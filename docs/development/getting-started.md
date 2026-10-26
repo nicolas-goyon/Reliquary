@@ -33,6 +33,8 @@ The API also serves these addresses:
 | Address | Content |
 | --- | --- |
 | <http://localhost:5080/health/live> | Health check of the API process |
+| <http://localhost:5080/health/ready> | Health check of PostgreSQL and Redis |
+| <http://localhost:5080/metrics> | Metrics in the Prometheus text format |
 | <http://localhost:5080/api/v1/status> | Name, version and core components of the API |
 | <http://localhost:5080/openapi/v1.json> | OpenAPI document of the public API |
 

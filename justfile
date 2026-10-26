@@ -25,7 +25,11 @@ reset:
 
 # Destroy the local infrastructure and its data.
 down:
-    {{ compose }} down --volumes --remove-orphans
+    {{ compose }} --profile observability down --volumes --remove-orphans
+
+# Start Grafana and the OpenTelemetry collector of the local instance on http://localhost:3000.
+observability:
+    {{ compose }} --profile observability up --detach observability
 
 # Show the state of the local infrastructure.
 ps:

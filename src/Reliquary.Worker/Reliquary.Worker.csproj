@@ -1,5 +1,10 @@
-<Project Sdk="Microsoft.NET.Sdk.Worker">
-  <!-- The worker process: the outbox publisher, the scheduled jobs and the event consumers. -->
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <!-- The worker process: the outbox publisher, the scheduled jobs and the event consumers.
+       Its small HTTP server serves only the health endpoints and the metrics, for the operators. -->
+  <ItemGroup>
+    <PackageReference Include="OpenTelemetry.Exporter.Prometheus.AspNetCore" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\Reliquary.Hosting\Reliquary.Hosting.csproj" />
   </ItemGroup>

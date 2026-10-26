@@ -28,5 +28,15 @@ services:
       timeout: 5s
       retries: 12
 
+  # Optional: Grafana with Prometheus, Tempo and Loki, and an OpenTelemetry collector.
+  # Start it with "just observability". See docs/development/observability.md.
+  observability:
+    image: grafana/otel-lgtm:0.38.1
+    profiles: ["observability"]
+    ports:
+      - "127.0.0.1:${RELIQUARY_GRAFANA_PORT:-3000}:3000"
+      - "127.0.0.1:${RELIQUARY_OTLP_GRPC_PORT:-4317}:4317"
+      - "127.0.0.1:${RELIQUARY_OTLP_HTTP_PORT:-4318}:4318"
+
 volumes:
   postgres-data:

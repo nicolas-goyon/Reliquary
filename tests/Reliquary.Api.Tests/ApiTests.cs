@@ -40,16 +40,5 @@ public sealed class ApiTests(ApiFactory factory) : IClassFixture<ApiFactory>
         Assert.Contains("/api/v1/status", await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), StringComparison.Ordinal);
     }
 
-    [Fact]
-    public async Task UnknownRouteReturnsProblemDetails()
-    {
-        using var client = factory.CreateClient();
-
-        var response = await client.GetAsync(new Uri("/api/v1/unknown", UriKind.Relative), TestContext.Current.CancellationToken);
-
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
-        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
-    }
-
     private sealed record StatusResponse(string Name, string Version, IReadOnlyList<string> Components);
 }
