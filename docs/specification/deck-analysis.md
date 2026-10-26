@@ -12,7 +12,7 @@ Terms follow the [glossary](../glossary.md).
   - distribution by type, color and category
   - mana sources against the mana symbols that the cards need, with the Karsten method
   - draw probabilities, for example "X lands on turn 3"
-- **Rules for each format**, with Commander first: each format defines its expected categories and its targets.
+- **Analysis for each format**, with Commander first: each format defines its expected categories and its targets.
 - **Needs of a Commander deck**: the analysis compares each category with a target.
   The categories are ramp, card draw, interaction, board wipes, lands, synergy and win conditions.
   Known Commander templates inspire each target, and the analysis adjusts the target to the curve and the strategy.

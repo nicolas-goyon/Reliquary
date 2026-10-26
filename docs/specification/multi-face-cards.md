@@ -30,7 +30,7 @@ The import accepts all these names and links each name to the same Oracle card.
 The analysis rules must state these points explicitly:
 
 - which cost the mana curve uses: the cost of the front face, or the Oracle value
-- whether a modal card with a land face and a spell face counts as a land
+- whether the analysis treats a modal card with a land face and a spell face as a land
 
 ## Milestones
 
@@ -39,4 +39,4 @@ The project delivers the features of this file in these [milestones](../roadmap.
 | Milestone | Features |
 | --- | --- |
 | M0 (Foundations) | The data model and the search |
-| M1 (Commander deck MVP) | How Reliquary shows each card face, and the analysis rules |
+| M1 (Commander deck MVP) | The rules to show the card faces, and the analysis rules |

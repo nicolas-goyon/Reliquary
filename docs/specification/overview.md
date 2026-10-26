@@ -14,7 +14,7 @@ Commander is the priority format.
   Deck testing has modes from goldfish to simplified online games.
 - **What makes Reliquary different**:
   - variants of one deck, with a transition plan between a variant and the assembled version
-  - an assembled deck that counts as a location of the collection
+  - an assembled deck that Reliquary treats as a location of the collection
   - locked locations, and locations that are not pickable
   - dated inventories
   - local multiplayer tests, and a shared screen for Discord or a stream
@@ -109,7 +109,7 @@ These rules connect decks and the collection.
 - An **assembled deck is part of the collection**.
   It is a location, like a rack, and it contains its own cards.
 - An assembled deck is **never a source** to complete another deck.
-  In the difference between a deck and the collection, its cards do not count as available cards.
+  In the difference between a deck and the collection, its cards are never available cards.
 - The user can mark any location as **locked**, as **not pickable**, or both:
   - The user must unlock a locked location before any change to its content.
     Examples of locked locations: a cube, a collection binder or a showcase deck.

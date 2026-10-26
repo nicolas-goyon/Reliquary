@@ -57,6 +57,6 @@ The project delivers the features of this file in these [milestones](../roadmap.
 
 | Milestone | Features |
 | --- | --- |
-| M2 (Versions and collection) | Detail level, locations, location entries, movements, inventories, import and export |
+| M2 (Versions and collection) | Locations, entries (location entries with their detail level, and movements), inventories, import and export |
 | M4 (Plugins) | Import and export formats from plugins |
 | Later | Collection sharing. The data model of M2 keeps room for it. |
