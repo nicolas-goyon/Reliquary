@@ -18,4 +18,7 @@ internal static partial class CardsLog
 
     [LoggerMessage(EventId = 3003, Level = LogLevel.Error, Message = "The import of the source {Source} failed.")]
     public static partial void SourceImportFailed(this ILogger logger, Exception exception, string source);
+
+    [LoggerMessage(EventId = 3010, Level = LogLevel.Warning, Message = "A card search stopped after {Milliseconds} ms. The query has {Length} characters.")]
+    public static partial void SearchTimedOut(this ILogger logger, int length, int milliseconds);
 }

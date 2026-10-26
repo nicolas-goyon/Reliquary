@@ -8,6 +8,7 @@ using Reliquary.BuildingBlocks.Data;
 using Reliquary.BuildingBlocks.Jobs;
 using Reliquary.Cards.Api;
 using Reliquary.Cards.Import;
+using Reliquary.Cards.Search;
 
 namespace Reliquary.Cards;
 
@@ -29,6 +30,7 @@ public sealed class CardsComponent : ICoreComponent
     public void AddServices(IServiceCollection services, IConfiguration configuration)
     {
         services.AddSingleton<CardQueries>();
+        services.AddSingleton<CardSearch>();
     }
 
     /// <inheritdoc />
