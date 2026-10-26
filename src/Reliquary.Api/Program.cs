@@ -3,6 +3,7 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 using Reliquary.Api;
 using Reliquary.Api.Conventions;
+using Reliquary.BuildingBlocks.Api;
 using Reliquary.Hosting;
 using Reliquary.Platform.Observability;
 
@@ -29,12 +30,15 @@ var app = builder.Build();
 
 app.UseExceptionHandler();
 app.UseStatusCodePages();
+app.UseAuthentication();
+app.UseAuthorization();
+app.UseRateLimiter();
 
 app.MapOpenApi();
 app.MapHealthEndpoints();
 app.MapPrometheusScrapingEndpoint("/metrics");
 
-var api = app.MapGroup("/api/v1");
+var api = app.MapGroup(ApiRoutes.Base);
 
 api.MapGet("/status", ApiStatus.Create)
     .WithName("GetStatus")

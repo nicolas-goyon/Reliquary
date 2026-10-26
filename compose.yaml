@@ -1,4 +1,4 @@
-# Local infrastructure for development: PostgreSQL and Redis.
+# Local infrastructure for development: PostgreSQL, Redis and a test email server.
 # Use the justfile recipes: just up, just stop, just reset and just down.
 # The settings come from the .env file. See .env.example.
 services:
@@ -27,6 +27,13 @@ services:
       interval: 5s
       timeout: 5s
       retries: 12
+
+  # A test email server. It keeps all the emails and sends none. Read the emails at http://localhost:18025.
+  mailpit:
+    image: axllent/mailpit:v1.30.5
+    ports:
+      - "127.0.0.1:${RELIQUARY_SMTP_PORT:-11025}:1025"
+      - "127.0.0.1:${RELIQUARY_MAILPIT_PORT:-18025}:8025"
 
   # Optional: Grafana with Prometheus, Tempo and Loki, and an OpenTelemetry collector.
   # Start it with "just observability". See docs/development/observability.md.

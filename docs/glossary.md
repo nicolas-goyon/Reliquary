@@ -66,6 +66,19 @@ The French column gives the term for the French interface.
 | Table window | The window that shows the table. It masks hidden information. | Fenêtre table |
 | Player window | The private window that shows the hand of one player. | Fenêtre joueur |
 
+## Accounts
+
+| Term | Meaning | French interface |
+| --- | --- | --- |
+| Account | The identity of a user on an instance. The ID of the account is also the ID of the owner of the user data. | Compte |
+| Administrator | A user who manages the instance. The setting `Auth:AdministratorEmails` gives the administrators. | Administrateur |
+| Web session | A sign-in in the web interface. It has a short access token and a refresh token in a cookie. | Session |
+| Access token | A signed token that gives access to the public API for 15 minutes. | Jeton d'accès |
+| Refresh token | A secret in an HttpOnly cookie that gives a new access token. Each use replaces it. | — |
+| OAuth login | A connection between an account and an account at an OAuth provider: Google, GitHub or Discord. The user can then sign in with that provider. | Connexion externe |
+| API key | A personal secret that a script or a third-party client uses to call the public API for a user. | Clé d'API |
+| Quota | The maximum number of requests of an API key or of an account in one day (UTC). | Quota |
+
 ## Extensions
 
 | Term | Meaning | French interface |

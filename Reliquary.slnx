@@ -13,6 +13,7 @@
     <Project Path="src/Reliquary.Worker/Reliquary.Worker.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/Reliquary.Accounts.Tests/Reliquary.Accounts.Tests.csproj" />
     <Project Path="tests/Reliquary.Api.Tests/Reliquary.Api.Tests.csproj" />
     <Project Path="tests/Reliquary.Architecture.Tests/Reliquary.Architecture.Tests.csproj" />
     <Project Path="tests/Reliquary.BuildingBlocks.Tests/Reliquary.BuildingBlocks.Tests.csproj" />

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -39,6 +40,15 @@ public interface ICoreComponent
     /// <param name="services">The service collection of the worker.</param>
     /// <param name="configuration">The configuration of the worker.</param>
     void AddWorkerServices(IServiceCollection services, IConfiguration configuration)
+    {
+    }
+
+    /// <summary>
+    /// Adds conventions to all the endpoints of the public API, for example an endpoint filter.
+    /// The host calls this method on each core component before it maps the endpoints.
+    /// </summary>
+    /// <param name="api">The route group of the public API.</param>
+    void ConfigureApi(RouteGroupBuilder api)
     {
     }
 
