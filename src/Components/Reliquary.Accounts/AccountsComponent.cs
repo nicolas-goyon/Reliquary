@@ -42,6 +42,11 @@ public sealed class AccountsComponent : ICoreComponent
         services.AddSingleton<AccessTokens>();
         services.AddSingleton<AccountEmails>();
         services.AddSingleton<AccountService>();
+    }
+
+    /// <inheritdoc />
+    public void AddApiServices(IServiceCollection services, IConfiguration configuration)
+    {
         services.AddSingleton<QuotaCounter>();
         services.AddSingleton<QuotaFilter>();
 

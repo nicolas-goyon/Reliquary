@@ -36,6 +36,22 @@ public static class HostingExtensions
     }
 
     /// <summary>
+    /// Adds the services that only the API host uses, for each core component.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="configuration">The configuration of the host.</param>
+    /// <returns>The service collection.</returns>
+    public static IServiceCollection AddReliquaryApi(this IServiceCollection services, IConfiguration configuration)
+    {
+        foreach (var component in CoreComponents.All)
+        {
+            component.AddApiServices(services, configuration);
+        }
+
+        return services;
+    }
+
+    /// <summary>
     /// Adds the background services of the worker process and the worker services of each core component.
     /// </summary>
     /// <param name="services">The service collection.</param>

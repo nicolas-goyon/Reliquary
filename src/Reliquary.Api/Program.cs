@@ -18,6 +18,7 @@ builder.Services.AddOpenApi("v1", options => options.AddDocumentTransformer((doc
     return Task.CompletedTask;
 }));
 builder.Services.AddReliquaryCore(builder.Configuration);
+builder.Services.AddReliquaryApi(builder.Configuration);
 
 builder.AddReliquaryTelemetry("reliquary-api")
     .WithTracing(tracing => tracing.AddAspNetCoreInstrumentation(options =>
