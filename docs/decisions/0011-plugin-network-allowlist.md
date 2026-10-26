@@ -9,7 +9,7 @@
 Plugins connect Reliquary to other tools, for example Moxfield, marketplaces or a scan application.
 Some of these tools run on other servers.
 Other tools run on the computer of the user, for example a scan application or a local tool.
-Free network access would let a plugin send the data of the user to any server.
+Without a limit, a plugin could send the data of the user to any server.
 Some sites also refuse calls from a browser (CORS).
 
 ## Decision
@@ -18,7 +18,7 @@ Some sites also refuse calls from a browser (CORS).
 - The plugin manifest declares the domains of the plugin, and the plugin can reach only these domains.
 - The user accepts the domains when they install the plugin.
   Each new domain needs a new approval from the user.
-- The automatic analysis of the plugin catalog rejects a plugin that calls domains that its plugin manifest does not declare.
+- The automatic analysis of the plugin catalog rejects a plugin that uses domains that its plugin manifest does not declare.
 - For the sites that refuse calls from a browser, the core offers a network relay:
   - The relay accepts only the domains of the plugin manifest.
   - The relay has quotas.

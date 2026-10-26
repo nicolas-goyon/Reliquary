@@ -22,7 +22,7 @@ Modules come later, but the core prepares for them from milestone M0.
 | Who can write it | Anyone | The internal team or selected partners |
 | Who installs it | Each user, for their own account | The instance administrator |
 | Access to data | The data of the user, through the public API, with the permissions that the user gives | Access on the server. A module can add its own tables and fields. |
-| Acts without a connected user | No. A plugin acts only when the app is open. | Yes, for example with scheduled synchronizations and webhooks |
+| Acts without a connected user | No. A plugin acts only when the web interface is open. | Yes, for example with scheduled synchronizations and webhooks |
 | Typical use | Show more information, automate an action, link an external account | An advanced feature that does not belong in the core |
 | Expected number | Many | A few |
 
@@ -42,10 +42,10 @@ Plugins have two purposes:
 
 ### Linked accounts
 
-- The plugin manifest declares the external sites that the plugin connects to.
+- The plugin manifest declares each external site that the plugin needs.
   For each site, it declares an authentication method and a synchronization method.
-  - Authentication methods: OAuth 2 with PKCE, an API key, or a public account name.
-  - Synchronization methods: manual, when the app opens, or periodic while the app is open.
+  - Authentication methods: OAuth 2 with PKCE, an API key, or a public user name.
+  - Synchronization methods: manual, when the web interface opens, or periodic while the web interface is open.
 - The account page of the user shows a **Linked accounts** panel.
   Reliquary builds this panel from the installed plugins.
   For each site, the panel shows the site, the plugin that uses the site, the connection state and the last synchronization.
@@ -57,12 +57,13 @@ Plugins have two purposes:
 
 ### Interface slots
 
-- The interface has named places for extensions: the **slots**.
+- The interface contains named places for extensions: the **slots**.
   The slots include the action bar of a deck, menus, analysis tabs and the columns of the table mode.
-  They also include the card page, the account page and the navigation entries.
+  They also include the card page, the account page and the navigation items.
 - A plugin declares in its plugin manifest the slots that it uses.
-  In these slots, it adds buttons, charts, interface elements or a new menu category.
-- The core renders each contribution in its own isolated container: a sandboxed iframe, or an interface component that the SDK loads.
+  In these slots, it adds buttons, charts, interface elements or a new group of menu items.
+- The core isolates each contribution of a plugin.
+  It renders the contribution in a sandboxed iframe, or in an interface component that the SDK loads.
   A plugin cannot access the DOM of the core or the DOM of other plugins.
 - The core keeps control of the layout:
   - Each slot has a maximum size.
@@ -110,7 +111,7 @@ This example shows the plugin manifest of a plugin that synchronizes decks with 
    The interface then shows a "not checked" banner.
 2. **Plugin catalog**: each plugin of the catalog has a public Git repository and a reproducible build.
    An automatic analysis rejects a plugin that contains hard-coded keys or access tokens.
-   It also rejects a plugin that calls domains that its plugin manifest does not declare.
+   It also rejects a plugin that uses domains that its plugin manifest does not declare.
 3. **Review and signature**: the project reviews each plugin, then signs it.
    By default, Reliquary offers only signed plugins.
    The other plugins need an explicit approval from the user.
@@ -143,7 +144,7 @@ Modules are rare and signed, and the instance administrator installs them.
   It extends them with **extension tables**, which use the ID of the core entity as a link.
   Example: `mod_x.deck_extra(deck_id, …)`.
 - The tables of a module follow the [split rules](./database.md): an `owner_id` on all user data, and UUIDv7 identifiers.
-  Reliquary can then move the module data of a user to another database, with the other data of the user.
+  Because of these rules, Reliquary can move the module data of a user to another database, with the other data of the user.
 - When the administrator uninstalls a module, the core stays intact.
   The administrator can archive or delete the schema of the module.
 
@@ -151,16 +152,16 @@ Modules are rare and signed, and the instance administrator installs them.
 
 - **Preferred option**: each module is a **separate service** in its own container.
   The module communicates with the core through a versioned internal API and the event bus.
-  An operator can deploy and scale a module separately from the core.
+  The instance administrator can deploy and scale a module separately from the core.
   If a module fails, the core continues to run.
   Authors can write a module in C# or in TypeScript.
-- **Alternative**: an internal module with a close link to the core can be a .NET library.
+- **Alternative**: a module of the internal team with a close link to the core can be a .NET library.
   The core loads the library when it starts, behind the same interfaces.
 
-## Prepare the core for modules (milestones M0 to M2)
+## Prepare the core for modules (milestones 0 to 2)
 
 The core applies to itself, from the start, the constraints that it will apply to modules.
-Then the arrival of modules needs no rewrite of the core.
+With these constraints, the arrival of modules needs no rewrite of the core.
 The core prepares these seven items:
 
 1. **Modular monolith**: the core contains five core components (Accounts, Cards, Decks, Collection and Playtest).
@@ -170,12 +171,13 @@ The core prepares these seven items:
 3. **Migration tool for several schema sets**: one tool applies the migrations of the core and of the `mod_*` schemas.
    The tool applies them to all the databases of the shard directory.
 4. **Interface slots**: the core uses slots for its own panels.
-   The slot system then has real use before it opens to extensions.
+   This use tests the slot system before the slots open to plugins and modules.
 5. **Internal API**: a versioned internal API, separate from the public API, with an OpenAPI description.
 6. **Service accounts and delegation**: a model of delegation tokens.
    A delegation token means "act for user X, with this scope", and the user can revoke it.
    The `users` schema includes this model.
-7. **Activation for each instance**: a register of the installed extensions, with activation flags and the minimum core version of each extension.
+7. **Activation for each instance**: a register of the installed extensions.
+   For each extension, the register gives an activation flag and the minimum core version.
 
 ## Related decisions
 

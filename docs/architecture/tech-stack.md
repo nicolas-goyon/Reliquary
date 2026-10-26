@@ -9,7 +9,7 @@ The backend uses C# and ASP.NET Core.
 The front end and the plugins use TypeScript.
 The database is PostgreSQL.
 The API keeps no state, so that Kubernetes can add replicas of the API.
-All data access uses a routing by user, so that an operator can move or split the database later.
+All data access uses a routing by user, so that the instance administrator can move or split the database later.
 
 ## Why C# and ASP.NET Core
 
@@ -17,7 +17,7 @@ The specification asks if C# and ASP.NET Core are a good fit for Reliquary.
 The answer is yes:
 
 - ASP.NET Core is one of the fastest web frameworks in public benchmarks.
-- ASP.NET Core runs well in Linux containers.
+- ASP.NET Core runs very well in Linux containers.
 - ASP.NET Core includes the features that the project needs:
   - SignalR for the real time of online games
   - built-in rate limiting for the quotas
@@ -43,14 +43,14 @@ Also, the maintainer knows C# better than Go.
 - **Stateless API**: the API keeps no session in memory, and each request carries an authentication token.
   Any replica of the API can serve any request.
 - **Real time**: SignalR uses a Redis backplane, so that the players of one game session can use different replicas.
-- **Background tasks**: separate workers run the Scryfall synchronization, auto-tag and the tasks of modules.
+- **Background tasks**: separate workers run the background tasks: the Scryfall synchronization, auto-tag and the tasks of modules.
   The workers scale independently of the API.
 - **Quotas**: Redis counts the requests for the quotas, so that the counts agree on all replicas.
 - **Helm chart**: the project delivers a Helm chart when Kubernetes hosting becomes relevant, on OVH or another provider.
 
 ## Database
 
-An operator can move and split the database without a rewrite:
+The instance administrator can move and split the database without a rewrite of Reliquary, because of these rules:
 
 - Separate schemas from the start, and a shard directory that gives the database of each user
 - UUIDv7 identifiers
@@ -62,14 +62,14 @@ The [database](./database.md) file gives the details.
 
 - Each action on a local instance needs one command only:
   - `just up` creates or updates the instance.
-  - `just reset` resets the instance.
+  - `just reset` deletes the data of the instance, then creates the instance again.
   - `just down` destroys the instance.
 - Docker Compose runs the services, and `just` gives the commands.
   [ADR 0016](../decisions/0016-local-infrastructure.md) records this choice.
 - A demo data set contains a subset of the cards, and example accounts and decks.
   With this data set, a developer can start work without a download of all the Scryfall data.
 - Several local instances can run at the same time, each with its own project prefix.
-  For example, a developer can test a plugin or a migration in a separate instance.
+  A developer can then test a plugin or a migration in a separate instance.
 
 The [getting started guide](../development/getting-started.md) gives all the commands.
 
@@ -82,10 +82,10 @@ The **Alternative** column gives an option that the project did not choose, or a
 | API | C# and ASP.NET Core on .NET 10, the current LTS version ([ADR 0006](../decisions/0006-backend-and-frontend-languages.md)) | Go |
 | Real time | SignalR with a Redis backplane | Raw WebSocket |
 | Database | PostgreSQL, separate schemas, shard directory ([ADR 0008](../decisions/0008-postgresql-schemas-and-shard-directory.md)) | Citus for native sharding later |
-| Migrations | Versioned SQL scripts with DbUp or grate. The choice of the tool is still open. | EF Core Migrations |
+| Migrations | Versioned SQL scripts with DbUp or grate. The M0 task [#14](https://github.com/nicolas-goyon/reliquary/issues/14) chooses the tool. | EF Core Migrations |
 | Search | A parser that converts the Scryfall syntax to SQL, with PostgreSQL indexes | Meilisearch as a complement |
 | Cache, quotas, queues | Redis. Hangfire or dedicated workers for the background tasks. | RabbitMQ |
 | Front end | TypeScript, React and Vite, PWA ([ADR 0015](../decisions/0015-frontend-react-vite-i18next.md)) | SvelteKit (not chosen) |
-| Plugins and modules | Plugins: TypeScript in a browser sandbox. Modules: C# or TypeScript services in containers. | Internal modules as .NET libraries |
+| Plugins and modules | Plugins: TypeScript in a browser sandbox. Modules: C# or TypeScript services in containers. | Modules of the internal team as .NET libraries |
 | Observability | OpenTelemetry, Prometheus, Grafana | — |
 | Deployment | Docker Compose and just ([ADR 0016](../decisions/0016-local-infrastructure.md)) for local instances. Helm on Kubernetes. | .NET Aspire for local instances (not chosen) |

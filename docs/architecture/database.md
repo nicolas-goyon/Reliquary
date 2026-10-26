@@ -33,10 +33,10 @@ To move a user, do these steps:
 1. Make the data of the user read-only.
 2. Copy the data of the user to the new database.
 3. Change the shard directory, so that it gives the new database for the user.
-4. Make the data of the user writable again.
+4. Make the data of the user writable again, in the new database.
 5. Delete the old copy of the data.
 
-With these moves, an operator can empty one database into another database, one user at a time.
+With these moves, the instance administrator can empty one database into another database, one user at a time.
 For example, an instance can move from a home server to a VPS, and then to Kubernetes.
 
 ## Identifiers
@@ -52,9 +52,9 @@ The mechanism exists, but it adds no operational cost.
 ## Migrations
 
 - The migrations are an ordered list of versioned SQL scripts, as in Go projects: `0001_init.sql`, `0002_decks.sql` and the next scripts.
-- A migration tool applies the scripts when the application starts, or when an operator runs a separate command.
+- A migration tool applies the scripts when the application starts, or when the instance administrator runs a separate command.
 - The choice of the migration tool is still open: DbUp or grate.
-  A task of milestone M0 chooses the tool and records the choice in an ADR.
+  The M0 task [#14](https://github.com/nicolas-goyon/reliquary/issues/14) chooses the tool and records the choice in an ADR.
 - The tool applies each migration to all the databases of the shard directory.
 - A migration must never break the previous version of the API during a progressive deployment.
 - Each module has its own SQL migrations for its `mod_<id>` schema.

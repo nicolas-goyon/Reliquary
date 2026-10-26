@@ -50,13 +50,13 @@ Reliquary can split all the user data by `owner_id`.
 | Deck | Name, format, visibility, folder, tags, and the location if the deck is an assembled deck | Refers to its current deck version |
 | DeckVersion | Frozen list of deck lines, message, parent versions, variant | Never changes, like a Git commit |
 | DeckLine | OracleCard, quantity, zone, tags, note, purchase preferences (wanted or avoided printings, languages, minimum condition, foil, maximum price) | The printing is optional |
-| Location | Name, type (rack, binder, storage box, assembled deck or cube), optional parent location, `locked`, `pickable` | Two levels at most: the location, then the section |
+| Location | Name, type (rack, binder, storage box, assembled deck or cube), optional parent location (for a section), `locked`, `pickable` | Two levels at most: the location, then the section |
 | LocationEntry | Location, OracleCard, quantity, language, optional printing, optional advanced fields | The collection is the sum of the location entries |
 | Inventory | Location, date, recorded content | A dated record of one location |
-| Movement | Type (entry, exit or move), origin and destination (a location, a purchase, a sale, a gift or "nowhere"), quantity, date | A simple log |
+| Movement | Type (cards in, cards out or a move), origin and destination (a location, a purchase, a sale, a gift or "nowhere"), quantity, date | A simple log |
 | Tag, Folder | Global tags, or local tags of one deck. Nested folders. | — |
 | CollectionShare | Owner, guest, locations, rights (read, difference or edit) | In the model from the start. A later milestone delivers the feature. |
-| ApiKey, UsageCounter | API keys, request counters for each day | Basis of the quotas |
+| ApiKey, UsageCounter | API keys, daily request counters | Basis of the quotas |
 | ExtensionInstall | Type (plugin or module), version, permissions, slots, settings | Plugin: one for each user. Module: one for each instance. |
-| AccountLink | User, external site, extension, authentication method, encrypted access tokens, state, last synchronization, consent to act while the user is offline | Source of the **Linked accounts** panel |
+| AccountLink | User, external site, extension, authentication method, encrypted access tokens, state, last synchronization, consent to act while the user is not connected | Source of the **Linked accounts** panel |
 | DomainEvent (outbox) | Event type, version, `owner_id`, payload, date | Basis of the event bus for modules |

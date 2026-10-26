@@ -31,13 +31,16 @@ Reliquary has two levels of extensions: plugins and modules.
 - The core never runs plugin code on the server.
   Only signed modules that the instance administrator installs run on the server.
 - A module communicates with the core through a versioned internal API and domain events.
+- The preferred form of a module is a separate service in a container.
+  Authors can write a module in C# or in TypeScript.
+  A module of the internal team with a close link to the core can be a .NET library instead.
 - The core prepares for modules from milestone M0.
   The [extensions](../architecture/extensions.md) file lists the seven items of this work.
 
 ## Consequences
 
 - Anyone can extend Reliquary without access to the server.
-- A plugin acts only when the app is open.
+- A plugin acts only when the web interface is open.
   A feature that must act while the user is not connected needs a module.
-- The project must review, sign and revoke plugins for the plugin catalog.
+- The project must review and sign the plugins of the plugin catalog, and revoke compromised plugin versions.
 - The core must deliver domain events, an internal API, slots, delegation tokens and a register of extensions before modules exist.

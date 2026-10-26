@@ -53,7 +53,7 @@ A core component communicates with other core components only through interfaces
 It never reads or writes the tables of another core component.
 [ADR 0007](../decisions/0007-modular-monolith.md) gives the reasons.
 
-| Core component | Content | Box in the diagram |
+| Core component | Content | Name in the diagram |
 | --- | --- | --- |
 | Accounts | Accounts, authentication, API keys, quotas, service accounts and delegation tokens, in the `users` schema | Not in the diagram |
 | Cards | Card reference data, card search and deck analysis | Search and analysis |

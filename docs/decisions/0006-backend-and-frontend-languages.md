@@ -12,7 +12,7 @@ The specification compares two options for the backend: C# with ASP.NET Core, an
 It gives these points:
 
 - ASP.NET Core is one of the fastest web frameworks in public benchmarks.
-- ASP.NET Core runs well in Linux containers.
+- ASP.NET Core runs very well in Linux containers.
 - ASP.NET Core includes the features that the project needs:
   - SignalR for the real time of online games
   - built-in rate limiting for the quotas
@@ -35,7 +35,7 @@ It gives these points:
 ## Consequences
 
 - The backend uses the standard features of ASP.NET Core: SignalR for the game sessions, the built-in rate limiting for the quotas, and OpenTelemetry.
-- The backend uses more memory than a backend in Go.
+- The project accepts a higher memory use than a backend in Go would need.
 - Backend contributors write C#.
   Front-end contributors and plugin authors write TypeScript.
 - The [technology stack](../architecture/tech-stack.md) gives the full stack.

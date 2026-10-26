@@ -24,7 +24,7 @@ The specification compares three licenses:
 - The project chose AGPL-3.0 for these reasons:
   - The project stays open.
   - Other people can continue the project if its author stops.
-  - No fork of the project can become closed source, also as SaaS (software as a service).
+  - No fork of the project can become closed source, even as SaaS (software as a service).
 - The project can publish the plugin SDK separately under MIT or Apache 2.0, so that plugins can have their own license.
   The choice between MIT and Apache 2.0 is still open.
 - If the project plans a paid offer one day, it will need a contributor license agreement (CLA).
@@ -32,12 +32,12 @@ The specification compares three licenses:
 
 ## Consequences
 
-- Anyone can use and change Reliquary, also for commercial use.
+- The license allows use, changes and commercial use.
 - The code of a fork stays under AGPL-3.0.
 - An operator can run a changed version of Reliquary as an online service.
   The operator must then publish the code of this version for all the users of the service.
 - AGPL-3.0 gives protection against patent lawsuits.
 - Many companies avoid AGPL-3.0 code.
   This is a real obstacle to the adoption of Reliquary by companies.
-- Each contribution uses the AGPL-3.0 license.
+- Each contribution uses the AGPL-3.0 license, as the [contributing guide](../../CONTRIBUTING.md) says.
 - The license of the plugin SDK needs a separate decision.

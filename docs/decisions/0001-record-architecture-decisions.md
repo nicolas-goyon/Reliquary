@@ -9,7 +9,7 @@
 Reliquary makes architecture decisions from the start, for example about the license, the languages, the database and the extensions.
 Contributors and AI agents must know the reason for each decision before they change the code.
 Without the reason, a contributor can accept a decision with no understanding, or change it by accident.
-The first specification of the project is in French, and it gives the reasons in different sections.
+The first specification of the project is in French, and it gives the reasons in different places.
 
 ## Decision
 
@@ -20,7 +20,7 @@ The first specification of the project is in French, and it gives the reasons in
   The file name is the number and a short name, for example `0007-modular-monolith.md`.
 - The project gives the numbers in sequence, and never uses a number again.
 - Each ADR starts with its number and its title, then gives its status, its date and its deciders.
-  Then it has three sections: Context, Decision and Consequences.
+  Then it has three parts, each with a level-2 heading: Context, Decision and Consequences.
   The [template](template.md) gives the format.
 - The status of an ADR is one of these values:
   - **Proposed**: the project discusses the decision.

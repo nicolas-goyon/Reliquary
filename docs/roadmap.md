@@ -12,6 +12,7 @@ The plugin ecosystem opens last.
 
 The roadmap puts decks first, then the collection, deck testing and plugins.
 It has five milestones, with a gate between each pair of milestones.
+A sixth milestone, Later, contains the work after M4.
 
 ```mermaid
 flowchart TB

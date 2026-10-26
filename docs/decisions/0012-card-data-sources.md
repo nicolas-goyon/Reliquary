@@ -17,7 +17,7 @@ Public sources give this data, and each source has its own terms.
 - [MTGJSON](https://mtgjson.com/) gives external IDs (Cardmarket, TCGplayer and MTGO) and preconstructed decks.
 - Reliquary follows the terms of Scryfall and MTGJSON.
 - Reliquary shows the card images from the Scryfall URLs.
-  Reliquary never stores copies of the images.
+  Reliquary never hosts copies of the images.
 - [EDHREC](https://edhrec.com/) gives the Commander recommendations.
 - [Commander Spellbook](https://commanderspellbook.com/) gives the combo detection.
 - recommender.cards is an optional source.
