@@ -45,4 +45,4 @@ ENTRYPOINT ["dotnet", "Reliquary.Worker.dll"]
 
 FROM runtime AS cli
 COPY --from=build /app/cli .
-ENTRYPOINT ["dotnet", "Reliquary.Cli.dll"]
+ENTRYPOINT ["dotnet", "reliquary.dll"]
