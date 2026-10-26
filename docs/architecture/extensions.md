@@ -10,8 +10,8 @@ Reliquary has two levels of extensions:
 
 - **Plugins**: anyone can write a plugin.
   Plugins run only in the browser.
-- **Modules**: modules are few and trusted.
-  They run in the front end and on the server, and they can extend the data.
+- **Modules**: a few trusted extensions.
+  Modules run in the front end and on the server, and they can extend the data.
 
 Plugins arrive in milestone M4.
 Modules come later, but the core prepares for them from milestone M0.
@@ -109,7 +109,8 @@ This example shows the plugin manifest of a plugin that synchronizes decks with 
 1. **Development mode**: anyone can load a plugin from a local folder or from a URL.
    The interface then shows a "not checked" banner.
 2. **Plugin catalog**: each plugin of the catalog has a public Git repository and a reproducible build.
-   An automatic analysis rejects a plugin that contains hard-coded keys or tokens, or domains that its manifest does not declare.
+   An automatic analysis rejects a plugin that contains hard-coded keys or access tokens.
+   It also rejects a plugin that calls domains that its plugin manifest does not declare.
 3. **Review and signature**: the project reviews each plugin, then signs it.
    By default, Reliquary offers only signed plugins.
    The other plugins need an explicit approval from the user.
@@ -142,7 +143,7 @@ Modules are rare and signed, and the instance administrator installs them.
   It extends them with **extension tables**, which use the ID of the core entity as a link.
   Example: `mod_x.deck_extra(deck_id, …)`.
 - The tables of a module follow the [split rules](./database.md): an `owner_id` on all user data, and UUIDv7 identifiers.
-  Thus Reliquary can move the module data of a user to another database, with the other data of the user.
+  Reliquary can then move the module data of a user to another database, with the other data of the user.
 - When the administrator uninstalls a module, the core stays intact.
   The administrator can archive or delete the schema of the module.
 
@@ -159,26 +160,26 @@ Modules are rare and signed, and the instance administrator installs them.
 ## Prepare the core for modules (milestones M0 to M2)
 
 The core applies to itself, from the start, the constraints that it will apply to modules.
-Thus the arrival of modules needs no rewrite of the core.
+Then the arrival of modules needs no rewrite of the core.
 The core prepares these seven items:
 
-1. **Modular monolith**: the core has separate core components: Accounts, Cards, Decks, Collection and Playtest.
+1. **Modular monolith**: the core contains five core components (Accounts, Cards, Decks, Collection and Playtest).
    They communicate only through interfaces and domain events, never through the tables of another core component.
 2. **Versioned domain events**: the core components publish domain events through an outbox table from milestone M0.
    They publish the events even when no consumer exists yet.
 3. **Migration tool for several schema sets**: one tool applies the migrations of the core and of the `mod_*` schemas.
    The tool applies them to all the databases of the shard directory.
 4. **Interface slots**: the core uses slots for its own panels.
-   Thus the project tests the slot system in real use before the slots open to extensions.
+   The slot system then has real use before it opens to extensions.
 5. **Internal API**: a versioned internal API, separate from the public API, with an OpenAPI description.
 6. **Service accounts and delegation**: a model of delegation tokens.
    A delegation token means "act for user X, with this scope", and the user can revoke it.
-   The `users` schema contains this model from the start.
+   The `users` schema includes this model.
 7. **Activation for each instance**: a register of the installed extensions, with activation flags and the minimum core version of each extension.
 
 ## Related decisions
 
+- [ADR 0002](../decisions/0002-license-agpl-3.0.md): the license of the core, and the open question about the license of the plugin SDK
 - [ADR 0007](../decisions/0007-modular-monolith.md): modular monolith for the core
 - [ADR 0010](../decisions/0010-plugins-and-modules.md): two extension levels, plugins and modules
 - [ADR 0011](../decisions/0011-plugin-network-allowlist.md): plugin network access through a declared list of domains
-- [ADR 0002](../decisions/0002-license-agpl-3.0.md): the license of the core and the open question about the license of the plugin SDK

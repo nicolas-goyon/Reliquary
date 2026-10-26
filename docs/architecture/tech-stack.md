@@ -13,12 +13,12 @@ All data access uses a routing by user, so that an operator can move or split th
 
 ## Why C# and ASP.NET Core
 
-The specification asks if C# and ASP.NET Core are a good fit for the project.
+The specification asks if C# and ASP.NET Core are a good fit for Reliquary.
 The answer is yes:
 
 - ASP.NET Core is one of the fastest web frameworks in public benchmarks.
 - ASP.NET Core runs well in Linux containers.
-- ASP.NET Core gives, as standard, the features that the project needs:
+- ASP.NET Core includes the features that the project needs:
   - SignalR for the real time of online games
   - built-in rate limiting for the quotas
   - EF Core or raw SQL
@@ -34,13 +34,13 @@ Also, the maintainer knows C# better than Go.
 | Operation | Target |
 | --- | --- |
 | Card search | An answer in less than 150 ms, on about 100,000 printings |
-| Deck of 100 cards | Load and analysis in less than 1 s |
+| Load and analysis of a deck of 100 cards | Less than 1 s |
 | Collection of 50,000 cards | No noticeable loss of speed |
 | Action in an online game | The action reaches the other players in less than 200 ms |
 
 ## Horizontal scaling with Kubernetes
 
-- **Stateless API**: the API keeps no session in memory, and it uses token authentication.
+- **Stateless API**: the API keeps no session in memory, and each request carries an authentication token.
   Any replica of the API can serve any request.
 - **Real time**: SignalR uses a Redis backplane, so that the players of one game session can use different replicas.
 - **Background tasks**: separate workers run the Scryfall synchronization, auto-tag and the tasks of modules.
@@ -48,10 +48,23 @@ Also, the maintainer knows C# better than Go.
 - **Quotas**: Redis counts the requests for the quotas, so that the counts agree on all replicas.
 - **Helm chart**: the project delivers a Helm chart when Kubernetes hosting becomes relevant, on OVH or another provider.
 
+## Database
+
+An operator can move and split the database without a rewrite:
+
+- Separate schemas from the start, and a shard directory that gives the database of each user
+- UUIDv7 identifiers
+- Ordered SQL migrations for all the databases of the shard directory
+
+The [database](./database.md) file gives the details.
+
 ## Local development
 
-- One command does each action on a local instance: `just up` creates or updates it, `just reset` resets it, and `just down` destroys it.
-  Docker Compose runs the services, and `just` gives the commands.
+- Each action on a local instance needs one command only:
+  - `just up` creates or updates the instance.
+  - `just reset` resets the instance.
+  - `just down` destroys the instance.
+- Docker Compose runs the services, and `just` gives the commands.
   [ADR 0016](../decisions/0016-local-infrastructure.md) records this choice.
 - A demo data set contains a subset of the cards, and example accounts and decks.
   With this data set, a developer can start work without a download of all the Scryfall data.

@@ -18,7 +18,7 @@ flowchart TB
     m0["M0 · Foundations<br/>Card data, card search, accounts, migrations, shard directory, local instance"]
     g0{{"Gate: one command creates and destroys a local instance. Card search answers in less than 150 ms."}}
     m1["M1 · Commander deck MVP<br/>Deck building, bulk editing, tags, analysis, import and export, public decks"]
-    g1{{"Gate: a Moxfield deck goes through import, editing and export with no data loss."}}
+    g1{{"Gate: the import, editing and export of a Moxfield deck lose no data."}}
     m2["M2 · Versions and collection<br/>Deck versions, variants, transition plan, locations, inventories"]
     g2{{"Gate: the purchase list is correct for each card."}}
     m3["M3 · Deck testing<br/>Goldfish, local multiplayer, shared screen, simplified online games"]

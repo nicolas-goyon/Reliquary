@@ -7,7 +7,7 @@ Terms follow the [glossary](../glossary.md).
 
 Plugins stay in the browser.
 Modules also run on the server, and they use the database.
-The diagram shows the parts of Reliquary and their connections.
+This diagram shows the parts of Reliquary and their connections.
 
 ```mermaid
 flowchart TB
@@ -55,7 +55,7 @@ It never reads or writes the tables of another core component.
 
 | Core component | Content | Box in the diagram |
 | --- | --- | --- |
-| Accounts | Accounts, authentication, API keys, quotas, service accounts and delegation tokens. Its tables are in the `users` schema. | Not in the diagram |
+| Accounts | Accounts, authentication, API keys, quotas, service accounts and delegation tokens, in the `users` schema | Not in the diagram |
 | Cards | Card reference data, card search and deck analysis | Search and analysis |
 | Decks | Decks, deck versions, variants, tags and folders | Decks and versions |
 | Collection | Locations, location entries, movements and inventories | Collection and locations |
@@ -72,13 +72,12 @@ The public API uses REST and SignalR, and it has a version number.
 
 The API keeps no session in memory.
 Each request carries an authentication token.
-Thus any replica of the API can serve any request.
+Any replica of the API can serve any request.
 
 ### Real time
 
-Online games use game sessions with SignalR.
-A Redis backplane connects the replicas of the API.
-Thus the players of one game session can use different replicas.
+Each online game uses a game session with SignalR.
+A Redis backplane connects the replicas of the API, so that the players of one game session can use different replicas.
 
 ### Background workers
 
@@ -95,10 +94,10 @@ Only signed modules that the instance administrator installs run on the server.
 
 Reliquary has two levels of extensions:
 
-- **Plugins** run only in the browser, in a sandbox.
+- A **plugin** runs only in the browser, in a sandbox.
   Anyone can write a plugin, and each user installs plugins for their own account.
-- **Modules** are trusted extensions with a front-end part and a server part.
-  Only the instance administrator installs modules.
+- A **module** is a trusted extension with a front-end part and a server part.
+  Only the instance administrator can install a module.
   A module can add its own tables.
 
 Plugins arrive in milestone M4.
@@ -109,6 +108,7 @@ The [extensions](./extensions.md) file gives the details.
 
 - [Data model](./data-model.md): the card reference data and the user data
 - [Database](./database.md): the schemas, the shard directory, the move of a user and the migrations
+- [Extensions](./extensions.md): plugins and modules
 - [Technology stack](./tech-stack.md): the technologies, the performance targets and the scaling
 - [Roadmap](../roadmap.md): the milestones and their gates
 - [Decision records](../decisions/README.md): the reasons for the decisions

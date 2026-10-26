@@ -24,21 +24,16 @@ Reliquary prepares a horizontal split of the user data:
 - A shard directory gives the database of each user, or of each range of users.
 - For each request, the application gets the database connection for the `owner_id` from the shard directory.
 
-## One database at the start
-
-At the start, the shard directory contains one database only.
-The mechanism exists, but it adds no operational cost.
-
 ## Move a user to another database
 
 Reliquary can move the data of one user to another database while the instance runs.
-During the move, the user cannot change their data for a short time.
-The move has these steps:
+The user cannot change their data during the move, but the move is short.
+To move a user, do these steps:
 
 1. Make the data of the user read-only.
 2. Copy the data of the user to the new database.
 3. Change the shard directory, so that it gives the new database for the user.
-4. Allow changes to the data of the user again.
+4. Make the data of the user writable again.
 5. Delete the old copy of the data.
 
 With these moves, an operator can empty one database into another database, one user at a time.
@@ -47,7 +42,12 @@ For example, an instance can move from a home server to a VPS, and then to Kuber
 ## Identifiers
 
 All identifiers are UUIDv7 values, not auto-increment integers.
-Thus Reliquary can copy data between databases with no collision of identifiers.
+With these identifiers, Reliquary can copy data between databases with no collision.
+
+## One database at the start
+
+At the start, the shard directory contains one database only.
+The mechanism exists, but it adds no operational cost.
 
 ## Migrations
 
@@ -56,7 +56,7 @@ Thus Reliquary can copy data between databases with no collision of identifiers.
 - The choice of the migration tool is still open: DbUp or grate.
   A task of milestone M0 chooses the tool and records the choice in an ADR.
 - The tool applies each migration to all the databases of the shard directory.
-- During a progressive deployment, the previous version of the API must continue to work after each migration.
+- A migration must never break the previous version of the API during a progressive deployment.
 - Each module has its own SQL migrations for its `mod_<id>` schema.
   The same tool applies the migrations of the core and the migrations of the modules.
 
