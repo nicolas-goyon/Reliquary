@@ -136,15 +136,31 @@ def write_cards(source, output, oracle_ids, related_printings, profile):
 
 
 def write_tags(source, output, name, key, targets):
-    count = 0
+    """Write the tags with links to the targets, and all their ancestor tags.
+
+    The search finds the cards of a tag through its descendants, so the file keeps
+    the parent tags, also when they have no link to a target.
+    """
+    tags = {}
+    kept = set()
+    for tag in read_jsonl(source / f"{name}.jsonl.gz"):
+        tag["taggings"] = [tagging for tagging in tag.get("taggings", []) if tagging.get(key) in targets]
+        tags[tag["id"]] = tag
+        if tag["taggings"]:
+            kept.add(tag["id"])
+
+    pending = list(kept)
+    while pending:
+        for parent_id in tags[pending.pop()].get("parent_ids") or []:
+            if parent_id in tags and parent_id not in kept:
+                kept.add(parent_id)
+                pending.append(parent_id)
+
     with gzip.open(output / f"{name}.jsonl.gz", "wt", encoding="utf-8") as handle:
-        for tag in read_jsonl(source / f"{name}.jsonl.gz"):
-            taggings = [tagging for tagging in tag.get("taggings", []) if tagging.get(key) in targets]
-            if taggings:
-                tag["taggings"] = taggings
+        for tag_id, tag in tags.items():
+            if tag_id in kept:
                 handle.write(json.dumps(tag, ensure_ascii=False, separators=(",", ":")) + "\n")
-                count += 1
-    return count
+    return len(kept)
 
 
 def write_rulings(source, output, oracle_ids):
@@ -169,9 +185,11 @@ def write_identifiers(source, output, printing_ids):
         handle.write(buffer.getvalue())
 
 
-def write_sets(source, output, set_codes):
+def write_sets(source, output, set_codes, profile):
+    """Write the sets. The demo keeps all the sets, because the keywords b: and g: of the search use the parent sets and the blocks."""
     sets = json.loads((source / "sets.json").read_text(encoding="utf-8"))
-    sets["data"] = [item for item in sets["data"] if item["code"] in set_codes]
+    if profile != "demo":
+        sets["data"] = [item for item in sets["data"] if item["code"] in set_codes]
     sets["has_more"] = False
     (output / "sets.json").write_text(json.dumps(sets, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
 
@@ -194,7 +212,7 @@ def main():
     art_tags = write_tags(arguments.source, arguments.output, "art_tags", "illustration_id", illustration_ids)
     write_rulings(arguments.source, arguments.output, oracle_ids)
     write_identifiers(arguments.source, arguments.output, {card["id"] for card in printings})
-    write_sets(arguments.source, arguments.output, {card["set"] for card in printings})
+    write_sets(arguments.source, arguments.output, {card["set"] for card in printings}, arguments.profile)
 
     print(f"{len(oracle_ids)} cards, {len(printings)} printings, {oracle_tags} Oracle tags, {art_tags} illustration tags.")
 
