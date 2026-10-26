@@ -27,3 +27,6 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
   An account page shows the profile, the password and the API keys.
 - Interface slots: the core renders its navigation and its account panels through named slots.
 - Extension registry: the administrator installs, enables and uninstalls extensions. The API refuses an extension for another version of the core API.
+- Card search with the Scryfall syntax: `GET /api/v1/cards/search`, with all the names of a card, paging, warnings and errors with a position.
+- Parity tests of the card search against the examples of the Scryfall syntax guide, on the demo dataset in `data/demo`.
+- The search benchmark in `bench/Reliquary.Cards.Benchmark` and its GitHub workflow.

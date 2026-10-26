@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Routing;
 using Reliquary.BuildingBlocks.Api;
+using Reliquary.Cards.Search;
 
 namespace Reliquary.Cards.Api;
 
@@ -11,6 +12,9 @@ namespace Reliquary.Cards.Api;
 /// </summary>
 internal static class CardEndpoints
 {
+    /// <summary>The maximum number of characters of a search query. Scryfall has the same limit.</summary>
+    public const int MaxQueryLength = 1000;
+
     /// <summary>
     /// Maps the endpoints under <c>/cards</c>, <c>/printings</c> and <c>/sets</c>.
     /// </summary>
@@ -18,6 +22,14 @@ internal static class CardEndpoints
     public static void Map(IEndpointRouteBuilder api)
     {
         var cards = api.MapGroup("/cards").WithTags("Cards");
+
+        cards.MapGet("/search", SearchCardsAsync)
+            .WithName("SearchCards")
+            .WithSummary("Searches the cards with a query in the Scryfall syntax.")
+            .WithDescription(
+                "The parameter q contains the query, for example \"t:creature c:g mv<=2\". "
+                + "The keywords unique:, order:, dir: and prefer: in the query win over the parameters unique, order and dir. "
+                + "Specific error codes: search_syntax_error (with the member position), search_query_empty and search_timeout.");
 
         cards.MapGet("/named", GetCardByNameAsync)
             .WithName("GetCardByName")
@@ -44,6 +56,74 @@ internal static class CardEndpoints
             .WithTags("Cards")
             .WithName("GetSets")
             .WithSummary("Gets all the sets, the most recent first.");
+    }
+
+    private static async Task<Results<Ok<CardSearchResponse>, ProblemHttpResult>> SearchCardsAsync(
+        string? q,
+        string? unique,
+        string? order,
+        string? dir,
+        int? limit,
+        string? cursor,
+        CardSearch search,
+        CancellationToken cancellationToken)
+    {
+        var errors = new List<FieldError>();
+        if (string.IsNullOrWhiteSpace(q))
+        {
+            errors.Add(new FieldError("q", FieldErrorCodes.Required, "The query is necessary."));
+        }
+        else if (q.Length > MaxQueryLength)
+        {
+            errors.Add(new FieldError("q", FieldErrorCodes.TooLong, $"The query must have {MaxQueryLength} characters or fewer."));
+        }
+
+        SearchUnique? uniqueMode = unique?.ToLowerInvariant() switch
+        {
+            null or "" or "cards" => SearchUnique.Cards,
+            "prints" => SearchUnique.Prints,
+            "art" => SearchUnique.Art,
+            _ => null,
+        };
+        if (uniqueMode is null)
+        {
+            errors.Add(new FieldError("unique", FieldErrorCodes.NotAllowed, "The value of unique must be cards, prints or art."));
+        }
+
+        var sortOrder = SearchOrder.Name;
+        if (!string.IsNullOrEmpty(order) && !SearchCompiler.TryParseOrder(order, out sortOrder))
+        {
+            errors.Add(new FieldError("order", FieldErrorCodes.NotAllowed, "The value of order is not a known sort order. The OpenAPI description lists the sort orders."));
+        }
+
+        var direction = SearchDirection.Auto;
+        if (!string.IsNullOrEmpty(dir) && !SearchCompiler.TryParseDirection(dir, out direction))
+        {
+            errors.Add(new FieldError("dir", FieldErrorCodes.NotAllowed, "The value of dir must be asc, desc or auto."));
+        }
+
+        if (!PageRequest.TryCreate(limit, cursor, out var page, out var pageError))
+        {
+            errors.Add(pageError!);
+        }
+
+        if (errors.Count > 0)
+        {
+            return ApiProblems.Validation(errors);
+        }
+
+        var outcome = await search.SearchAsync(new CardSearchRequest(q!, new SearchDefaults(uniqueMode!.Value, sortOrder, direction), page), cancellationToken);
+        return outcome switch
+        {
+            CardSearchSucceeded succeeded => TypedResults.Ok(succeeded.Response),
+            CardSearchInvalidCursor => ApiProblems.Validation(Cursors.InvalidCursor()),
+            CardSearchFailed failed => ApiProblems.Problem(
+                StatusCodes.Status400BadRequest,
+                failed.Code,
+                failed.Message,
+                new Dictionary<string, object?> { ["position"] = failed.Position, ["warnings"] = failed.Warnings }),
+            _ => throw new InvalidOperationException("The search gave an unknown result."),
+        };
     }
 
     private static async Task<Results<Ok<CardResponse>, ProblemHttpResult>> GetCardAsync(Guid id, CardQueries queries, CancellationToken cancellationToken) =>

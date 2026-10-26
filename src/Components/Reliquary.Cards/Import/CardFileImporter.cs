@@ -49,6 +49,25 @@ internal sealed class CardFileImporter(IDatabase database, IDomainEventWriter ev
 
     private const int CommandTimeoutSeconds = 3600;
 
+    /// <summary>
+    /// The order of the printings of a card for the choice of its default printing: the first printing is the default printing.
+    /// </summary>
+    private const string BestPrintingOrder = """
+        (p.lang = 'en') desc,
+        (p.released_at <= current_date) desc,
+        ('paper' = any (p.games)) desc,
+        (p.set_type in ('expansion', 'core', 'masters', 'draft_innovation', 'commander', 'starter', 'duel_deck', 'eternal', 'planechase', 'archenemy')) desc,
+        (p.collector_number ~ '^[0-9]+[a-z]?$') desc,
+        (p.frame in ('2015', '2003')) desc,
+        (p.promo or p.variation or p.oversized or p.full_art) asc,
+        (p.border_color = 'black') desc,
+        (p.frame_effects && array['showcase', 'extendedart', 'etched', 'inverted', 'borderless']) asc,
+        (p.image_status = 'highres_scan') desc,
+        p.released_at desc,
+        p.collector_number_value nulls last,
+        p.id
+        """;
+
     private static readonly CopyTable<(OracleRow Row, byte[] Hash)> OracleTable = new("reference.import_oracle_cards",
     [
         new("id", NpgsqlDbType.Uuid, item => item.Row.Id),
@@ -140,6 +159,8 @@ internal sealed class CardFileImporter(IDatabase database, IDomainEventWriter ev
         new("full_art", NpgsqlDbType.Boolean, item => item.Row.FullArt),
         new("textless", NpgsqlDbType.Boolean, item => item.Row.Textless),
         new("booster", NpgsqlDbType.Boolean, item => item.Row.Booster),
+        new("story_spotlight", NpgsqlDbType.Boolean, item => item.Row.StorySpotlight),
+        new("content_warning", NpgsqlDbType.Boolean, item => item.Row.ContentWarning),
         new("frame", NpgsqlDbType.Text, item => item.Row.Frame),
         new("frame_effects", NpgsqlDbType.Array | NpgsqlDbType.Text, item => item.Row.FrameEffects),
         new("border_color", NpgsqlDbType.Text, item => item.Row.BorderColor),
@@ -303,12 +324,31 @@ internal sealed class CardFileImporter(IDatabase database, IDomainEventWriter ev
         var changedCards = await connection.ExecuteScalarAsync<int>(Command("select count(*) from changed_oracles", transaction, cancellationToken));
         var changedPrintings = await connection.ExecuteScalarAsync<int>(Command("select count(*) from changed_printings", transaction, cancellationToken));
 
+        // The insert computes the columns that depend on the printings from the staging table of the printings.
+        // A second update of each row would double the size of the table after a first import.
         await ExecuteAsync(connection, transaction, $"""
-            insert into reference.oracle_cards ({OracleTable.ColumnList}, updated_at)
-            select {OracleTable.ColumnList}, @now from reference.import_oracle_cards
-            where id in (select id from changed_oracles)
+            with best as (
+                select distinct on (p.oracle_id) p.oracle_id, p.id
+                from reference.import_printings p
+                where p.oracle_id in (select id from changed_oracles)
+                order by p.oracle_id, {BestPrintingOrder}
+            ),
+            summary as (
+                {PrintingSummary("reference.import_printings", "where p.oracle_id in (select id from changed_oracles)")}
+            )
+            insert into reference.oracle_cards ({OracleTable.ColumnList}, default_printing_id, first_released_at, is_extra, is_funny, search_hidden, updated_at)
+            select {Prefixed(OracleTable.ColumnList, "o")}, b.id, m.released_at, {IsExtra}, {IsFunny}, {SearchHidden}, @now
+            from reference.import_oracle_cards o
+            left join best b on b.oracle_id = o.id
+            left join summary m on m.oracle_id = o.id
+            where o.id in (select id from changed_oracles)
             on conflict (id) do update set
                 {UpdateSet(OracleTable.ColumnList, "id")},
+                default_printing_id = excluded.default_printing_id,
+                first_released_at = excluded.first_released_at,
+                is_extra = excluded.is_extra,
+                is_funny = excluded.is_funny,
+                search_hidden = excluded.search_hidden,
                 updated_at = excluded.updated_at;
 
             delete from reference.card_faces where oracle_id in (select id from changed_oracles);
@@ -331,18 +371,24 @@ internal sealed class CardFileImporter(IDatabase database, IDomainEventWriter ev
             order by oracle_id, name_normalized, lang, kind, name
             on conflict do nothing;
 
-            insert into reference.printings ({PrintingTable.ColumnList}, updated_at)
-            select {PrintingTable.ColumnList}, @now from reference.import_printings
-            where id in (select id from changed_printings)
+            with english as (
+                select distinct set_code, collector_number from reference.import_printings where lang = 'en'
+            )
+            insert into reference.printings ({PrintingTable.ColumnList}, default_lang, updated_at)
+            select {Prefixed(PrintingTable.ColumnList, "s")}, (s.lang = 'en' or e.set_code is null), @now
+            from reference.import_printings s
+            left join english e on e.set_code = s.set_code and e.collector_number = s.collector_number
+            where s.id in (select id from changed_printings)
             on conflict (id) do update set
                 {UpdateSet(PrintingTable.ColumnList, "id")},
+                default_lang = excluded.default_lang,
                 updated_at = excluded.updated_at;
 
             delete from reference.printing_faces where printing_id in (select id from changed_printings);
             insert into reference.printing_faces ({PrintingFaceTable.ColumnList})
             select {PrintingFaceTable.ColumnList} from reference.import_printing_faces
             where printing_id in (select id from changed_printings);
-            """, cancellationToken, new { now });
+            """, cancellationToken, new { now, extraLayouts = CardMapper.ExtraLayouts.ToArray() });
 
         var deletedPrintings = 0;
         var existing = await connection.ExecuteScalarAsync<long>(Command("select count(*) from reference.printings", transaction, cancellationToken));
@@ -358,59 +404,116 @@ internal sealed class CardFileImporter(IDatabase database, IDomainEventWriter ev
         await events.WriteAsync(DatabaseTarget.Reference, transaction, new CardDataImported(source, changedCards, changedPrintings, deletedPrintings), ownerId: null, cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 
+        // Fresh statistics give good plans to the card search.
+        await ExecuteAsync(connection, null, """
+            analyze reference.oracle_cards, reference.card_faces, reference.card_names, reference.printings, reference.printing_faces
+            """, cancellationToken);
+
         return new CardImportResult(staged.CardCount, staged.PrintingCount, changedCards, changedPrintings, deletedPrintings, staged.SkippedLines);
     }
 
+    /// <summary>The condition of an extra card: a token, an emblem, an art card or a card with printings in token and memorabilia sets only.</summary>
+    private const string IsExtra = "(o.layout = any (@extraLayouts) or not coalesce(m.game_card, false))";
+
+    /// <summary>The condition of a funny card, as the keyword is:funny of Scryfall: a card that is not legal in Vintage, with a funny printing.</summary>
+    private const string IsFunny = "(o.legalities->>'vintage' = 'not_legal' and coalesce(m.funny_printing, false))";
+
     /// <summary>
-    /// Computes the columns of the Oracle cards that depend on their printings: the default printing,
-    /// the first release date and the "extra" flag.
+    /// The condition of a card that the search hides by default, as Scryfall does: a card with a content warning,
+    /// or a card that is legal in no format, with a funny printing or with digital printings only,
+    /// and without a printing in an Un-set or with an acorn stamp.
+    /// Examples: the playtest cards, the Heroes of the Realm cards and the specialized variants of Alchemy.
+    /// A card of a set that is not released yet is legal in no format, but the search shows it.
     /// </summary>
+    private const string SearchHidden = """
+        (coalesce(m.content_warning, false)
+         or (not exists (select 1 from jsonb_each_text(o.legalities) legality where legality.value <> 'not_legal')
+             and (coalesce(m.funny_printing, false) or not coalesce(m.paper, false))
+             and not coalesce(m.un_printing, false)))
+        """;
+
+    /// <summary>
+    /// Gives the summary of the printings of each card, alias <c>m</c> in <see cref="IsExtra"/>, <see cref="IsFunny"/> and <see cref="SearchHidden"/>.
+    /// </summary>
+    /// <remarks>
+    /// A funny printing has a silver border, an acorn stamp or the promo type "playtest", or it is in a funny set.
+    /// The sets of Unfinity are an exception: they contain cards that are legal in the Eternal formats, and their other cards are not funny.
+    /// An "un" printing has an acorn stamp, or it is in one of the Un-sets: Unglued, Unhinged, Unstable, Unsanctioned and Unfinity.
+    /// The search shows these cards by default. It hides the other funny cards, for example the holiday cards and the playtest cards.
+    /// </remarks>
+    private static string PrintingSummary(string table, string? filter) => $"""
+        select p.oracle_id,
+            min(p.released_at) as released_at,
+            bool_or(p.set_type not in ('token', 'memorabilia')) as game_card,
+            bool_or(p.border_color = 'silver' or p.security_stamp = 'acorn' or 'playtest' = any (p.promo_types)
+                    or (p.set_type = 'funny' and p.set_code not in ('unf', 'sunf'))) as funny_printing,
+            bool_or(p.security_stamp = 'acorn' or p.set_code in ('ugl', 'unh', 'ust', 'und', 'unf', 'sunf', 'una', 'ulst')) as un_printing,
+            bool_or(p.content_warning) as content_warning,
+            bool_or('paper' = any (p.games)) as paper
+        from {table} p
+        {filter}
+        group by p.oracle_id
+        """;
+
+    /// <summary>
+    /// Computes the columns that depend on other printings: the default printing, the first release date, the "extra" flag,
+    /// the "funny" flag and the "hidden" flag of the Oracle cards, and the default language flag of the printings.
+    /// </summary>
+    /// <remarks>
+    /// A printing is in the default language of the search when it is in English,
+    /// or when its set has no English printing with the same collector number.
+    /// </remarks>
     private static Task<int> UpdateDerivedColumnsAsync(NpgsqlConnection connection, NpgsqlTransaction transaction, CancellationToken cancellationToken) =>
-        ExecuteAsync(connection, transaction, """
+        ExecuteAsync(connection, transaction, $"""
+            with english as (
+                select distinct set_code, collector_number from reference.printings where lang = 'en'
+            ),
+            derived as (
+                select p.id, (p.lang = 'en' or e.set_code is null) as default_lang
+                from reference.printings p
+                left join english e on e.set_code = p.set_code and e.collector_number = p.collector_number
+            )
+            update reference.printings p
+            set default_lang = d.default_lang
+            from derived d
+            where p.id = d.id and p.default_lang is distinct from d.default_lang;
+
             with best as (
                 select distinct on (p.oracle_id) p.oracle_id, p.id
                 from reference.printings p
-                order by p.oracle_id,
-                    (p.lang = 'en') desc,
-                    (p.released_at <= current_date) desc,
-                    ('paper' = any (p.games)) desc,
-                    (p.set_type in ('expansion', 'core', 'masters', 'draft_innovation', 'commander', 'starter', 'duel_deck', 'eternal', 'planechase', 'archenemy')) desc,
-                    (p.collector_number ~ '^[0-9]+[a-z]?$') desc,
-                    (p.frame in ('2015', '2003')) desc,
-                    (p.promo or p.variation or p.oversized or p.full_art) asc,
-                    (p.border_color = 'black') desc,
-                    (p.frame_effects && array['showcase', 'extendedart', 'etched', 'inverted', 'borderless']) asc,
-                    (p.image_status = 'highres_scan') desc,
-                    p.released_at desc,
-                    p.collector_number_value nulls last,
-                    p.id
+                order by p.oracle_id, {BestPrintingOrder}
             ),
-            first_release as (
-                select oracle_id, min(released_at) as released_at
-                from reference.printings
-                group by oracle_id
+            summary as (
+                {PrintingSummary("reference.printings", null)}
             ),
             derived as (
                 select o.id,
                     b.id as default_printing_id,
-                    f.released_at as first_released_at,
-                    (o.layout = any (@extraLayouts) or not exists (
-                        select 1 from reference.printings p
-                        where p.oracle_id = o.id and p.set_type not in ('token', 'memorabilia'))) as is_extra
+                    m.released_at as first_released_at,
+                    {IsExtra} as is_extra,
+                    {IsFunny} as is_funny,
+                    {SearchHidden} as search_hidden
                 from reference.oracle_cards o
                 left join best b on b.oracle_id = o.id
-                left join first_release f on f.oracle_id = o.id
+                left join summary m on m.oracle_id = o.id
             )
             update reference.oracle_cards o
             set default_printing_id = d.default_printing_id,
                 first_released_at = d.first_released_at,
-                is_extra = d.is_extra
+                is_extra = d.is_extra,
+                is_funny = d.is_funny,
+                search_hidden = d.search_hidden
             from derived d
             where o.id = d.id
               and (o.default_printing_id is distinct from d.default_printing_id
                    or o.first_released_at is distinct from d.first_released_at
-                   or o.is_extra is distinct from d.is_extra);
+                   or o.is_extra is distinct from d.is_extra
+                   or o.is_funny is distinct from d.is_funny
+                   or o.search_hidden is distinct from d.search_hidden);
             """, cancellationToken, new { extraLayouts = CardMapper.ExtraLayouts.ToArray() });
+
+    private static string Prefixed(string columnList, string alias) =>
+        string.Join(", ", columnList.Split(", ").Select(column => $"{alias}.{column}"));
 
     private static string UpdateSet(string columnList, string key) =>
         string.Join(

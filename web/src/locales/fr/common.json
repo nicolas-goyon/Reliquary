@@ -58,6 +58,9 @@
     "external_sign_in_failed": "La connexion avec le service externe a échoué. Réessayez.",
     "external_email_missing": "Le service externe n’a pas fourni d’adresse e-mail. Utilisez une autre méthode de connexion.",
     "external_email_not_verified": "Le service externe n’a pas vérifié votre adresse e-mail. Vérifiez l’adresse sur ce service, ou connectez-vous avec votre mot de passe.",
+    "search_syntax_error": "La recherche contient une erreur de syntaxe. Corrigez la recherche, puis réessayez.",
+    "search_query_empty": "La recherche ne contient aucun critère reconnu. Modifiez la recherche.",
+    "search_timeout": "La recherche a pris trop de temps. Précisez la recherche.",
     "unknown": "Une erreur s’est produite. Réessayez."
   },
   "fieldErrors": {

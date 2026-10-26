@@ -60,7 +60,22 @@ The script `tools/demo-data/build_demo_data.py` creates a small dataset from the
    ```
 
 The profile `fixture` creates the test data of `tests/Reliquary.Cards.Tests/Fixtures`.
-The profile `demo` adds the 300 most popular Commander cards.
+The profile `demo` adds the 300 most popular Commander cards, and keeps all the sets.
+The folder [`data/demo`](../../data/demo/README.md) contains the result of the profile `demo`.
+
+The tag files keep the parent tags of each tag, also when a parent tag has no card of the dataset.
+The search uses the parent tags: `otag:removal` finds the cards of all the child tags of `removal`.
+
+## After the migration of the card search
+
+The migration `0002_card_search.sql` adds columns that the import fills.
+After this migration, run the import again with `--force`:
+
+```shell
+just cli jobs run cards.import --force
+```
+
+Until this import, the search uses the printings in all the languages, and `is:spotlight` finds no card.
 
 ## Settings
 

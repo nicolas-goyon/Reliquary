@@ -216,6 +216,8 @@ internal static class CardMapper
             card.FullArt,
             card.Textless,
             card.Booster,
+            card.StorySpotlight,
+            card.ContentWarning,
             card.Frame,
             [.. card.FrameEffects ?? []],
             card.BorderColor,

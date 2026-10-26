@@ -77,6 +77,8 @@ internal sealed record PrintingRow(
     bool FullArt,
     bool Textless,
     bool Booster,
+    bool StorySpotlight,
+    bool ContentWarning,
     string? Frame,
     string[] FrameEffects,
     string? BorderColor,

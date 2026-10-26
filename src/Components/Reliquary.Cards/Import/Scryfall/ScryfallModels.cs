@@ -97,6 +97,10 @@ internal sealed class ScryfallCard
 
     public bool Booster { get; set; }
 
+    public bool StorySpotlight { get; set; }
+
+    public bool ContentWarning { get; set; }
+
     public string? Frame { get; set; }
 
     public List<string>? FrameEffects { get; set; }
