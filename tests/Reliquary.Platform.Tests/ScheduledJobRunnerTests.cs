@@ -35,6 +35,7 @@ public sealed class ScheduledJobRunnerTests
 
         Assert.Equal(JobRunResult.Succeeded, result);
         Assert.Equal(2, job.Runs);
+        Assert.True(job.LastRunForced);
     }
 
     [Fact]
@@ -79,9 +80,12 @@ public sealed class ScheduledJobRunnerTests
 
         public int Runs { get; private set; }
 
-        public Task RunAsync(CancellationToken cancellationToken)
+        public bool LastRunForced { get; private set; }
+
+        public Task RunAsync(JobRun run, CancellationToken cancellationToken)
         {
             Runs++;
+            LastRunForced = run.Force;
             return Fail ? throw new InvalidOperationException("The job fails on purpose.") : Task.CompletedTask;
         }
     }

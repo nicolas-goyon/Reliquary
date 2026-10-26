@@ -15,3 +15,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Worker process and the command line tool `reliquary`, with the command `migrate`.
 - API conventions: problem details with stable error codes, paging with cursors, and JSON settings.
 - OpenTelemetry traces, metrics and logs, Prometheus endpoints, readiness checks for PostgreSQL and Redis, and an optional Grafana service.
+- Card reference data: sets, Oracle cards with all their faces and names, printings, tags, rulings and MTGJSON identifiers.
+  A scheduled job imports them every 12 hours.
+- Card endpoints: a card by its identifier or by any name, its printings and its rulings, a printing, and the sets.
+- The CLI commands `jobs list` and `jobs run`.

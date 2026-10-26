@@ -31,5 +31,6 @@ All documents are in English and follow the [writing rules](contributing/writing
 | [Getting started](development/getting-started.md) | How to run Reliquary on your computer, and the code layout |
 | [Translation guide](development/translations.md) | Rules for the French and English interface texts |
 | [Observability](development/observability.md) | Traces, metrics, logs, health endpoints and Grafana |
+| [Card data](development/card-data.md) | Import of the card data from Scryfall and MTGJSON, and small datasets |
 | [Writing style](contributing/writing-style.md) | The ASD-STE100 rules for all English text |
 | [Contributing guide](../CONTRIBUTING.md) | Branches, pull requests and checks |

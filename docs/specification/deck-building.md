@@ -11,7 +11,8 @@ Terms follow the [glossary](../glossary.md).
 - Visual filters and autocomplete help the users who do not know the syntax.
 - Reliquary recommends cards for the context of each deck:
   - EDHREC gives the popular cards for the commander of the deck, and synergy information.
-  - An optional source is recommender.cards, if access to it is possible.
+  - An optional source is [recommander.cards](https://recommander.cards), through its public API.
+    Its terms allow personal, non-commercial use, and ask for a credit to the source.
 
 ## Editing
 

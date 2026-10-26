@@ -67,7 +67,8 @@ internal static class ApiConventions
 /// Converts the exceptions of the endpoints into problem details with a stable error code.
 /// </summary>
 /// <param name="problems">The problem details service.</param>
-internal sealed class ApiExceptionHandler(IProblemDetailsService problems) : IExceptionHandler
+/// <param name="logger">The logger. The handler logs each unexpected exception, because the framework does not log a handled exception.</param>
+internal sealed partial class ApiExceptionHandler(IProblemDetailsService problems, ILogger<ApiExceptionHandler> logger) : IExceptionHandler
 {
     public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
     {
@@ -87,6 +88,11 @@ internal sealed class ApiExceptionHandler(IProblemDetailsService problems) : IEx
                 ApiConventions.DefaultError(StatusCodes.Status500InternalServerError).Message),
         };
 
+        if (status == StatusCodes.Status500InternalServerError)
+        {
+            LogUnexpectedException(logger, exception, httpContext.Request.Method, httpContext.Request.Path);
+        }
+
         httpContext.Response.StatusCode = status;
         if (status == StatusCodes.Status503ServiceUnavailable)
         {
@@ -105,4 +111,7 @@ internal sealed class ApiExceptionHandler(IProblemDetailsService problems) : IEx
             },
         });
     }
+
+    [LoggerMessage(EventId = 2000, Level = LogLevel.Error, Message = "The request {Method} {Path} failed with an unexpected exception.")]
+    private static partial void LogUnexpectedException(ILogger logger, Exception exception, string method, PathString path);
 }

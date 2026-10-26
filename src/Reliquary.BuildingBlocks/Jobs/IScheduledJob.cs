@@ -22,7 +22,17 @@ public interface IScheduledJob
     /// <summary>
     /// Runs the job one time.
     /// </summary>
+    /// <param name="run">The options of this run.</param>
     /// <param name="cancellationToken">A token that stops the job.</param>
     /// <returns>A task that completes at the end of the run.</returns>
-    Task RunAsync(CancellationToken cancellationToken);
+    Task RunAsync(JobRun run, CancellationToken cancellationToken);
 }
+
+/// <summary>
+/// The options of one run of a scheduled job.
+/// </summary>
+/// <param name="Force">
+/// <see langword="true"/> when an administrator starts the run, for example with <c>reliquary jobs run</c>.
+/// The job then does all its work, also when its sources did not change.
+/// </param>
+public sealed record JobRun(bool Force);

@@ -20,7 +20,7 @@ Public sources give this data, and each source has its own terms.
   Reliquary never hosts copies of the images.
 - [EDHREC](https://edhrec.com/) gives the Commander recommendations.
 - [Commander Spellbook](https://commanderspellbook.com/) gives the combo detection.
-- recommender.cards is an optional source.
+- recommander.cards is an optional source.
   Reliquary uses it only if access to it is possible.
 - A scheduled task synchronizes the data.
   The task keeps a version of each import, so that it can run an import again.
@@ -30,5 +30,5 @@ Public sources give this data, and each source has its own terms.
 - The card images depend on the Scryfall servers.
 - Scryfall Tagger has no official API, so auto-tag must use the `otag:` search of Scryfall.
   The feasibility of auto-tag is still open.
-- Access to recommender.cards is also still open.
+- [ADR 0020](0020-card-data-import.md) gives the answers of the spike [#26](https://github.com/nicolas-goyon/reliquary/issues/26): Scryfall publishes the Oracle tags as bulk data, and recommander.cards has a public API.
 - The [data model](../architecture/data-model.md) gives the entities of the card data.
