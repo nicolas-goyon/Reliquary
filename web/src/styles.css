@@ -1,0 +1,111 @@
+/* Base styles of the skeleton. The design system of Reliquary replaces them later. */
+:root {
+  --color-background: #fbfaf8;
+  --color-surface: #ffffff;
+  --color-text: #1d1b19;
+  --color-text-muted: #57524c;
+  --color-border: #d9d4cd;
+  --color-link: #1f5fa8;
+  --color-focus: #1f5fa8;
+
+  color-scheme: light dark;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  line-height: 1.5;
+  color: var(--color-text);
+  background-color: var(--color-background);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-background: #161514;
+    --color-surface: #201f1d;
+    --color-text: #f1eee9;
+    --color-text-muted: #b8b2aa;
+    --color-border: #3a3733;
+    --color-link: #8cb8f0;
+    --color-focus: #8cb8f0;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+a {
+  color: var(--color-link);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.app-header,
+.app-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background-color: var(--color-surface);
+  border-color: var(--color-border);
+  border-style: solid;
+  border-width: 0;
+}
+
+.app-header {
+  border-bottom-width: 1px;
+}
+
+.app-footer {
+  border-top-width: 1px;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
+.app-name {
+  font-weight: 700;
+  font-size: 1.125rem;
+}
+
+.app-main {
+  flex: 1;
+  width: 100%;
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.tagline {
+  color: var(--color-text-muted);
+}
+
+.language-switcher {
+  display: inline-flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.language-switcher select {
+  min-height: 2.75rem;
+  padding: 0 0.5rem;
+  font: inherit;
+}
+
+.api-status {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.375rem;
+  background-color: var(--color-surface);
+}

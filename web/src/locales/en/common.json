@@ -1,0 +1,25 @@
+{
+  "app": {
+    "name": "Reliquary",
+    "tagline": "Deck and collection manager for Magic: The Gathering"
+  },
+  "language": {
+    "label": "Language",
+    "en": "English",
+    "fr": "Français"
+  },
+  "home": {
+    "title": "Manage your decks and your collection.",
+    "description": "Reliquary is in early development. The first milestone creates the foundations: card data, card search and accounts.",
+    "roadmapLink": "Read the roadmap"
+  },
+  "apiStatus": {
+    "checking": "The application checks the API.",
+    "available": "The API is available. Version {{version}}.",
+    "unavailable": "The API is not available."
+  },
+  "footer": {
+    "license": "Free software under the AGPL-3.0 license.",
+    "source": "Source code"
+  }
+}
