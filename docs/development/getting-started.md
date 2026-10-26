@@ -77,8 +77,12 @@ CI runs the same checks for each pull request.
 | `Reliquary.slnx` | The .NET solution |
 | `Directory.Build.props` | Build settings for all .NET projects |
 | `Directory.Packages.props` | Versions of the NuGet packages |
-| `src/Reliquary.Api` | Host of the public API. It registers each core component. |
-| `src/Reliquary.BuildingBlocks` | Shared contracts, for example `ICoreComponent` |
+| `src/Reliquary.Api` | Host of the public API |
+| `src/Reliquary.Worker` | Host of the background work: the outbox publisher and the scheduled jobs |
+| `src/Reliquary.Cli` | The command line tool `reliquary`, for example `reliquary migrate` |
+| `src/Reliquary.Hosting` | Registers the platform and the core components in the three hosts |
+| `src/Reliquary.Platform` | Shared infrastructure: connections, shard directory, migrations, outbox and scheduled jobs |
+| `src/Reliquary.BuildingBlocks` | Shared contracts, for example `ICoreComponent`, `IDatabase` and `IDomainEventWriter` |
 | `src/Components/Reliquary.Accounts` | Accounts, authentication, API keys and quotas |
 | `src/Components/Reliquary.Cards` | Card reference data, card search and deck analysis |
 | `src/Components/Reliquary.Decks` | Decks, deck versions, variants, tags and folders |
@@ -86,16 +90,19 @@ CI runs the same checks for each pull request.
 | `src/Components/Reliquary.Playtest` | Table engine and game sessions |
 | `tests/Reliquary.Api.Tests` | Tests of the API host |
 | `tests/Reliquary.Architecture.Tests` | Tests of the rules between the core components |
+| `tests/Reliquary.Platform.Tests` | Integration tests of the platform, on PostgreSQL |
+| `tests/Shared` | Helpers that the test projects share, for example the test databases |
 | `web` | The web app |
 | `tools/ste-lint` | Check of the writing rules |
 | `docs` | Documentation |
 
 ## Rules for the core components
 
-- A core component references `Reliquary.BuildingBlocks` only.
+- A core component references `Reliquary.BuildingBlocks` only. It never references `Reliquary.Platform` or `Reliquary.Hosting`.
 - A core component never references another core component. The architecture tests fail if it does.
 - A core component communicates with other core components through interfaces and domain events.
-- Each core component has one class that implements `ICoreComponent`. The API host lists these classes in `CoreComponents.cs`.
+- Each core component has one class that implements `ICoreComponent`. `src/Reliquary.Hosting/CoreComponents.cs` lists these classes.
+- A core component declares its SQL scripts as migration sets. The [database](../architecture/database.md) page gives the rules.
 
 The [architecture overview](../architecture/overview.md) and [ADR 0007](../decisions/0007-modular-monolith.md) give the reasons.
 
@@ -103,8 +110,8 @@ The [architecture overview](../architecture/overview.md) and [ADR 0007](../decis
 
 1. Create the project `src/Components/Reliquary.<Name>/Reliquary.<Name>.csproj`. Copy the content from an existing core component.
 2. Add a class `<Name>Component` that implements `ICoreComponent`.
-3. Add the project to `Reliquary.slnx`, to `src/Reliquary.Api/Reliquary.Api.csproj` and to `tests/Reliquary.Architecture.Tests/Reliquary.Architecture.Tests.csproj`.
-4. Add the component to `CoreComponents.All` in the API host.
+3. Add the project to `Reliquary.slnx`, to `src/Reliquary.Hosting/Reliquary.Hosting.csproj` and to `tests/Reliquary.Architecture.Tests/Reliquary.Architecture.Tests.csproj`.
+4. Add the component to `CoreComponents.All` in `src/Reliquary.Hosting/CoreComponents.cs`.
 5. Add the assembly to `ComponentAssemblies` in `CoreComponentTests.cs`.
 6. Update the expected list of components in `ApiTests.cs`.
 7. Record the new core component in an ADR.

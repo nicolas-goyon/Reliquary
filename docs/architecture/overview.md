@@ -85,6 +85,26 @@ Background tasks run in worker processes, separate from the API.
 Examples are the Scryfall synchronization, auto-tag and the tasks of modules.
 The workers scale independently of the API.
 
+### Hosts
+
+The same core components run in three hosts:
+
+| Host | Content |
+| --- | --- |
+| `Reliquary.Api` | The public API |
+| `Reliquary.Worker` | The outbox publisher, the scheduled jobs and the event consumers |
+| `Reliquary.Cli` | The command `reliquary` for the administrators, for example `reliquary migrate` |
+
+The project `Reliquary.Platform` contains the shared infrastructure of the hosts.
+The core components use only the interfaces of `Reliquary.BuildingBlocks`.
+[ADR 0019](../decisions/0019-hosts-and-scheduled-jobs.md) gives the reasons.
+
+### Domain events
+
+Each core component writes its domain events to an outbox, in the transaction of its data change.
+The worker sends the events to the consumers.
+The [domain events](./domain-events.md) page gives the rules.
+
 ### Extension boundary
 
 The core never runs plugin code on the server.

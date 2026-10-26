@@ -21,8 +21,33 @@ Later, each schema can move to its own database server.
 Reliquary prepares a horizontal split of the user data:
 
 - All the content tables have an `owner_id` column.
-- A shard directory gives the database of each user, or of each range of users.
+- A shard directory gives the database of each owner.
 - For each request, the application gets the database connection for the `owner_id` from the shard directory.
+
+### Shard directory
+
+The table `users.shard_directory` contains one row for each owner:
+
+| Column | Content |
+| --- | --- |
+| `owner_id` | The owner of the data |
+| `shard` | The name of the shard database |
+| `read_only` | `true` while the data of the owner moves to another database |
+| `assigned_at` | The time of the assignment |
+
+The configuration gives the connection string of each shard, by name, in `Database:Shards`.
+The table contains only the names, so the passwords stay out of the database.
+Without a shard in the configuration, the instance has one shard, `main`, in the users database.
+
+A new owner goes to the shard `Database:DefaultShard`.
+The core component that creates the owner calls `IShardDirectory.AssignAsync` in its own transaction.
+
+A core component opens a content connection with `IDatabase.OpenContentAsync(ownerId, access)`:
+
+- With the access `Read`, the connection opens also during a move.
+- With the access `Write`, the method fails during a move, so no change goes to the old copy.
+- The directory keeps each assignment in memory for one minute (`Database:DirectoryCacheDuration`).
+  A move must wait for this time after it makes the owner read-only.
 
 ## Move a user to another database
 
@@ -51,13 +76,45 @@ The mechanism exists, but it adds no operational cost.
 
 ## Migrations
 
-- The migrations are an ordered list of versioned SQL scripts, as in Go projects: `0001_init.sql`, `0002_decks.sql` and the next scripts.
-- A migration tool applies the scripts when the application starts, or when the instance administrator runs a separate command.
-- The choice of the migration tool is still open: DbUp or grate.
-  The M0 task [#14](https://github.com/nicolas-goyon/reliquary/issues/14) chooses the tool and records the choice in an ADR.
-- The tool applies each migration to all the databases of the shard directory.
-- A migration must never break the previous version of the API during a progressive deployment.
-- Each module has its own SQL migrations for its `mod_<id>` schema.
-  The same tool applies the migrations of the core and the migrations of the modules.
+Reliquary applies ordered SQL scripts with DbUp.
+[ADR 0017](../decisions/0017-data-access-and-migrations.md) gives the reasons for this choice.
 
-[ADR 0008](../decisions/0008-postgresql-schemas-and-shard-directory.md) gives the reasons for these rules.
+### Migration sets
+
+A migration set is an ordered list of SQL scripts that one owner applies to one schema.
+The owner is the platform, a core component or a module.
+
+- Each script is an embedded resource of the assembly of the owner, in the folder `Migrations/<schema>`, for example `Migrations/users/0001_accounts.sql`.
+- The name of a script starts with a number of four digits: `0001_init.sql`, `0002_decks.sql` and the next scripts.
+- Each owner numbers its own scripts. Two owners never share a number.
+- A core component declares its sets in `ICoreComponent.MigrationSets`.
+- The runner applies the sets of the platform first, then the sets of the core components in their order of registration.
+
+Each schema has a journal table, `<schema>.schema_migrations`.
+It contains the name of each applied script, in the form `<owner>/<file>`.
+
+### Databases of each set
+
+| Target | Databases |
+| --- | --- |
+| `Users` | The users database |
+| `Reference` | The reference database |
+| `Content` | Each shard database |
+
+### Apply the migrations
+
+- The command `reliquary migrate` of the CLI applies the scripts to all databases. Run it before each deployment.
+- The command `reliquary migrate --check` lists the pending scripts. Its exit code is 1 when a script is pending.
+- When `Database:MigrateOnStartup` is `true`, the API and the worker apply the scripts when they start. The development settings enable this option.
+- An advisory lock in each database stops two hosts that apply the scripts at the same time.
+- Each script runs in its own transaction. When a script fails, the runner stops, and the database keeps the scripts before it.
+
+### Rules for the scripts
+
+- Never change a script after its merge. Add a new script.
+- A migration must never break the previous version of the API during a progressive deployment.
+  For example, add a column in one release, and remove the old column in a later release.
+- A script uses only its own schema, and never the tables of another owner.
+- Each module has its own sets for its `mod_<id>` schema. The same runner applies them.
+
+[ADR 0008](../decisions/0008-postgresql-schemas-and-shard-directory.md) gives the reasons for the schemas and the shard directory.

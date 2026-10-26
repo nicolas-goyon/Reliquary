@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Composition root: the hosts (API, worker and CLI) use this project to register the platform and the core components. -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Reliquary.BuildingBlocks\Reliquary.BuildingBlocks.csproj" />
+    <ProjectReference Include="..\Reliquary.Platform\Reliquary.Platform.csproj" />
+    <ProjectReference Include="..\Components\Reliquary.Accounts\Reliquary.Accounts.csproj" />
+    <ProjectReference Include="..\Components\Reliquary.Cards\Reliquary.Cards.csproj" />
+    <ProjectReference Include="..\Components\Reliquary.Collection\Reliquary.Collection.csproj" />
+    <ProjectReference Include="..\Components\Reliquary.Decks\Reliquary.Decks.csproj" />
+    <ProjectReference Include="..\Components\Reliquary.Playtest\Reliquary.Playtest.csproj" />
+  </ItemGroup>
+</Project>

@@ -5,12 +5,12 @@ using Reliquary.Collection;
 using Reliquary.Decks;
 using Reliquary.Playtest;
 
-namespace Reliquary.Api;
+namespace Reliquary.Hosting;
 
 /// <summary>
-/// The list of the core components that the API host registers.
+/// The list of the core components that the hosts register.
 /// </summary>
-internal static class CoreComponents
+public static class CoreComponents
 {
     /// <summary>
     /// Gets all core components, in the order of registration.

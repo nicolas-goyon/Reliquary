@@ -89,6 +89,9 @@ The French column gives the term for the French interface.
 | Shard directory | A table that gives the database of each user or range of users. | — |
 | Domain event | A versioned record of a change in a core component or a module. | — |
 | Outbox | A table where a core component writes domain events in the same transaction as its data change. A publisher then sends the events to the consumers. | — |
+| Migration set | An ordered list of SQL scripts that one owner applies to one schema. The owner is the platform, a core component or a module. | — |
+| Scheduled job | A task that the worker runs again after the same interval each time, for example the daily import of the card data. | — |
+| Worker | The process that runs the outbox publisher, the scheduled jobs and the event consumers. It runs separately from the API. | — |
 | Public API | The versioned HTTP API for the web interface, plugins and third-party clients. | API publique |
 | Internal API | The versioned API between modules and the core. It is separate from the public API. | — |
 | Milestone | A group of features with a gate at the end: M0 to M4, then Later. | Jalon |

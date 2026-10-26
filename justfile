@@ -54,6 +54,18 @@ api:
 web:
     npm --prefix web run dev
 
+# Start the worker: the outbox publisher and the scheduled jobs.
+worker:
+    dotnet run --project src/Reliquary.Worker
+
+# Run a command of the CLI, for example "just cli migrate --check".
+cli *args:
+    dotnet run --project src/Reliquary.Cli -- {{ args }}
+
+# Apply the database migrations to the local databases.
+migrate:
+    dotnet run --project src/Reliquary.Cli -- migrate
+
 # Check the code and the documentation.
 lint: lint-code lint-docs
 

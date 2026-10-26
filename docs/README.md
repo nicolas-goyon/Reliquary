@@ -18,6 +18,7 @@ All documents are in English and follow the [writing rules](contributing/writing
 | [Overview](architecture/overview.md) | Core components, API, real time and extensions |
 | [Data model](architecture/data-model.md) | Card reference data and user data |
 | [Database](architecture/database.md) | Schemas, shard directory and migrations |
+| [Domain events](architecture/domain-events.md) | Event names, versions, outbox and consumers |
 | [Extensions](architecture/extensions.md) | Plugins and modules |
 | [Technology stack](architecture/tech-stack.md) | Technologies and performance targets |
 | [Decision records](decisions/README.md) | The reasons for each important decision |

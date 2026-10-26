@@ -1,15 +1,12 @@
 using Reliquary.Api;
+using Reliquary.Hosting;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi("v1");
 builder.Services.AddHealthChecks();
-
-foreach (var component in CoreComponents.All)
-{
-    component.AddServices(builder.Services, builder.Configuration);
-}
+builder.Services.AddReliquaryCore(builder.Configuration);
 
 var app = builder.Build();
 
@@ -25,9 +22,11 @@ api.MapGet("/status", ApiStatus.Create)
     .WithName("GetStatus")
     .WithSummary("Gets the name, the version and the core components of the API.");
 
-foreach (var component in CoreComponents.All)
-{
-    component.MapEndpoints(api);
-}
+api.MapReliquaryEndpoints();
 
 await app.RunAsync();
+
+/// <summary>
+/// The entry point of the API host. The tests use this type to start the host.
+/// </summary>
+public partial class Program;

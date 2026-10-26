@@ -1,15 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
-  <!-- Host of the public API. It registers each core component. -->
+  <!-- Host of the public API. -->
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Reliquary.BuildingBlocks\Reliquary.BuildingBlocks.csproj" />
-    <ProjectReference Include="..\Components\Reliquary.Accounts\Reliquary.Accounts.csproj" />
-    <ProjectReference Include="..\Components\Reliquary.Cards\Reliquary.Cards.csproj" />
-    <ProjectReference Include="..\Components\Reliquary.Collection\Reliquary.Collection.csproj" />
-    <ProjectReference Include="..\Components\Reliquary.Decks\Reliquary.Decks.csproj" />
-    <ProjectReference Include="..\Components\Reliquary.Playtest\Reliquary.Playtest.csproj" />
+    <ProjectReference Include="..\Reliquary.Hosting\Reliquary.Hosting.csproj" />
   </ItemGroup>
 </Project>
