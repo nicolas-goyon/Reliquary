@@ -52,7 +52,7 @@ On the last page, `nextCursor` is `null`.
 ### Filters
 
 - Each filter is a query parameter with the name of its field, for example `format=commander`.
-- The card search uses the Scryfall syntax in the parameter `q`.
+- The card search uses the Scryfall syntax in the parameter `q`. The [card search](card-search.md) file describes it.
 
 ## Errors
 
@@ -109,6 +109,9 @@ Rules for the error codes:
 | `api_key_limit` | 409 | The account has the maximum number of API keys. |
 | `provider_not_enabled` | 404 | The OAuth provider is not enabled on the instance. |
 | `core_version_not_supported` | 409 | The extension does not support the current version of the core API. |
+| `search_syntax_error` | 400 | The card search query has a syntax error. The member `position` gives the index of the character. |
+| `search_query_empty` | 400 | The card search query has no search condition. The member `warnings` gives the ignored terms. |
+| `search_timeout` | 400 | The card search took more than 5 seconds. |
 
 An endpoint can add a more specific code.
 The OpenAPI document of the endpoint lists its specific codes.
