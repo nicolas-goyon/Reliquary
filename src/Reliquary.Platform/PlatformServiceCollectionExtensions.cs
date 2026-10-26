@@ -10,6 +10,7 @@ using Reliquary.BuildingBlocks.Events;
 using Reliquary.Platform.Data;
 using Reliquary.Platform.Email;
 using Reliquary.Platform.Events;
+using Reliquary.Platform.Extensions;
 using Reliquary.Platform.Health;
 using Reliquary.Platform.Jobs;
 using Reliquary.Platform.Migrations;
@@ -44,6 +45,7 @@ public static class PlatformServiceCollectionExtensions
         services.TryAddSingleton<IDatabase, Database>();
         services.TryAddSingleton<IDomainEventWriter, OutboxWriter>();
         services.TryAddSingleton<MigrationRunner>();
+        services.TryAddSingleton<ExtensionRegistry>();
 
         if (string.IsNullOrWhiteSpace(configuration[$"{EmailOptions.Section}:Smtp:Host"]))
         {

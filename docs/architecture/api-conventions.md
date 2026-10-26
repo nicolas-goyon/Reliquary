@@ -108,6 +108,7 @@ Rules for the error codes:
 | `session_expired` | 401 | The refresh cookie is missing, expired or revoked. The user must sign in again. |
 | `api_key_limit` | 409 | The account has the maximum number of API keys. |
 | `provider_not_enabled` | 404 | The OAuth provider is not enabled on the instance. |
+| `core_version_not_supported` | 409 | The extension does not support the current version of the core API. |
 
 An endpoint can add a more specific code.
 The OpenAPI document of the endpoint lists its specific codes.

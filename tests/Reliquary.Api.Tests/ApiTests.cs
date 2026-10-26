@@ -40,5 +40,5 @@ public sealed class ApiTests(ApiFactory factory) : IClassFixture<ApiFactory>
         Assert.Contains("/api/v1/status", await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), StringComparison.Ordinal);
     }
 
-    private sealed record StatusResponse(string Name, string Version, IReadOnlyList<string> Components);
+    private sealed record StatusResponse(string Name, string Version, IReadOnlyList<string> Components, string CoreApi);
 }
