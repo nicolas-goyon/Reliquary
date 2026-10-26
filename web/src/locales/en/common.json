@@ -21,5 +21,51 @@
   "footer": {
     "license": "Free software under the AGPL-3.0 license.",
     "source": "Source code"
+  },
+  "navigation": {
+    "label": "Main navigation",
+    "skipToContent": "Go to the content",
+    "home": "Home",
+    "account": "Account",
+    "signIn": "Sign in",
+    "register": "Make an account",
+    "signOut": "Sign out"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "description": "This page does not exist. Check the address."
+  },
+  "slots": {
+    "contributionFailed": "This part of the page has an error. The other parts continue to work."
+  },
+  "errors": {
+    "network_error": "The application cannot reach the server. Check your connection, then try again.",
+    "internal_error": "The server has an error. Try again later.",
+    "service_unavailable": "The server is not available. Try again later.",
+    "validation_failed": "Some fields are not correct. Correct them, then try again.",
+    "authentication_required": "Sign in to continue.",
+    "invalid_authentication": "Your session stopped. Sign in again.",
+    "forbidden": "You cannot do this operation.",
+    "not_found": "The item does not exist.",
+    "rate_limited": "You sent too many requests. Wait one minute, then try again.",
+    "quota_exceeded": "This API key used all its requests for today.",
+    "invalid_credentials": "The email address or the password is not correct.",
+    "email_not_checked": "Your email address is not checked. Open the link in the email that we sent to you.",
+    "invalid_token": "This link is not valid. It is possible that you used it before, or that it expired. Ask for a new email.",
+    "session_expired": "Your session stopped. Sign in again.",
+    "api_key_limit": "You have the maximum number of API keys. Revoke a key, then try again.",
+    "provider_not_enabled": "This sign-in service is not available on this instance.",
+    "external_sign_in_failed": "The sign-in with the external service failed. Try again.",
+    "external_email_missing": "The external service did not give an email address. Use a different sign-in method.",
+    "external_email_not_verified": "The external service did not check your email address. Check the address on that service, or sign in with your password.",
+    "unknown": "An error occurred. Try again."
+  },
+  "fieldErrors": {
+    "required": "This field is necessary.",
+    "too_short": "This value is too short.",
+    "too_long": "This value is too long.",
+    "invalid_format": "This value does not have the correct format.",
+    "not_allowed": "This value is not permitted.",
+    "unknown": "This value is not correct."
   }
 }

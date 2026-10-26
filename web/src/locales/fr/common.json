@@ -21,5 +21,51 @@
   "footer": {
     "license": "Logiciel libre sous licence AGPL-3.0.",
     "source": "Code source"
+  },
+  "navigation": {
+    "label": "Navigation principale",
+    "skipToContent": "Aller au contenu",
+    "home": "Accueil",
+    "account": "Compte",
+    "signIn": "Se connecter",
+    "register": "Créer un compte",
+    "signOut": "Se déconnecter"
+  },
+  "notFound": {
+    "title": "Page introuvable",
+    "description": "Cette page n’existe pas. Vérifiez l’adresse."
+  },
+  "slots": {
+    "contributionFailed": "Cette partie de la page a rencontré une erreur. Le reste de la page fonctionne toujours."
+  },
+  "errors": {
+    "network_error": "L’application ne parvient pas à joindre le serveur. Vérifiez votre connexion, puis réessayez.",
+    "internal_error": "Le serveur a rencontré une erreur. Réessayez plus tard.",
+    "service_unavailable": "Le serveur n’est pas disponible. Réessayez plus tard.",
+    "validation_failed": "Certains champs sont incorrects. Corrigez-les, puis réessayez.",
+    "authentication_required": "Connectez-vous pour continuer.",
+    "invalid_authentication": "Votre session a expiré. Reconnectez-vous.",
+    "forbidden": "Vous ne pouvez pas effectuer cette opération.",
+    "not_found": "L’élément n’existe pas.",
+    "rate_limited": "Vous avez envoyé trop de requêtes. Patientez une minute, puis réessayez.",
+    "quota_exceeded": "Cette clé d’API a utilisé toutes ses requêtes pour aujourd’hui.",
+    "invalid_credentials": "L’adresse e-mail ou le mot de passe est incorrect.",
+    "email_not_checked": "Votre adresse e-mail n’est pas vérifiée. Ouvrez le lien de l’e-mail que nous vous avons envoyé.",
+    "invalid_token": "Ce lien n’est pas valable. Il a peut-être déjà servi ou expiré. Demandez un nouvel e-mail.",
+    "session_expired": "Votre session a expiré. Reconnectez-vous.",
+    "api_key_limit": "Vous avez atteint le nombre maximal de clés d’API. Révoquez une clé, puis réessayez.",
+    "provider_not_enabled": "Ce service de connexion n’est pas disponible sur cette instance.",
+    "external_sign_in_failed": "La connexion avec le service externe a échoué. Réessayez.",
+    "external_email_missing": "Le service externe n’a pas fourni d’adresse e-mail. Utilisez une autre méthode de connexion.",
+    "external_email_not_verified": "Le service externe n’a pas vérifié votre adresse e-mail. Vérifiez l’adresse sur ce service, ou connectez-vous avec votre mot de passe.",
+    "unknown": "Une erreur s’est produite. Réessayez."
+  },
+  "fieldErrors": {
+    "required": "Ce champ est obligatoire.",
+    "too_short": "Cette valeur est trop courte.",
+    "too_long": "Cette valeur est trop longue.",
+    "invalid_format": "Cette valeur n’a pas le bon format.",
+    "not_allowed": "Cette valeur n’est pas autorisée.",
+    "unknown": "Cette valeur est incorrecte."
   }
 }
