@@ -12,7 +12,7 @@ namespace Reliquary.Cli;
 internal static class CliHost
 {
     /// <summary>
-    /// Builds a host with the platform and the core components.
+    /// Builds a host with the platform and the core components. The host never starts its background services.
     /// </summary>
     /// <returns>The host. The caller must dispose it.</returns>
     public static IHost Build()
@@ -25,6 +25,7 @@ internal static class CliHost
 
         builder.Configuration.AddEnvironmentVariables("RELIQUARY_");
         builder.Services.AddReliquaryCore(builder.Configuration);
+        builder.Services.AddReliquaryWorker(builder.Configuration);
         return builder.Build();
     }
 }

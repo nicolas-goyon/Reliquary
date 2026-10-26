@@ -83,7 +83,7 @@ public sealed class ApiConventionTests(ApiFactory factory) : IClassFixture<ApiFa
     private static async Task<(int Status, JsonElement Body, HttpContext Context)> HandleAsync(Exception exception)
     {
         var context = NewContext();
-        var handler = new ApiExceptionHandler(context.RequestServices.GetRequiredService<IProblemDetailsService>());
+        var handler = new ApiExceptionHandler(context.RequestServices.GetRequiredService<IProblemDetailsService>(), NullLogger<ApiExceptionHandler>.Instance);
 
         Assert.True(await handler.TryHandleAsync(context, exception, TestContext.Current.CancellationToken));
         return (context.Response.StatusCode, await ReadBodyAsync(context), context);

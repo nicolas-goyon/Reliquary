@@ -46,7 +46,7 @@ public sealed class ScheduledJobRunner(
     /// Runs a job when it is due and no other replica runs it.
     /// </summary>
     /// <param name="job">The job.</param>
-    /// <param name="force">When <see langword="true"/>, the runner ignores the interval.</param>
+    /// <param name="force">When <see langword="true"/>, the runner ignores the interval, and the job does all its work.</param>
     /// <param name="cancellationToken">A token that stops the job.</param>
     /// <returns>The result of the attempt.</returns>
     public async Task<JobRunResult> RunIfDueAsync(IScheduledJob job, bool force, CancellationToken cancellationToken)
@@ -81,7 +81,7 @@ public sealed class ScheduledJobRunner(
             logger.JobStarted(job.Name);
             try
             {
-                await job.RunAsync(cancellationToken);
+                await job.RunAsync(new JobRun(force), cancellationToken);
             }
             catch (Exception exception) when (exception is not OperationCanceledException)
             {

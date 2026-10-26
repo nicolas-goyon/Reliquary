@@ -93,6 +93,9 @@ CI runs the same checks for each pull request.
 | `tests/Reliquary.Api.Tests` | Tests of the API host |
 | `tests/Reliquary.Architecture.Tests` | Tests of the rules between the core components |
 | `tests/Reliquary.Platform.Tests` | Integration tests of the platform, on PostgreSQL |
+| `tests/Reliquary.Cards.Tests` | Tests of the card import and the card endpoints, with real card fixtures |
+| `tests/Reliquary.BuildingBlocks.Tests` | Unit tests of the shared contracts |
+| `tools/demo-data` | The script that creates small card datasets |
 | `tests/Shared` | Helpers that the test projects share, for example the test databases |
 | `web` | The web app |
 | `tools/ste-lint` | Check of the writing rules |
