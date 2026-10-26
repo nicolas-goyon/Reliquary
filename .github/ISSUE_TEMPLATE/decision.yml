@@ -1,0 +1,27 @@
+name: Decision
+description: Ask a question that needs a recorded decision (ADR).
+labels: ["type: decision", "needs: triage"]
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+      description: Write the question that the decision answers.
+    validations:
+      required: true
+  - type: textarea
+    id: options
+    attributes:
+      label: Options
+      description: List the options, with their advantages and their disadvantages.
+    validations:
+      required: true
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Constraints
+      description: List the requirements and the decisions that limit the options.
+  - type: markdown
+    attributes:
+      value: |
+        The issue closes when an ADR in docs/decisions records the decision.
