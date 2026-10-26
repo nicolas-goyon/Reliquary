@@ -1,0 +1,15 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Components/Reliquary.Accounts/Reliquary.Accounts.csproj" />
+    <Project Path="src/Components/Reliquary.Cards/Reliquary.Cards.csproj" />
+    <Project Path="src/Components/Reliquary.Collection/Reliquary.Collection.csproj" />
+    <Project Path="src/Components/Reliquary.Decks/Reliquary.Decks.csproj" />
+    <Project Path="src/Components/Reliquary.Playtest/Reliquary.Playtest.csproj" />
+    <Project Path="src/Reliquary.Api/Reliquary.Api.csproj" />
+    <Project Path="src/Reliquary.BuildingBlocks/Reliquary.BuildingBlocks.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Reliquary.Api.Tests/Reliquary.Api.Tests.csproj" />
+    <Project Path="tests/Reliquary.Architecture.Tests/Reliquary.Architecture.Tests.csproj" />
+  </Folder>
+</Solution>
