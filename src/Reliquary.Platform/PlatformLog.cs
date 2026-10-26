@@ -30,4 +30,7 @@ internal static partial class PlatformLog
 
     [LoggerMessage(EventId = 1203, Level = LogLevel.Error, Message = "The runner could not check the job {Job}. It tries again after {Delay}.")]
     public static partial void JobCheckFailed(this ILogger logger, Exception exception, string job, TimeSpan delay);
+
+    [LoggerMessage(EventId = 1300, Level = LogLevel.Warning, Message = "The instance has no SMTP server, so the email goes to the log. To: {To}. Subject: {Subject}.\n{Body}")]
+    public static partial void EmailWrittenToLog(this ILogger logger, string to, string subject, string body);
 }

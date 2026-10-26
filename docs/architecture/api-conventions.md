@@ -101,6 +101,13 @@ Rules for the error codes:
 | `owner_read_only` | 503 | The data of the user moves to another database. The response has a `Retry-After` header. |
 | `service_unavailable` | 503 | A service that the server needs is not available. |
 | `internal_error` | 500 | An error on the server. |
+| `invalid_authentication` | 401 | The request has an access token or an API key, but it is not valid. This also applies to a public endpoint. |
+| `invalid_credentials` | 400 or 401 | The email address or the password is not correct. |
+| `email_not_checked` | 403 | The user must open the link of the email before the first sign-in. |
+| `invalid_token` | 400 | The link of the email is not valid: the user opened it before, it expired, or it is not complete. |
+| `session_expired` | 401 | The refresh cookie is missing, expired or revoked. The user must sign in again. |
+| `api_key_limit` | 409 | The account has the maximum number of API keys. |
+| `provider_not_enabled` | 404 | The OAuth provider is not enabled on the instance. |
 
 An endpoint can add a more specific code.
 The OpenAPI document of the endpoint lists its specific codes.

@@ -5,6 +5,22 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="AspNet.Security.OAuth.Discord" />
+    <PackageReference Include="AspNet.Security.OAuth.GitHub" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\Reliquary.BuildingBlocks\Reliquary.BuildingBlocks.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Migrations\**\*.sql" LogicalName="Migrations/%(RecursiveDir)%(Filename)%(Extension)" />
+    <EmbeddedResource Include="Emails\*.json" LogicalName="Emails/%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Reliquary.Accounts.Tests" />
   </ItemGroup>
 </Project>

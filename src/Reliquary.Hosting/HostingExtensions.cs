@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -56,8 +57,13 @@ public static class HostingExtensions
     /// </summary>
     /// <param name="api">The route group of the public API.</param>
     /// <returns>The route group.</returns>
-    public static IEndpointRouteBuilder MapReliquaryEndpoints(this IEndpointRouteBuilder api)
+    public static RouteGroupBuilder MapReliquaryEndpoints(this RouteGroupBuilder api)
     {
+        foreach (var component in CoreComponents.All)
+        {
+            component.ConfigureApi(api);
+        }
+
         foreach (var component in CoreComponents.All)
         {
             component.MapEndpoints(api);

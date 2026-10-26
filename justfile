@@ -10,7 +10,7 @@ compose := "docker compose --project-name reliquary-" + instance + " --file comp
 default:
     @just --list
 
-# Create or update the local infrastructure (PostgreSQL and Redis).
+# Create or update the local infrastructure (PostgreSQL, Redis and Mailpit).
 up:
     {{ compose }} up --detach --wait
 

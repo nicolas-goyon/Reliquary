@@ -61,6 +61,20 @@ The Cards core component owns the tables of the `reference` schema.
   The import prefers an English printing that Wizards of the Coast already released, in a regular set.
   It also prefers a normal collector number, a modern frame and no special treatment.
 
+## Accounts
+
+The Accounts component keeps the accounts in the `users` schema, not in the shards.
+[Accounts and authentication](accounts.md) tells how the API uses them.
+
+| Table | Content |
+| --- | --- |
+| `accounts` | The email address, the password hash, the public name, the language and the security stamp of each account |
+| `external_logins` | The OAuth logins of each account |
+| `refresh_tokens` | The hashes of the refresh tokens of the web sessions |
+| `account_tokens` | The hashes of the single-use tokens of the emails |
+| `api_keys` | The prefix and the hash of the secret of each API key |
+| `usage_counters` | The number of API requests of each day, for each API key and each account |
+
 ## User data
 
 Reliquary can split all the user data by `owner_id`.
