@@ -27,7 +27,7 @@ The `just lint-docs` command runs this check and the Markdown check.
 
 ## What the check reads
 
-- All Markdown files that Git tracks
+- All Markdown files that Git tracks, and the new Markdown files that Git does not ignore
 - The English interface texts in `web/src/locales/en`
 
 ## Project configuration

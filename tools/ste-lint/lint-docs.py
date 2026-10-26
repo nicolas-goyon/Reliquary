@@ -5,7 +5,7 @@ The rules come from ste-lint.py. That file is a copy of an MIT-licensed
 tool, and this project does not change it. This wrapper adds the project
 configuration:
 
-- It selects the text to check: all Markdown files that Git tracks, and
+- It selects the text to check: all Markdown files that Git tracks or does not ignore, and
   the English interface texts in web/src/locales/en.
 - It applies the project glossary: "remove" and "delete" are two
   different actions, so the synonym check must not join them.
@@ -50,7 +50,7 @@ def load_linter():
 
 def default_files():
     result = subprocess.run(
-        ["git", "ls-files", "-z", "--", "*.md", LOCALE_DIR + "*.json"],
+        ["git", "ls-files", "-z", "--cached", "--others", "--exclude-standard", "--", "*.md", LOCALE_DIR + "*.json"],
         cwd=ROOT, capture_output=True, check=True,
     )
     names = [name for name in result.stdout.decode("utf-8").split("\0") if name]

@@ -32,7 +32,8 @@ The spike found these facts on 2026-10-26:
 - The setting `Cards:Import:BulkType` chooses the card file: `all_cards` (default, all the languages) or `default_cards` (smaller).
 - The setting `Cards:Import:Directory` makes the job read local files and download nothing. The demo data and the tests use it.
 - The import of the cards writes to staging tables with the binary COPY protocol. Then, in one transaction, it changes only the rows whose content hash changed.
-- The import deletes the printings that the file does not contain, but only when the file contains at least 90 % of the current printings. A truncated file cannot delete the data.
+- The import deletes the printings that the file does not contain.
+  It does so only when the file contains at least 90 % of the current printings, so a truncated file cannot delete the data.
 - The import never deletes an Oracle card, because user data can refer to it.
 - Reliquary can use recommander.cards in milestone M1, as an option that the administrator enables. The interface must credit the source.
 
