@@ -65,6 +65,10 @@ Plugins have two purposes:
 - The core isolates each contribution of a plugin.
   It renders the contribution in a sandboxed iframe, or in an interface component that the SDK loads.
   A plugin cannot access the DOM of the core or the DOM of other plugins.
+- The web app has the slots from milestone M0, and the core uses them for its own panels.
+  `web/src/slots/registry.ts` gives the names of the slots and the context of each slot.
+  `web/src/slots/coreContributions.tsx` registers the panels of the core, for example the panels of the account page.
+  Each contribution renders in its own container with its own error boundary, so a contribution that fails does not stop the page.
 - The core keeps control of the layout:
   - Each slot has a maximum size.
   - The user can change the order of the contributions and hide them.

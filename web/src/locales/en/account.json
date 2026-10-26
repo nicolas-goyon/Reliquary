@@ -1,0 +1,40 @@
+{
+  "title": "Your account",
+  "profile": {
+    "title": "Profile",
+    "email": "Email address",
+    "displayName": "Public name",
+    "language": "Interface language",
+    "submit": "Save the profile",
+    "saved": "We saved the profile."
+  },
+  "password": {
+    "title": "Change the password",
+    "titleFirst": "Set a password",
+    "description": "After the change, your other sessions stop.",
+    "current": "Current password",
+    "new": "New password",
+    "submit": "Save the password",
+    "saved": "We saved the new password."
+  },
+  "logins": {
+    "title": "External sign-in services",
+    "none": "Your account has no external sign-in service."
+  },
+  "apiKeys": {
+    "title": "API keys",
+    "description": "An API key lets a script or another application use the Reliquary API for you. Each key has a daily quota. Keep your keys secret.",
+    "none": "You have no API key.",
+    "name": "Name",
+    "prefix": "Key",
+    "createdAt": "Created",
+    "lastUsedAt": "Last use",
+    "neverUsed": "Never",
+    "actions": "Actions",
+    "revoke": "Revoke",
+    "revokeConfirm": "Revoke the key \"{{name}}\"? The applications that use it stop working.",
+    "newName": "Name of the new key",
+    "create": "Create a key",
+    "createdOnce": "The key \"{{name}}\" is ready. Copy it now: the application shows it one time only."
+  }
+}

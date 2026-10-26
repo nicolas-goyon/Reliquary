@@ -1,14 +1,14 @@
 {
   "email_check": {
     "subject": "Vérifiez votre adresse e-mail pour Reliquary",
-    "body": "Bonjour {displayName},\n\nPour terminer la création de votre compte Reliquary, ouvrez ce lien :\n\n{link}\n\nLe lien est valable {hours} heures.\n\nSi vous n'avez pas créé de compte sur Reliquary, ignorez cet e-mail."
+    "body": "Bonjour {displayName},\n\nPour terminer la création de votre compte Reliquary, ouvrez ce lien :\n\n{link}\n\nLe lien est valable {hours} heures.\n\nSi vous n’avez pas créé de compte sur Reliquary, ignorez cet e-mail."
   },
   "password_reset": {
     "subject": "Réinitialisez votre mot de passe Reliquary",
-    "body": "Bonjour {displayName},\n\nPour choisir un nouveau mot de passe pour Reliquary, ouvrez ce lien :\n\n{link}\n\nLe lien est valable {hours} heure(s). Après la réinitialisation, toutes vos sessions sont fermées.\n\nSi vous n'avez pas demandé de nouveau mot de passe, ignorez cet e-mail. Votre mot de passe ne change pas."
+    "body": "Bonjour {displayName},\n\nPour choisir un nouveau mot de passe pour Reliquary, ouvrez ce lien :\n\n{link}\n\nLe lien est valable {hours} heure(s). Après la réinitialisation, toutes vos sessions sont fermées.\n\nSi vous n’avez pas demandé de nouveau mot de passe, ignorez cet e-mail. Votre mot de passe ne change pas."
   },
   "account_exists": {
     "subject": "Votre compte Reliquary",
-    "body": "Bonjour {displayName},\n\nQuelqu'un a essayé de créer un compte Reliquary avec cette adresse e-mail. Vous avez déjà un compte avec cette adresse.\n\nPour vous connecter, ouvrez ce lien :\n\n{link}\n\nSi vous avez oublié votre mot de passe, utilisez le lien « Mot de passe oublié ? » de la page de connexion.\n\nSi vous n'avez pas essayé de créer de compte, ignorez cet e-mail."
+    "body": "Bonjour {displayName},\n\nQuelqu’un a essayé de créer un compte Reliquary avec cette adresse e-mail. Vous avez déjà un compte avec cette adresse.\n\nPour vous connecter, ouvrez ce lien :\n\n{link}\n\nSi vous avez oublié votre mot de passe, utilisez le lien « Mot de passe oublié ? » de la page de connexion.\n\nSi vous n’avez pas essayé de créer de compte, ignorez cet e-mail."
   }
 }

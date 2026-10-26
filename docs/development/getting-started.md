@@ -19,7 +19,7 @@ On Windows, run the `just` recipes in Git Bash or in WSL.
 
 1. Clone the repository and open its folder.
 2. Copy `.env.example` to `.env`. Change the ports if other programs use them.
-3. Run `just up` to start PostgreSQL and Redis.
+3. Run `just up` to start PostgreSQL, Redis and Mailpit.
 4. Run `just restore` to install the .NET packages and the npm packages.
 5. Run `just api` to start the API on <http://localhost:5080>.
 6. In a second terminal, run `just web` to start the web app on <http://localhost:5173>.
@@ -27,6 +27,15 @@ On Windows, run the `just` recipes in Git Bash or in WSL.
 
 The page shows "The API is available" and the version of the API.
 The language list at the top of the page changes the interface language.
+
+To make an account:
+
+1. Select **Make an account**, then complete the form.
+2. Open Mailpit at <http://localhost:18025> and open the email of Reliquary.
+3. Open the link in the email, then sign in.
+
+The account `admin@reliquary.localhost` is an administrator of the local instance.
+[Accounts and authentication](../architecture/accounts.md) gives the settings of the OAuth providers.
 
 The API also serves these addresses:
 
@@ -37,6 +46,7 @@ The API also serves these addresses:
 | <http://localhost:5080/metrics> | Metrics in the Prometheus text format |
 | <http://localhost:5080/api/v1/status> | Name, version and core components of the API |
 | <http://localhost:5080/openapi/v1.json> | OpenAPI document of the public API |
+| <http://localhost:18025> | Mailpit: the emails of the local instance |
 
 ## Manage the local infrastructure
 

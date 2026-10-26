@@ -21,7 +21,8 @@ web/src/locales/en/common.json
 web/src/locales/fr/common.json
 ```
 
-The `common` namespace contains the texts of the application shell.
+The `common` namespace contains the texts of the application shell and the API error messages.
+The `auth` namespace contains the sign-in and registration pages, and the `account` namespace contains the account page.
 Create a new namespace for each large feature, for example `decks` or `collection`.
 Add each new namespace to `resources` in `web/src/i18n/index.ts`, for each language.
 
@@ -54,6 +55,8 @@ A call to `t()` with an unknown key is a type error.
 
 The API returns a stable error code for each error.
 The web app translates the code into the language of the user.
+The keys are `errors.<code>` and `fieldErrors.<code>` in the `common` namespace.
+To translate a new code, add it to `translatedErrorCodes` in `web/src/api/errors.ts`, then add the texts.
 The English message in the API response is for developers. It follows the strict mode of the writing rules.
 
 ## Add a language

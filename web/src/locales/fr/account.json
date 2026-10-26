@@ -1,0 +1,40 @@
+{
+  "title": "Votre compte",
+  "profile": {
+    "title": "Profil",
+    "email": "Adresse e-mail",
+    "displayName": "Nom d’affichage",
+    "language": "Langue de l’interface",
+    "submit": "Enregistrer le profil",
+    "saved": "Le profil est enregistré."
+  },
+  "password": {
+    "title": "Changer le mot de passe",
+    "titleFirst": "Définir un mot de passe",
+    "description": "Après le changement, vos autres sessions sont fermées.",
+    "current": "Mot de passe actuel",
+    "new": "Nouveau mot de passe",
+    "submit": "Enregistrer le mot de passe",
+    "saved": "Le nouveau mot de passe est enregistré."
+  },
+  "logins": {
+    "title": "Services de connexion externes",
+    "none": "Aucun service externe n’est relié à votre compte."
+  },
+  "apiKeys": {
+    "title": "Clés d’API",
+    "description": "Une clé d’API permet à un script ou à une autre application d’utiliser l’API de Reliquary à votre place. Chaque clé a un quota quotidien. Gardez vos clés secrètes.",
+    "none": "Vous n’avez aucune clé d’API.",
+    "name": "Nom",
+    "prefix": "Clé",
+    "createdAt": "Créée le",
+    "lastUsedAt": "Dernière utilisation",
+    "neverUsed": "Jamais",
+    "actions": "Actions",
+    "revoke": "Révoquer",
+    "revokeConfirm": "Révoquer la clé « {{name}} » ? Les applications qui l’utilisent cesseront de fonctionner.",
+    "newName": "Nom de la nouvelle clé",
+    "create": "Créer une clé",
+    "createdOnce": "La clé « {{name}} » est prête. Copiez-la maintenant : l’application ne l’affiche qu’une seule fois."
+  }
+}

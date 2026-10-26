@@ -6,3 +6,6 @@ afterEach(() => {
   cleanup()
   localStorage.clear()
 })
+
+// jsdom has no scrolling. The router calls scrollTo after each navigation.
+window.scrollTo = () => undefined

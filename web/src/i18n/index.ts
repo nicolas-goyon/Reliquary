@@ -1,7 +1,11 @@
 import i18n from 'i18next'
 import LanguageDetector from 'i18next-browser-languagedetector'
 import { initReactI18next } from 'react-i18next'
+import enAccount from '../locales/en/account.json'
+import enAuth from '../locales/en/auth.json'
 import enCommon from '../locales/en/common.json'
+import frAccount from '../locales/fr/account.json'
+import frAuth from '../locales/fr/auth.json'
 import frCommon from '../locales/fr/common.json'
 
 /** The interface languages. English is the source language. */
@@ -12,8 +16,8 @@ export const defaultNamespace = 'common'
 
 /** The translation resources. English gives the TypeScript types of the keys. */
 export const resources = {
-  en: { common: enCommon },
-  fr: { common: frCommon },
+  en: { common: enCommon, auth: enAuth, account: enAccount },
+  fr: { common: frCommon, auth: frAuth, account: frAccount },
 } as const
 
 /** The local storage key that keeps the language that the user chose. */
@@ -36,7 +40,7 @@ void i18n
     fallbackLng: 'en',
     nonExplicitSupportedLngs: true,
     defaultNS: defaultNamespace,
-    ns: [defaultNamespace],
+    ns: [defaultNamespace, 'auth', 'account'],
     initAsync: false,
     interpolation: {
       // React escapes the values. Escaping them twice shows HTML entities.
