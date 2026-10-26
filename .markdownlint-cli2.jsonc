@@ -1,0 +1,20 @@
+// Markdown format rules. The writing rules are in docs/contributing/writing-style.md.
+{
+  "config": {
+    "default": true,
+    // One sentence on each line, so a line can be long.
+    "MD013": false,
+    // The same heading text can occur under different parent headings.
+    "MD024": { "siblings_only": true },
+    "MD004": { "style": "dash" },
+    "MD029": { "style": "ordered" },
+    "MD046": { "style": "fenced" }
+  },
+  "ignores": [
+    "**/node_modules/**",
+    "**/bin/**",
+    "**/obj/**",
+    "web/dist/**",
+    ".github/pull_request_template.md"
+  ]
+}
