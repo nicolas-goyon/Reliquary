@@ -134,6 +134,7 @@ jobs:
           base=http://localhost:8080
           curl --fail --silent --show-error "$base/api/v1/status"
           curl --fail --silent --show-error "$base/api/v1/cards/named?name=Sol%20Ring" | grep --quiet '"name":"Sol Ring"'
+          curl --fail --silent --show-error "$base/api/v1/cards/search?q=t%3Aartifact%20mv%3D1" | grep --quiet '"name":"Sol Ring"'
           curl --fail --silent --show-error "$base/account" | grep --quiet 'id="root"'
           curl --fail --silent --show-error --header 'Content-Type: application/json' \
             --data '{"email":"demo@reliquary.localhost","password":"reliquary-demo"}' \
