@@ -39,10 +39,17 @@ The [GitHub milestones](https://github.com/nicolas-goyon/reliquary/milestones) a
 
 ## Quick start
 
-You need the .NET 10 SDK, Node.js 24, Docker with Compose, [just](https://just.systems) and Python 3.
+To try Reliquary, you need Docker with Compose and [just](https://just.systems) only:
 
 ```shell
-just up        # start PostgreSQL and Redis
+just up        # build and start a full instance with the demo data on http://localhost:8080
+just down      # destroy the instance and its data
+```
+
+To change the code, you also need the .NET 10 SDK, Node.js 24 and Python 3:
+
+```shell
+just infra     # start PostgreSQL, Redis and Mailpit
 just restore   # install the .NET and npm packages
 just api       # start the API on http://localhost:5080
 just web       # start the web app on http://localhost:5173 (in a second terminal)

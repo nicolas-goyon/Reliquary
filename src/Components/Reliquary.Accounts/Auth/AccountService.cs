@@ -98,6 +98,31 @@ internal sealed class AccountService(
         }
     }
 
+    /// <summary>
+    /// Creates an account with a checked email address and sends no email. The demo data uses it.
+    /// </summary>
+    /// <returns><see langword="false"/> when an account with the address exists.</returns>
+    public async Task<bool> CreateCheckedAccountAsync(string email, string password, string displayName, string language, CancellationToken cancellationToken)
+    {
+        var normalized = AccountValidation.NormalizeEmail(email);
+        if (await store.FindByEmailAsync(normalized, cancellationToken) is not null)
+        {
+            return false;
+        }
+
+        var now = time.GetUtcNow();
+        var account = NewAccount(email.Trim(), normalized, displayName, language, now);
+        account.PasswordHash = Hasher.HashPassword(account, password);
+        account.EmailCheckedAt = now.UtcDateTime;
+        if (!await CreateAsync(account, null, cancellationToken))
+        {
+            return false;
+        }
+
+        logger.AccountCreated(account.Id, "demo");
+        return true;
+    }
+
     public async Task ResendEmailCheckAsync(string email, CancellationToken cancellationToken)
     {
         var account = await store.FindByEmailAsync(AccountValidation.NormalizeEmail(email), cancellationToken);

@@ -21,5 +21,5 @@ Front-end developers and plugin authors also need a local instance.
 ## Consequences
 
 - The commands for the infrastructure need Docker and `just` only. They do not need the .NET SDK.
-- Issue [#10](https://github.com/nicolas-goyon/reliquary/issues/10) adds the API, the worker and the web app to the Compose file, so that `just up` creates a full instance.
+- Issue [#10](https://github.com/nicolas-goyon/reliquary/issues/10) adds the API, the worker and the web app to the Compose file, so that `just up` creates a full instance. [ADR 0024](0024-container-images.md) gives the design.
 - Aspire gives a dashboard for .NET services. OpenTelemetry and an optional Grafana service give the same information ([#12](https://github.com/nicolas-goyon/reliquary/issues/12)).

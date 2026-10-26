@@ -14,6 +14,7 @@ using Reliquary.Accounts.Quotas;
 using Reliquary.BuildingBlocks;
 using Reliquary.BuildingBlocks.Api;
 using Reliquary.BuildingBlocks.Data;
+using Reliquary.BuildingBlocks.Demo;
 using Reliquary.BuildingBlocks.Jobs;
 
 namespace Reliquary.Accounts;
@@ -42,6 +43,7 @@ public sealed class AccountsComponent : ICoreComponent
         services.AddSingleton<AccessTokens>();
         services.AddSingleton<AccountEmails>();
         services.AddSingleton<AccountService>();
+        services.AddSingleton<IDemoDataSeeder, DemoAccounts>();
     }
 
     /// <inheritdoc />

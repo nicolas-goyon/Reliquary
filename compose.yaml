@@ -1,6 +1,22 @@
-# Local infrastructure for development: PostgreSQL, Redis and a test email server.
-# Use the justfile recipes: just up, just stop, just reset and just down.
+# A local instance of Reliquary.
+# - The infrastructure: PostgreSQL, Redis and a test email server. "just infra" starts it only.
+# - The profile "app": the API, the worker, the web app and the CLI, built from the source code. "just up" starts all.
+# Use the justfile recipes: just up, just infra, just stop, just reset and just down.
 # The settings come from the .env file. See .env.example.
+
+# The settings of the .NET hosts in the containers.
+x-backend-environment: &backend-environment
+  ConnectionStrings__Users: Host=postgres;Port=5432;Database=reliquary;Username=reliquary;Password=${RELIQUARY_POSTGRES_PASSWORD:-reliquary}
+  ConnectionStrings__Redis: redis:6379
+  Auth__SigningKey: ${RELIQUARY_SIGNING_KEY:-bG9jYWwtaW5zdGFuY2Utb25seS1kby1ub3QtdXNlLWluLXByb2R1Y3Rpb24=}
+  Auth__PublicUrl: http://localhost:${RELIQUARY_APP_PORT:-8080}
+  Auth__AdministratorEmails__0: admin@reliquary.localhost
+  Email__From: Reliquary <noreply@reliquary.localhost>
+  Email__Smtp__Host: mailpit
+  Email__Smtp__Port: "1025"
+  Email__Smtp__Security: None
+  Cards__Import__Directory: /data/cards
+
 services:
   postgres:
     image: postgres:18-alpine
@@ -34,6 +50,62 @@ services:
     ports:
       - "127.0.0.1:${RELIQUARY_SMTP_PORT:-11025}:1025"
       - "127.0.0.1:${RELIQUARY_MAILPIT_PORT:-18025}:8025"
+
+  # Applies the migrations. "just up" runs it before it starts the API and the worker.
+  migrate:
+    image: reliquary/cli:local
+    build:
+      context: .
+      target: cli
+    profiles: ["app"]
+    command: ["migrate"]
+    environment: *backend-environment
+    volumes:
+      - ${RELIQUARY_CARD_DATA:-./data/demo}:/data/cards:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    image: reliquary/api:local
+    build:
+      context: .
+      target: api
+    profiles: ["app"]
+    environment:
+      <<: *backend-environment
+      ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  worker:
+    image: reliquary/worker:local
+    build:
+      context: .
+      target: worker
+    profiles: ["app"]
+    environment: *backend-environment
+    volumes:
+      - ${RELIQUARY_CARD_DATA:-./data/demo}:/data/cards:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # The web app on http://localhost:8080. Nginx sends the /api requests to the API.
+  web:
+    image: reliquary/web:local
+    build:
+      context: web
+    profiles: ["app"]
+    ports:
+      - "127.0.0.1:${RELIQUARY_APP_PORT:-8080}:8080"
+    depends_on:
+      - api
 
   # Optional: Grafana with Prometheus, Tempo and Loki, and an OpenTelemetry collector.
   # Start it with "just observability". See docs/development/observability.md.

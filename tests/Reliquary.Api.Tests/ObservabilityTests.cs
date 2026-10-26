@@ -77,7 +77,15 @@ public sealed class ObservabilityTests
         var response = await client.GetAsync(new Uri("/test/database", UriKind.Relative), TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var request = Assert.Single(activities, activity => activity.Source.Name == "Microsoft.AspNetCore" && activity.DisplayName.Contains("/test/database", StringComparison.Ordinal));
+
+        // The server can stop the request activity after the client receives the response.
+        static bool IsRequest(Activity activity) => activity.Source.Name == "Microsoft.AspNetCore" && activity.DisplayName.Contains("/test/database", StringComparison.Ordinal);
+        for (var attempt = 0; attempt < 50 && !activities.Any(IsRequest); attempt++)
+        {
+            await Task.Delay(100, TestContext.Current.CancellationToken);
+        }
+
+        var request = Assert.Single(activities, IsRequest);
         Assert.Contains(activities, activity => activity.Source.Name == "Npgsql" && activity.TraceId == request.TraceId);
     }
 

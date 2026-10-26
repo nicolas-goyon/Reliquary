@@ -10,30 +10,42 @@ compose := "docker compose --project-name reliquary-" + instance + " --file comp
 default:
     @just --list
 
-# Create or update the local infrastructure (PostgreSQL, Redis and Mailpit).
+# Create or update a full local instance on http://localhost:8080: build the images, apply the migrations and load the demo data.
 up:
-    {{ compose }} up --detach --wait
+    {{ compose }} --profile app build
+    {{ compose }} up --detach --wait postgres redis mailpit
+    {{ compose }} --profile app run --rm migrate migrate
+    {{ compose }} --profile app run --rm migrate demo load
+    {{ compose }} --profile app up --detach --wait api worker web
 
-# Stop the local infrastructure. The data stays.
+# Start only the local infrastructure (PostgreSQL, Redis and Mailpit), for "just api" and "just web".
+infra:
+    {{ compose }} up --detach --wait postgres redis mailpit
+
+# Stop the local instance. The data stays.
 stop:
-    {{ compose }} stop
+    {{ compose }} --profile app --profile observability stop
 
-# Delete the data of the local infrastructure, then create it again.
+# Delete the data of the local instance, then create it again.
 reset:
-    {{ compose }} down --volumes
-    {{ compose }} up --detach --wait
+    {{ compose }} --profile app --profile observability down --volumes --remove-orphans
+    just up
 
-# Destroy the local infrastructure and its data.
+# Destroy the local instance and its data.
 down:
-    {{ compose }} --profile observability down --volumes --remove-orphans
+    {{ compose }} --profile app --profile observability down --volumes --remove-orphans
+
+# Load the demo dataset into the local instance: the demo cards and the demo accounts.
+demo:
+    {{ compose }} --profile app run --rm migrate demo load
 
 # Start Grafana and the OpenTelemetry collector of the local instance on http://localhost:3000.
 observability:
     {{ compose }} --profile observability up --detach observability
 
-# Show the state of the local infrastructure.
+# Show the state of the local instance.
 ps:
-    {{ compose }} ps
+    {{ compose }} --profile app ps
 
 # Install the .NET packages and the npm packages.
 restore:
@@ -69,6 +81,10 @@ cli *args:
 # Apply the database migrations to the local databases.
 migrate:
     dotnet run --project src/Reliquary.Cli -- migrate
+
+# Load the demo dataset into the local databases, for "just api".
+demo-local:
+    Cards__Import__Directory={{ justfile_directory() }}/data/demo dotnet run --project src/Reliquary.Cli -- demo load
 
 # Check the code and the documentation.
 lint: lint-code lint-docs

@@ -38,7 +38,8 @@ Human contributors follow the same rules in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 | Command | Effect |
 | --- | --- |
-| `just up` | Start PostgreSQL and Redis |
+| `just up` | Build and start a full local instance with the demo data |
+| `just infra` | Start PostgreSQL, Redis and Mailpit only |
 | `just build` | Build the backend and the web app |
 | `just test` | Run all the tests |
 | `just lint` | Check the code and the documentation |
