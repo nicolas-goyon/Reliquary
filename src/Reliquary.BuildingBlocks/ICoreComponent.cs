@@ -35,6 +35,15 @@ public interface ICoreComponent
     void AddServices(IServiceCollection services, IConfiguration configuration);
 
     /// <summary>
+    /// Adds the services that only the API host uses, for example the authentication and the endpoint filters.
+    /// </summary>
+    /// <param name="services">The service collection of the API host.</param>
+    /// <param name="configuration">The configuration of the API host.</param>
+    void AddApiServices(IServiceCollection services, IConfiguration configuration)
+    {
+    }
+
+    /// <summary>
     /// Adds the services that only the worker process uses, for example scheduled jobs and event consumers.
     /// </summary>
     /// <param name="services">The service collection of the worker.</param>
