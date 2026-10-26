@@ -21,6 +21,9 @@ export const translatedErrorCodes = [
   'external_sign_in_failed',
   'external_email_missing',
   'external_email_not_verified',
+  'search_syntax_error',
+  'search_query_empty',
+  'search_timeout',
 ] as const
 
 export type TranslatedErrorCode = (typeof translatedErrorCodes)[number]

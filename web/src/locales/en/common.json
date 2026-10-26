@@ -58,6 +58,9 @@
     "external_sign_in_failed": "The sign-in with the external service failed. Try again.",
     "external_email_missing": "The external service did not give an email address. Use a different sign-in method.",
     "external_email_not_verified": "The external service did not check your email address. Check the address on that service, or sign in with your password.",
+    "search_syntax_error": "The search has a syntax error. Correct the search, then try again.",
+    "search_query_empty": "The search has no condition that the application knows. Change the search.",
+    "search_timeout": "The search took too much time. Make the search more specific.",
     "unknown": "An error occurred. Try again."
   },
   "fieldErrors": {
