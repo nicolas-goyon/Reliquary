@@ -113,3 +113,62 @@ jobs:
         uses: DavidAnson/markdownlint-cli2-action@v25
         with:
           globs: "**/*.md"
+
+  instance:
+    name: Local instance
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: just
+
+      - name: Create the first instance
+        run: just up
+
+      - name: Check the first instance
+        run: |
+          set -euo pipefail
+          base=http://localhost:8080
+          curl --fail --silent --show-error "$base/api/v1/status"
+          curl --fail --silent --show-error "$base/api/v1/cards/named?name=Sol%20Ring" | grep --quiet '"name":"Sol Ring"'
+          curl --fail --silent --show-error "$base/account" | grep --quiet 'id="root"'
+          curl --fail --silent --show-error --header 'Content-Type: application/json' \
+            --data '{"email":"demo@reliquary.localhost","password":"reliquary-demo"}' \
+            "$base/api/v1/auth/sign-in" | grep --quiet '"accessToken"'
+
+      - name: Create a second instance with other ports
+        env:
+          RELIQUARY_INSTANCE: second
+          RELIQUARY_APP_PORT: "8081"
+          RELIQUARY_POSTGRES_PORT: "15433"
+          RELIQUARY_REDIS_PORT: "16380"
+          RELIQUARY_SMTP_PORT: "11026"
+          RELIQUARY_MAILPIT_PORT: "18026"
+        run: |
+          set -euo pipefail
+          just up
+          curl --fail --silent --show-error http://localhost:8081/api/v1/status
+          curl --fail --silent --show-error http://localhost:8080/api/v1/status
+
+      - name: Show the logs
+        if: failure()
+        run: |
+          docker compose --project-name reliquary-dev --file compose.yaml --profile app logs --no-color
+          docker compose --project-name reliquary-second --file compose.yaml --profile app logs --no-color
+
+      - name: Destroy the instances
+        run: |
+          set -euo pipefail
+          just down
+          RELIQUARY_INSTANCE=second just down
+          for project in reliquary-dev reliquary-second; do
+            containers=$(docker ps --all --quiet --filter "label=com.docker.compose.project=$project")
+            volumes=$(docker volume ls --quiet --filter "label=com.docker.compose.project=$project")
+            if [ -n "$containers$volumes" ]; then
+              echo "The instance $project left containers or volumes: $containers $volumes"
+              exit 1
+            fi
+          done

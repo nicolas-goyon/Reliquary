@@ -61,7 +61,7 @@ The [database](./database.md) file gives the details.
 ## Local development
 
 - Each action on a local instance needs one command only:
-  - `just up` creates or updates the instance.
+  - `just up` creates or updates the instance: the API, the worker and the web app in containers, with the demo data.
   - `just reset` deletes the data of the instance, then creates the instance again.
   - `just down` destroys the instance.
 - Docker Compose runs the services, and `just` gives the commands.

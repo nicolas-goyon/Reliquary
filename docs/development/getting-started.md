@@ -15,11 +15,31 @@ Terms follow the [glossary](../glossary.md).
 
 On Windows, run the `just` recipes in Git Bash or in WSL.
 
-## Start Reliquary for the first time
+## Try a full local instance
+
+You need Docker with Compose and `just` only.
 
 1. Clone the repository and open its folder.
 2. Copy `.env.example` to `.env`. Change the ports if other programs use them.
-3. Run `just up` to start PostgreSQL, Redis and Mailpit.
+3. Run `just up`.
+   The command builds the images, applies the migrations, loads the demo data and starts the instance.
+4. Open <http://localhost:8080> in a browser.
+
+The instance contains the demo cards of `data/demo` and these demo accounts:
+
+| Email address | Password | Role |
+| --- | --- | --- |
+| `demo@reliquary.localhost` | `reliquary-demo` | User, English interface |
+| `demo-fr@reliquary.localhost` | `reliquary-demo` | User, French interface |
+| `admin@reliquary.localhost` | `reliquary-admin` | Administrator |
+
+The passwords are public. Do not open a local instance to other computers.
+
+## Start Reliquary for development
+
+1. Clone the repository and open its folder.
+2. Copy `.env.example` to `.env`. Change the ports if other programs use them.
+3. Run `just infra` to start PostgreSQL, Redis and Mailpit.
 4. Run `just restore` to install the .NET packages and the npm packages.
 5. Run `just api` to start the API on <http://localhost:5080>.
 6. In a second terminal, run `just web` to start the web app on <http://localhost:5173>.
@@ -34,6 +54,7 @@ To make an account:
 2. Open Mailpit at <http://localhost:18025> and open the email of Reliquary.
 3. Open the link in the email, then sign in.
 
+To load the demo cards and the demo accounts into the development databases, run `just demo-local`.
 The account `admin@reliquary.localhost` is an administrator of the local instance.
 [Accounts and authentication](../architecture/accounts.md) gives the settings of the OAuth providers.
 
@@ -48,18 +69,31 @@ The API also serves these addresses:
 | <http://localhost:5080/openapi/v1.json> | OpenAPI document of the public API |
 | <http://localhost:18025> | Mailpit: the emails of the local instance |
 
-## Manage the local infrastructure
+## Manage the local instance
 
 | Command | Effect |
 | --- | --- |
-| `just up` | Create or update the local infrastructure |
-| `just stop` | Stop the local infrastructure. The data stays. |
-| `just reset` | Delete the data, then create the local infrastructure again |
-| `just down` | Destroy the local infrastructure and its data |
+| `just up` | Create or update the full instance: build the images, apply the migrations, load the demo data and start the services |
+| `just infra` | Start only PostgreSQL, Redis and Mailpit |
+| `just demo` | Load the demo data into the full instance again |
+| `just stop` | Stop the instance. The data stays. |
+| `just reset` | Delete the data, then create the instance again |
+| `just down` | Destroy the instance: no container and no volume stays |
 | `just ps` | Show the state of the containers |
 
-The local infrastructure contains PostgreSQL and Redis only.
-Issue [#10](https://github.com/nicolas-goyon/reliquary/issues/10) adds the API, the worker and the web app to the instance.
+The full instance contains these services:
+
+| Service | Content |
+| --- | --- |
+| `postgres` | The databases |
+| `redis` | The cache, the quota counters and the data protection keys |
+| `mailpit` | A test email server. It keeps the emails and sends none. |
+| `migrate` | The CLI. `just up` runs it to apply the migrations and load the demo data. |
+| `api` | The public API |
+| `worker` | The outbox publisher and the scheduled jobs |
+| `web` | The web app. Nginx sends the `/api` requests to the API. |
+
+To use the full card data, set `RELIQUARY_CARD_DATA` to a folder with the files of [the card data guide](card-data.md).
 
 ## Run several instances at the same time
 
@@ -67,9 +101,13 @@ Each instance needs a name and its own ports.
 Give the values on the command line, or in a second copy of the repository with its own `.env` file.
 
 ```shell
-RELIQUARY_INSTANCE=plugin-test RELIQUARY_POSTGRES_PORT=15433 RELIQUARY_REDIS_PORT=16380 just up
-RELIQUARY_INSTANCE=plugin-test just down
+export RELIQUARY_INSTANCE=plugin-test RELIQUARY_APP_PORT=8081 RELIQUARY_POSTGRES_PORT=15433 \
+  RELIQUARY_REDIS_PORT=16380 RELIQUARY_SMTP_PORT=11026 RELIQUARY_MAILPIT_PORT=18026
+just up
+just down
 ```
+
+The instances share the images, but each instance has its own containers and volumes.
 
 ## Check your work
 

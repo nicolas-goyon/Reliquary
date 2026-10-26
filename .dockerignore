@@ -1,0 +1,11 @@
+**/bin/
+**/obj/
+**/node_modules/
+**/dist/
+**/TestResults/
+.git/
+.claude/
+.env
+docs/
+tests/
+bench/

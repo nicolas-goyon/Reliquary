@@ -31,6 +31,7 @@ Each record gives the context, the decision and its consequences.
 | [0021](0021-card-search.md) | Card search with the Scryfall syntax in PostgreSQL | Accepted |
 | [0022](0022-authentication-and-api-keys.md) | Authentication, web sessions and API keys | Accepted |
 | [0023](0023-extension-registry.md) | Extension registry and core API version | Accepted |
+| [0024](0024-container-images.md) | Container images and the full local instance | Accepted |
 
 ## Open decisions
 
