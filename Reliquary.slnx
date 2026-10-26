@@ -15,6 +15,7 @@
   <Folder Name="/tests/">
     <Project Path="tests/Reliquary.Api.Tests/Reliquary.Api.Tests.csproj" />
     <Project Path="tests/Reliquary.Architecture.Tests/Reliquary.Architecture.Tests.csproj" />
+    <Project Path="tests/Reliquary.BuildingBlocks.Tests/Reliquary.BuildingBlocks.Tests.csproj" />
     <Project Path="tests/Reliquary.Platform.Tests/Reliquary.Platform.Tests.csproj" />
   </Folder>
 </Solution>

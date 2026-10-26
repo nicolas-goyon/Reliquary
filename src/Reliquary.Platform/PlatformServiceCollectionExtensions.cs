@@ -5,8 +5,12 @@ using Reliquary.BuildingBlocks.Data;
 using Reliquary.BuildingBlocks.Events;
 using Reliquary.Platform.Data;
 using Reliquary.Platform.Events;
+using Reliquary.Platform.Health;
 using Reliquary.Platform.Jobs;
 using Reliquary.Platform.Migrations;
+using ConfigurationOptions = StackExchange.Redis.ConfigurationOptions;
+using ConnectionMultiplexer = StackExchange.Redis.ConnectionMultiplexer;
+using IConnectionMultiplexer = StackExchange.Redis.IConnectionMultiplexer;
 
 namespace Reliquary.Platform;
 
@@ -38,12 +42,31 @@ public static class PlatformServiceCollectionExtensions
         // The migrations must complete before the other hosted services start, so this service comes first.
         services.Insert(0, ServiceDescriptor.Singleton<Microsoft.Extensions.Hosting.IHostedService, MigrateOnStartupService>());
 
-        foreach (var stream in PlatformMigrations.Sets)
+        foreach (var set in PlatformMigrations.Sets)
         {
-            services.AddSingleton(stream);
+            services.AddSingleton(set);
         }
 
+        services.TryAddSingleton<IConnectionMultiplexer>(_ => ConnectRedis(configuration));
+        services.TryAddSingleton(provider => new Lazy<IConnectionMultiplexer>(provider.GetRequiredService<IConnectionMultiplexer>));
+
+        services.AddHealthChecks()
+            .AddCheck<PostgresHealthCheck>("postgresql", tags: [HealthTags.Ready])
+            .AddCheck<RedisHealthCheck>("redis", tags: [HealthTags.Ready]);
+
         return services;
+    }
+
+    private static ConnectionMultiplexer ConnectRedis(IConfiguration configuration)
+    {
+        var connectionString = configuration.GetConnectionString("Redis") is { Length: > 0 } value
+            ? value
+            : throw new InvalidOperationException("The configuration has no connection string \"Redis\". Set ConnectionStrings:Redis.");
+
+        // The connection continues in the background when Redis is not available, so the host can start.
+        var options = ConfigurationOptions.Parse(connectionString);
+        options.AbortOnConnectFail = false;
+        return ConnectionMultiplexer.Connect(options);
     }
 
     /// <summary>

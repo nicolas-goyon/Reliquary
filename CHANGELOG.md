@@ -13,3 +13,5 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Local infrastructure with PostgreSQL and Redis, and CI for the backend, the web app and the documentation.
 - Database platform: connections through the shard directory, SQL migrations with DbUp, domain events through an outbox, and scheduled jobs.
 - Worker process and the command line tool `reliquary`, with the command `migrate`.
+- API conventions: problem details with stable error codes, paging with cursors, and JSON settings.
+- OpenTelemetry traces, metrics and logs, Prometheus endpoints, readiness checks for PostgreSQL and Redis, and an optional Grafana service.

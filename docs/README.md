@@ -19,6 +19,7 @@ All documents are in English and follow the [writing rules](contributing/writing
 | [Data model](architecture/data-model.md) | Card reference data and user data |
 | [Database](architecture/database.md) | Schemas, shard directory and migrations |
 | [Domain events](architecture/domain-events.md) | Event names, versions, outbox and consumers |
+| [API conventions](architecture/api-conventions.md) | Versions, JSON, paging, sort, filters and error codes |
 | [Extensions](architecture/extensions.md) | Plugins and modules |
 | [Technology stack](architecture/tech-stack.md) | Technologies and performance targets |
 | [Decision records](decisions/README.md) | The reasons for each important decision |
@@ -29,5 +30,6 @@ All documents are in English and follow the [writing rules](contributing/writing
 | --- | --- |
 | [Getting started](development/getting-started.md) | How to run Reliquary on your computer, and the code layout |
 | [Translation guide](development/translations.md) | Rules for the French and English interface texts |
+| [Observability](development/observability.md) | Traces, metrics, logs, health endpoints and Grafana |
 | [Writing style](contributing/writing-style.md) | The ASD-STE100 rules for all English text |
 | [Contributing guide](../CONTRIBUTING.md) | Branches, pull requests and checks |
