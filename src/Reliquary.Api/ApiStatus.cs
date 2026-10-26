@@ -1,4 +1,5 @@
 using System.Reflection;
+using Reliquary.Hosting;
 
 namespace Reliquary.Api;
 

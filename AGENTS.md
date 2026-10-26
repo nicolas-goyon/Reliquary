@@ -23,6 +23,10 @@ Human contributors follow the same rules in [CONTRIBUTING.md](CONTRIBUTING.md).
 | Path | Content |
 | --- | --- |
 | `src/Reliquary.Api` | Host of the public API |
+| `src/Reliquary.Worker` | Host of the outbox publisher and the scheduled jobs |
+| `src/Reliquary.Cli` | Command line tool for the administrators |
+| `src/Reliquary.Hosting` | Registers the platform and the core components in the hosts |
+| `src/Reliquary.Platform` | Shared infrastructure. The core components must not reference it. |
 | `src/Reliquary.BuildingBlocks` | Shared contracts for the core components |
 | `src/Components` | The core components: Accounts, Cards, Decks, Collection and Playtest |
 | `tests` | .NET tests, with the architecture tests |

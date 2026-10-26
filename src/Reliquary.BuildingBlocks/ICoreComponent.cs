@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Reliquary.BuildingBlocks.Data;
 
 namespace Reliquary.BuildingBlocks;
 
@@ -21,11 +22,25 @@ public interface ICoreComponent
     string Name { get; }
 
     /// <summary>
-    /// Adds the services of the core component to the service collection of the host.
+    /// Gets the migration sets of the core component: the SQL scripts that create and change its tables.
+    /// </summary>
+    IEnumerable<MigrationSet> MigrationSets => [];
+
+    /// <summary>
+    /// Adds the services of the core component to the service collection of each host.
     /// </summary>
     /// <param name="services">The service collection of the host.</param>
     /// <param name="configuration">The configuration of the host.</param>
     void AddServices(IServiceCollection services, IConfiguration configuration);
+
+    /// <summary>
+    /// Adds the services that only the worker process uses, for example scheduled jobs and event consumers.
+    /// </summary>
+    /// <param name="services">The service collection of the worker.</param>
+    /// <param name="configuration">The configuration of the worker.</param>
+    void AddWorkerServices(IServiceCollection services, IConfiguration configuration)
+    {
+    }
 
     /// <summary>
     /// Adds the endpoints of the core component to the public API.

@@ -18,6 +18,32 @@ jobs:
   backend:
     name: Backend
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: reliquary
+          POSTGRES_PASSWORD: reliquary
+          POSTGRES_DB: reliquary
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready --username=reliquary"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+      redis:
+        image: redis:8-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      RELIQUARY_TEST_POSTGRES: Host=localhost;Port=5432;Database=postgres;Username=reliquary;Password=reliquary
+      RELIQUARY_TEST_REDIS: localhost:6379
     steps:
       - uses: actions/checkout@v7
 

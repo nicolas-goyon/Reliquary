@@ -24,6 +24,9 @@ Each record gives the context, the decision and its consequences.
 | [0014](0014-product-scope.md) | Product scope | Accepted |
 | [0015](0015-frontend-react-vite-i18next.md) | Front end: React, Vite and i18next | Accepted |
 | [0016](0016-local-infrastructure.md) | Local infrastructure: Docker Compose and just | Accepted |
+| [0017](0017-data-access-and-migrations.md) | Data access with Npgsql and Dapper, migrations with DbUp | Accepted |
+| [0018](0018-domain-events-and-outbox.md) | Domain events through an outbox in each database | Accepted |
+| [0019](0019-hosts-and-scheduled-jobs.md) | Three hosts and scheduled jobs in the worker | Accepted |
 
 ## Open decisions
 
@@ -32,7 +35,6 @@ An ADR records the answer, and the pull request of the ADR closes the issue.
 
 | Issue | Question | Milestone |
 | --- | --- | --- |
-| [#14](https://github.com/nicolas-goyon/reliquary/issues/14) | Migration tool: DbUp or grate | M0 |
 | [#26](https://github.com/nicolas-goyon/reliquary/issues/26) | Access to the Scryfall Tagger data and to recommender.cards (spike) | M0 |
 | [#36](https://github.com/nicolas-goyon/reliquary/issues/36) | Analysis rules for cards with more than one face | M1 |
 | [#58](https://github.com/nicolas-goyon/reliquary/issues/58) | License of the plugin SDK: MIT or Apache 2.0 | M4 |

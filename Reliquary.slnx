@@ -7,9 +7,14 @@
     <Project Path="src/Components/Reliquary.Playtest/Reliquary.Playtest.csproj" />
     <Project Path="src/Reliquary.Api/Reliquary.Api.csproj" />
     <Project Path="src/Reliquary.BuildingBlocks/Reliquary.BuildingBlocks.csproj" />
+    <Project Path="src/Reliquary.Cli/Reliquary.Cli.csproj" />
+    <Project Path="src/Reliquary.Hosting/Reliquary.Hosting.csproj" />
+    <Project Path="src/Reliquary.Platform/Reliquary.Platform.csproj" />
+    <Project Path="src/Reliquary.Worker/Reliquary.Worker.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Reliquary.Api.Tests/Reliquary.Api.Tests.csproj" />
     <Project Path="tests/Reliquary.Architecture.Tests/Reliquary.Architecture.Tests.csproj" />
+    <Project Path="tests/Reliquary.Platform.Tests/Reliquary.Platform.Tests.csproj" />
   </Folder>
 </Solution>

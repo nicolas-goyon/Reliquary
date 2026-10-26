@@ -38,6 +38,41 @@ public sealed class CoreComponentTests
     }
 
     [Fact]
+    public void CoreComponentsUseNoReliquaryAssemblyExceptTheBuildingBlocks()
+    {
+        var allowed = typeof(ICoreComponent).Assembly.GetName().Name;
+
+        var violations = ComponentAssemblies
+            .SelectMany(assembly => assembly.GetReferencedAssemblies()
+                .Where(reference => reference.Name!.StartsWith("Reliquary.", StringComparison.Ordinal) && reference.Name != allowed)
+                .Select(reference => $"{assembly.GetName().Name} uses {reference.Name}"))
+            .ToList();
+
+        Assert.Empty(violations);
+    }
+
+    [Fact]
+    public void CoreComponentProjectsReferenceOnlyTheBuildingBlocks()
+    {
+        var componentsFolder = Path.Combine(RepositoryRoot.Path, "src", "Components");
+        var buildingBlocks = Path.Combine(RepositoryRoot.Path, "src", "Reliquary.BuildingBlocks", "Reliquary.BuildingBlocks.csproj");
+        var projectFiles = Directory.GetFiles(componentsFolder, "*.csproj", SearchOption.AllDirectories);
+
+        var violations = projectFiles
+            .SelectMany(projectFile => XDocument.Load(projectFile)
+                .Descendants("ProjectReference")
+                .Select(reference => Path.GetFullPath(Path.Combine(
+                    Path.GetDirectoryName(projectFile)!,
+                    reference.Attribute("Include")!.Value.Replace('\\', Path.DirectorySeparatorChar))))
+                .Where(target => target != buildingBlocks)
+                .Select(target => $"{Path.GetFileName(projectFile)} references {Path.GetFileName(target)}"))
+            .ToList();
+
+        Assert.NotEmpty(projectFiles);
+        Assert.Empty(violations);
+    }
+
+    [Fact]
     public void CoreComponentProjectsDoNotReferenceEachOther()
     {
         var componentsFolder = Path.Combine(RepositoryRoot.Path, "src", "Components");

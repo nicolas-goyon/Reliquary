@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+  <!-- The worker process: the outbox publisher, the scheduled jobs and the event consumers. -->
+  <ItemGroup>
+    <ProjectReference Include="..\Reliquary.Hosting\Reliquary.Hosting.csproj" />
+  </ItemGroup>
+</Project>

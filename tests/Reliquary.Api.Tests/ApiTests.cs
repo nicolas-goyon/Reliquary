@@ -1,10 +1,9 @@
 using System.Net;
 using System.Net.Http.Json;
-using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace Reliquary.Api.Tests;
 
-public sealed class ApiTests(WebApplicationFactory<Program> factory) : IClassFixture<WebApplicationFactory<Program>>
+public sealed class ApiTests(ApiFactory factory) : IClassFixture<ApiFactory>
 {
     [Fact]
     public async Task LivenessEndpointReturnsHealthy()
