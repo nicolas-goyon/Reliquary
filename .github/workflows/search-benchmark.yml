@@ -1,0 +1,86 @@
+name: Search benchmark
+
+# Measures the response time of the card search on the full card data (Scryfall default_cards).
+# See docs/development/search-benchmark.md.
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "src/Components/Reliquary.Cards/**"
+      - "bench/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: search-benchmark-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  benchmark:
+    name: Card search benchmark
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: reliquary
+          POSTGRES_PASSWORD: reliquary
+          POSTGRES_DB: reliquary
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready --username=reliquary"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      ConnectionStrings__Users: Host=localhost;Port=5432;Database=reliquary;Username=reliquary;Password=reliquary;Command Timeout=600
+      RELIQUARY_BENCH_DATABASE: Host=localhost;Port=5432;Database=reliquary;Username=reliquary;Password=reliquary
+      CARD_DATA: ${{ github.workspace }}/.card-data
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: Download the card data from Scryfall
+        run: |
+          mkdir -p "$CARD_DATA"
+          agent="Reliquary/0.1 (+https://github.com/nicolas-goyon/reliquary)"
+          curl --fail --silent --show-error --location --user-agent "$agent" --header "Accept: application/json" \
+            https://api.scryfall.com/bulk-data --output "$CARD_DATA/bulk-data.json"
+          download() {
+            uri=$(jq --raw-output --arg type "$1" '.data[] | select(.type == $type) | .jsonl_download_uri' "$CARD_DATA/bulk-data.json")
+            curl --fail --silent --show-error --location --user-agent "$agent" "$uri" --output "$CARD_DATA/$2"
+          }
+          download default_cards cards.jsonl.gz
+          download oracle_tags oracle_tags.jsonl.gz
+          download art_tags art_tags.jsonl.gz
+          curl --fail --silent --show-error --location --user-agent "$agent" --header "Accept: application/json" \
+            https://api.scryfall.com/sets --output "$CARD_DATA/sets.json"
+          rm "$CARD_DATA/bulk-data.json"
+          ls -l "$CARD_DATA"
+
+      - name: Build
+        run: dotnet build --configuration Release
+
+      - name: Import the card data
+        env:
+          Cards__Import__Directory: ${{ env.CARD_DATA }}
+        run: |
+          dotnet run --no-build --configuration Release --project src/Reliquary.Cli -- migrate
+          dotnet run --no-build --configuration Release --project src/Reliquary.Cli -- jobs run cards.import --force
+
+      - name: Run the benchmark
+        run: dotnet run --no-build --configuration Release --project bench/Reliquary.Cards.Benchmark -- --output "$RUNNER_TEMP/search-benchmark.md"
+
+      - name: Write the summary
+        if: always()
+        run: |
+          if [ -f "$RUNNER_TEMP/search-benchmark.md" ]; then
+            cat "$RUNNER_TEMP/search-benchmark.md" >> "$GITHUB_STEP_SUMMARY"
+          fi

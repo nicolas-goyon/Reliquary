@@ -1,4 +1,7 @@
 <Solution>
+  <Folder Name="/bench/">
+    <Project Path="bench/Reliquary.Cards.Benchmark/Reliquary.Cards.Benchmark.csproj" />
+  </Folder>
   <Folder Name="/src/">
     <Project Path="src/Components/Reliquary.Accounts/Reliquary.Accounts.csproj" />
     <Project Path="src/Components/Reliquary.Cards/Reliquary.Cards.csproj" />
