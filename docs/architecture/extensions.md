@@ -179,9 +179,27 @@ The core prepares these seven items:
 7. **Activation for each instance**: a register of the installed extensions.
    For each extension, the register gives an activation flag and the minimum core version.
 
+## Extension registry
+
+The extension registry is ready from milestone M0, before any extension can run.
+[ADR 0023](../decisions/0023-extension-registry.md) gives the reasons for the design.
+
+- The administrator installs an extension from its manifest with `PUT /api/v1/admin/extensions/{id}`.
+  The registry does not enable a new extension.
+- The administrator enables or disables an extension, or changes its settings, with `PATCH /api/v1/admin/extensions/{id}`.
+- The field `coreApi` of the manifest gives the versions of the core API that the extension supports, in the syntax of npm, for example `^1.0`.
+  The API refuses an extension that does not support the current version, with the error `core_version_not_supported`.
+  After an update of the core, an incompatible extension stays in the registry, but it does not run.
+- `GET /api/v1/extensions` lists the enabled extensions and the current version of the core API.
+  For an authenticated user, the field `active` tells if the extension runs for the user.
+- A module runs when the instance enables it.
+  A plugin runs when the instance enables it and the user activates it with `PUT /api/v1/me/extensions/{id}`.
+- `GET /api/v1/status` also gives the version of the core API.
+
 ## Related decisions
 
 - [ADR 0002](../decisions/0002-license-agpl-3.0.md): the license of the core, and the open question about the license of the plugin SDK
 - [ADR 0007](../decisions/0007-modular-monolith.md): modular monolith for the core
 - [ADR 0010](../decisions/0010-plugins-and-modules.md): two extension levels, plugins and modules
 - [ADR 0011](../decisions/0011-plugin-network-allowlist.md): plugin network access through a declared list of domains
+- [ADR 0023](../decisions/0023-extension-registry.md): the extension registry and the version of the core API

@@ -91,6 +91,6 @@ Reliquary can split all the user data by `owner_id`.
 | Tag, Folder | Global tags, or local tags of one deck. Nested folders. | — |
 | CollectionShare | Owner, guest, locations, rights (read, difference or edit) | In the model from the start. A later milestone delivers the feature. |
 | ApiKey, UsageCounter | API keys, daily request counters | Basis of the quotas |
-| ExtensionInstall | Type (plugin or module), version, permissions, slots, settings | Plugin: one for each user. Module: one for each instance. |
+| ExtensionInstall, PluginActivation | Kind (plugin or module), version, core API range, permissions, slots, settings, activation flag. The activation of a plugin for each user. | The instance installs each extension one time (`users.extensions`). Each user activates the plugins (`content.plugin_activations`). |
 | AccountLink | User, external site, extension, authentication method, encrypted access tokens, state, last synchronization, consent to act while the user is not connected | Source of the **Linked accounts** panel |
 | DomainEvent (outbox) | Event type, version, `owner_id`, payload, date | Basis of the event bus for modules |

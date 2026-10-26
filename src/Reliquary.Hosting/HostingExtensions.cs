@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Reliquary.Platform;
+using Reliquary.Platform.Extensions;
 
 namespace Reliquary.Hosting;
 
@@ -68,6 +69,8 @@ public static class HostingExtensions
         {
             component.MapEndpoints(api);
         }
+
+        api.MapExtensionEndpoints();
 
         return api;
     }

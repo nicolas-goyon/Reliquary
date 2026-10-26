@@ -9,7 +9,8 @@ namespace Reliquary.Api;
 /// <param name="Name">The name of the application.</param>
 /// <param name="Version">The version of the API host.</param>
 /// <param name="Components">The names of the registered core components.</param>
-internal sealed record ApiStatus(string Name, string Version, IReadOnlyList<string> Components)
+/// <param name="CoreApi">The version of the core API for the extensions.</param>
+internal sealed record ApiStatus(string Name, string Version, IReadOnlyList<string> Components, string CoreApi)
 {
     /// <summary>
     /// Creates the status from the API assembly and the registered core components.
@@ -28,6 +29,6 @@ internal sealed record ApiStatus(string Name, string Version, IReadOnlyList<stri
             version = version[..plusIndex];
         }
 
-        return new ApiStatus("Reliquary", version, [.. CoreComponents.All.Select(component => component.Name)]);
+        return new ApiStatus("Reliquary", version, [.. CoreComponents.All.Select(component => component.Name)], BuildingBlocks.Versioning.CoreApi.Version.ToString());
     }
 }

@@ -29,6 +29,7 @@ Each record gives the context, the decision and its consequences.
 | [0019](0019-hosts-and-scheduled-jobs.md) | Three hosts and scheduled jobs in the worker | Accepted |
 | [0020](0020-card-data-import.md) | Import of the card data from the bulk files | Accepted |
 | [0022](0022-authentication-and-api-keys.md) | Authentication, web sessions and API keys | Accepted |
+| [0023](0023-extension-registry.md) | Extension registry and core API version | Accepted |
 
 ## Open decisions
 

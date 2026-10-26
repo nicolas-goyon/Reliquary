@@ -92,6 +92,8 @@ The French column gives the term for the French interface.
 | Slot | A named place in the web interface. The core, plugins and modules add interface elements to slots. | Slot |
 | Linked account | A connection between a Reliquary account and an account on an external site. Plugins and modules use linked accounts. | Compte lié |
 | Plugin catalog | The public list of plugins that the project reviewed and signed. | Catalogue de plugins |
+| Extension registry | The list of the extensions that the administrator installed on the instance, with an activation flag for each extension. | Registre des extensions |
+| Core API version | The version of the API that the core gives to extensions. A manifest gives the versions that the extension supports, for example `^1.0`. | Version de l'API du cœur |
 
 ## Platform
 

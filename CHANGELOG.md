@@ -23,3 +23,4 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
   Web sessions use a short access token and a refresh cookie.
 - Personal API keys with daily quotas for each key and each account. The quotas use Redis, so all the API replicas share them.
 - Emails in English and French, and a Mailpit service in the local infrastructure.
+- Extension registry: the administrator installs, enables and uninstalls extensions. The API refuses an extension for another version of the core API.
