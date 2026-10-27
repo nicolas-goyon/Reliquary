@@ -425,5 +425,47 @@
     "removeLines": "Retirer les lignes",
     "removeConfirm_one": "Retirer {{count}} ligne du deck ?",
     "removeConfirm_other": "Retirer {{count}} lignes du deck ?"
+  },
+  "explore": {
+    "title": "Explorer les decks publics",
+    "views": "Listes de decks",
+    "view": {
+      "search": "Recherche",
+      "favorites": "Mes favoris",
+      "following": "Auteurs suivis"
+    },
+    "name": "Nom du deck",
+    "commander": "Commandant",
+    "card": "Carte du deck",
+    "search": "Rechercher",
+    "clear": "Effacer les filtres",
+    "loading": "Chargement des decks…",
+    "empty": "Aucun deck ne correspond à la recherche.",
+    "by": "Par",
+    "cards_one": "{{count}} carte",
+    "cards_other": "{{count}} cartes",
+    "copies_one": "{{count}} copie",
+    "copies_other": "{{count}} copies",
+    "favorites_one": "{{count}} favori",
+    "favorites_other": "{{count}} favoris",
+    "sorts": {
+      "recent": "Les plus récents",
+      "popular": "Les plus populaires"
+    }
+  },
+  "author": {
+    "follow": "Suivre",
+    "unfollow": "Ne plus suivre",
+    "decks_one": "{{count}} deck public",
+    "decks_other": "{{count}} decks publics",
+    "followers_one": "{{count}} abonné",
+    "followers_other": "{{count}} abonnés",
+    "publicDecks": "Decks publics"
+  },
+  "social": {
+    "favorite": "Ajouter à mes favoris",
+    "unfavorite": "Retirer de mes favoris",
+    "share": "Copier le lien",
+    "copied": "Lien copié."
   }
 }

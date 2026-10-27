@@ -425,5 +425,47 @@
     "removeLines": "Remove the lines",
     "removeConfirm_one": "Remove {{count}} line from the deck?",
     "removeConfirm_other": "Remove {{count}} lines from the deck?"
+  },
+  "explore": {
+    "title": "Explore the public decks",
+    "views": "Deck lists",
+    "view": {
+      "search": "Search",
+      "favorites": "My favorites",
+      "following": "Followed authors"
+    },
+    "name": "Deck name",
+    "commander": "Commander",
+    "card": "Card in the deck",
+    "search": "Search",
+    "clear": "Clear the filters",
+    "loading": "The application loads the decks.",
+    "empty": "No deck agrees with the search.",
+    "by": "By",
+    "cards_one": "{{count}} card",
+    "cards_other": "{{count}} cards",
+    "copies_one": "{{count}} copy",
+    "copies_other": "{{count}} copies",
+    "favorites_one": "{{count}} favorite",
+    "favorites_other": "{{count}} favorites",
+    "sorts": {
+      "recent": "Most recent",
+      "popular": "Most popular"
+    }
+  },
+  "author": {
+    "follow": "Follow",
+    "unfollow": "Stop following",
+    "decks_one": "{{count}} public deck",
+    "decks_other": "{{count}} public decks",
+    "followers_one": "{{count}} follower",
+    "followers_other": "{{count}} followers",
+    "publicDecks": "Public decks"
+  },
+  "social": {
+    "favorite": "Add to my favorites",
+    "unfavorite": "Remove from my favorites",
+    "share": "Copy the link",
+    "copied": "The application copied the link."
   }
 }
