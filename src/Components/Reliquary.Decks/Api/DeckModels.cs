@@ -77,6 +77,29 @@ public sealed record UpdateLineRequest(
     IReadOnlyList<string>? GlobalTags = null,
     IReadOnlyList<string>? Categories = null);
 
+/// <summary>A group action on several lines of one deck.</summary>
+/// <param name="LineIds">The lines. They must all be lines of the deck.</param>
+/// <param name="Action">The action: <c>move</c>, <c>tag</c>, <c>untag</c>, <c>printing</c>, <c>quantity</c> or <c>remove</c>.</param>
+/// <param name="Zone">The zone of the action <c>move</c>.</param>
+/// <param name="Tags">The local tags to add or to remove, by name, for the actions <c>tag</c> and <c>untag</c>.</param>
+/// <param name="GlobalTags">The global tags to add or to remove, by name, for the actions <c>tag</c> and <c>untag</c>.</param>
+/// <param name="Categories">The categories to add or to remove, for the actions <c>tag</c> and <c>untag</c>.</param>
+/// <param name="QuantityDelta">For the action <c>quantity</c>: the number of cards to add to each line, from -999 to 999, but not 0. A line with a quantity of 0 or less goes out of the deck.</param>
+/// <param name="Finish">For the action <c>printing</c>: the new finish of each line.</param>
+/// <param name="ClearPrinting">For the action <c>printing</c>: set to <see langword="true"/> to remove the printing of each line, so that the default printing applies.</param>
+/// <param name="ExpectedVersion">The version that the client read. The API refuses the change when the deck has another version.</param>
+public sealed record LineGroupRequest(
+    IReadOnlyList<Guid>? LineIds,
+    string? Action,
+    string? Zone = null,
+    IReadOnlyList<string>? Tags = null,
+    IReadOnlyList<string>? GlobalTags = null,
+    IReadOnlyList<string>? Categories = null,
+    int? QuantityDelta = null,
+    string? Finish = null,
+    bool? ClearPrinting = null,
+    int? ExpectedVersion = null);
+
 /// <summary>A deck with its lines, and the cards and printings of the lines.</summary>
 /// <param name="Id">The ID of the deck.</param>
 /// <param name="OwnerId">The owner of the deck.</param>

@@ -22,6 +22,7 @@ The OpenAPI document gives the bodies and the responses.
 | `POST /decks/{id}/lines` | Owner | Adds cards. |
 | `PUT /decks/{id}/lines` | Owner | Replaces all the lines. |
 | `PATCH /decks/{id}/lines/{lineId}` | Owner | Changes a line. A quantity of 0 removes the line. |
+| `POST /decks/{id}/lines/group` | Owner | Applies one action to several lines in one change. See [group actions on lines](#group-actions-on-lines). |
 | `DELETE /decks/{id}/lines/{lineId}` | Owner | Removes a line. |
 | `GET /decks/{id}/text` | Like the deck | Gets the lines in the [deck text format](../development/deck-text-format.md). |
 | `PUT /decks/{id}/text` | Owner | Replaces the lines from a text. |
@@ -145,3 +146,28 @@ The query of `GET /public-decks` accepts these parameters:
 | `sort` | `recent` (default) or `popular`: the number of copies by other users plus the number of favorites |
 
 A visitor with no account opens an unlisted or public deck with its link: `GET /decks/{id}`.
+
+## Group actions on lines
+
+The table mode of the deck page uses `POST /decks/{id}/lines/group` to change many lines in one request.
+The body gives the line IDs in `lineIds`, 1,000 or fewer, and one action:
+
+| Action | Fields | Effect |
+| --- | --- | --- |
+| `move` | `zone` | Moves the lines to the zone. |
+| `tag` | `tags`, `globalTags`, `categories` | Adds the local tags, the global tags and the categories to each line. The API creates the tags that do not exist. |
+| `untag` | `tags`, `globalTags`, `categories` | Removes the local tags, the global tags and the categories from each line. |
+| `printing` | `clearPrinting`, `finish` | `clearPrinting: true` removes the printing, so the default printing of the card applies. `finish` sets the finish. |
+| `quantity` | `quantityDelta` | Adds the number to the quantity of each line, from -999 to 999. A line with a quantity of 0 or less goes out of the deck. |
+| `remove` | — | Removes the lines from the deck. |
+
+The API applies the action to all the lines in one transaction.
+The deck gets one new version, and the outbox gets one `decks.deck.updated` event.
+With `expectedVersion`, the API refuses the change when the deck has another version, with the status 409.
+
+After the action, two lines can have the same zone, card, printing and finish.
+The API then joins them into one line, like `POST /decks/{id}/lines`.
+The line that the action did not change keeps its ID, and it gets the sum of the quantities, the tags and the categories.
+
+When a line ID is not a line of the deck, the API changes nothing and gives the status 404.
+An incorrect field gives the status 400 with the list of field errors.
