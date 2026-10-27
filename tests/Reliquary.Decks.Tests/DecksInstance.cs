@@ -63,6 +63,17 @@ public sealed class DecksInstance : IAsyncDisposable
     /// </summary>
     public async Task PublishEventsAsync()
     {
+        await EnsureWorkerAsync();
+        var publisher = worker!.GetRequiredService<OutboxPublisher>();
+        await publisher.PublishPendingAsync(TestContext.Current.CancellationToken);
+    }
+
+    /// <summary>Gets the services of the worker host, on the same database as the API.</summary>
+    public IServiceProvider Worker => worker ?? throw new InvalidOperationException("Call EnsureWorkerAsync first.");
+
+    /// <summary>Builds the services of the worker host one time.</summary>
+    public async Task EnsureWorkerAsync()
+    {
         await GetAsync();
         await gate.WaitAsync(TestContext.Current.CancellationToken);
         try
@@ -86,9 +97,6 @@ public sealed class DecksInstance : IAsyncDisposable
         {
             gate.Release();
         }
-
-        var publisher = worker.GetRequiredService<OutboxPublisher>();
-        await publisher.PublishPendingAsync(TestContext.Current.CancellationToken);
     }
 
     /// <summary>

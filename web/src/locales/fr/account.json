@@ -36,5 +36,27 @@
     "newName": "Nom de la nouvelle clé",
     "create": "Créer une clé",
     "createdOnce": "La clé « {{name}} » est prête. Copiez-la maintenant : l’application ne l’affiche qu’une seule fois."
+  },
+  "dataExport": {
+    "title": "Exporter vos données",
+    "description": "Obtenez toutes les données de votre compte dans une archive ZIP : votre compte, vos decks en fichiers texte et JSON, vos dossiers, vos tags, vos favoris et les auteurs que vous suivez. L’archive reste disponible 7 jours.",
+    "request": "Demander un export",
+    "pending": "Le serveur prépare l’archive. Revenez dans quelques minutes.",
+    "download": "Télécharger l’archive",
+    "expires": "(disponible jusqu’au {{date}})",
+    "status": {
+      "pending": "En cours",
+      "ready": "Prête",
+      "failed": "Échec. Demandez un nouvel export."
+    }
+  },
+  "deletion": {
+    "title": "Supprimer votre compte",
+    "description": "Reliquary supprime votre compte et toutes vos données 7 jours après votre demande. Vous pouvez annuler la demande pendant ces 7 jours. Exportez d’abord vos données si vous voulez les garder.",
+    "password": "Mot de passe",
+    "submit": "Supprimer mon compte",
+    "confirm": "Supprimer votre compte et toutes vos données dans 7 jours ?",
+    "scheduled": "Reliquary supprimera votre compte et toutes vos données le {{date}}.",
+    "cancel": "Annuler la suppression"
   }
 }

@@ -123,6 +123,22 @@ internal sealed class AccountService(
         return true;
     }
 
+    /// <summary>
+    /// Checks the password of an account before a sensitive operation. An account with no password needs no password.
+    /// </summary>
+    /// <returns><see langword="true"/> when the password is correct or not necessary.</returns>
+    public async Task<bool> CheckPasswordAsync(Guid accountId, string? password, CancellationToken cancellationToken)
+    {
+        var account = await store.FindByIdAsync(accountId, cancellationToken);
+        if (account is null)
+        {
+            return false;
+        }
+
+        return account.PasswordHash is null
+            || (password is not null && Hasher.VerifyHashedPassword(account, account.PasswordHash, password) != PasswordVerificationResult.Failed);
+    }
+
     public async Task ResendEmailCheckAsync(string email, CancellationToken cancellationToken)
     {
         var account = await store.FindByEmailAsync(AccountValidation.NormalizeEmail(email), cancellationToken);

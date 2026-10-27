@@ -36,5 +36,27 @@
     "newName": "Name of the new key",
     "create": "Create a key",
     "createdOnce": "The key \"{{name}}\" is ready. Copy it now: the application shows it one time only."
+  },
+  "dataExport": {
+    "title": "Export your data",
+    "description": "Get all the data of your account in a ZIP archive. The archive contains your account, your decks in text and JSON files, your folders, your tags, your favorites and the authors that you follow. It stays available for 7 days.",
+    "request": "Ask for an export",
+    "pending": "The server prepares the archive. Come back in a few minutes.",
+    "download": "Download the archive",
+    "expires": "(available until {{date}})",
+    "status": {
+      "pending": "In progress",
+      "ready": "Ready",
+      "failed": "Failed. Ask for a new export."
+    }
+  },
+  "deletion": {
+    "title": "Delete your account",
+    "description": "Reliquary deletes your account and all your data 7 days after your request. You can cancel the request during these 7 days. Export your data first if you want to keep it.",
+    "password": "Password",
+    "submit": "Delete my account",
+    "confirm": "Delete your account and all your data in 7 days?",
+    "scheduled": "Reliquary deletes your account and all your data on {{date}}.",
+    "cancel": "Cancel the deletion"
   }
 }

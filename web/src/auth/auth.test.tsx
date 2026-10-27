@@ -22,6 +22,8 @@ describe('authentication', () => {
       'POST /auth/sign-in': ({ body }) => ((body as { password: string }).password === 'correct horse battery' ? session() : problem(401, 'invalid_credentials')),
       'GET /me': () => Response.json({ account: testAccount, externalLogins: ['github'] }),
       'GET /me/api-keys': () => Response.json([]),
+      'GET /me/exports': () => Response.json([]),
+      'GET /me/deletion': () => Response.json({ requestedAt: null, deleteAfter: null }),
     })
     const user = userEvent.setup()
     render(<App />)
@@ -56,6 +58,8 @@ describe('authentication', () => {
     const calls = mockApi({
       'POST /auth/refresh': () => session(`token-${++refreshes}`),
       'GET /me': () => Response.json({ account: testAccount, externalLogins: [] }),
+      'GET /me/exports': () => Response.json([]),
+      'GET /me/deletion': () => Response.json({ requestedAt: null, deleteAfter: null }),
       'GET /me/api-keys': ({ headers }) => {
         keyRequests += 1
         return headers.Authorization === 'Bearer token-1' ? problem(401, 'invalid_authentication') : Response.json([])

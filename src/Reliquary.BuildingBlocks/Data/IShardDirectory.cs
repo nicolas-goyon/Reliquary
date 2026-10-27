@@ -24,6 +24,15 @@ public interface IShardDirectory
     /// <param name="cancellationToken">A token that stops the operation.</param>
     /// <returns>The assignment of the owner.</returns>
     Task<ShardAssignment> AssignAsync(Guid ownerId, NpgsqlTransaction transaction, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Removes the assignment of a deleted owner, in the transaction of the caller.
+    /// </summary>
+    /// <param name="ownerId">The owner.</param>
+    /// <param name="transaction">A transaction on the database of the <c>users</c> schema.</param>
+    /// <param name="cancellationToken">A token that stops the operation.</param>
+    /// <returns>A task that completes when the directory has no entry for the owner.</returns>
+    Task RemoveAsync(Guid ownerId, NpgsqlTransaction transaction, CancellationToken cancellationToken = default);
 }
 
 /// <summary>

@@ -60,5 +60,13 @@ internal sealed class ShardDirectory(DataSources sources, IMemoryCache cache, IO
             new CommandDefinition(AssignSql, new { ownerId, shard }, transaction, cancellationToken: cancellationToken));
     }
 
+    public async Task RemoveAsync(Guid ownerId, NpgsqlTransaction transaction, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(transaction);
+        await transaction.Connection!.ExecuteAsync(new CommandDefinition(
+            "delete from users.shard_directory where owner_id = @ownerId", new { ownerId }, transaction, cancellationToken: cancellationToken));
+        cache.Remove(CacheKey(ownerId));
+    }
+
     private static string CacheKey(Guid ownerId) => $"shard-directory:{ownerId}";
 }

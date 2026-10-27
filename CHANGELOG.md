@@ -7,6 +7,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Added
 
+- The export of all the data of an account as a ZIP archive, and the deletion of an account after 7 days (ADR 0032).
 - Repository rules, the English documentation with checks for ASD-STE100, and the backlog of the roadmap.
 - .NET 10 solution skeleton with the five core components and the architecture tests.
 - Web app skeleton with a French and English interface.

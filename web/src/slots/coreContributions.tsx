@@ -1,5 +1,6 @@
 import { AccountMenu, MainNavigation } from '../components/Navigation'
 import { ApiKeysPanel, LoginsPanel, PasswordPanel, ProfilePanel } from '../account/AccountPanels'
+import { AccountDeletionPanel, DataExportPanel } from '../account/PersonalDataPanels'
 import { CommanderPanel, CurvePanel, DistributionPanel, DrawsPanel, ManaPanel } from '../components/analysis/AnalysisPanels'
 import i18n from '../i18n'
 import type { SlotRegistry } from './registry'
@@ -15,6 +16,8 @@ export function registerCoreContributions(registry: SlotRegistry): void {
   registry.register('account.page', { id: 'core.password', order: 20, render: ({ account }) => <PasswordPanel key={account.id} account={account} /> })
   registry.register('account.page', { id: 'core.logins', order: 30, render: () => <LoginsPanel /> })
   registry.register('account.page', { id: 'core.apiKeys', order: 40, render: () => <ApiKeysPanel /> })
+  registry.register('account.page', { id: 'core.dataExport', order: 50, render: () => <DataExportPanel /> })
+  registry.register('account.page', { id: 'core.deletion', order: 60, render: () => <AccountDeletionPanel /> })
 
   // The tabs of the deck analysis. The tab list calls the titles in each render, so the titles follow the language.
   registry.register('analysis.tabs', { id: 'core.curve', order: 10, title: () => i18n.t('decks:analysis.tabs.curve'), render: (context) => <CurvePanel {...context} /> })

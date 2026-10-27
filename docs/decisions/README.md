@@ -37,6 +37,7 @@ Each record gives the context, the decision and its consequences.
 | [0027](0027-deck-analysis.md) | Deck analysis on the server, with rules and tables as data in code | Accepted |
 | [0028](0028-card-recommendations-source.md) | Source of the card recommendations: recommander.cards | Accepted |
 | [0029](0029-public-deck-read-model.md) | Read model of the public decks in the users database, filled by the domain events | Accepted |
+| [0032](0032-personal-data.md) | Export and deletion of the personal data through providers of each core component | Accepted |
 
 ## Open decisions
 

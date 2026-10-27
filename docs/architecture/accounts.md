@@ -113,6 +113,19 @@ The API uses the language of the account.
 With no SMTP server in the settings, the API writes each email to the log.
 The local infrastructure has Mailpit: open `http://localhost:18025` to read the emails.
 
+## Personal data
+
+[ADR 0032](../decisions/0032-personal-data.md) describes the export and the deletion of the data of an account.
+
+| Endpoint | Effect |
+| --- | --- |
+| `GET /me/exports` | Lists the recent exports of the account. |
+| `POST /me/exports` | Asks for a ZIP archive of all the data. The worker makes it in one minute or less. |
+| `GET /me/exports/{id}/archive` | Downloads the archive. It stays available for 7 days. |
+| `GET /me/deletion` | Gets the deletion request. |
+| `POST /me/deletion` | Asks for the deletion of the account, with the password. The worker deletes the account and all its data after 7 days. |
+| `DELETE /me/deletion` | Cancels the deletion request. |
+
 ## Settings
 
 | Setting | Default | Meaning |
