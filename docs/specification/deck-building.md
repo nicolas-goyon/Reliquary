@@ -9,10 +9,13 @@ Terms follow the [glossary](../glossary.md).
 - Card search accepts the full Scryfall syntax, including `lang:fr`, `is:`, `otag:`, `art:`, `prefer:`, operators and regular expressions.
 - A user can search by localized name, in French and in other languages.
 - Visual filters and autocomplete help the users who do not know the syntax.
-- Reliquary recommends cards for the context of each deck:
-  - EDHREC gives the popular cards for the commander of the deck, and synergy information.
-  - An optional source is [recommander.cards](https://recommander.cards), through its public API.
+- Reliquary recommends cards for the commanders of each deck:
+  - The source is [recommander.cards](https://recommander.cards), through its public API.
     Its terms allow personal, non-commercial use, and ask for a credit to the source.
+  - The administrator enables the recommendations. They are off by default.
+  - The recommendations do not show the cards that the deck contains.
+  - The owner adds a recommended card to the main deck or to the considering zone in one action.
+  - [ADR 0028](../decisions/0028-card-recommendations-source.md) tells why Reliquary does not use EDHREC.
 
 ## Editing
 

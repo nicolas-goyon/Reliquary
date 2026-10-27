@@ -32,3 +32,4 @@ Public sources give this data, and each source has its own terms.
   The feasibility of auto-tag is still open.
 - [ADR 0020](0020-card-data-import.md) gives the answers of the spike [#26](https://github.com/nicolas-goyon/reliquary/issues/26): Scryfall publishes the Oracle tags as bulk data, and recommander.cards has a public API.
 - The [data model](../architecture/data-model.md) gives the entities of the card data.
+- [ADR 0028](0028-card-recommendations-source.md) replaces the decision about EDHREC: the terms of EDHREC forbid automated requests, so the recommendations use recommander.cards.
