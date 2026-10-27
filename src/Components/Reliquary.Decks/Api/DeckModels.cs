@@ -240,3 +240,22 @@ public sealed record DeckLegalityResponse(string Format, bool Legal, IReadOnlyLi
 /// <param name="Visibility">The visibility of the copy. The default is <c>private</c>.</param>
 /// <param name="FolderId">The folder of the copy, or <see langword="null"/>.</param>
 public sealed record CopyDeckRequest(string? Name, string? Visibility, Guid? FolderId);
+
+/// <summary>A file to import as a new deck.</summary>
+/// <param name="Format">The format of the file: <c>text</c>, <c>moxfield</c>, <c>mtga</c>, <c>mtgo</c>, <c>dek</c> or <c>archidekt</c>.</param>
+/// <param name="Content">The content of the file.</param>
+/// <param name="Name">The name of the new deck.</param>
+/// <param name="DeckFormat">The format of the new deck. The default is <c>commander</c>.</param>
+/// <param name="Visibility">The visibility of the new deck. The default is <c>private</c>.</param>
+public sealed record ImportDeckRequest(string? Format, string? Content, string? Name, string? DeckFormat, string? Visibility);
+
+/// <summary>The result of an import.</summary>
+/// <param name="Deck">The new deck.</param>
+/// <param name="Warnings">The lines that the import changed, for example a printing that it did not find. The line stays in the deck with no printing.</param>
+public sealed record ImportDeckResponse(DeckResponse Deck, IReadOnlyList<DeckTextLineError> Warnings);
+
+/// <summary>A deck as a file.</summary>
+/// <param name="FileName">The name of the file.</param>
+/// <param name="ContentType">The media type of the file.</param>
+/// <param name="Content">The content of the file.</param>
+public sealed record ExportDeckResponse(string FileName, string ContentType, string Content);

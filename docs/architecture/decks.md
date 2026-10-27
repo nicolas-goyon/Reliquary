@@ -22,6 +22,8 @@ The OpenAPI document gives the bodies and the responses.
 | `DELETE /decks/{id}/lines/{lineId}` | Owner | Removes a line. |
 | `GET /decks/{id}/text` | Like the deck | Gets the lines in the [deck text format](../development/deck-text-format.md). |
 | `PUT /decks/{id}/text` | Owner | Replaces the lines from a text. |
+| `POST /decks/import` | User | Makes a deck from a file of another tool. See [deck import and export](../development/deck-import-export.md). |
+| `GET /decks/{id}/export` | Like the deck | Gives the deck as a file of another tool. |
 | `POST /decks/{id}/copy` | User who can see the deck | Copies the deck into a new deck of the user. |
 | `GET /decks/{id}/legality` | Like the deck | Checks the legality of the deck in its format. |
 | `GET /tags` | User | Lists the global tags of the user. |

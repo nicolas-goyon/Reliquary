@@ -6,6 +6,7 @@ using Reliquary.BuildingBlocks;
 using Reliquary.BuildingBlocks.Data;
 using Reliquary.Decks.Api;
 using Reliquary.Decks.Data;
+using Reliquary.Decks.Exchange;
 using Reliquary.Decks.Text;
 
 namespace Reliquary.Decks;
@@ -33,6 +34,7 @@ public sealed class DecksComponent : ICoreComponent
         services.AddSingleton<DeckService>();
         services.AddSingleton<TagService>();
         services.AddSingleton<DeckTextService>();
+        services.AddSingleton<DeckExchangeService>();
     }
 
     /// <inheritdoc />
