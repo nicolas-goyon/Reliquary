@@ -5,6 +5,7 @@ import { ApiError, apiRequest } from '../api/client'
 import { formatKey, lineImage, zones, type Deck, type DeckLegality, type DeckLine, type DeckTextLineError, type Visibility, type Zone } from '../api/decks'
 import { useAuth } from '../auth/session'
 import { AnalysisSection } from '../components/analysis/AnalysisSection'
+import { AutoTagDialog } from '../components/auto-tag/AutoTagDialog'
 import { CardImage } from '../components/CardImage'
 import { Combobox, type Suggestion } from '../components/Combobox'
 import { FormatSelect, VisibilitySelect } from '../components/DeckFields'
@@ -57,6 +58,7 @@ function DeckEditor({ deck, onChange }: EditorProps) {
   const [mode, setMode] = useState<'visual' | 'text' | 'table'>('visual')
   const [copying, setCopying] = useState(false)
   const [exporting, setExporting] = useState(false)
+  const [autoTagging, setAutoTagging] = useState(false)
   const [legality, setLegality] = useState<DeckLegality | null>(null)
   const owner = deck.isOwner
 
@@ -102,6 +104,11 @@ function DeckEditor({ deck, onChange }: EditorProps) {
               {t(`editor.${value}Mode`)}
             </button>
           ))}
+        {owner && (
+          <button type="button" onClick={() => setAutoTagging(true)}>
+            {t('autoTag.open')}
+          </button>
+        )}
         <button type="button" onClick={() => setCopying(true)}>
           {t('editor.copy')}
         </button>
@@ -117,6 +124,7 @@ function DeckEditor({ deck, onChange }: EditorProps) {
       </div>
       {copying && <CopyDialog deck={deck} onClose={() => setCopying(false)} />}
       {exporting && <DeckExportDialog deckId={deck.id} onClose={() => setExporting(false)} />}
+      {autoTagging && owner && <AutoTagDialog deck={deck} onApplied={onChange} onClose={() => setAutoTagging(false)} />}
       <ErrorAlert error={error} />
       {legality && <LegalityPanel deck={deck} legality={legality} />}
       {owner && <RecommendationsPanel deck={deck} onAdd={(oracleId, zone) => change('/lines', 'POST', { lines: [{ oracleId, zone }] })} />}

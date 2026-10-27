@@ -51,6 +51,42 @@
     "win_condition": "Win condition",
     "protection": "Protection"
   },
+  "autoTag": {
+    "open": "Auto-tag",
+    "title": "Auto-tag",
+    "help": "Auto-tag suggests the categories of each card from the Scryfall tags and the card text. Select the lines to change. Change the categories if necessary, then apply.",
+    "loading": "Loading the suggestions…",
+    "empty": "The deck has no card to tag.",
+    "noChange": "Each line already has the suggested categories.",
+    "onlyChanges": "Show only the changes",
+    "selectChanges": "Select all the changes",
+    "selectNone": "Clear the selection",
+    "tableCaption": "Suggested categories of the cards",
+    "columns": {
+      "apply": "Apply",
+      "card": "Card",
+      "current": "Current categories",
+      "suggested": "Suggested categories",
+      "reason": "Reason"
+    },
+    "select": "Apply the suggestion for {{name}}",
+    "edit": "Change the categories of {{name}}",
+    "editorLegend": "Categories of {{name}}",
+    "noCategory": "No category",
+    "source": {
+      "user_rule": "Your earlier choice",
+      "oracle_tag": "Scryfall tag",
+      "text_rule": "Card text",
+      "none": "No suggestion"
+    },
+    "reason": {
+      "oracleTag": "Scryfall tag: {{tag}}"
+    },
+    "ruleHint": "Each change of a suggestion becomes your rule for this card. The next suggestions use your rules first.",
+    "conflict": "The deck changed after auto-tag read it. Close auto-tag and open it again.",
+    "apply_one": "Apply {{count}} change",
+    "apply_other": "Apply {{count}} changes"
+  },
   "actions": {
     "save": "Save",
     "cancel": "Cancel"

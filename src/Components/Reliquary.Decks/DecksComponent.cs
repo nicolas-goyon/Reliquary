@@ -10,6 +10,7 @@ using Reliquary.BuildingBlocks.Accounts;
 using Reliquary.BuildingBlocks.Data;
 using Reliquary.BuildingBlocks.Events;
 using Reliquary.Decks.Api;
+using Reliquary.Decks.AutoTag;
 using Reliquary.Decks.Data;
 using Reliquary.Decks.Exchange;
 using Reliquary.Decks.Exploration;
@@ -46,6 +47,7 @@ public sealed class DecksComponent : ICoreComponent
         services.AddSingleton<DeckTextService>();
         services.AddSingleton<DeckExchangeService>();
         services.AddSingleton<IPersonalDataProvider, DeckPersonalData>();
+        services.AddSingleton<AutoTagService>();
     }
 
     /// <inheritdoc />
@@ -79,5 +81,6 @@ public sealed class DecksComponent : ICoreComponent
         FolderEndpoints.Map(api);
         PublicDeckEndpoints.Map(api);
         RecommendationEndpoints.Map(api);
+        AutoTagEndpoints.Map(api);
     }
 }

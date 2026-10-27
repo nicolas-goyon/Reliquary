@@ -1,0 +1,227 @@
+{
+  "description": "Reference decks for the acceptance test of auto-tag (issue #97). A person wrote the expected categories before the rules existed. 'categories' gives the categories that a suggestion must contain. 'accepted' gives other categories that a suggestion can also contain, because a deck builder can tag the card either way.",
+  "decks": [
+    {
+      "name": "Mono-green ramp",
+      "cards": [
+        { "name": "Forest", "categories": ["land"] },
+        { "name": "Llanowar Elves", "categories": ["ramp"] },
+        { "name": "Elvish Mystic", "categories": ["ramp"] },
+        { "name": "Birds of Paradise", "categories": ["ramp"] },
+        { "name": "Cultivate", "categories": ["ramp"] },
+        { "name": "Kodama's Reach", "categories": ["ramp"] },
+        { "name": "Rampant Growth", "categories": ["ramp"] },
+        { "name": "Nature's Lore", "categories": ["ramp"] },
+        { "name": "Farseek", "categories": ["ramp"] },
+        { "name": "Three Visits", "categories": ["ramp"] },
+        { "name": "Beast Within", "categories": ["targeted_interaction"] },
+        { "name": "Heroic Intervention", "categories": ["protection"] },
+        { "name": "Craterhoof Behemoth", "categories": ["win_condition"] },
+        { "name": "Sylvan Library", "categories": ["card_draw"] },
+        { "name": "Garruk's Uprising", "categories": ["card_draw"], "accepted": ["synergy"] },
+        { "name": "Mosswort Bridge", "categories": ["land"] },
+        { "name": "Yavimaya, Cradle of Growth", "categories": ["land"] }
+      ]
+    },
+    {
+      "name": "Mono-blue control",
+      "cards": [
+        { "name": "Counterspell", "categories": ["targeted_interaction"] },
+        { "name": "Arcane Denial", "categories": ["targeted_interaction"] },
+        { "name": "Negate", "categories": ["targeted_interaction"] },
+        { "name": "Swan Song", "categories": ["targeted_interaction"] },
+        { "name": "Force of Will", "categories": ["targeted_interaction"] },
+        { "name": "Mana Drain", "categories": ["targeted_interaction"], "accepted": ["ramp"] },
+        { "name": "Cyclonic Rift", "categories": ["board_wipe"], "accepted": ["targeted_interaction"] },
+        { "name": "Brainstorm", "categories": ["card_draw"] },
+        { "name": "Ponder", "categories": ["card_draw"] },
+        { "name": "Preordain", "categories": ["card_draw"] },
+        { "name": "Opt", "categories": ["card_draw"] },
+        { "name": "Rhystic Study", "categories": ["card_draw"] },
+        { "name": "Mystic Remora", "categories": ["card_draw"] },
+        { "name": "Windfall", "categories": ["card_draw"] },
+        { "name": "Rapid Hybridization", "categories": ["targeted_interaction"] },
+        { "name": "Pongify", "categories": ["targeted_interaction"] },
+        { "name": "Reality Shift", "categories": ["targeted_interaction"] },
+        { "name": "Mystic Sanctuary", "categories": ["land"] },
+        { "name": "Otawara, Soaring City", "categories": ["land"], "accepted": ["targeted_interaction"] }
+      ]
+    },
+    {
+      "name": "Mono-black aristocrats",
+      "cards": [
+        { "name": "Blood Artist", "categories": ["synergy"], "accepted": ["win_condition"] },
+        { "name": "Zulaport Cutthroat", "categories": ["synergy"], "accepted": ["win_condition"] },
+        { "name": "Viscera Seer", "categories": ["synergy"] },
+        { "name": "Morbid Opportunist", "categories": ["card_draw"] },
+        { "name": "Pitiless Plunderer", "categories": ["synergy"], "accepted": ["ramp"] },
+        { "name": "Phyrexian Altar", "categories": ["synergy"], "accepted": ["ramp"] },
+        { "name": "Ashnod's Altar", "categories": ["synergy"], "accepted": ["ramp"] },
+        { "name": "Night's Whisper", "categories": ["card_draw"] },
+        { "name": "Sign in Blood", "categories": ["card_draw"] },
+        { "name": "Phyrexian Arena", "categories": ["card_draw"] },
+        { "name": "Infernal Grasp", "categories": ["targeted_interaction"] },
+        { "name": "Deadly Rollick", "categories": ["targeted_interaction"] },
+        { "name": "Toxic Deluge", "categories": ["board_wipe"] },
+        { "name": "Feed the Swarm", "categories": ["targeted_interaction"] },
+        { "name": "Gray Merchant of Asphodel", "categories": ["win_condition"], "accepted": ["synergy"] },
+        { "name": "Exsanguinate", "categories": ["win_condition"] },
+        { "name": "Cabal Coffers", "categories": ["land"], "accepted": ["ramp"] },
+        { "name": "Phyrexian Tower", "categories": ["land"], "accepted": ["ramp", "synergy"] }
+      ]
+    },
+    {
+      "name": "Mono-white control",
+      "cards": [
+        { "name": "Swords to Plowshares", "categories": ["targeted_interaction"] },
+        { "name": "Path to Exile", "categories": ["targeted_interaction"] },
+        { "name": "Generous Gift", "categories": ["targeted_interaction"] },
+        { "name": "Farewell", "categories": ["board_wipe"] },
+        { "name": "Austere Command", "categories": ["board_wipe"] },
+        { "name": "Teferi's Protection", "categories": ["protection"] },
+        { "name": "Flawless Maneuver", "categories": ["protection"] },
+        { "name": "Akroma's Will", "categories": ["protection"], "accepted": ["win_condition"] },
+        { "name": "Smothering Tithe", "categories": ["ramp"] },
+        { "name": "Esper Sentinel", "categories": ["card_draw"] },
+        { "name": "Enlightened Tutor", "categories": [] },
+        { "name": "Grand Abolisher", "categories": ["protection"] },
+        { "name": "Ghostly Prison", "categories": [], "accepted": ["protection"] },
+        { "name": "Stroke of Midnight", "categories": ["targeted_interaction"] },
+        { "name": "Witch Enchanter // Witch-Blessed Meadow", "categories": ["targeted_interaction"], "accepted": ["land"] },
+        { "name": "Karn's Bastion", "categories": ["land"] },
+        { "name": "Secluded Courtyard", "categories": ["land"] }
+      ]
+    },
+    {
+      "name": "Izzet spells",
+      "cards": [
+        { "name": "Lightning Bolt", "categories": ["targeted_interaction"] },
+        { "name": "Fire // Ice", "categories": ["targeted_interaction"], "accepted": ["card_draw"] },
+        { "name": "Abrade", "categories": ["targeted_interaction"] },
+        { "name": "Chaos Warp", "categories": ["targeted_interaction"] },
+        { "name": "Blasphemous Act", "categories": ["board_wipe"] },
+        { "name": "Vandalblast", "categories": ["board_wipe"], "accepted": ["targeted_interaction"] },
+        { "name": "Faithless Looting", "categories": ["card_draw"] },
+        { "name": "Frantic Search", "categories": ["card_draw"], "accepted": ["ramp"] },
+        { "name": "Thrill of Possibility", "categories": ["card_draw"] },
+        { "name": "Unexpected Windfall", "categories": ["card_draw"], "accepted": ["ramp"] },
+        { "name": "Big Score", "categories": ["card_draw"], "accepted": ["ramp"] },
+        { "name": "Jeska's Will", "categories": ["ramp"], "accepted": ["card_draw"] },
+        { "name": "Seething Song", "categories": ["ramp"] },
+        { "name": "Izzet Signet", "categories": ["ramp"] },
+        { "name": "Talisman of Creativity", "categories": ["ramp"] },
+        { "name": "Deflecting Swat", "categories": ["protection"], "accepted": ["targeted_interaction"] },
+        { "name": "Steam Vents", "categories": ["land"] },
+        { "name": "Sulfur Falls", "categories": ["land"] }
+      ]
+    },
+    {
+      "name": "Colorless artifacts",
+      "cards": [
+        { "name": "Sol Ring", "categories": ["ramp"] },
+        { "name": "Arcane Signet", "categories": ["ramp"] },
+        { "name": "Mind Stone", "categories": ["ramp"], "accepted": ["card_draw"] },
+        { "name": "Thought Vessel", "categories": ["ramp"] },
+        { "name": "Fellwar Stone", "categories": ["ramp"] },
+        { "name": "Commander's Sphere", "categories": ["ramp"], "accepted": ["card_draw"] },
+        { "name": "Thran Dynamo", "categories": ["ramp"] },
+        { "name": "Everflowing Chalice", "categories": ["ramp"] },
+        { "name": "Chromatic Lantern", "categories": ["ramp"] },
+        { "name": "Wayfarer's Bauble", "categories": ["ramp"] },
+        { "name": "Lightning Greaves", "categories": ["protection"] },
+        { "name": "Swiftfoot Boots", "categories": ["protection"] },
+        { "name": "Skullclamp", "categories": ["card_draw"] },
+        { "name": "The One Ring", "categories": ["card_draw"], "accepted": ["protection"] },
+        { "name": "Solemn Simulacrum", "categories": ["ramp"], "accepted": ["card_draw"] },
+        { "name": "Mithril Coat", "categories": ["protection"] },
+        { "name": "Command Tower", "categories": ["land"] },
+        { "name": "Ancient Tomb", "categories": ["land"], "accepted": ["ramp"] }
+      ]
+    },
+    {
+      "name": "Golgari graveyard",
+      "cards": [
+        { "name": "Assassin's Trophy", "categories": ["targeted_interaction"] },
+        { "name": "Eternal Witness", "categories": [], "accepted": ["card_draw", "synergy"] },
+        { "name": "Sakura-Tribe Elder", "categories": ["ramp"] },
+        { "name": "Explore", "categories": ["ramp"], "accepted": ["card_draw"] },
+        { "name": "Crop Rotation", "categories": [], "accepted": ["ramp"] },
+        { "name": "Demonic Tutor", "categories": [] },
+        { "name": "Vampiric Tutor", "categories": [] },
+        { "name": "Reanimate", "categories": [], "accepted": ["synergy"] },
+        { "name": "Animate Dead", "categories": [], "accepted": ["synergy"] },
+        { "name": "Victimize", "categories": [], "accepted": ["synergy"] },
+        { "name": "Deadly Dispute", "categories": ["card_draw"], "accepted": ["synergy", "ramp"] },
+        { "name": "Village Rites", "categories": ["card_draw"], "accepted": ["synergy"] },
+        { "name": "Woodland Cemetery", "categories": ["land"] },
+        { "name": "Overgrown Tomb", "categories": ["land"] },
+        { "name": "Llanowar Wastes", "categories": ["land"] },
+        { "name": "Bojuka Bog", "categories": ["land"], "accepted": ["targeted_interaction"] }
+      ]
+    },
+    {
+      "name": "Mardu damage",
+      "cards": [
+        { "name": "Terminate", "categories": ["targeted_interaction"] },
+        { "name": "Boros Charm", "categories": ["protection"], "accepted": ["win_condition", "targeted_interaction"] },
+        { "name": "Boros Signet", "categories": ["ramp"] },
+        { "name": "Talisman of Conviction", "categories": ["ramp"] },
+        { "name": "Rakdos Signet", "categories": ["ramp"] },
+        { "name": "Talisman of Indulgence", "categories": ["ramp"] },
+        { "name": "Professional Face-Breaker", "categories": ["ramp"], "accepted": ["card_draw", "synergy"] },
+        { "name": "Impact Tremors", "categories": ["synergy"], "accepted": ["win_condition"] },
+        { "name": "Storm-Kiln Artist", "categories": ["ramp"], "accepted": ["synergy"] },
+        { "name": "Untimely Malfunction", "categories": ["targeted_interaction"] },
+        { "name": "Syr Konrad, the Grim", "categories": ["synergy"], "accepted": ["win_condition"] },
+        { "name": "Withering Torment", "categories": ["targeted_interaction"] },
+        { "name": "Bonecrusher Giant // Stomp", "categories": ["targeted_interaction"] },
+        { "name": "Sacred Foundry", "categories": ["land"] },
+        { "name": "Blood Crypt", "categories": ["land"] },
+        { "name": "Battlefield Forge", "categories": ["land"] }
+      ]
+    },
+    {
+      "name": "Simic counters and tokens",
+      "cards": [
+        { "name": "Doubling Season", "categories": ["synergy"] },
+        { "name": "Hardened Scales", "categories": ["synergy"] },
+        { "name": "The Ozolith", "categories": ["synergy"] },
+        { "name": "Rhythm of the Wild", "categories": ["synergy"], "accepted": ["protection"] },
+        { "name": "Avenger of Zendikar", "categories": ["win_condition"], "accepted": ["synergy"] },
+        { "name": "Scute Swarm", "categories": ["synergy"], "accepted": ["win_condition"] },
+        { "name": "Beast Whisperer", "categories": ["card_draw"] },
+        { "name": "Tireless Provisioner", "categories": ["ramp"] },
+        { "name": "Bloom Tender", "categories": ["ramp"] },
+        { "name": "Growth Spiral", "categories": ["ramp"], "accepted": ["card_draw"] },
+        { "name": "Rishkar's Expertise", "categories": ["card_draw"] },
+        { "name": "Return of the Wildspeaker", "categories": ["card_draw"], "accepted": ["win_condition"] },
+        { "name": "Seedborn Muse", "categories": ["synergy"] },
+        { "name": "Breeding Pool", "categories": ["land"] },
+        { "name": "Yavimaya Coast", "categories": ["land"] },
+        { "name": "Forest", "categories": ["land"] }
+      ]
+    },
+    {
+      "name": "Esper staples",
+      "cards": [
+        { "name": "Anguished Unmaking", "categories": ["targeted_interaction"] },
+        { "name": "Dovin's Veto", "categories": ["targeted_interaction"] },
+        { "name": "Snap", "categories": ["targeted_interaction"], "accepted": ["ramp"] },
+        { "name": "An Offer You Can't Refuse", "categories": ["targeted_interaction"] },
+        { "name": "Fierce Guardianship", "categories": ["targeted_interaction"] },
+        { "name": "Force of Negation", "categories": ["targeted_interaction"] },
+        { "name": "Dimir Signet", "categories": ["ramp"] },
+        { "name": "Talisman of Dominance", "categories": ["ramp"] },
+        { "name": "Azorius Signet", "categories": ["ramp"] },
+        { "name": "Orzhov Signet", "categories": ["ramp"] },
+        { "name": "Black Market Connections", "categories": ["card_draw"], "accepted": ["ramp", "synergy"] },
+        { "name": "Archmage Emeritus", "categories": ["card_draw"] },
+        { "name": "Faerie Mastermind", "categories": ["card_draw"] },
+        { "name": "Watery Grave", "categories": ["land"] },
+        { "name": "Underground River", "categories": ["land"] },
+        { "name": "Hallowed Fountain", "categories": ["land"] },
+        { "name": "Godless Shrine", "categories": ["land"] }
+      ]
+    }
+  ]
+}

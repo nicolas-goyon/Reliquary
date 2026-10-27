@@ -32,6 +32,9 @@ The OpenAPI document gives the bodies and the responses.
 | `GET /decks/{id}/legality` | Like the deck | Checks the legality of the deck in its format. |
 | `GET /decks/{id}/analysis` | Like the deck | Analyzes the deck. See [Deck analysis](deck-analysis.md). |
 | `GET /decks/{id}/recommendations` | Owner | Recommends cards for the commanders of the deck. See [recommendations](#recommendations). |
+
+| `GET /decks/{id}/auto-tag` | Owner | Suggests the categories of the lines. See [Auto-tag](auto-tag.md). |
+| `POST /decks/{id}/auto-tag` | Owner | Sets the categories of lines in one change. See [Auto-tag](auto-tag.md). |
 | `GET /tags` | User | Lists the global tags of the user. |
 | `PATCH /tags/{id}` | Owner | Renames a tag, or merges it with a tag of the same name. |
 | `DELETE /tags/{id}` | Owner | Deletes a tag. |

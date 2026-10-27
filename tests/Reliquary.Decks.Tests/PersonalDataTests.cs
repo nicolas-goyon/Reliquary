@@ -42,7 +42,7 @@ public sealed class PersonalDataTests(DecksInstance instance)
         Assert.Equal("ready", ready.Status);
         Assert.Equal("application/zip", download.Content.Headers.ContentType!.MediaType);
         Assert.Equal(
-            ["README.txt", "account/account.json", "decks/decks.json", "decks/favorites.json", "decks/folders.json", "decks/following.json", "decks/global-tags.json", "decks/text/Atraxa (2).txt", "decks/text/Atraxa.txt"],
+            ["README.txt", "account/account.json", "decks/category-rules.json", "decks/decks.json", "decks/favorites.json", "decks/folders.json", "decks/following.json", "decks/global-tags.json", "decks/text/Atraxa (2).txt", "decks/text/Atraxa.txt"],
             entries);
         Assert.Equal("Tester", account.GetProperty("displayName").GetString());
         Assert.False(account.TryGetProperty("passwordHash", out _));
@@ -59,6 +59,8 @@ public sealed class PersonalDataTests(DecksInstance instance)
         var accountId = me.GetProperty("account").GetProperty("id").GetGuid();
         await client.PostAsJsonAsync("/api/v1/deck-folders", new { name = "Folder" }, Cancel);
         var deck = await CreateDeckAsync(client, "Public", new { name = "Sol Ring", globalTags = new[] { "Ramp" } }, "public");
+        var line = Assert.Single(deck.Lines);
+        await client.PatchAsJsonAsync($"/api/v1/decks/{deck.Id}/lines/{line.Id}", new { categories = new[] { "ramp" } }, Cancel);
         var theirs = await CreateDeckAsync(other, "Theirs", new { name = "Sol Ring" }, "public");
         await client.PostAsJsonAsync("/api/v1/me/api-keys", new { name = "Script" }, Cancel);
         await instance.PublishEventsAsync();

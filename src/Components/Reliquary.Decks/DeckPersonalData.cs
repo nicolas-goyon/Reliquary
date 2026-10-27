@@ -76,6 +76,15 @@ internal sealed class DeckPersonalData(DeckStore store, DeckService decks, DeckT
         var globalTags = await tags.ListGlobalAsync(ownerId, cancellationToken);
         await archive.WriteJsonAsync("global-tags.json", globalTags.Select(tag => new { tag.Name, tag.LineCount }), cancellationToken);
 
+        await using (var content = await store.OpenAsync(ownerId, ContentAccess.Read, cancellationToken))
+        {
+            var rules = await content.QueryAsync<(Guid OracleId, string[] Categories, DateTime UpdatedAt)>(new CommandDefinition(
+                "select oracle_id, categories, updated_at from content.category_rules where owner_id = @ownerId order by updated_at",
+                new { ownerId },
+                cancellationToken: cancellationToken));
+            await archive.WriteJsonAsync("category-rules.json", rules.Select(rule => new { rule.OracleId, rule.Categories, rule.UpdatedAt }), cancellationToken);
+        }
+
         await using var users = await store.OpenUsersAsync(cancellationToken);
         var favorites = await users.QueryAsync<(Guid DeckId, string? Name, DateTime CreatedAt)>(new CommandDefinition(
             """
@@ -109,6 +118,7 @@ internal sealed class DeckPersonalData(DeckStore store, DeckService decks, DeckT
                 delete from content.decks where owner_id = @ownerId;
                 delete from content.tags where owner_id = @ownerId;
                 delete from content.deck_folders where owner_id = @ownerId;
+                delete from content.category_rules where owner_id = @ownerId;
                 """,
                 new { ownerId },
                 transaction,

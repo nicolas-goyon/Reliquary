@@ -105,4 +105,7 @@ internal sealed class SmallCatalog : ICardCatalog
 
     public Task<IReadOnlyDictionary<Guid, PrintingFacts>> GetPrintingsAsync(IReadOnlyCollection<Guid> printingIds, CancellationToken cancellationToken = default) =>
         Task.FromResult<IReadOnlyDictionary<Guid, PrintingFacts>>(new Dictionary<Guid, PrintingFacts>());
+
+    public Task<IReadOnlyDictionary<Guid, IReadOnlyList<CardOracleTag>>> GetOracleTagsAsync(IReadOnlyCollection<Guid> oracleIds, CancellationToken cancellationToken = default) =>
+        throw new NotSupportedException();
 }
