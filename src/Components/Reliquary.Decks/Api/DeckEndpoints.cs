@@ -53,6 +53,14 @@ internal static class DeckEndpoints
             .WithName("UpdateDeckLine")
             .WithSummary("Changes the quantity, the zone, the printing, the finish or the note of a line. A quantity of 0 removes the line.");
 
+        owner.MapPost("/{deckId:guid}/copy", CopyAsync)
+            .WithName("CopyDeck")
+            .WithSummary("Copies a deck into a new deck of the user: one of their decks, or an unlisted or public deck of another user.");
+
+        decks.MapGet("/{deckId:guid}/legality", GetLegalityAsync)
+            .WithName("GetDeckLegality")
+            .WithSummary("Checks the legality of a deck in its format: deck size, copies, banned cards, commanders and color identity.");
+
         decks.MapGet("/{deckId:guid}/text", GetTextAsync)
             .WithName("GetDeckText")
             .WithSummary("Gets the lines of a deck in the deck text format. See docs/development/deck-text-format.md.");
@@ -241,6 +249,34 @@ internal static class DeckEndpoints
     {
         var view = await decks.DeleteLineAsync(user.GetAccountId(), deckId, lineId, cancellationToken);
         return TypedResults.Ok(await ToResponseAsync(view, catalog, cancellationToken));
+    }
+
+    private static async Task<Results<Created<DeckResponse>, ProblemHttpResult>> CopyAsync(
+        Guid deckId, CopyDeckRequest request, ClaimsPrincipal user, DeckService decks, ICardCatalog catalog, CancellationToken cancellationToken)
+    {
+        var errors = new List<FieldError>();
+        if (request.Name is not null && string.IsNullOrWhiteSpace(request.Name))
+        {
+            errors.Add(new FieldError("name", FieldErrorCodes.TooShort, "The name of the deck must contain a character that is not a space."));
+        }
+
+        ValidateDeckFields(errors, request.Name?.Trim(), null, request.Visibility, null);
+        if (errors.Count > 0)
+        {
+            return ApiProblems.Validation(errors);
+        }
+
+        var copy = await decks.CopyAsync(user.GetAccountId(), deckId, request.Name?.Trim(), request.Visibility ?? "private", request.FolderId, cancellationToken);
+        var view = await decks.GetAsync(user.GetAccountId(), copy.Id, cancellationToken);
+        return TypedResults.Created($"{ApiRoutes.Base}/decks/{copy.Id}", await ToResponseAsync(view, catalog, cancellationToken));
+    }
+
+    private static async Task<Ok<DeckLegalityResponse>> GetLegalityAsync(Guid deckId, ClaimsPrincipal user, DeckService decks, ICardCatalog catalog, CancellationToken cancellationToken)
+    {
+        var view = await decks.GetAsync(user.FindAccountId(), deckId, cancellationToken);
+        var cards = await catalog.GetCardsAsync([.. view.Lines.Select(line => line.OracleId).Distinct()], cancellationToken);
+        var problems = Legality.DeckLegality.Check(view.Deck.Format, view.Lines.Select(line => (line.Zone, line.OracleId, line.Quantity)), cards);
+        return TypedResults.Ok(new DeckLegalityResponse(view.Deck.Format, problems.Count == 0, problems));
     }
 
     private static async Task<Ok<DeckTextResponse>> GetTextAsync(Guid deckId, ClaimsPrincipal user, DeckTextService texts, CancellationToken cancellationToken)

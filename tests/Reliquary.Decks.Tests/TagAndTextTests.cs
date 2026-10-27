@@ -148,3 +148,45 @@ public sealed class TagAndTextTests(DecksInstance instance)
         return (await response.Content.ReadFromJsonAsync<DeckResponse>(Cancel))!;
     }
 }
+
+[Collection(DecksGroup.Name)]
+public sealed class DeckCopyTests(DecksInstance instance)
+{
+    private static CancellationToken Cancel => TestContext.Current.CancellationToken;
+
+    [Fact]
+    public async Task UserCopiesThePublicDeckOfAnotherUser()
+    {
+        using var owner = await instance.NewUserAsync();
+        using var other = await instance.NewUserAsync();
+        var created = await owner.PostAsJsonAsync("/api/v1/decks", new
+        {
+            name = "Original",
+            visibility = "public",
+            lines = new object[]
+            {
+                new { name = "Sol Ring", note = "Turn one", tags = new[] { "Fast" }, globalTags = new[] { "Mana rock" }, categories = new[] { "ramp" } },
+                new { name = "Forest", quantity = 4 },
+            },
+        }, Cancel);
+        var original = (await created.Content.ReadFromJsonAsync<DeckResponse>(Cancel))!;
+        var privateDeck = (await (await owner.PostAsJsonAsync("/api/v1/decks", new { name = "Secret" }, Cancel)).Content.ReadFromJsonAsync<DeckResponse>(Cancel))!;
+
+        var response = await other.PostAsJsonAsync($"/api/v1/decks/{original.Id}/copy", new { name = "My copy" }, Cancel);
+        var copy = (await response.Content.ReadFromJsonAsync<DeckResponse>(Cancel))!;
+        var refused = await other.PostAsJsonAsync($"/api/v1/decks/{privateDeck.Id}/copy", new { }, Cancel);
+        var ownCopy = (await (await owner.PostAsJsonAsync($"/api/v1/decks/{original.Id}/copy", new { }, Cancel)).Content.ReadFromJsonAsync<DeckResponse>(Cancel))!;
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        Assert.Equal(("My copy", "private", original.Id), (copy.Name, copy.Visibility, copy.SourceDeckId));
+        Assert.True(copy.IsOwner);
+        var solRing = copy.Lines.Single(line => copy.Cards[line.OracleId].Name == "Sol Ring");
+        Assert.Equal(("Turn one", "ramp"), (solRing.Note, solRing.Categories.Single()));
+        Assert.All(solRing.TagIds, id => Assert.False(copy.Tags[id].Global));
+        Assert.Equal(["Fast", "Mana rock"], solRing.TagIds.Select(id => copy.Tags[id].Name).Order());
+        Assert.Equal(HttpStatusCode.NotFound, refused.StatusCode);
+        Assert.Null(ownCopy.SourceDeckId);
+        Assert.Equal("Original", ownCopy.Name);
+        Assert.Contains(ownCopy.Tags.Values, tag => tag is { Name: "Mana rock", Global: true });
+    }
+}

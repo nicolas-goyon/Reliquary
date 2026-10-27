@@ -228,3 +228,15 @@ public sealed record DeckSummaryResponse(
     IReadOnlyList<Guid> CommanderIds,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt);
+
+/// <summary>The legality of a deck in its format.</summary>
+/// <param name="Format">The format of the deck.</param>
+/// <param name="Legal">Whether the deck is legal.</param>
+/// <param name="Problems">The problems. The list is empty when the deck is legal.</param>
+public sealed record DeckLegalityResponse(string Format, bool Legal, IReadOnlyList<Legality.LegalityProblem> Problems);
+
+/// <summary>The options of the copy of a deck.</summary>
+/// <param name="Name">The name of the copy. The default is the name of the deck.</param>
+/// <param name="Visibility">The visibility of the copy. The default is <c>private</c>.</param>
+/// <param name="FolderId">The folder of the copy, or <see langword="null"/>.</param>
+public sealed record CopyDeckRequest(string? Name, string? Visibility, Guid? FolderId);
