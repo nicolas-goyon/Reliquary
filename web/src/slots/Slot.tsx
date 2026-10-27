@@ -1,6 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useSlotContributions, type SlotContexts, type SlotName } from './registry'
+import { useSlotContributions, type SlotContexts, type SlotContribution, type SlotName } from './registry'
 
 interface SlotProps<Name extends SlotName> {
   name: Name
@@ -18,12 +18,28 @@ export function Slot<Name extends SlotName>({ name, context, className }: SlotPr
     <div className={className ? `slot ${className}` : 'slot'} data-slot={name}>
       {contributions.map((contribution) => (
         <div key={contribution.id} className="slot-contribution" data-contribution={contribution.id}>
-          <ContributionBoundary slot={name} contributionId={contribution.id}>
-            <Contribution render={() => contribution.render(context)} />
-          </ContributionBoundary>
+          <SlotItem slot={name} contribution={contribution} context={context} />
         </div>
       ))}
     </div>
+  )
+}
+
+interface SlotItemProps<Name extends SlotName> {
+  slot: Name
+  contribution: SlotContribution<Name>
+  context: SlotContexts[Name]
+}
+
+/**
+ * Renders one contribution of a slot inside its own error boundary.
+ * A slot with its own layout, for example the tabs of the analysis, uses it for each contribution.
+ */
+export function SlotItem<Name extends SlotName>({ slot, contribution, context }: SlotItemProps<Name>) {
+  return (
+    <ContributionBoundary slot={slot} contributionId={contribution.id}>
+      <Contribution render={() => contribution.render(context)} />
+    </ContributionBoundary>
   )
 }
 

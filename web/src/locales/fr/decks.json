@@ -182,5 +182,130 @@
       "manabox": "Le fichier contient les commandants, les compagnons et le deck principal.",
       "dragonshield": "Le fichier contient les commandants, les compagnons et le deck principal."
     }
+  },
+  "analysis": {
+    "title": "Analyse du deck",
+    "loading": "L’application calcule l’analyse.",
+    "failed": "L’application ne peut pas obtenir l’analyse. Rechargez la page pour réessayer.",
+    "cards": "Cartes",
+    "status": "État",
+    "tabs": {
+      "curve": "Courbe de mana",
+      "distribution": "Répartition",
+      "mana": "Sources de mana",
+      "draws": "Probabilités de pioche",
+      "commander": "Besoins Commander"
+    },
+    "summary": {
+      "cards": "Cartes",
+      "lands": "Terrains",
+      "modalLands": "Terrains modaux",
+      "spells": "Sorts",
+      "averageManaValue": "Valeur de mana moyenne"
+    },
+    "curve": {
+      "title": "Courbe de mana",
+      "manaValue": "Valeur de mana",
+      "orMore": "{{manaValue}}+",
+      "hint": "La courbe compte les cartes qui ne sont pas des terrains. Un terrain modal compte avec sa face de sort."
+    },
+    "types": {
+      "title": "Types de carte",
+      "type": "Type de carte",
+      "keys": {
+        "artifact": "Artefact",
+        "battle": "Bataille",
+        "creature": "Créature",
+        "enchantment": "Enchantement",
+        "instant": "Éphémère",
+        "kindred": "Tribal",
+        "land": "Terrain",
+        "planeswalker": "Planeswalker",
+        "sorcery": "Rituel",
+        "other": "Autre type"
+      }
+    },
+    "colors": {
+      "title": "Couleurs",
+      "color": "Couleur",
+      "keys": {
+        "W": "Blanc",
+        "U": "Bleu",
+        "B": "Noir",
+        "R": "Rouge",
+        "G": "Vert",
+        "C": "Incolore"
+      }
+    },
+    "categories": {
+      "title": "Catégories",
+      "category": "Catégorie",
+      "uncategorized": "Sans catégorie"
+    },
+    "mana": {
+      "hint": "Les sources requises viennent des tables de Frank Karsten pour les decks de {{size}} cartes.",
+      "empty": "Aucune carte du deck ne demande de mana coloré, et aucune carte n’en produit.",
+      "symbols": "Symboles de mana",
+      "landSources": "Terrains",
+      "otherSources": "Autres sources",
+      "sources": "Sources",
+      "required": "Requis",
+      "card": "Carte la plus exigeante",
+      "cardPips_one": "{{card}} ({{count}} symbole)",
+      "cardPips_other": "{{card}} ({{count}} symboles)",
+      "status": {
+        "ok": "Sources suffisantes",
+        "low": "Sources insuffisantes",
+        "no_requirement": "Aucune exigence"
+      }
+    },
+    "draws": {
+      "hint": "La bibliothèque contient {{librarySize}} cartes, dont {{lands}} terrains. Les probabilités ne tiennent pas compte des mulligans.",
+      "checkpoint": "Moment",
+      "atLeast_one": "Au moins {{count}} terrain",
+      "atLeast_other": "Au moins {{count}} terrains",
+      "checkpoints": {
+        "opening_hand": "Main de départ",
+        "turn_2_play": "Tour 2, en premier",
+        "turn_2_draw": "Tour 2, en second",
+        "turn_3_play": "Tour 3, en premier",
+        "turn_3_draw": "Tour 3, en second",
+        "turn_4_play": "Tour 4, en premier",
+        "turn_4_draw": "Tour 4, en second",
+        "other": "Autre moment"
+      }
+    },
+    "needs": {
+      "title": "Besoins par catégorie",
+      "target": "Cible",
+      "range": "{{target}} (de {{min}} à {{max}})",
+      "status": {
+        "low_one": "Insuffisant : ajoutez {{count}} carte",
+        "low_other": "Insuffisant : ajoutez {{count}} cartes",
+        "ok_one": "Dans la plage",
+        "ok_other": "Dans la plage",
+        "high_one": "Trop : {{count}} carte de plus que la cible",
+        "high_other": "Trop : {{count}} cartes de plus que la cible",
+        "no_target_one": "Aucune cible",
+        "no_target_other": "Aucune cible"
+      }
+    },
+    "bracket": {
+      "title": "Bracket indicatif",
+      "value": "Bracket {{bracket}}",
+      "hint": "Le bracket est indicatif. C’est le bracket le plus bas qui convient au deck.",
+      "noReason": "Aucune carte du deck ne demande un bracket supérieur à 1.",
+      "reasonBracket": "bracket {{bracket}} ou plus",
+      "reasons": {
+        "game_changers": "Game Changers",
+        "mass_land_denial": "Destruction massive de terrains",
+        "extra_turns": "Cartes de tours supplémentaires",
+        "other": "Autre règle"
+      },
+      "unchecked": {
+        "two_card_combos": "L’analyse ne vérifie pas encore les combos à deux cartes. Un combo peut placer le deck dans un bracket plus élevé.",
+        "other": "L’analyse ne vérifie pas encore certaines règles. Le deck peut être dans un bracket plus élevé."
+      }
+    }
   }
 }
