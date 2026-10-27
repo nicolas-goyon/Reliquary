@@ -36,6 +36,10 @@ The French column gives the term for the French interface.
 | Transition plan | The steps from the assembled version to a variant: cards to remove from the deck, cards to take from a location and cards to buy. | Plan de transition |
 | Commander | The Magic: The Gathering format, also known as EDH. Write "commander" in lowercase for the card in the command zone. | Commander |
 | Bracket | The Commander scale for the power level of a deck. Reliquary shows an indicative bracket. | Bracket |
+| Game Changer | A card on the official Commander list of cards that change games a lot. The number of Game Changers limits the bracket of a deck. | Game Changer |
+| Modal land | A modal double-faced card with a spell face and a land face. The analysis counts it as a land and as a spell. | Terrain modal |
+| Mana source | A card that produces mana of a color: a land, a modal land or a permanent with a mana ability. | Source de mana |
+| Category need | The comparison of the number of cards in a category with a target for the format. | Besoin |
 
 ## Collection
 

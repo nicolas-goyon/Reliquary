@@ -70,6 +70,10 @@ internal static class DeckEndpoints
             .WithName("ExportDeck")
             .WithSummary("Gets a deck as a file of another tool: text, moxfield, mtga, mtgo, dek or archidekt.");
 
+        decks.MapGet("/{deckId:guid}/analysis", GetAnalysisAsync)
+            .WithName("GetDeckAnalysis")
+            .WithSummary("Analyzes a deck: mana curve, distributions, mana sources, draw probabilities, and for Commander the category needs and the indicative bracket.");
+
         decks.MapGet("/{deckId:guid}/text", GetTextAsync)
             .WithName("GetDeckText")
             .WithSummary("Gets the lines of a deck in the deck text format. See docs/development/deck-text-format.md.");
@@ -370,6 +374,14 @@ internal static class DeckEndpoints
 
         var file = await exchange.ExportAsync(user.FindAccountId(), deckId, deckFormat, cancellationToken);
         return TypedResults.Ok(new ExportDeckResponse(file.FileName, file.ContentType, file.Content));
+    }
+
+    private static async Task<Ok<Analysis.DeckAnalysis>> GetAnalysisAsync(Guid deckId, ClaimsPrincipal user, DeckService decks, ICardCatalog catalog, CancellationToken cancellationToken)
+    {
+        var view = await decks.GetAsync(user.FindAccountId(), deckId, cancellationToken);
+        var cards = await catalog.GetCardsAsync([.. view.Lines.Select(line => line.OracleId).Distinct()], cancellationToken);
+        var lines = view.Lines.Select(line => new Analysis.AnalysisLine(line.Zone, line.OracleId, line.Quantity, line.Categories));
+        return TypedResults.Ok(Analysis.DeckAnalyzer.Analyze(view.Deck.Format, lines, cards));
     }
 
     private static async Task<Ok<DeckTextResponse>> GetTextAsync(Guid deckId, ClaimsPrincipal user, DeckTextService texts, CancellationToken cancellationToken)

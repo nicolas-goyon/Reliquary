@@ -4,6 +4,7 @@ This file describes the analysis of a deck.
 The analysis is only about the game.
 Other parts of Reliquary handle all the subjects about prices and purchases.
 Terms follow the [glossary](../glossary.md).
+The [architecture page](../architecture/deck-analysis.md) gives the formulas, the tables and their sources.
 
 ## Analysis features
 

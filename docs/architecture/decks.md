@@ -26,6 +26,7 @@ The OpenAPI document gives the bodies and the responses.
 | `GET /decks/{id}/export` | Like the deck | Gives the deck as a file of another tool. |
 | `POST /decks/{id}/copy` | User who can see the deck | Copies the deck into a new deck of the user. |
 | `GET /decks/{id}/legality` | Like the deck | Checks the legality of the deck in its format. |
+| `GET /decks/{id}/analysis` | Like the deck | Analyzes the deck. See [Deck analysis](deck-analysis.md). |
 | `GET /tags` | User | Lists the global tags of the user. |
 | `PATCH /tags/{id}` | Owner | Renames a tag, or merges it with a tag of the same name. |
 | `DELETE /tags/{id}` | Owner | Deletes a tag. |
