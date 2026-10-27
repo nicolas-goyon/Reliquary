@@ -109,6 +109,7 @@ Rules for the error codes:
 | `api_key_limit` | 409 | The account has the maximum number of API keys. |
 | `provider_not_enabled` | 404 | The OAuth provider is not enabled on the instance. |
 | `core_version_not_supported` | 409 | The extension does not support the current version of the core API. |
+| `deck_text_invalid` | 400 | The deck text has lines that the API cannot use. The member `lineErrors` gives the number, the reason code and the text of each line. |
 | `deck_version_conflict` | 409 | The deck changed since the client read it. Read the deck again, then repeat the change. |
 | `search_syntax_error` | 400 | The card search query has a syntax error. The member `position` gives the index of the character. |
 | `search_query_empty` | 400 | The card search query has no search condition. The member `warnings` gives the ignored terms. |

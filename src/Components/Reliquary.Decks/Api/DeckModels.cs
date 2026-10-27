@@ -29,7 +29,20 @@ public sealed record UpdateDeckRequest(string? Name, string? Format, string? Vis
 /// <param name="Quantity">The quantity, from 1 to 999. The default is 1.</param>
 /// <param name="Zone">The zone. The default is <c>main</c>.</param>
 /// <param name="Note">A note.</param>
-public sealed record LineRequest(Guid? OracleId, string? Name, Guid? PrintingId, string? Finish, int? Quantity, string? Zone, string? Note);
+/// <param name="Tags">The local tags of the line, by name. The API creates the tags that do not exist.</param>
+/// <param name="GlobalTags">The global tags of the line, by name. The API creates the tags that do not exist.</param>
+/// <param name="Categories">The categories of the line, for example <c>ramp</c>.</param>
+public sealed record LineRequest(
+    Guid? OracleId,
+    string? Name,
+    Guid? PrintingId,
+    string? Finish,
+    int? Quantity,
+    string? Zone,
+    string? Note,
+    IReadOnlyList<string>? Tags = null,
+    IReadOnlyList<string>? GlobalTags = null,
+    IReadOnlyList<string>? Categories = null);
 
 /// <summary>The lines to add to a deck.</summary>
 /// <param name="Lines">The lines.</param>
@@ -48,7 +61,20 @@ public sealed record ReplaceLinesRequest(IReadOnlyList<LineRequest>? Lines, int?
 /// <param name="Finish">The finish.</param>
 /// <param name="ClearFinish">Set to <see langword="true"/> to remove the finish.</param>
 /// <param name="Note">The note.</param>
-public sealed record UpdateLineRequest(int? Quantity, string? Zone, Guid? PrintingId, bool? ClearPrinting, string? Finish, bool? ClearFinish, string? Note);
+/// <param name="Tags">The local tags. The list replaces the local tags of the line.</param>
+/// <param name="GlobalTags">The global tags. The list replaces the global tags of the line.</param>
+/// <param name="Categories">The categories. The list replaces the categories of the line.</param>
+public sealed record UpdateLineRequest(
+    int? Quantity,
+    string? Zone,
+    Guid? PrintingId,
+    bool? ClearPrinting,
+    string? Finish,
+    bool? ClearFinish,
+    string? Note,
+    IReadOnlyList<string>? Tags = null,
+    IReadOnlyList<string>? GlobalTags = null,
+    IReadOnlyList<string>? Categories = null);
 
 /// <summary>A deck with its lines, and the cards and printings of the lines.</summary>
 /// <param name="Id">The ID of the deck.</param>
@@ -69,6 +95,7 @@ public sealed record UpdateLineRequest(int? Quantity, string? Zone, Guid? Printi
 /// <param name="Lines">The lines.</param>
 /// <param name="Cards">The cards of the lines, by Oracle ID.</param>
 /// <param name="Printings">The printings of the lines and the default printings of the cards, by ID.</param>
+/// <param name="Tags">The tags of the lines, by ID.</param>
 public sealed record DeckResponse(
     Guid Id,
     Guid OwnerId,
@@ -87,7 +114,13 @@ public sealed record DeckResponse(
     IReadOnlyDictionary<string, int> Counts,
     IReadOnlyList<DeckLineResponse> Lines,
     IReadOnlyDictionary<Guid, DeckCardResponse> Cards,
-    IReadOnlyDictionary<Guid, DeckPrintingResponse> Printings);
+    IReadOnlyDictionary<Guid, DeckPrintingResponse> Printings,
+    IReadOnlyDictionary<Guid, DeckTagResponse> Tags);
+
+/// <summary>A tag of a deck line.</summary>
+/// <param name="Name">The name of the tag.</param>
+/// <param name="Global">Whether the tag is a global tag of the user. A local tag belongs to the deck.</param>
+public sealed record DeckTagResponse(string Name, bool Global);
 
 /// <summary>A line of a deck.</summary>
 /// <param name="Id">The ID of the line.</param>
@@ -97,7 +130,41 @@ public sealed record DeckResponse(
 /// <param name="Quantity">The quantity.</param>
 /// <param name="Zone">The zone.</param>
 /// <param name="Note">The note.</param>
-public sealed record DeckLineResponse(Guid Id, Guid OracleId, Guid? PrintingId, string? Finish, int Quantity, string Zone, string Note);
+/// <param name="TagIds">The tags of the line. The deck response gives their names.</param>
+/// <param name="Categories">The categories of the line.</param>
+public sealed record DeckLineResponse(Guid Id, Guid OracleId, Guid? PrintingId, string? Finish, int Quantity, string Zone, string Note, IReadOnlyList<Guid> TagIds, IReadOnlyList<string> Categories);
+
+/// <summary>A deck as text.</summary>
+/// <param name="Text">The text, in the deck text format.</param>
+/// <param name="Version">The version of the deck.</param>
+public sealed record DeckTextResponse(string Text, int Version);
+
+/// <summary>The new content of a deck as text.</summary>
+/// <param name="Text">The text, in the deck text format.</param>
+/// <param name="ExpectedVersion">The version that the client read. The API refuses the change when the deck has another version.</param>
+/// <param name="DryRun">Set to <see langword="true"/> to check the text without a change of the deck.</param>
+public sealed record SetDeckTextRequest(string? Text, int? ExpectedVersion, bool? DryRun);
+
+/// <summary>A line of a deck text that the API cannot use.</summary>
+/// <param name="Line">The number of the line. The first line has the number 1.</param>
+/// <param name="Code">The reason code: <c>missing_name</c>, <c>quantity_out_of_range</c>, <c>tag_too_long</c>, <c>card_not_found</c> or <c>printing_not_found</c>.</param>
+/// <param name="Text">The text of the line.</param>
+public sealed record DeckTextLineError(int Line, string Code, string Text);
+
+/// <summary>A global tag of the user.</summary>
+/// <param name="Id">The ID of the tag.</param>
+/// <param name="Name">The name.</param>
+/// <param name="LineCount">The number of deck lines with the tag.</param>
+public sealed record TagResponse(Guid Id, string Name, int LineCount);
+
+/// <summary>A tag after a change of its name.</summary>
+/// <param name="Id">The ID of the tag. After a merge, it is the ID of the other tag.</param>
+/// <param name="Name">The name.</param>
+public sealed record RenamedTagResponse(Guid Id, string Name);
+
+/// <summary>The new name of a tag. When a tag of the same kind has this name, the two tags become one tag.</summary>
+/// <param name="Name">The new name.</param>
+public sealed record RenameTagRequest(string? Name);
 
 /// <summary>The data of a card that the deck page shows.</summary>
 /// <param name="Name">The Oracle name.</param>

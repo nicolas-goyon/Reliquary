@@ -17,6 +17,7 @@ namespace Reliquary.Decks.Text;
 /// <param name="GlobalTags">The global tags of the user.</param>
 /// <param name="Note">The note, or an empty text.</param>
 /// <param name="Zone">The zone of the section of the line.</param>
+/// <param name="Categories">The categories of the analysis, for example <c>ramp</c>.</param>
 public sealed record DeckTextLine(
     int LineNumber,
     int Quantity,
@@ -27,7 +28,8 @@ public sealed record DeckTextLine(
     IReadOnlyList<string> Tags,
     IReadOnlyList<string> GlobalTags,
     string Note,
-    string Zone);
+    string Zone,
+    IReadOnlyList<string> Categories);
 
 /// <summary>
 /// A line of the text that the parser cannot read.
@@ -54,7 +56,7 @@ public sealed record DeckTextResult(IReadOnlyList<DeckTextLine> Lines, IReadOnly
 /// 1 Atraxa, Praetors' Voice (2X2) 190 *F*
 ///
 /// Main
-/// 1 Sol Ring (C21) 263 #Ramp #!Mana Rock -- Turn one
+/// 1 Sol Ring (C21) 263 #Ramp #!Mana Rock #@ramp -- Turn one
 /// 10 Forest
 /// </code>
 /// </remarks>
@@ -68,6 +70,9 @@ public static partial class DeckText
 
     /// <summary>The reason code of a tag that is too long.</summary>
     public const string TagTooLong = "tag_too_long";
+
+    /// <summary>The reason code of a category that is not a predefined category.</summary>
+    public const string UnknownCategory = "unknown_category";
 
     /// <summary>The maximum length of a tag.</summary>
     public const int MaxTagLength = 50;
@@ -212,6 +217,11 @@ public static partial class DeckText
             builder.Append(" #!").Append(tag);
         }
 
+        foreach (var category in line.Categories)
+        {
+            builder.Append(" #@").Append(category);
+        }
+
         if (line.Note.Length > 0)
         {
             builder.Append(NoteSeparator).Append(line.Note);
@@ -259,6 +269,7 @@ public static partial class DeckText
 
         var tags = new List<string>();
         var globalTags = new List<string>();
+        var categories = new List<string>();
         // A space before the rest finds a tag at the start, for example "3 #ramp", which has no card name.
         rest = " " + rest;
         var tagIndex = rest.IndexOf(" #", StringComparison.Ordinal);
@@ -266,6 +277,18 @@ public static partial class DeckText
         {
             foreach (var part in rest[(tagIndex + 2)..].Split(" #", StringSplitOptions.RemoveEmptyEntries))
             {
+                if (part.StartsWith('@'))
+                {
+                    var category = part[1..].Trim().ToLowerInvariant();
+                    if (!DeckRules.Categories.Contains(category))
+                    {
+                        return (null, UnknownCategory);
+                    }
+
+                    categories.Add(category);
+                    continue;
+                }
+
                 var global = part.StartsWith('!');
                 var tag = (global ? part[1..] : part).Trim();
                 if (tag.Length == 0)
@@ -308,7 +331,7 @@ public static partial class DeckText
             return (null, MissingName);
         }
 
-        return (new DeckTextLine(number, quantity, name, setCode, collectorNumber, finish, tags, globalTags, note, zone), null);
+        return (new DeckTextLine(number, quantity, name, setCode, collectorNumber, finish, tags, globalTags, note, zone, categories), null);
     }
 
     [GeneratedRegex(@"^(?://\s*)?(?<name>[A-Za-z][A-Za-z ]*?)\s*:?\s*(?:\(\d+\))?$")]

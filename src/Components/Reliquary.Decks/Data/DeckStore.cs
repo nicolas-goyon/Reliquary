@@ -85,12 +85,33 @@ internal sealed class DeckLineRow
 
     public string Note { get; set; } = string.Empty;
 
+    public string[] Categories { get; set; } = [];
+
+    public Guid[] TagIds { get; set; } = [];
+
     public DateTime CreatedAt { get; set; }
 
     public DateTime UpdatedAt { get; set; }
 
+    /// <summary>Gets the content of the line, to find the lines that a change modified.</summary>
+    public string Content => $"{PrintingId}|{Finish}|{Quantity}|{Zone}|{Note}|{string.Join(',', Categories.Order(StringComparer.Ordinal))}|{string.Join(',', TagIds.Order())}";
+
     /// <summary>Gets the key of the line: one line for each card, printing and finish in a zone.</summary>
     public (string Zone, Guid OracleId, Guid? PrintingId, string? Finish) Key => (Zone, OracleId, PrintingId, Finish);
+}
+
+/// <summary>
+/// A tag of a user: a global tag, or a local tag of one deck.
+/// </summary>
+internal sealed class TagRow
+{
+    public Guid Id { get; set; }
+
+    public Guid? DeckId { get; set; }
+
+    public string Name { get; set; } = string.Empty;
+
+    public bool IsGlobal => DeckId is null;
 }
 
 /// <summary>
@@ -105,8 +126,9 @@ internal sealed class DeckStore(IDatabase database)
         """;
 
     private const string LineColumns = """
-        id, deck_id as DeckId, oracle_id as OracleId, printing_id as PrintingId, finish, quantity, zone, note,
-        created_at as CreatedAt, updated_at as UpdatedAt
+        l.id, l.deck_id as DeckId, l.oracle_id as OracleId, l.printing_id as PrintingId, l.finish, l.quantity, l.zone, l.note, l.categories,
+        coalesce((select array_agg(t.tag_id order by t.tag_id) from content.deck_line_tags t where t.deck_line_id = l.id), '{}') as TagIds,
+        l.created_at as CreatedAt, l.updated_at as UpdatedAt
         """;
 
     public ValueTask<NpgsqlConnection> OpenAsync(Guid ownerId, ContentAccess access, CancellationToken cancellationToken) =>
@@ -152,7 +174,7 @@ internal sealed class DeckStore(IDatabase database)
 
     public static async Task<IReadOnlyList<DeckLineRow>> ListLinesAsync(NpgsqlConnection connection, Guid deckId, CancellationToken cancellationToken, NpgsqlTransaction? transaction = null) =>
         (await connection.QueryAsync<DeckLineRow>(new CommandDefinition(
-            $"select {LineColumns} from content.deck_lines where deck_id = @deckId order by created_at, id",
+            $"select {LineColumns} from content.deck_lines l where l.deck_id = @deckId order by l.created_at, l.id",
             new { deckId },
             transaction,
             cancellationToken: cancellationToken))).ToList();
@@ -208,8 +230,8 @@ internal sealed class DeckStore(IDatabase database)
     public static Task InsertLinesAsync(NpgsqlTransaction transaction, Guid ownerId, IEnumerable<DeckLineRow> lines, CancellationToken cancellationToken) =>
         transaction.Connection!.ExecuteAsync(new CommandDefinition(
             """
-            insert into content.deck_lines (id, deck_id, owner_id, oracle_id, printing_id, finish, quantity, zone, note, created_at, updated_at)
-            values (@Id, @DeckId, @OwnerId, @OracleId, @PrintingId, @Finish, @Quantity, @Zone, @Note, @CreatedAt, @UpdatedAt)
+            insert into content.deck_lines (id, deck_id, owner_id, oracle_id, printing_id, finish, quantity, zone, note, categories, created_at, updated_at)
+            values (@Id, @DeckId, @OwnerId, @OracleId, @PrintingId, @Finish, @Quantity, @Zone, @Note, @Categories, @CreatedAt, @UpdatedAt)
             """,
             lines.Select(line => new
             {
@@ -222,11 +244,122 @@ internal sealed class DeckStore(IDatabase database)
                 line.Quantity,
                 line.Zone,
                 line.Note,
+                line.Categories,
                 line.CreatedAt,
                 line.UpdatedAt,
             }),
             transaction,
             cancellationToken: cancellationToken));
+
+    public static Task InsertLineTagsAsync(NpgsqlTransaction transaction, IEnumerable<DeckLineRow> lines, CancellationToken cancellationToken) =>
+        transaction.Connection!.ExecuteAsync(new CommandDefinition(
+            "insert into content.deck_line_tags (deck_line_id, tag_id) values (@LineId, @TagId) on conflict do nothing",
+            lines.SelectMany(line => line.TagIds.Select(tagId => new { LineId = line.Id, TagId = tagId })),
+            transaction,
+            cancellationToken: cancellationToken));
+
+    /// <summary>
+    /// Gets the global tags of an owner and the local tags of a deck.
+    /// </summary>
+    public static async Task<IReadOnlyList<TagRow>> ListTagsAsync(NpgsqlConnection connection, Guid ownerId, Guid? deckId, CancellationToken cancellationToken, NpgsqlTransaction? transaction = null) =>
+        (await connection.QueryAsync<TagRow>(new CommandDefinition(
+            """
+            select id, deck_id as DeckId, name from content.tags
+            where owner_id = @ownerId and (deck_id is null or deck_id = @deckId)
+            order by deck_id nulls first, lower(name)
+            """,
+            new { ownerId, deckId },
+            transaction,
+            cancellationToken: cancellationToken))).ToList();
+
+    public static async Task<IReadOnlyList<TagRow>> FindTagsAsync(NpgsqlConnection connection, IReadOnlyCollection<Guid> tagIds, CancellationToken cancellationToken) =>
+        (await connection.QueryAsync<TagRow>(new CommandDefinition(
+            "select id, deck_id as DeckId, name from content.tags where id = any(@ids)",
+            new { ids = tagIds.ToArray() },
+            cancellationToken: cancellationToken))).ToList();
+
+    public static Task InsertTagsAsync(NpgsqlTransaction transaction, Guid ownerId, IEnumerable<TagRow> tags, DateTime now, CancellationToken cancellationToken) =>
+        transaction.Connection!.ExecuteAsync(new CommandDefinition(
+            "insert into content.tags (id, owner_id, deck_id, name, created_at, updated_at) values (@Id, @OwnerId, @DeckId, @Name, @Now, @Now)",
+            tags.Select(tag => new { tag.Id, OwnerId = ownerId, tag.DeckId, tag.Name, Now = now }),
+            transaction,
+            cancellationToken: cancellationToken));
+
+    /// <summary>
+    /// Gets the global tags of an owner with the number of deck lines that use each tag.
+    /// </summary>
+    public static async Task<IReadOnlyList<(Guid Id, string Name, int LineCount)>> ListGlobalTagsAsync(NpgsqlConnection connection, Guid ownerId, CancellationToken cancellationToken) =>
+        (await connection.QueryAsync<(Guid Id, string Name, int LineCount)>(new CommandDefinition(
+            """
+            select t.id, t.name, (select count(*) from content.deck_line_tags l where l.tag_id = t.id)::int
+            from content.tags t
+            where t.owner_id = @ownerId and t.deck_id is null
+            order by lower(t.name)
+            """,
+            new { ownerId },
+            cancellationToken: cancellationToken))).ToList();
+
+    public static Task<TagRow?> FindOwnedTagAsync(NpgsqlConnection connection, NpgsqlTransaction transaction, Guid ownerId, Guid tagId, CancellationToken cancellationToken) =>
+        connection.QuerySingleOrDefaultAsync<TagRow>(new CommandDefinition(
+            "select id, deck_id as DeckId, name from content.tags where id = @tagId and owner_id = @ownerId for update",
+            new { tagId, ownerId },
+            transaction,
+            cancellationToken: cancellationToken));
+
+    public static Task<TagRow?> FindTagByNameAsync(NpgsqlConnection connection, NpgsqlTransaction transaction, Guid ownerId, Guid? deckId, string name, CancellationToken cancellationToken) =>
+        connection.QuerySingleOrDefaultAsync<TagRow>(new CommandDefinition(
+            """
+            select id, deck_id as DeckId, name from content.tags
+            where owner_id = @ownerId and deck_id is not distinct from @deckId and lower(name) = lower(@name)
+            """,
+            new { ownerId, deckId, name },
+            transaction,
+            cancellationToken: cancellationToken));
+
+    public static Task RenameTagAsync(NpgsqlTransaction transaction, Guid tagId, string name, DateTime now, CancellationToken cancellationToken) =>
+        transaction.Connection!.ExecuteAsync(new CommandDefinition(
+            "update content.tags set name = @name, updated_at = @now where id = @tagId",
+            new { tagId, name, now },
+            transaction,
+            cancellationToken: cancellationToken));
+
+    /// <summary>
+    /// Moves the deck lines of one tag to another tag, then deletes the first tag.
+    /// </summary>
+    public static async Task MergeTagAsync(NpgsqlTransaction transaction, Guid fromTagId, Guid intoTagId, CancellationToken cancellationToken)
+    {
+        await transaction.Connection!.ExecuteAsync(new CommandDefinition(
+            """
+            insert into content.deck_line_tags (deck_line_id, tag_id)
+            select deck_line_id, @intoTagId from content.deck_line_tags where tag_id = @fromTagId
+            on conflict do nothing
+            """,
+            new { fromTagId, intoTagId },
+            transaction,
+            cancellationToken: cancellationToken));
+        await DeleteTagAsync(transaction, fromTagId, cancellationToken);
+    }
+
+    public static Task DeleteTagAsync(NpgsqlTransaction transaction, Guid tagId, CancellationToken cancellationToken) =>
+        transaction.Connection!.ExecuteAsync(new CommandDefinition(
+            "delete from content.tags where id = @tagId",
+            new { tagId },
+            transaction,
+            cancellationToken: cancellationToken));
+
+    /// <summary>
+    /// Gets the decks that contain a line with a tag, and increases their versions.
+    /// </summary>
+    public static async Task<IReadOnlyList<DeckRow>> TouchDecksOfTagAsync(NpgsqlTransaction transaction, Guid tagId, DateTime now, CancellationToken cancellationToken) =>
+        (await transaction.Connection!.QueryAsync<DeckRow>(new CommandDefinition(
+            $"""
+            update content.decks d set version = version + 1, updated_at = @now
+            where d.id in (select l.deck_id from content.deck_lines l join content.deck_line_tags t on t.deck_line_id = l.id where t.tag_id = @tagId)
+            returning {DeckColumns}
+            """,
+            new { tagId, now },
+            transaction,
+            cancellationToken: cancellationToken))).ToList();
 
     public static Task DeleteLinesAsync(NpgsqlTransaction transaction, Guid deckId, IEnumerable<Guid> lineIds, CancellationToken cancellationToken) =>
         transaction.Connection!.ExecuteAsync(new CommandDefinition(

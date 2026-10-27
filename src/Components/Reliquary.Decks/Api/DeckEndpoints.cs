@@ -7,6 +7,7 @@ using Reliquary.BuildingBlocks.Api;
 using Reliquary.BuildingBlocks.Cards;
 using Reliquary.BuildingBlocks.Security;
 using Reliquary.Decks.Data;
+using Reliquary.Decks.Text;
 
 namespace Reliquary.Decks.Api;
 
@@ -51,6 +52,14 @@ internal static class DeckEndpoints
         owner.MapPatch("/{deckId:guid}/lines/{lineId:guid}", UpdateLineAsync)
             .WithName("UpdateDeckLine")
             .WithSummary("Changes the quantity, the zone, the printing, the finish or the note of a line. A quantity of 0 removes the line.");
+
+        decks.MapGet("/{deckId:guid}/text", GetTextAsync)
+            .WithName("GetDeckText")
+            .WithSummary("Gets the lines of a deck in the deck text format. See docs/development/deck-text-format.md.");
+
+        owner.MapPut("/{deckId:guid}/text", SetTextAsync)
+            .WithName("SetDeckText")
+            .WithSummary("Replaces the lines of a deck from a text in the deck text format. The API changes nothing when a line has an error.");
 
         owner.MapDelete("/{deckId:guid}/lines/{lineId:guid}", DeleteLineAsync)
             .WithName("DeleteDeckLine")
@@ -203,6 +212,7 @@ internal static class DeckEndpoints
         }
 
         ValidateLineFields(errors, string.Empty, request.Zone, request.Finish, request.Note);
+        ValidateTags(errors, string.Empty, request.Tags, request.GlobalTags, request.Categories);
         if (errors.Count > 0)
         {
             return ApiProblems.Validation(errors);
@@ -212,7 +222,17 @@ internal static class DeckEndpoints
             user.GetAccountId(),
             deckId,
             lineId,
-            new LineChanges(request.Quantity, request.Zone, request.PrintingId, request.ClearPrinting == true, request.Finish, request.ClearFinish == true, request.Note),
+            new LineChanges(
+                request.Quantity,
+                request.Zone,
+                request.PrintingId,
+                request.ClearPrinting == true,
+                request.Finish,
+                request.ClearFinish == true,
+                request.Note,
+                Clean(request.Tags),
+                Clean(request.GlobalTags),
+                request.Categories),
             cancellationToken);
         return TypedResults.Ok(await ToResponseAsync(view, catalog, cancellationToken));
     }
@@ -222,6 +242,31 @@ internal static class DeckEndpoints
         var view = await decks.DeleteLineAsync(user.GetAccountId(), deckId, lineId, cancellationToken);
         return TypedResults.Ok(await ToResponseAsync(view, catalog, cancellationToken));
     }
+
+    private static async Task<Ok<DeckTextResponse>> GetTextAsync(Guid deckId, ClaimsPrincipal user, DeckTextService texts, CancellationToken cancellationToken)
+    {
+        var (text, version) = await texts.GetAsync(user.FindAccountId(), deckId, cancellationToken);
+        return TypedResults.Ok(new DeckTextResponse(text, version));
+    }
+
+    private static async Task<Results<Ok<DeckResponse>, NoContent, ProblemHttpResult>> SetTextAsync(
+        Guid deckId, SetDeckTextRequest request, ClaimsPrincipal user, DeckTextService texts, ICardCatalog catalog, CancellationToken cancellationToken)
+    {
+        if (request.Text is null)
+        {
+            return ApiProblems.Validation(new FieldError("text", FieldErrorCodes.Required, "The text is necessary. An empty text removes all the lines."));
+        }
+
+        if (request.Text.Length > MaxTextLength)
+        {
+            return ApiProblems.Validation(new FieldError("text", FieldErrorCodes.TooLong, $"The text must have {MaxTextLength} characters or fewer."));
+        }
+
+        var view = await texts.SetAsync(user.GetAccountId(), deckId, request.Text, request.ExpectedVersion, request.DryRun == true, cancellationToken);
+        return view is null ? TypedResults.NoContent() : TypedResults.Ok(await ToResponseAsync(view, catalog, cancellationToken));
+    }
+
+    private const int MaxTextLength = 200_000;
 
     private static void ValidateDeckFields(List<FieldError> errors, string? name, string? format, string? visibility, string? description)
     {
@@ -264,6 +309,45 @@ internal static class DeckEndpoints
         }
     }
 
+    private static void ValidateTags(List<FieldError> errors, string prefix, IReadOnlyList<string>? tags, IReadOnlyList<string>? globalTags, IReadOnlyList<string>? categories)
+    {
+        foreach (var (field, list) in new[] { ("tags", tags), ("globalTags", globalTags) })
+        {
+            if (list is null)
+            {
+                continue;
+            }
+
+            if (list.Count > DeckRules.MaxTagsPerLine)
+            {
+                errors.Add(new FieldError($"{prefix}{field}", FieldErrorCodes.TooLong, $"A line can have {DeckRules.MaxTagsPerLine} tags or fewer."));
+            }
+
+            for (var index = 0; index < list.Count; index++)
+            {
+                if (string.IsNullOrWhiteSpace(list[index]))
+                {
+                    errors.Add(new FieldError($"{prefix}{field}[{index}]", FieldErrorCodes.Required, "A tag must contain a character that is not a space."));
+                }
+                else if (list[index].Trim().Length > DeckRules.MaxTagLength || list[index].Contains('#', StringComparison.Ordinal))
+                {
+                    errors.Add(new FieldError($"{prefix}{field}[{index}]", FieldErrorCodes.InvalidFormat, $"A tag must have {DeckRules.MaxTagLength} characters or fewer, and no \"#\"."));
+                }
+            }
+        }
+
+        for (var index = 0; index < (categories?.Count ?? 0); index++)
+        {
+            if (!DeckRules.Categories.Contains(categories![index]))
+            {
+                errors.Add(new FieldError($"{prefix}categories[{index}]", FieldErrorCodes.NotAllowed, $"The category must be one of these categories: {string.Join(", ", DeckRules.Categories)}."));
+            }
+        }
+    }
+
+    private static List<string>? Clean(IReadOnlyList<string>? tags) =>
+        tags?.Select(tag => tag.Trim()).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+
     /// <summary>
     /// Checks the line requests, and finds the card of each line that gives a name.
     /// </summary>
@@ -305,9 +389,19 @@ internal static class DeckEndpoints
             }
 
             ValidateLineFields(errors, prefix, line.Zone, line.Finish, line.Note);
+            ValidateTags(errors, prefix, line.Tags, line.GlobalTags, line.Categories);
             if (oracleId is { } id)
             {
-                inputs.Add(new LineInput(id, line.PrintingId, line.Finish, line.Quantity ?? 1, line.Zone ?? "main", line.Note?.Trim() ?? string.Empty));
+                inputs.Add(new LineInput(
+                    id,
+                    line.PrintingId,
+                    line.Finish,
+                    line.Quantity ?? 1,
+                    line.Zone ?? "main",
+                    line.Note?.Trim() ?? string.Empty,
+                    Clean(line.Tags) ?? [],
+                    Clean(line.GlobalTags) ?? [],
+                    line.Categories ?? []));
             }
         }
 
@@ -342,7 +436,7 @@ internal static class DeckEndpoints
             Utc(deck.UpdatedAt),
             view.IsOwner,
             counts,
-            [.. view.Lines.Select(line => new DeckLineResponse(line.Id, line.OracleId, line.PrintingId, line.Finish, line.Quantity, line.Zone, line.Note))],
+            [.. view.Lines.Select(line => new DeckLineResponse(line.Id, line.OracleId, line.PrintingId, line.Finish, line.Quantity, line.Zone, line.Note, line.TagIds, line.Categories))],
             cards.ToDictionary(pair => pair.Key, pair => new DeckCardResponse(
                 pair.Value.Name,
                 pair.Value.Layout,
@@ -355,7 +449,8 @@ internal static class DeckEndpoints
                 pair.Value.Analysis.IsLand,
                 pair.Value.DefaultPrintingId,
                 [.. pair.Value.Faces.Select(face => new DeckCardFaceResponse(face.Name, face.ManaCost, face.TypeLine))])),
-            printings.ToDictionary(pair => pair.Key, pair => new DeckPrintingResponse(pair.Value.SetCode, pair.Value.CollectorNumber, pair.Value.Lang, pair.Value.ImageUri)));
+            printings.ToDictionary(pair => pair.Key, pair => new DeckPrintingResponse(pair.Value.SetCode, pair.Value.CollectorNumber, pair.Value.Lang, pair.Value.ImageUri)),
+            view.Tags.ToDictionary(tag => tag.Id, tag => new DeckTagResponse(tag.Name, tag.IsGlobal)));
     }
 
     private static DateTimeOffset Utc(DateTime value) => new(DateTime.SpecifyKind(value, DateTimeKind.Utc));
@@ -382,6 +477,14 @@ internal sealed class DeckExceptionFilter : IEndpointFilter
         try
         {
             return await next(context);
+        }
+        catch (DeckTextException exception)
+        {
+            return ApiProblems.Problem(
+                StatusCodes.Status400BadRequest,
+                DeckErrorCodes.TextInvalid,
+                exception.Message,
+                new Dictionary<string, object?> { ["lineErrors"] = exception.LineErrors.Select(error => new DeckTextLineError(error.Line, error.Code, error.Text)).ToList() });
         }
         catch (DeckException exception)
         {

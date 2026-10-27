@@ -34,4 +34,5 @@ The Decks component must not read the tables of the Cards component ([ADR 0007](
 - The deck page gets a deck, its lines, its cards and its printings in one request.
 - The read model of the public decks ([#107](https://github.com/nicolas-goyon/reliquary/issues/107)) can use the domain events.
 - A deck directory entry with no deck can stay after a failure. It has no effect, because the deck is not in the shard.
-- The deck tags and the categories arrive with issue [#96](https://github.com/nicolas-goyon/reliquary/issues/96), in a new migration.
+- The table `content.tags` contains the global tags of a user and the local tags of each deck. A line can have tags and predefined categories.
+  A request gives the tags by name, and the API creates the tags that do not exist.
