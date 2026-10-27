@@ -41,6 +41,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - The deck text format: quantities, printings, finishes, tags, notes and zone sections, with the bulk edit syntax of Moxfield.
 - Global tags, local tags and the predefined categories of the deck lines. Rename, merge and delete a tag.
 - Read and replace the lines of a deck as text, with the error of each line.
+- Deck analysis with `GET /api/v1/decks/{id}/analysis`: the mana curve, the distributions, the mana sources with the method of Frank Karsten and the draw probabilities.
+  For Commander, the analysis also gives the category needs and an indicative bracket (ADR 0027).
 - The legality check of a deck: deck size, copies, card legalities, commanders, pairs and color identity.
 - Deck import and export in the CSV formats of Deckbox, ManaBox and Dragon Shield, and in a generic CSV format with a column map.
 - Deck import and export in the formats of Moxfield, MTG Arena, Magic Online and Archidekt, and in the Reliquary text. A test proves the Moxfield round trip of the M1 gate.

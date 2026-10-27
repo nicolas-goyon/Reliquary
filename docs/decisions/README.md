@@ -34,6 +34,7 @@ Each record gives the context, the decision and its consequences.
 | [0024](0024-container-images.md) | Container images and the full local instance | Accepted |
 | [0025](0025-multi-face-analysis-rules.md) | Analysis rules for cards with more than one face | Accepted |
 | [0026](0026-deck-model.md) | Deck model of milestone M1 | Accepted |
+| [0027](0027-deck-analysis.md) | Deck analysis on the server, with rules and tables as data in code | Accepted |
 
 ## Open decisions
 
