@@ -26,6 +26,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Web app: sign-in, registration, email check, password reset and OAuth sign-in, in French and English.
   An account page shows the profile, the password and the API keys.
 - Card search page with the Scryfall syntax, the autocomplete of the keywords and of the card names, and the position of the syntax errors.
+- Filter panel on the card search page: colors, color identity, card types, mana value, rarity, format legality and set.
+  The panel writes the terms into the search text and reads them from it.
 - Card page: the faces, the legalities, the other names, the rulings and the printings.
 - Deck list and deck page: make, rename, copy and delete a deck, and see the legality problems.
   On the deck page, the user adds cards with the autocomplete, changes the quantities and moves the cards between the zones by drag and drop.

@@ -16,6 +16,61 @@
   "suggestions": {
     "keyword": "Mot-clé"
   },
+  "filters": {
+    "toggle": "Filtres",
+    "help": "Les filtres écrivent leurs termes dans le texte de la recherche. Vous pouvez aussi saisir les termes.",
+    "color": "Couleurs",
+    "identity": "Identité de couleur",
+    "mode": "Comparaison",
+    "modes": {
+      "including": "Incluant ces couleurs",
+      "exactly": "Exactement ces couleurs",
+      "atMost": "Au plus ces couleurs"
+    },
+    "colorNames": {
+      "w": "Blanc",
+      "u": "Bleu",
+      "b": "Noir",
+      "r": "Rouge",
+      "g": "Vert"
+    },
+    "types": "Types de carte",
+    "typeNames": {
+      "creature": "Créature",
+      "instant": "Éphémère",
+      "sorcery": "Rituel",
+      "artifact": "Artefact",
+      "enchantment": "Enchantement",
+      "planeswalker": "Planeswalker",
+      "land": "Terrain",
+      "battle": "Bataille"
+    },
+    "manaValue": "Valeur de mana",
+    "operator": "Opérateur",
+    "operators": {
+      "equal": "Égale à",
+      "less": "Inférieure à",
+      "greater": "Supérieure à",
+      "lessOrEqual": "Inférieure ou égale à",
+      "greaterOrEqual": "Supérieure ou égale à"
+    },
+    "value": "Valeur",
+    "rarity": "Rareté",
+    "anyRarity": "Toutes les raretés",
+    "rarities": {
+      "common": "Commune",
+      "uncommon": "Peu commune",
+      "rare": "Rare",
+      "mythic": "Rare mythique",
+      "special": "Spéciale",
+      "bonus": "Bonus"
+    },
+    "format": "Légale dans le format",
+    "anyFormat": "Tous les formats",
+    "set": "Code de l’extension",
+    "setHint": "Saisissez le code de l’extension, par exemple mh3.",
+    "clear": "Effacer les filtres"
+  },
   "warnings": {
     "unknown_keyword": "La recherche ne connaît pas le mot-clé de « {{term}} ». Ce terme est ignoré.",
     "unsupported_keyword": "Reliquary ne gère pas « {{term}} ». Ce terme est ignoré.",

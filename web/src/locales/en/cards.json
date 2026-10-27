@@ -16,6 +16,61 @@
   "suggestions": {
     "keyword": "Keyword"
   },
+  "filters": {
+    "toggle": "Filters",
+    "help": "The filters write their terms into the search text. You can also type the terms.",
+    "color": "Colors",
+    "identity": "Color identity",
+    "mode": "Comparison",
+    "modes": {
+      "including": "Including these colors",
+      "exactly": "Exactly these colors",
+      "atMost": "At most these colors"
+    },
+    "colorNames": {
+      "w": "White",
+      "u": "Blue",
+      "b": "Black",
+      "r": "Red",
+      "g": "Green"
+    },
+    "types": "Card types",
+    "typeNames": {
+      "creature": "Creature",
+      "instant": "Instant",
+      "sorcery": "Sorcery",
+      "artifact": "Artifact",
+      "enchantment": "Enchantment",
+      "planeswalker": "Planeswalker",
+      "land": "Land",
+      "battle": "Battle"
+    },
+    "manaValue": "Mana value",
+    "operator": "Operator",
+    "operators": {
+      "equal": "Equal to",
+      "less": "Less than",
+      "greater": "Greater than",
+      "lessOrEqual": "Less than or equal to",
+      "greaterOrEqual": "Greater than or equal to"
+    },
+    "value": "Value",
+    "rarity": "Rarity",
+    "anyRarity": "All the rarities",
+    "rarities": {
+      "common": "Common",
+      "uncommon": "Uncommon",
+      "rare": "Rare",
+      "mythic": "Mythic rare",
+      "special": "Special",
+      "bonus": "Bonus"
+    },
+    "format": "Legal in the format",
+    "anyFormat": "All the formats",
+    "set": "Set code",
+    "setHint": "Type the code of the set, for example mh3.",
+    "clear": "Clear the filters"
+  },
   "warnings": {
     "unknown_keyword": "The search does not know the keyword of \"{{term}}\". It ignored this term.",
     "unsupported_keyword": "Reliquary does not support \"{{term}}\". It ignored this term.",
