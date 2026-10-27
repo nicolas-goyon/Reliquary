@@ -12,6 +12,9 @@ export function MainNavigation({ account }: { account: Account | null }) {
       <li>
         <Link to="/">{t('navigation.home')}</Link>
       </li>
+      <li>
+        <Link to="/cards">{t('navigation.cards')}</Link>
+      </li>
       {account && (
         <li>
           <Link to="/account">{t('navigation.account')}</Link>

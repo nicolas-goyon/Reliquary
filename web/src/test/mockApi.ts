@@ -1,6 +1,6 @@
 import { vi } from 'vitest'
 
-export type Handler = (request: { body: unknown; headers: Record<string, string> }) => Response | Promise<Response>
+export type Handler = (request: { body: unknown; headers: Record<string, string>; url: URL }) => Response | Promise<Response>
 
 /** A problem response of the API. */
 export function problem(status: number, code: string, errors: { field: string; code: string; message: string }[] = []): Response {
@@ -40,7 +40,7 @@ export function mockApi(handlers: Record<string, Handler>) {
       if (!handler) {
         throw new Error(`The test has no handler for ${key}.`)
       }
-      return handler({ body, headers })
+      return handler({ body, headers, url })
     }),
   )
   return calls
