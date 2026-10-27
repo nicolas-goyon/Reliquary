@@ -7,6 +7,7 @@ using Reliquary.BuildingBlocks.Api;
 using Reliquary.BuildingBlocks.Cards;
 using Reliquary.BuildingBlocks.Security;
 using Reliquary.Decks.Data;
+using Reliquary.Decks.Exchange;
 using Reliquary.Decks.Text;
 
 namespace Reliquary.Decks.Api;
@@ -28,6 +29,10 @@ internal static class DeckEndpoints
         owner.MapPost(string.Empty, CreateAsync)
             .WithName("CreateDeck")
             .WithSummary("Creates a deck, with its first lines.");
+
+        owner.MapPost("/import", ImportAsync)
+            .WithName("ImportDeck")
+            .WithSummary("Creates a deck from a file of another tool. The API makes no deck when a line has an error. See docs/development/deck-import-export.md.");
 
         decks.MapGet("/{deckId:guid}", GetAsync)
             .WithName("GetDeck")
@@ -60,6 +65,10 @@ internal static class DeckEndpoints
         decks.MapGet("/{deckId:guid}/legality", GetLegalityAsync)
             .WithName("GetDeckLegality")
             .WithSummary("Checks the legality of a deck in its format: deck size, copies, banned cards, commanders and color identity.");
+
+        decks.MapGet("/{deckId:guid}/export", ExportAsync)
+            .WithName("ExportDeck")
+            .WithSummary("Gets a deck as a file of another tool: text, moxfield, mtga, mtgo, dek or archidekt.");
 
         decks.MapGet("/{deckId:guid}/text", GetTextAsync)
             .WithName("GetDeckText")
@@ -277,6 +286,58 @@ internal static class DeckEndpoints
         var cards = await catalog.GetCardsAsync([.. view.Lines.Select(line => line.OracleId).Distinct()], cancellationToken);
         var problems = Legality.DeckLegality.Check(view.Deck.Format, view.Lines.Select(line => (line.Zone, line.OracleId, line.Quantity)), cards);
         return TypedResults.Ok(new DeckLegalityResponse(view.Deck.Format, problems.Count == 0, problems));
+    }
+
+    private static async Task<Results<Created<ImportDeckResponse>, ProblemHttpResult>> ImportAsync(
+        ImportDeckRequest request, ClaimsPrincipal user, DeckExchangeService exchange, DeckService decks, ICardCatalog catalog, CancellationToken cancellationToken)
+    {
+        var errors = new List<FieldError>();
+        if (string.IsNullOrEmpty(request.Format))
+        {
+            errors.Add(new FieldError("format", FieldErrorCodes.Required, "The file format is necessary."));
+        }
+        else if (!DeckFormats.All.ContainsKey(request.Format))
+        {
+            errors.Add(new FieldError("format", FieldErrorCodes.NotAllowed, $"The file format is not known. Use one of these formats: {string.Join(", ", DeckFormats.All.Keys)}."));
+        }
+
+        if (request.Content is null)
+        {
+            errors.Add(new FieldError("content", FieldErrorCodes.Required, "The content of the file is necessary."));
+        }
+        else if (request.Content.Length > MaxTextLength)
+        {
+            errors.Add(new FieldError("content", FieldErrorCodes.TooLong, $"The file must have {MaxTextLength} characters or fewer."));
+        }
+
+        var name = string.IsNullOrWhiteSpace(request.Name) ? "Imported deck" : request.Name.Trim();
+        ValidateDeckFields(errors, name, request.DeckFormat, request.Visibility, null);
+        if (errors.Count > 0)
+        {
+            return ApiProblems.Validation(errors);
+        }
+
+        var (deck, warnings) = await exchange.ImportAsync(
+            user.GetAccountId(),
+            DeckFormats.All[request.Format!],
+            request.Content!,
+            new NewDeck(name, request.DeckFormat ?? "commander", request.Visibility ?? "private", null, string.Empty, null),
+            cancellationToken);
+        var view = await decks.GetAsync(user.GetAccountId(), deck.Id, cancellationToken);
+        return TypedResults.Created(
+            $"{ApiRoutes.Base}/decks/{deck.Id}",
+            new ImportDeckResponse(await ToResponseAsync(view, catalog, cancellationToken), [.. warnings.Select(warning => new DeckTextLineError(warning.Line, warning.Code, warning.Text))]));
+    }
+
+    private static async Task<Results<Ok<ExportDeckResponse>, ProblemHttpResult>> ExportAsync(Guid deckId, string? format, ClaimsPrincipal user, DeckExchangeService exchange, CancellationToken cancellationToken)
+    {
+        if (format is null || !DeckFormats.All.TryGetValue(format, out var deckFormat))
+        {
+            return ApiProblems.Validation(new FieldError("format", FieldErrorCodes.NotAllowed, $"Give one of these file formats: {string.Join(", ", DeckFormats.All.Keys)}."));
+        }
+
+        var file = await exchange.ExportAsync(user.FindAccountId(), deckId, deckFormat, cancellationToken);
+        return TypedResults.Ok(new ExportDeckResponse(file.FileName, file.ContentType, file.Content));
     }
 
     private static async Task<Ok<DeckTextResponse>> GetTextAsync(Guid deckId, ClaimsPrincipal user, DeckTextService texts, CancellationToken cancellationToken)

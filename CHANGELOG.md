@@ -39,6 +39,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Global tags, local tags and the predefined categories of the deck lines. Rename, merge and delete a tag.
 - Read and replace the lines of a deck as text, with the error of each line.
 - The legality check of a deck: deck size, copies, card legalities, commanders, pairs and color identity.
+- Deck import and export in the formats of Moxfield, MTG Arena, Magic Online and Archidekt, and in the Reliquary text. A test proves the Moxfield round trip of the M1 gate.
 - The copy of a deck: one of the decks of the user, or an unlisted or public deck of another user.
 - Card search with the Scryfall syntax: `GET /api/v1/cards/search`, with all the names of a card, paging, warnings and errors with a position.
 - Parity tests of the card search against the examples of the Scryfall syntax guide, on the demo dataset in `data/demo`.
