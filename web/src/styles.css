@@ -1277,3 +1277,57 @@ tr[aria-selected='true'] {
 .deck-table-row a {
   color: inherit;
 }
+
+.public-decks {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr));
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.public-deck {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.public-deck-image {
+  flex: none;
+  width: 5rem;
+}
+
+.public-deck-body h3 {
+  margin: 0 0 0.25rem;
+  font-size: 1.0625rem;
+}
+
+.public-deck-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  margin: 0.25rem 0 0;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
+.deck-social {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: center;
+  margin: 0.5rem 0;
+  color: var(--color-text-muted);
+}
+
+.segmented {
+  display: inline-flex;
+  gap: 0.25rem;
+  margin-bottom: 1rem;
+}
+
+.segmented button[aria-pressed='true'] {
+  border-color: var(--color-primary);
+  font-weight: 600;
+}

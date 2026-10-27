@@ -31,7 +31,8 @@
     "register": "Make an account",
     "signOut": "Sign out",
     "cards": "Cards",
-    "decks": "Decks"
+    "decks": "Decks",
+    "explore": "Explore"
   },
   "notFound": {
     "title": "Page not found",

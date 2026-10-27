@@ -31,7 +31,8 @@
     "register": "Créer un compte",
     "signOut": "Se déconnecter",
     "cards": "Cartes",
-    "decks": "Decks"
+    "decks": "Decks",
+    "explore": "Explorer"
   },
   "notFound": {
     "title": "Page introuvable",

@@ -2,11 +2,13 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AccountPage } from './pages/AccountPage'
 import { CardPage } from './pages/CardPage'
+import { AuthorPage } from './pages/AuthorPage'
 import { CardSearchPage } from './pages/CardSearchPage'
 import { DeckImportPage } from './pages/DeckImportPage'
 import { DeckListPage } from './pages/DeckListPage'
 import { DeckPage } from './pages/DeckPage'
 import { AuthCompletePage, CheckEmailPage, ForgotPasswordPage, ResetPasswordPage } from './pages/EmailLinkPages'
+import { ExplorePage } from './pages/ExplorePage'
 import { HomePage, NotFoundPage } from './pages/HomePage'
 import { RegisterPage } from './pages/RegisterPage'
 import { SignInPage } from './pages/SignInPage'
@@ -24,12 +26,14 @@ const repositoryUrl = 'https://github.com/nicolas-goyon/reliquary'
 const patternRoutes: { pattern: RegExp; render(match: RegExpMatchArray): ReactNode }[] = [
   { pattern: /^\/cards\/([0-9a-f-]{36})$/, render: (match) => <CardPage key={match[1]} id={match[1]} /> },
   { pattern: /^\/decks\/([0-9a-f-]{36})$/, render: (match) => <DeckPage key={match[1]} id={match[1]} /> },
+  { pattern: /^\/authors\/([0-9a-f-]{36})$/, render: (match) => <AuthorPage key={match[1]} id={match[1]} /> },
 ]
 
 const routes: Record<string, () => ReactNode> = {
   '/cards': () => <CardSearchPage />,
   '/decks': () => <DeckListPage />,
   '/decks/import': () => <DeckImportPage />,
+  '/explore': () => <ExplorePage />,
   '/': () => <HomePage />,
   '/sign-in': () => <SignInPage />,
   '/register': () => <RegisterPage />,
