@@ -57,6 +57,12 @@ jobs:
       - name: Build
         run: dotnet build --no-restore --configuration Release
 
+      - name: Install the PostgreSQL 18 client for the backup tests
+        run: |
+          sudo apt-get install --yes --no-install-recommends postgresql-common
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install --yes --no-install-recommends postgresql-client-18
+
       - name: Test
         run: dotnet test --no-build --configuration Release
 
@@ -139,6 +145,24 @@ jobs:
           curl --fail --silent --show-error --header 'Content-Type: application/json' \
             --data '{"email":"demo@reliquary.localhost","password":"reliquary-demo"}' \
             "$base/api/v1/auth/sign-in" | grep --quiet '"accessToken"'
+
+      - name: Back up, delete and restore the first instance
+        run: |
+          set -euo pipefail
+          base=http://localhost:8080
+          token=$(curl --fail --silent --show-error --header 'Content-Type: application/json' \
+            --data '{"email":"demo@reliquary.localhost","password":"reliquary-demo"}' \
+            "$base/api/v1/auth/sign-in" | python3 -c 'import json,sys; print(json.load(sys.stdin)["accessToken"])')
+          curl --fail --silent --show-error --header "Authorization: Bearer $token" --header 'Content-Type: application/json' \
+            --data '{"name":"Backup check","lines":[{"name":"Sol Ring"}]}' "$base/api/v1/decks" > /dev/null
+          just backup ci
+          just down
+          just restore-backup ci
+          token=$(curl --fail --silent --show-error --header 'Content-Type: application/json' \
+            --data '{"email":"demo@reliquary.localhost","password":"reliquary-demo"}' \
+            "$base/api/v1/auth/sign-in" | python3 -c 'import json,sys; print(json.load(sys.stdin)["accessToken"])')
+          curl --fail --silent --show-error --header "Authorization: Bearer $token" "$base/api/v1/decks" | grep --quiet '"name":"Backup check"'
+          curl --fail --silent --show-error "$base/api/v1/cards/named?name=Sol%20Ring" | grep --quiet '"name":"Sol Ring"'
 
       - name: Create a second instance with other ports
         env:

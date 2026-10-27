@@ -44,5 +44,13 @@ EXPOSE 8080
 ENTRYPOINT ["dotnet", "Reliquary.Worker.dll"]
 
 FROM runtime AS cli
+# The backup commands run pg_dump and pg_restore. Their major version must be the version of the PostgreSQL server.
+USER root
+RUN apt-get update \
+    && apt-get install --yes --no-install-recommends postgresql-common \
+    && /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y \
+    && apt-get install --yes --no-install-recommends postgresql-client-18 \
+    && rm -rf /var/lib/apt/lists/*
+USER $APP_UID
 COPY --from=build /app/cli .
 ENTRYPOINT ["dotnet", "reliquary.dll"]

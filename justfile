@@ -35,6 +35,19 @@ reset:
 down:
     {{ compose }} --profile app --profile observability down --volumes --remove-orphans
 
+# Back up all the databases of the local instance to the folder backups/NAME. See docs/development/backup-and-restore.md.
+backup name:
+    mkdir -p backups && chmod a+rwx backups
+    {{ compose }} --profile app run --rm --volume "{{ justfile_directory() }}/backups:/backups" migrate backup /backups/{{ name }}
+
+# Restore the backup backups/NAME into the local instance. It stops the API and the worker, and replaces the data.
+restore-backup name:
+    {{ compose }} up --detach --wait postgres redis mailpit
+    {{ compose }} --profile app stop api worker
+    {{ compose }} --profile app run --rm --volume "{{ justfile_directory() }}/backups:/backups" migrate restore /backups/{{ name }} --replace
+    {{ compose }} --profile app run --rm migrate migrate
+    {{ compose }} --profile app up --detach --wait api worker web
+
 # Load the demo dataset into the local instance: the demo cards and the demo accounts.
 demo:
     {{ compose }} --profile app run --rm migrate demo load
