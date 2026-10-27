@@ -28,4 +28,10 @@ internal static partial class AccountsLog
 
     [LoggerMessage(EventId = 3101, Level = LogLevel.Information, Message = "The job wrote {Count} usage counters to the database.")]
     public static partial void UsageFlushed(this ILogger logger, int count);
+
+    [LoggerMessage(EventId = 3200, Level = LogLevel.Error, Message = "The export {ExportId} of the account {AccountId} failed.")]
+    public static partial void ExportFailed(this ILogger logger, Exception exception, Guid exportId, Guid accountId);
+
+    [LoggerMessage(EventId = 3201, Level = LogLevel.Information, Message = "The worker deleted the account {AccountId} and its data.")]
+    public static partial void AccountDeleted(this ILogger logger, Guid accountId);
 }

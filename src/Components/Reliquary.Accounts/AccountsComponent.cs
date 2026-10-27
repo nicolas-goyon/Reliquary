@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Reliquary.Accounts.Auth;
 using Reliquary.Accounts.Data;
 using Reliquary.Accounts.Emails;
+using Reliquary.Accounts.PersonalData;
 using Reliquary.Accounts.Profile;
 using Reliquary.Accounts.Quotas;
 using Reliquary.BuildingBlocks;
@@ -42,6 +43,8 @@ public sealed class AccountsComponent : ICoreComponent
         services.TryAddSingleton(TimeProvider.System);
         services.AddSingleton<AccountStore>();
         services.AddSingleton<IAccountDirectory, AccountDirectory>();
+        services.AddSingleton<IPersonalDataProvider, AccountPersonalData>();
+        services.AddSingleton<PersonalDataService>();
         services.AddSingleton<AccessTokens>();
         services.AddSingleton<AccountEmails>();
         services.AddSingleton<AccountService>();
@@ -79,6 +82,7 @@ public sealed class AccountsComponent : ICoreComponent
     public void AddWorkerServices(IServiceCollection services, IConfiguration configuration)
     {
         services.AddSingleton<IScheduledJob, UsageFlushJob>();
+        services.AddSingleton<IScheduledJob, PersonalDataJob>();
     }
 
     /// <inheritdoc />
@@ -90,5 +94,6 @@ public sealed class AccountsComponent : ICoreComponent
         AuthEndpoints.Map(api);
         ExternalEndpoints.Map(api);
         ProfileEndpoints.Map(api);
+        PersonalDataEndpoints.Map(api);
     }
 }

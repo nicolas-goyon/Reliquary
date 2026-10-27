@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using Reliquary.BuildingBlocks;
+using Reliquary.BuildingBlocks.Accounts;
 using Reliquary.BuildingBlocks.Data;
 using Reliquary.BuildingBlocks.Events;
 using Reliquary.Decks.Api;
@@ -44,6 +45,7 @@ public sealed class DecksComponent : ICoreComponent
         services.AddSingleton<PublicDeckService>();
         services.AddSingleton<DeckTextService>();
         services.AddSingleton<DeckExchangeService>();
+        services.AddSingleton<IPersonalDataProvider, DeckPersonalData>();
     }
 
     /// <inheritdoc />

@@ -11,3 +11,10 @@ namespace Reliquary.Accounts;
 /// <param name="CreatedAt">The time of the creation.</param>
 [DomainEvent("accounts.account.created", 1)]
 public sealed record AccountCreated(Guid AccountId, string Language, string Shard, DateTimeOffset CreatedAt) : IDomainEvent;
+
+/// <summary>
+/// The worker deleted an account and all the data of the core components. The modules delete their own data of the account.
+/// </summary>
+/// <param name="AccountId">The ID of the deleted account.</param>
+[DomainEvent("accounts.account.deleted", 1)]
+public sealed record AccountDeleted(Guid AccountId) : IDomainEvent;
