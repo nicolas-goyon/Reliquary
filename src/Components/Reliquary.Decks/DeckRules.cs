@@ -24,6 +24,16 @@ public static class DeckRules
         "historic", "timeless", "alchemy", "gladiator", "explorer", "future", "penny", "freeform",
     ];
 
+    /// <summary>The predefined categories of the analysis.</summary>
+    public static readonly IReadOnlyList<string> Categories =
+        ["ramp", "card_draw", "targeted_interaction", "board_wipe", "synergy", "land", "win_condition", "protection"];
+
+    /// <summary>The maximum length of a tag.</summary>
+    public const int MaxTagLength = 50;
+
+    /// <summary>The maximum number of tags and categories of a deck line.</summary>
+    public const int MaxTagsPerLine = 20;
+
     /// <summary>The maximum length of the name of a deck.</summary>
     public const int MaxNameLength = 100;
 

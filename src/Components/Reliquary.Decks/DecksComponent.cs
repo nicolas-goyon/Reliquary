@@ -6,6 +6,7 @@ using Reliquary.BuildingBlocks;
 using Reliquary.BuildingBlocks.Data;
 using Reliquary.Decks.Api;
 using Reliquary.Decks.Data;
+using Reliquary.Decks.Text;
 
 namespace Reliquary.Decks;
 
@@ -30,8 +31,14 @@ public sealed class DecksComponent : ICoreComponent
         services.TryAddSingleton(TimeProvider.System);
         services.AddSingleton<DeckStore>();
         services.AddSingleton<DeckService>();
+        services.AddSingleton<TagService>();
+        services.AddSingleton<DeckTextService>();
     }
 
     /// <inheritdoc />
-    public void MapEndpoints(IEndpointRouteBuilder api) => DeckEndpoints.Map(api);
+    public void MapEndpoints(IEndpointRouteBuilder api)
+    {
+        DeckEndpoints.Map(api);
+        TagEndpoints.Map(api);
+    }
 }

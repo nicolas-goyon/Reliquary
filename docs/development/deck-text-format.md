@@ -12,7 +12,7 @@ Commander
 1 Atraxa, Praetors' Voice (2X2) 190 *F*
 
 Main
-1 Sol Ring (C21) 263 #Ramp #!Mana Rock -- Turn one
+1 Sol Ring (C21) 263 #Ramp #!Mana Rock #@ramp -- Turn one
 10 Forest
 1 Fire // Ice *E*
 
@@ -49,6 +49,7 @@ A line has these parts, in this order:
 | Finish | `*F*`, `*E*` | Optional. `*F*` gives the foil finish, and `*E*` gives the etched finish. |
 | Local tags | `#Ramp`, `#Fast mana` | Optional. A tag ends at the next `#` or at the note. |
 | Global tags | `#!Mana Rock` | Optional. |
+| Categories | `#@ramp`, `#@card_draw` | Optional. The codes of the predefined categories: `ramp`, `card_draw`, `targeted_interaction`, `board_wipe`, `synergy`, `land`, `win_condition` and `protection`. |
 | Note | `-- Turn one` | Optional. The note starts after ` -- `. |
 
 ## Errors
@@ -60,5 +61,6 @@ The parser reports each line that it cannot read, with the line number and a rea
 | `missing_name` | The line has no card name. |
 | `quantity_out_of_range` | The quantity is not from 1 to 999. |
 | `tag_too_long` | A tag has more than 50 characters. |
+| `unknown_category` | A category is not a predefined category. |
 
 The deck editor shows these errors before it saves the deck.

@@ -40,17 +40,42 @@ internal sealed record DeckChanges(string? Name, string? Format, string? Visibil
 /// <summary>
 /// The wanted content of a deck line.
 /// </summary>
-internal sealed record LineInput(Guid OracleId, Guid? PrintingId, string? Finish, int Quantity, string Zone, string Note);
+internal sealed record LineInput(
+    Guid OracleId,
+    Guid? PrintingId,
+    string? Finish,
+    int Quantity,
+    string Zone,
+    string Note,
+    IReadOnlyList<string> Tags,
+    IReadOnlyList<string> GlobalTags,
+    IReadOnlyList<string> Categories)
+{
+    public LineInput(Guid oracleId, Guid? printingId, string? finish, int quantity, string zone, string note)
+        : this(oracleId, printingId, finish, quantity, zone, note, [], [], [])
+    {
+    }
+}
 
 /// <summary>
-/// The changes of a deck line. A <see langword="null"/> field does not change.
+/// The changes of a deck line. A <see langword="null"/> field does not change. A list replaces the current list.
 /// </summary>
-internal sealed record LineChanges(int? Quantity, string? Zone, Guid? PrintingId, bool ClearPrinting, string? Finish, bool ClearFinish, string? Note);
+internal sealed record LineChanges(
+    int? Quantity,
+    string? Zone,
+    Guid? PrintingId,
+    bool ClearPrinting,
+    string? Finish,
+    bool ClearFinish,
+    string? Note,
+    IReadOnlyList<string>? Tags = null,
+    IReadOnlyList<string>? GlobalTags = null,
+    IReadOnlyList<string>? Categories = null);
 
 /// <summary>
-/// A deck and its lines, as a user can see them.
+/// A deck and its lines, as a user can see them, with the tags of the lines.
 /// </summary>
-internal sealed record DeckView(DeckRow Deck, IReadOnlyList<DeckLineRow> Lines, bool IsOwner);
+internal sealed record DeckView(DeckRow Deck, IReadOnlyList<DeckLineRow> Lines, bool IsOwner, IReadOnlyList<TagRow> Tags);
 
 /// <summary>
 /// The operations on the decks.
@@ -59,7 +84,6 @@ internal sealed class DeckService(DeckStore store, ICardCatalog catalog, IDomain
 {
     public async Task<DeckRow> CreateAsync(Guid ownerId, NewDeck input, IReadOnlyList<LineInput> lines, CancellationToken cancellationToken)
     {
-        var lineRows = new List<DeckLineRow>();
         var now = time.GetUtcNow().UtcDateTime;
         var deck = new DeckRow
         {
@@ -76,7 +100,6 @@ internal sealed class DeckService(DeckStore store, ICardCatalog catalog, IDomain
             UpdatedAt = now,
         };
         await ValidateLinesAsync(lines, cancellationToken);
-        Merge(lineRows, deck.Id, lines, now);
 
         // The directory comes first: a directory entry with no deck has no effect, but a deck with no entry cannot be shared.
         await store.AddToDirectoryAsync(deck.Id, ownerId, cancellationToken);
@@ -88,7 +111,10 @@ internal sealed class DeckService(DeckStore store, ICardCatalog catalog, IDomain
         }
 
         await DeckStore.InsertDeckAsync(transaction, deck, cancellationToken);
-        await DeckStore.InsertLinesAsync(transaction, ownerId, lineRows, cancellationToken);
+        var tags = await ResolveTagsAsync(connection, transaction, ownerId, deck.Id, lines, cancellationToken);
+        var rows = new List<DeckLineRow>();
+        Merge(rows, deck.Id, lines, tags, now);
+        await WriteLinesAsync(transaction, ownerId, deck.Id, [], rows, cancellationToken);
         await events.WriteAsync(DatabaseTarget.Content, transaction, new DeckCreated(deck.Id, deck.Format, deck.Visibility, deck.SourceDeckId), ownerId, cancellationToken);
         await transaction.CommitAsync(cancellationToken);
         return deck;
@@ -108,7 +134,8 @@ internal sealed class DeckService(DeckStore store, ICardCatalog catalog, IDomain
             throw DeckException.NotFound();
         }
 
-        return new DeckView(deck, await DeckStore.ListLinesAsync(connection, deckId, cancellationToken), isOwner);
+        var lines = await DeckStore.ListLinesAsync(connection, deckId, cancellationToken);
+        return new DeckView(deck, lines, isOwner, await TagsOfLinesAsync(connection, lines, cancellationToken));
     }
 
     public async Task<IReadOnlyList<DeckSummaryRow>> ListAsync(Guid ownerId, (DateTime UpdatedAt, Guid Id)? after, int limit, CancellationToken cancellationToken)
@@ -118,7 +145,7 @@ internal sealed class DeckService(DeckStore store, ICardCatalog catalog, IDomain
     }
 
     public Task<DeckView> UpdateAsync(Guid ownerId, Guid deckId, DeckChanges changes, CancellationToken cancellationToken) =>
-        MutateAsync(ownerId, deckId, changes.ExpectedVersion, async (connection, transaction, deck, _) =>
+        MutateAsync(ownerId, deckId, changes.ExpectedVersion, [], async (connection, transaction, deck, _, _) =>
         {
             if (changes.FolderId is { } folderId && !await DeckStore.FolderExistsAsync(connection, ownerId, folderId, cancellationToken, transaction))
             {
@@ -157,9 +184,9 @@ internal sealed class DeckService(DeckStore store, ICardCatalog catalog, IDomain
     public async Task<DeckView> AddLinesAsync(Guid ownerId, Guid deckId, IReadOnlyList<LineInput> lines, CancellationToken cancellationToken)
     {
         await ValidateLinesAsync(lines, cancellationToken);
-        return await MutateAsync(ownerId, deckId, null, (_, _, deck, current) =>
+        return await MutateAsync(ownerId, deckId, null, lines, (_, _, deck, current, tags) =>
         {
-            Merge(current, deck.Id, lines, time.GetUtcNow().UtcDateTime);
+            Merge(current, deck.Id, lines, tags, time.GetUtcNow().UtcDateTime);
             return Task.CompletedTask;
         }, cancellationToken);
     }
@@ -170,11 +197,11 @@ internal sealed class DeckService(DeckStore store, ICardCatalog catalog, IDomain
     public async Task<DeckView> ReplaceLinesAsync(Guid ownerId, Guid deckId, IReadOnlyList<LineInput> lines, int? expectedVersion, CancellationToken cancellationToken)
     {
         await ValidateLinesAsync(lines, cancellationToken);
-        return await MutateAsync(ownerId, deckId, expectedVersion, (_, _, deck, current) =>
+        return await MutateAsync(ownerId, deckId, expectedVersion, lines, (_, _, deck, current, tags) =>
         {
             var wanted = new List<DeckLineRow>();
             var now = time.GetUtcNow().UtcDateTime;
-            Merge(wanted, deck.Id, lines, now);
+            Merge(wanted, deck.Id, lines, tags, now);
             var existing = current.ToDictionary(line => line.Key);
             current.Clear();
             foreach (var line in wanted)
@@ -183,6 +210,8 @@ internal sealed class DeckService(DeckStore store, ICardCatalog catalog, IDomain
                 {
                     kept.Quantity = line.Quantity;
                     kept.Note = line.Note;
+                    kept.TagIds = line.TagIds;
+                    kept.Categories = line.Categories;
                     current.Add(kept);
                 }
                 else
@@ -197,28 +226,32 @@ internal sealed class DeckService(DeckStore store, ICardCatalog catalog, IDomain
 
     public async Task<DeckView> UpdateLineAsync(Guid ownerId, Guid deckId, Guid lineId, LineChanges changes, CancellationToken cancellationToken)
     {
+        Guid? newPrintingOracle = null;
         if (changes.PrintingId is { } printingId)
         {
-            await ValidatePrintingsAsync([printingId], cancellationToken);
+            var printings = await catalog.GetPrintingsAsync([printingId], cancellationToken);
+            if (!printings.TryGetValue(printingId, out var printing))
+            {
+                throw DeckException.Validation(new FieldError("printingId", FieldErrorCodes.NotAllowed, "The printing does not exist."));
+            }
+
+            newPrintingOracle = printing.OracleId;
         }
 
-        return await MutateAsync(ownerId, deckId, null, async (_, _, _, current) =>
+        var tagInput = new LineInput(Guid.Empty, null, null, 1, "main", string.Empty, changes.Tags ?? [], changes.GlobalTags ?? [], []);
+        return await MutateAsync(ownerId, deckId, null, [tagInput], (_, _, _, current, tags) =>
         {
             var line = current.FirstOrDefault(candidate => candidate.Id == lineId)
                 ?? throw new DeckException(StatusCodes.Status404NotFound, ErrorCodes.NotFound, "The deck line does not exist.");
             if (changes.Quantity == 0)
             {
                 current.Remove(line);
-                return;
+                return Task.CompletedTask;
             }
 
-            if (changes.PrintingId is { } newPrinting)
+            if (newPrintingOracle is { } oracle && oracle != line.OracleId)
             {
-                var printing = (await catalog.GetPrintingsAsync([newPrinting], cancellationToken))[newPrinting];
-                if (printing.OracleId != line.OracleId)
-                {
-                    throw DeckException.Validation(new FieldError("printingId", FieldErrorCodes.NotAllowed, "The printing is not a printing of the card of the line."));
-                }
+                throw DeckException.Validation(new FieldError("printingId", FieldErrorCodes.NotAllowed, "The printing is not a printing of the card of the line."));
             }
 
             line.Quantity = changes.Quantity ?? line.Quantity;
@@ -226,6 +259,13 @@ internal sealed class DeckService(DeckStore store, ICardCatalog catalog, IDomain
             line.PrintingId = changes.ClearPrinting ? null : changes.PrintingId ?? line.PrintingId;
             line.Finish = changes.ClearFinish ? null : changes.Finish ?? line.Finish;
             line.Note = changes.Note ?? line.Note;
+            if (changes.Tags is not null || changes.GlobalTags is not null)
+            {
+                var kept = line.TagIds.Where(id => changes.Tags is null ? tags.IsLocal(id) : changes.GlobalTags is null && !tags.IsLocal(id)).ToList();
+                line.TagIds = [.. kept.Concat(tags.IdsOf(tagInput)).Distinct()];
+            }
+
+            line.Categories = changes.Categories is { } categories ? [.. categories.Distinct()] : line.Categories;
             line.UpdatedAt = time.GetUtcNow().UtcDateTime;
 
             // A change can give the key of another line, for example a move to another zone. The two lines become one line.
@@ -233,14 +273,18 @@ internal sealed class DeckService(DeckStore store, ICardCatalog catalog, IDomain
             if (same is not null)
             {
                 same.Quantity = Math.Min(DeckRules.MaxQuantity, same.Quantity + line.Quantity);
+                same.TagIds = [.. same.TagIds.Union(line.TagIds)];
+                same.Categories = [.. same.Categories.Union(line.Categories)];
                 same.UpdatedAt = line.UpdatedAt;
                 current.Remove(line);
             }
+
+            return Task.CompletedTask;
         }, cancellationToken);
     }
 
     public Task<DeckView> DeleteLineAsync(Guid ownerId, Guid deckId, Guid lineId, CancellationToken cancellationToken) =>
-        MutateAsync(ownerId, deckId, null, (_, _, _, current) =>
+        MutateAsync(ownerId, deckId, null, [], (_, _, _, current, _) =>
         {
             if (current.RemoveAll(line => line.Id == lineId) == 0)
             {
@@ -254,11 +298,18 @@ internal sealed class DeckService(DeckStore store, ICardCatalog catalog, IDomain
     /// Loads a deck of the owner with a lock, applies a change to the deck and to its lines, and writes the differences,
     /// the new version and the event in one transaction.
     /// </summary>
+    /// <param name="ownerId">The owner of the deck.</param>
+    /// <param name="deckId">The deck.</param>
+    /// <param name="expectedVersion">The version that the client read, or <see langword="null"/>.</param>
+    /// <param name="inputs">The lines of the request. The method finds or creates their tags before the change.</param>
+    /// <param name="change">The change.</param>
+    /// <param name="cancellationToken">A token that stops the operation.</param>
     private async Task<DeckView> MutateAsync(
         Guid ownerId,
         Guid deckId,
         int? expectedVersion,
-        Func<NpgsqlConnection, NpgsqlTransaction, DeckRow, List<DeckLineRow>, Task> change,
+        IReadOnlyList<LineInput> inputs,
+        Func<NpgsqlConnection, NpgsqlTransaction, DeckRow, List<DeckLineRow>, TagMap, Task> change,
         CancellationToken cancellationToken)
     {
         await using var connection = await store.OpenAsync(ownerId, ContentAccess.Write, cancellationToken);
@@ -272,46 +323,86 @@ internal sealed class DeckService(DeckStore store, ICardCatalog catalog, IDomain
                 $"The deck changed since you read it. Its version is {deck.Version}, not {expected}. Read the deck again, then repeat the change.");
         }
 
-        var before = (await DeckStore.ListLinesAsync(connection, deckId, cancellationToken, transaction))
-            .ToDictionary(line => line.Id, line => (line.PrintingId, line.Finish, line.Quantity, line.Zone, line.Note));
+        var before = await DeckStore.ListLinesAsync(connection, deckId, cancellationToken, transaction);
         var lines = (await DeckStore.ListLinesAsync(connection, deckId, cancellationToken, transaction)).ToList();
-        await change(connection, transaction, deck, lines);
+        var tags = await ResolveTagsAsync(connection, transaction, ownerId, deckId, inputs, cancellationToken);
+        await change(connection, transaction, deck, lines, tags);
 
         if (lines.Count > DeckRules.MaxLines)
         {
             throw DeckException.Validation(new FieldError("lines", FieldErrorCodes.TooLong, $"A deck can have {DeckRules.MaxLines} lines or fewer."));
         }
 
-        var removed = before.Keys.Except(lines.Select(line => line.Id)).ToList();
-        var added = lines.Where(line => !before.ContainsKey(line.Id)).ToList();
-        var updated = lines.Where(line => before.TryGetValue(line.Id, out var old) && old != (line.PrintingId, line.Finish, line.Quantity, line.Zone, line.Note)).ToList();
-
-        // The unique key of the lines applies at each statement. Two changed lines can exchange their keys,
-        // so the changed lines go out with the removed lines, then come back with the new lines. They keep their IDs.
-        await DeckStore.DeleteLinesAsync(transaction, deckId, removed.Concat(updated.Select(line => line.Id)), cancellationToken);
-        await DeckStore.InsertLinesAsync(transaction, ownerId, updated.Concat(added), cancellationToken);
-
+        await WriteLinesAsync(transaction, ownerId, deckId, before, lines, cancellationToken);
         deck.Version++;
         deck.UpdatedAt = time.GetUtcNow().UtcDateTime;
         await DeckStore.UpdateDeckAsync(transaction, deck, cancellationToken);
         await events.WriteAsync(DatabaseTarget.Content, transaction, new DeckUpdated(deck.Id, deck.Version, deck.Format, deck.Visibility), ownerId, cancellationToken);
         await transaction.CommitAsync(cancellationToken);
-        return new DeckView(deck, lines, true);
+        return new DeckView(deck, lines, true, await TagsOfLinesAsync(connection, lines, cancellationToken));
     }
 
     /// <summary>
-    /// Adds the wanted lines to a list. A line with the key of an existing line adds its quantity to that line.
+    /// Writes the differences between two lists of lines, with the tags of the lines.
     /// </summary>
-    private static void Merge(List<DeckLineRow> lines, Guid deckId, IEnumerable<LineInput> inputs, DateTime now)
+    private static async Task WriteLinesAsync(NpgsqlTransaction transaction, Guid ownerId, Guid deckId, IReadOnlyList<DeckLineRow> before, IReadOnlyList<DeckLineRow> after, CancellationToken cancellationToken)
+    {
+        var old = before.ToDictionary(line => line.Id, line => line.Content);
+        var removed = old.Keys.Except(after.Select(line => line.Id)).ToList();
+        var added = after.Where(line => !old.ContainsKey(line.Id)).ToList();
+        var updated = after.Where(line => old.TryGetValue(line.Id, out var content) && content != line.Content).ToList();
+
+        // The unique key of the lines applies at each statement. Two changed lines can exchange their keys,
+        // so the changed lines go out with the removed lines, then come back with the new lines. They keep their IDs.
+        await DeckStore.DeleteLinesAsync(transaction, deckId, removed.Concat(updated.Select(line => line.Id)), cancellationToken);
+        await DeckStore.InsertLinesAsync(transaction, ownerId, updated.Concat(added), cancellationToken);
+        await DeckStore.InsertLineTagsAsync(transaction, updated.Concat(added), cancellationToken);
+    }
+
+    /// <summary>
+    /// Finds the tags of the inputs by name, and creates the tags that do not exist.
+    /// </summary>
+    private async Task<TagMap> ResolveTagsAsync(NpgsqlConnection connection, NpgsqlTransaction transaction, Guid ownerId, Guid deckId, IReadOnlyList<LineInput> inputs, CancellationToken cancellationToken)
+    {
+        var existing = await DeckStore.ListTagsAsync(connection, ownerId, deckId, cancellationToken, transaction);
+        var map = new TagMap(existing);
+        var missing = new List<TagRow>();
+        foreach (var (name, global) in inputs.SelectMany(input => input.Tags.Select(tag => (tag, false)).Concat(input.GlobalTags.Select(tag => (tag, true)))))
+        {
+            if (map.Find(name, global) is null)
+            {
+                var tag = new TagRow { Id = Ids.New(), DeckId = global ? null : deckId, Name = name.Trim() };
+                missing.Add(tag);
+                map.Add(tag);
+            }
+        }
+
+        await DeckStore.InsertTagsAsync(transaction, ownerId, missing, time.GetUtcNow().UtcDateTime, cancellationToken);
+        return map;
+    }
+
+    private static async Task<IReadOnlyList<TagRow>> TagsOfLinesAsync(NpgsqlConnection connection, IReadOnlyList<DeckLineRow> lines, CancellationToken cancellationToken)
+    {
+        var ids = lines.SelectMany(line => line.TagIds).Distinct().ToList();
+        return ids.Count == 0 ? [] : await DeckStore.FindTagsAsync(connection, ids, cancellationToken);
+    }
+
+    /// <summary>
+    /// Adds the wanted lines to a list. A line with the key of an existing line adds its quantity, its tags and its categories to that line.
+    /// </summary>
+    private static void Merge(List<DeckLineRow> lines, Guid deckId, IEnumerable<LineInput> inputs, TagMap tags, DateTime now)
     {
         foreach (var input in inputs)
         {
             var key = (input.Zone, input.OracleId, input.PrintingId, input.Finish);
+            var tagIds = tags.IdsOf(input).ToArray();
             var existing = lines.FirstOrDefault(line => line.Key == key);
             if (existing is not null)
             {
                 existing.Quantity = Math.Min(DeckRules.MaxQuantity, existing.Quantity + input.Quantity);
                 existing.Note = input.Note.Length > 0 ? input.Note : existing.Note;
+                existing.TagIds = [.. existing.TagIds.Union(tagIds)];
+                existing.Categories = [.. existing.Categories.Union(input.Categories)];
                 existing.UpdatedAt = now;
                 continue;
             }
@@ -326,6 +417,8 @@ internal sealed class DeckService(DeckStore store, ICardCatalog catalog, IDomain
                 Quantity = input.Quantity,
                 Zone = input.Zone,
                 Note = input.Note,
+                TagIds = tagIds,
+                Categories = [.. input.Categories.Distinct()],
                 CreatedAt = now,
                 UpdatedAt = now,
             });
@@ -364,15 +457,41 @@ internal sealed class DeckService(DeckStore store, ICardCatalog catalog, IDomain
             throw DeckException.Validation([.. errors]);
         }
     }
+}
 
-    private async Task ValidatePrintingsAsync(IReadOnlyCollection<Guid> printingIds, CancellationToken cancellationToken)
+/// <summary>
+/// The tags of an owner and of one deck, by name. The names are case-insensitive.
+/// </summary>
+internal sealed class TagMap
+{
+    private readonly Dictionary<string, TagRow> local = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, TagRow> global = new(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<Guid> localIds = [];
+
+    public TagMap(IEnumerable<TagRow> tags)
     {
-        var printings = await catalog.GetPrintingsAsync(printingIds, cancellationToken);
-        if (printings.Count != printingIds.Count)
+        foreach (var tag in tags)
         {
-            throw DeckException.Validation(new FieldError("printingId", FieldErrorCodes.NotAllowed, "The printing does not exist."));
+            Add(tag);
         }
     }
+
+    public void Add(TagRow tag)
+    {
+        (tag.IsGlobal ? global : local)[tag.Name] = tag;
+        if (!tag.IsGlobal)
+        {
+            localIds.Add(tag.Id);
+        }
+    }
+
+    public TagRow? Find(string name, bool isGlobal) =>
+        (isGlobal ? global : local).GetValueOrDefault(name.Trim());
+
+    public bool IsLocal(Guid tagId) => localIds.Contains(tagId);
+
+    public IEnumerable<Guid> IdsOf(LineInput input) =>
+        input.Tags.Select(name => Find(name, false)!.Id).Concat(input.GlobalTags.Select(name => Find(name, true)!.Id)).Distinct();
 }
 
 /// <summary>
@@ -382,4 +501,7 @@ public static class DeckErrorCodes
 {
     /// <summary>The deck changed since the client read it.</summary>
     public const string VersionConflict = "deck_version_conflict";
+
+    /// <summary>The deck text has lines that the API cannot use. The member <c>lineErrors</c> gives each line.</summary>
+    public const string TextInvalid = "deck_text_invalid";
 }

@@ -33,6 +33,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - The analysis rules of the cards with more than one face (ADR 0025).
 - Decks: create, read, change and delete a deck and its lines, with the zones, the visibility and the version of the deck (ADR 0026).
 - The deck text format: quantities, printings, finishes, tags, notes and zone sections, with the bulk edit syntax of Moxfield.
+- Global tags, local tags and the predefined categories of the deck lines. Rename, merge and delete a tag.
+- Read and replace the lines of a deck as text, with the error of each line.
 - Card search with the Scryfall syntax: `GET /api/v1/cards/search`, with all the names of a card, paging, warnings and errors with a position.
 - Parity tests of the card search against the examples of the Scryfall syntax guide, on the demo dataset in `data/demo`.
 - The search benchmark in `bench/Reliquary.Cards.Benchmark` and its GitHub workflow.
