@@ -93,6 +93,18 @@
     "export": "Export",
     "tableMode": "Table mode"
   },
+  "recommendations": {
+    "title": "Recommendations",
+    "loading": "The application loads the recommendations.",
+    "noCommander": "The deck has no commander. Put a card in the commander zone to get recommendations.",
+    "unavailable": "The recommendations are not available now. Try again later.",
+    "empty": "The source has no other card to recommend for these commanders.",
+    "addButton": "Add",
+    "considerButton": "Consider",
+    "addToMainLabel": "Add {{name}} to the main deck",
+    "addToConsideringLabel": "Add {{name}} to the considering zone",
+    "credit": "Recommendations by"
+  },
   "legality": {
     "legal": "The deck is legal in {{format}}.",
     "title": "The deck is not legal in {{format}}",

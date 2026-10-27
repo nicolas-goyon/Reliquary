@@ -31,6 +31,7 @@ The OpenAPI document gives the bodies and the responses.
 | `POST /decks/{id}/copy` | User who can see the deck | Copies the deck into a new deck of the user. |
 | `GET /decks/{id}/legality` | Like the deck | Checks the legality of the deck in its format. |
 | `GET /decks/{id}/analysis` | Like the deck | Analyzes the deck. See [Deck analysis](deck-analysis.md). |
+| `GET /decks/{id}/recommendations` | Owner | Recommends cards for the commanders of the deck. See [recommendations](#recommendations). |
 | `GET /tags` | User | Lists the global tags of the user. |
 | `PATCH /tags/{id}` | Owner | Renames a tag, or merges it with a tag of the same name. |
 | `DELETE /tags/{id}` | Owner | Deletes a tag. |
@@ -79,6 +80,42 @@ The response gives each problem with a stable code:
 | `companion_not_allowed` | The card in the companion zone has no companion ability. |
 
 The check does not read the deck building conditions of the companions.
+
+## Recommendations
+
+`GET /decks/{id}/recommendations` gives cards for the commanders of the deck, from the public API of [recommander.cards](https://recommander.cards).
+[ADR 0028](../decisions/0028-card-recommendations-source.md) gives the reasons for the source and for the limits.
+
+- The administrator enables the recommendations with the setting `Recommendations:Enabled`.
+  When the setting is off, the endpoint gives the status 404 with the code `recommendations_disabled`, and the web app does not show the panel.
+- The API sends only the Oracle IDs of the first two commanders to recommander.cards, never the deck list.
+- Redis keeps the list of each commander pair, so all the decks with the same commanders use one request.
+- The response does not contain the cards of the deck, in all the zones, and the cards that the card data does not know.
+- The query parameter `limit` gives the maximum number of cards, from 1 to 100. The default is 30.
+- Each client that shows the list must show the credit of the source: the response gives its name and its address in `source`.
+
+The field `status` of the response has one of these values:
+
+| Status | Meaning |
+| --- | --- |
+| `ok` | The list comes from the source. The list can be empty. |
+| `no_commander` | The deck has no commander. The list is empty. |
+| `unavailable` | The source failed, stopped after the timeout or is at its rate limit. The list is empty. Try again later. |
+
+The settings of the API host:
+
+| Setting | Default | Meaning |
+| --- | --- | --- |
+| `Recommendations:Enabled` | `false` | Enables the recommendations. The terms of recommander.cards allow personal, non-commercial use. |
+| `Recommendations:BaseUrl` | `https://api.recommander.cards/public-release/` | The address of the public API. |
+| `Recommendations:CacheDuration` | `1.00:00:00` | How long Redis keeps the list of a commander pair. |
+| `Recommendations:FailureCacheDuration` | `00:10:00` | How long Redis keeps a failure or an unknown commander. A longer `Retry-After` header of the source wins. |
+| `Recommendations:RequestsPerMinute` | `20` | The maximum number of requests to the source in one minute, for all the API replicas. |
+| `Recommendations:Timeout` | `00:00:05` | The time after which a request to the source stops. |
+
+The deck page shows the panel "Recommendations" to the owner.
+The owner adds a card to the main deck or to the considering zone with one button.
+The panel shows the credit "Recommendations by Recommander" with a link to the site.
 
 ## Deck list
 

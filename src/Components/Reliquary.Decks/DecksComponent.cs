@@ -1,7 +1,10 @@
+using System.Net.Http.Headers;
+using System.Reflection;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 using Reliquary.BuildingBlocks;
 using Reliquary.BuildingBlocks.Data;
 using Reliquary.BuildingBlocks.Events;
@@ -9,6 +12,7 @@ using Reliquary.Decks.Api;
 using Reliquary.Decks.Data;
 using Reliquary.Decks.Exchange;
 using Reliquary.Decks.Exploration;
+using Reliquary.Decks.Recommendations;
 using Reliquary.Decks.Text;
 
 namespace Reliquary.Decks;
@@ -47,11 +51,31 @@ public sealed class DecksComponent : ICoreComponent
         services.AddSingleton<IDomainEventConsumer, PublicDeckConsumer>();
 
     /// <inheritdoc />
+    public void AddApiServices(IServiceCollection services, IConfiguration configuration)
+    {
+        services.Configure<RecommendationOptions>(configuration.GetSection(RecommendationOptions.Section));
+        services.AddHttpClient(RecommanderSource.HttpClientName, (provider, client) =>
+        {
+            var settings = provider.GetRequiredService<IOptions<RecommendationOptions>>().Value;
+            var version = typeof(DecksComponent).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion?.Split('+')[0] ?? "0";
+            client.BaseAddress = settings.BaseUrl;
+            client.Timeout = settings.Timeout;
+            client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Reliquary", version));
+            client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("(+https://github.com/nicolas-goyon/reliquary)"));
+            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        });
+        services.AddSingleton<IRecommendationSource, RecommanderSource>();
+        services.AddSingleton<IRecommendationCache, RedisRecommendationCache>();
+        services.AddSingleton<RecommendationService>();
+    }
+
+    /// <inheritdoc />
     public void MapEndpoints(IEndpointRouteBuilder api)
     {
         DeckEndpoints.Map(api);
         TagEndpoints.Map(api);
         FolderEndpoints.Map(api);
         PublicDeckEndpoints.Map(api);
+        RecommendationEndpoints.Map(api);
     }
 }

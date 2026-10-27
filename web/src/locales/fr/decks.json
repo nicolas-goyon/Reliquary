@@ -93,6 +93,18 @@
     "export": "Exporter",
     "tableMode": "Mode tableau"
   },
+  "recommendations": {
+    "title": "Recommandations",
+    "loading": "L’application charge les recommandations.",
+    "noCommander": "Le deck n’a pas de commandant. Mettez une carte dans la zone du commandant pour obtenir des recommandations.",
+    "unavailable": "Les recommandations ne sont pas disponibles pour le moment. Réessayez plus tard.",
+    "empty": "La source n’a pas d’autre carte à recommander pour ces commandants.",
+    "addButton": "Ajouter",
+    "considerButton": "À l’étude",
+    "addToMainLabel": "Ajouter {{name}} au deck principal",
+    "addToConsideringLabel": "Ajouter {{name}} à la zone « À l’étude »",
+    "credit": "Recommandations de"
+  },
   "legality": {
     "legal": "Le deck est légal en {{format}}.",
     "title": "Le deck n’est pas légal en {{format}}",

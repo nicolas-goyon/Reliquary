@@ -1,0 +1,15 @@
+{
+  "result_code": "success",
+  "data": {
+    "recommendations": [
+      { "oracle_id": "6ad8011d-3471-4369-9d68-b264cc027487", "name": "Sol Ring", "score": 0.9991 },
+      { "oracle_id": "8b755881-a72d-4e21-a369-d2924eb4585a", "name": "Cultivate", "score": 0.9412 },
+      { "oracle_id": "795b096a-2bce-4588-a2c9-abc5ea40dc0c", "name": "Enchantress's Presence", "score": 0.9305 },
+      { "oracle_id": "b1544f21-7e98-461b-aed5-e748b0168c52", "name": "Swords to Plowshares", "score": 0.9277 },
+      { "oracle_id": "0895c9b7-ae7d-4bb3-af17-3b75deb50a25", "name": "Command Tower", "score": 0.9954 },
+      { "oracle_id": "cc187110-1148-4090-bbb8-e205694a39f5", "name": "Counterspell", "score": 0.8836 },
+      { "oracle_id": "68954295-54e3-4303-a6bc-fc4547a4e3a3", "name": "Llanowar Elves", "score": 0.7514 }
+    ]
+  },
+  "error": null
+}

@@ -1,0 +1,59 @@
+/* The recommendations panel of the deck page. */
+.recommendations {
+  margin-bottom: 1rem;
+}
+
+.recommendation-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
+  gap: 0 1rem;
+  max-height: 24rem;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.recommendation {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.2rem 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.recommendation-name a {
+  color: inherit;
+}
+
+.recommendation-type {
+  display: block;
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+}
+
+.recommendation-preview {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 4;
+  display: none;
+  width: 12rem;
+}
+
+.recommendation-name:hover .recommendation-preview {
+  display: block;
+}
+
+.recommendation-actions {
+  display: inline-flex;
+  gap: 0.25rem;
+}
+
+.recommendation-credit {
+  margin: 0.75rem 0 0;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}

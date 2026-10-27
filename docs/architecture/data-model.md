@@ -22,8 +22,8 @@ Reliquary uses these sources:
 - [Scryfall](https://scryfall.com/docs/api): the bulk data (cards, printings, card faces, localized names, legalities, rulings, Oracle tags and illustration tags) and the sets API.
   Reliquary shows the card images from the Scryfall servers.
 - [MTGJSON](https://mtgjson.com/): external IDs (Cardmarket, TCGplayer, Card Kingdom and others) and preconstructed decks.
-- [EDHREC](https://edhrec.com/): Commander recommendations.
-  Reliquary can also use [recommander.cards](https://recommander.cards), an optional source with a public API.
+- [recommander.cards](https://recommander.cards): Commander recommendations, through its public API, when the administrator enables them.
+  [ADR 0028](../decisions/0028-card-recommendations-source.md) gives the reasons.
 - [Commander Spellbook](https://commanderspellbook.com/): combo detection.
 
 A scheduled job imports the card data every 12 hours.
