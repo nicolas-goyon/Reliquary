@@ -11,6 +11,7 @@
   --color-on-primary: #ffffff;
   --color-danger: #b42318;
   --color-success: #2e7d32;
+  --color-warning: #9a6700;
 
   color-scheme: light dark;
   font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -32,6 +33,7 @@
     --color-on-primary: #10233a;
     --color-danger: #f3877b;
     --color-success: #8fd19e;
+    --color-warning: #e3b341;
   }
 }
 
@@ -304,6 +306,30 @@ button:disabled {
 
 .alert-success {
   border-color: var(--color-success);
+}
+
+.alert-warning {
+  border-color: var(--color-warning);
+}
+
+.column-map {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.25rem;
+}
+
+.column-map legend {
+  padding: 0 0.25rem;
+  font-weight: 600;
+}
+
+.import-text {
+  width: 100%;
+  font-family: var(--font-mono, ui-monospace, monospace);
 }
 
 .alert p {

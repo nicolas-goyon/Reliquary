@@ -42,6 +42,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Global tags, local tags and the predefined categories of the deck lines. Rename, merge and delete a tag.
 - Read and replace the lines of a deck as text, with the error of each line.
 - The legality check of a deck: deck size, copies, card legalities, commanders, pairs and color identity.
+- Web app: the import page of decks, with the column map of a CSV file, and the export dialog of the deck page.
 - Deck import and export in the CSV formats of Deckbox, ManaBox and Dragon Shield, and in a generic CSV format with a column map.
 - Deck import and export in the formats of Moxfield, MTG Arena, Magic Online and Archidekt, and in the Reliquary text. A test proves the Moxfield round trip of the M1 gate.
 - The copy of a deck: one of the decks of the user, or an unlisted or public deck of another user.

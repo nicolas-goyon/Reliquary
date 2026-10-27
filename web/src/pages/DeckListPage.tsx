@@ -51,9 +51,12 @@ export function DeckListPage() {
     <section className="page page-wide">
       <div className="page-header">
         <h1>{t('list.title')}</h1>
-        <button type="button" className="button-primary" onClick={() => setCreating(true)}>
-          {t('list.create')}
-        </button>
+        <div className="form-actions">
+          <Link to="/decks/import">{t('import.title')}</Link>
+          <button type="button" className="button-primary" onClick={() => setCreating(true)}>
+            {t('list.create')}
+          </button>
+        </div>
       </div>
       <ErrorAlert error={error} />
       {creating && <CreateDeckDialog onClose={() => setCreating(false)} />}
