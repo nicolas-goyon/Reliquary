@@ -31,6 +31,8 @@ The Decks component must not read the tables of the Cards component ([ADR 0007](
 
 ## Consequences
 
+- [Decks](../architecture/decks.md) gives the endpoints, the copy and the legality rules.
+
 - The deck page gets a deck, its lines, its cards and its printings in one request.
 - The read model of the public decks ([#107](https://github.com/nicolas-goyon/reliquary/issues/107)) can use the domain events.
 - A deck directory entry with no deck can stay after a failure. It has no effect, because the deck is not in the shard.

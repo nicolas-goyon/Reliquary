@@ -138,6 +138,38 @@ internal sealed class DeckService(DeckStore store, ICardCatalog catalog, IDomain
         return new DeckView(deck, lines, isOwner, await TagsOfLinesAsync(connection, lines, cancellationToken));
     }
 
+    /// <summary>
+    /// Copies a deck that the user can see into a new deck of the user.
+    /// The copy of the deck of another user keeps a link to the original deck, and its tags become local tags.
+    /// </summary>
+    public async Task<DeckRow> CopyAsync(Guid userId, Guid deckId, string? name, string visibility, Guid? folderId, CancellationToken cancellationToken)
+    {
+        var source = await GetAsync(userId, deckId, cancellationToken);
+        var tags = source.Tags.ToDictionary(tag => tag.Id);
+        var lines = source.Lines.Select(line =>
+        {
+            var lineTags = line.TagIds.Where(tags.ContainsKey).Select(id => tags[id]).ToList();
+            var local = source.IsOwner ? lineTags.Where(tag => !tag.IsGlobal) : lineTags;
+            var global = source.IsOwner ? lineTags.Where(tag => tag.IsGlobal) : [];
+            return new LineInput(
+                line.OracleId,
+                line.PrintingId,
+                line.Finish,
+                line.Quantity,
+                line.Zone,
+                line.Note,
+                [.. local.Select(tag => tag.Name).Distinct(StringComparer.OrdinalIgnoreCase)],
+                [.. global.Select(tag => tag.Name)],
+                line.Categories);
+        }).ToList();
+        var deck = source.Deck;
+        return await CreateAsync(
+            userId,
+            new NewDeck(name ?? deck.Name, deck.Format, visibility, folderId, deck.Description, source.IsOwner ? null : deck.Id),
+            lines,
+            cancellationToken);
+    }
+
     public async Task<IReadOnlyList<DeckSummaryRow>> ListAsync(Guid ownerId, (DateTime UpdatedAt, Guid Id)? after, int limit, CancellationToken cancellationToken)
     {
         await using var connection = await store.OpenAsync(ownerId, ContentAccess.Read, cancellationToken);
