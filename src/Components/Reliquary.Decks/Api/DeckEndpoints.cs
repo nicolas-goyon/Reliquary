@@ -24,11 +24,23 @@ internal static class DeckEndpoints
 
         owner.MapGet(string.Empty, ListAsync)
             .WithName("ListDecks")
-            .WithSummary("Lists the decks of the user, the most recent change first.");
+            .WithSummary("Lists the decks of the user with filters by folder, format, color identity, deck tag and archive. The pinned decks come first, then the sort applies.");
 
         owner.MapPost(string.Empty, CreateAsync)
             .WithName("CreateDeck")
             .WithSummary("Creates a deck, with its first lines.");
+
+        owner.MapGet("/tags", ListDeckTagsAsync)
+            .WithName("ListDeckTags")
+            .WithSummary("Lists the deck tags of the user, with the number of decks of each tag.");
+
+        owner.MapPost("/group", ApplyGroupActionAsync)
+            .WithName("ApplyDeckGroupAction")
+            .WithSummary("Applies one action to several decks of the user: move, tag, untag, pin, unpin, archive, unarchive or delete.");
+
+        owner.MapPost("/export", ExportDecksAsync)
+            .WithName("ExportDecks")
+            .WithSummary("Gets several decks of the user as one ZIP file, with one file for each deck.");
 
         owner.MapPost("/import", ImportAsync)
             .WithName("ImportDeck")
@@ -88,25 +100,63 @@ internal static class DeckEndpoints
     }
 
     private static async Task<Results<Ok<Page<DeckSummaryResponse>>, ProblemHttpResult>> ListAsync(
-        ClaimsPrincipal user, DeckService decks, int? limit, string? cursor, CancellationToken cancellationToken)
+        ClaimsPrincipal user,
+        DeckService decks,
+        int? limit,
+        string? cursor,
+        string? folderId,
+        string? format,
+        string? colors,
+        string? tag,
+        string? archived,
+        string? sort,
+        CancellationToken cancellationToken)
     {
         if (!PageRequest.TryCreate(limit, cursor, out var page, out var error))
         {
             return ApiProblems.Validation(error!);
         }
 
-        (DateTime, Guid)? after = null;
+        var offset = 0;
         if (page.Cursor is { } value)
         {
-            if (!Cursors.TryDecode<DeckCursor>(value, out var position))
+            if (!Cursors.TryDecode<DeckListCursor>(value, out var position) || position!.Offset < 0)
             {
                 return ApiProblems.Validation(Cursors.InvalidCursor());
             }
 
-            after = (position!.UpdatedAt, position.Id);
+            offset = position.Offset;
         }
 
-        var rows = await decks.ListAsync(user.GetAccountId(), after, page.Limit + 1, cancellationToken);
+        var errors = new List<FieldError>();
+        Guid? folder = null;
+        if (folderId is not null && folderId != "none")
+        {
+            if (Guid.TryParse(folderId, out var parsed))
+            {
+                folder = parsed;
+            }
+            else
+            {
+                errors.Add(new FieldError("folderId", FieldErrorCodes.InvalidFormat, "Give the ID of a folder, or none for the decks with no folder."));
+            }
+        }
+
+        var colorIdentity = colors is null ? null : ReadColors(colors);
+        if (colors is not null && colorIdentity is null)
+        {
+            errors.Add(new FieldError("colors", FieldErrorCodes.InvalidFormat, "Give the letters W, U, B, R and G, or C for colorless."));
+        }
+
+        AddChoiceError(errors, "archived", archived, ArchivedChoices);
+        AddChoiceError(errors, "sort", sort, SortChoices);
+        if (errors.Count > 0)
+        {
+            return ApiProblems.Validation(errors);
+        }
+
+        var query = new DeckListQuery(folder, folderId == "none", format, colorIdentity, tag, archived ?? "exclude", sort ?? "updated", offset, page.Limit + 1);
+        var rows = await decks.ListAsync(user.GetAccountId(), query, cancellationToken);
         var items = rows.Take(page.Limit).Select(row => new DeckSummaryResponse(
             row.Id,
             row.Name,
@@ -118,9 +168,129 @@ internal static class DeckEndpoints
             row.CardCount,
             row.CommanderIds,
             Utc(row.CreatedAt),
-            Utc(row.UpdatedAt))).ToList();
-        var next = rows.Count > page.Limit ? Cursors.Encode(new DeckCursor(rows[page.Limit - 1].UpdatedAt, rows[page.Limit - 1].Id)) : null;
+            Utc(row.UpdatedAt),
+            row.Tags,
+            row.ColorIdentity)).ToList();
+        var next = rows.Count > page.Limit ? Cursors.Encode(new DeckListCursor(offset + page.Limit)) : null;
         return TypedResults.Ok(new Page<DeckSummaryResponse>(items, next));
+    }
+
+    private static async Task<Ok<IReadOnlyList<DeckTagSummaryResponse>>> ListDeckTagsAsync(ClaimsPrincipal user, DeckService decks, CancellationToken cancellationToken)
+    {
+        var tags = await decks.ListDeckTagsAsync(user.GetAccountId(), cancellationToken);
+        return TypedResults.Ok<IReadOnlyList<DeckTagSummaryResponse>>([.. tags.Select(tag => new DeckTagSummaryResponse(tag.Name, tag.DeckCount))]);
+    }
+
+    private static async Task<Results<Ok<DeckGroupResponse>, ProblemHttpResult>> ApplyGroupActionAsync(
+        DeckGroupRequest request, ClaimsPrincipal user, DeckService decks, CancellationToken cancellationToken)
+    {
+        var errors = new List<FieldError>();
+        var deckIds = ValidateDeckIds(errors, request.DeckIds);
+        if (string.IsNullOrEmpty(request.Action))
+        {
+            errors.Add(new FieldError("action", FieldErrorCodes.Required, "The action is necessary."));
+        }
+        else
+        {
+            AddChoiceError(errors, "action", request.Action, GroupActions);
+        }
+
+        var tag = request.Tag?.Trim();
+        if (request.Action is "tag" or "untag")
+        {
+            ValidateDeckTag(errors, "tag", tag);
+        }
+
+        if (errors.Count > 0)
+        {
+            return ApiProblems.Validation(errors);
+        }
+
+        if (request.Action == "delete")
+        {
+            foreach (var deckId in deckIds)
+            {
+                await decks.DeleteAsync(user.GetAccountId(), deckId, cancellationToken);
+            }
+
+            return TypedResults.Ok(new DeckGroupResponse(deckIds.Count));
+        }
+
+        var count = await decks.ApplyGroupActionAsync(user.GetAccountId(), deckIds, new DeckGroupAction(request.Action!, request.FolderId, tag), cancellationToken);
+        return TypedResults.Ok(new DeckGroupResponse(count));
+    }
+
+    private static async Task<Results<FileContentHttpResult, ProblemHttpResult>> ExportDecksAsync(
+        ExportDecksRequest request, ClaimsPrincipal user, DeckExchangeService exchange, CancellationToken cancellationToken)
+    {
+        var errors = new List<FieldError>();
+        var deckIds = ValidateDeckIds(errors, request.DeckIds);
+        if (request.Format is null || !DeckFormats.All.TryGetValue(request.Format, out var format))
+        {
+            errors.Add(new FieldError("format", FieldErrorCodes.NotAllowed, $"Give one of these file formats: {string.Join(", ", DeckFormats.All.Keys)}."));
+            return ApiProblems.Validation(errors);
+        }
+
+        if (errors.Count > 0)
+        {
+            return ApiProblems.Validation(errors);
+        }
+
+        var archive = await exchange.ExportArchiveAsync(user.GetAccountId(), deckIds, format, cancellationToken);
+        return TypedResults.File(archive, "application/zip", "decks.zip");
+    }
+
+    private static HashSet<Guid> ValidateDeckIds(List<FieldError> errors, IReadOnlyList<Guid>? deckIds)
+    {
+        if (deckIds is not { Count: > 0 })
+        {
+            errors.Add(new FieldError("deckIds", FieldErrorCodes.Required, "Give one deck or more."));
+            return [];
+        }
+
+        if (deckIds.Count > MaxGroupDecks)
+        {
+            errors.Add(new FieldError("deckIds", FieldErrorCodes.TooLong, $"Give {MaxGroupDecks} decks or fewer."));
+        }
+
+        return [.. deckIds];
+    }
+
+    private static void ValidateDeckTag(List<FieldError> errors, string field, string? tag)
+    {
+        if (string.IsNullOrEmpty(tag))
+        {
+            errors.Add(new FieldError(field, FieldErrorCodes.Required, "The deck tag is necessary."));
+        }
+        else if (tag.Length > DeckRules.MaxLabelLength)
+        {
+            errors.Add(new FieldError(field, FieldErrorCodes.TooLong, $"A deck tag must have {DeckRules.MaxLabelLength} characters or fewer."));
+        }
+    }
+
+    private static void AddChoiceError(List<FieldError> errors, string field, string? value, IReadOnlyList<string> choices)
+    {
+        if (value is not null && !choices.Contains(value))
+        {
+            errors.Add(new FieldError(field, FieldErrorCodes.NotAllowed, $"Use one of these values: {string.Join(", ", choices)}."));
+        }
+    }
+
+    /// <summary>
+    /// Reads a color identity: the letters W, U, B, R and G in any order and case, or C for colorless.
+    /// </summary>
+    /// <returns>The letters in the order WUBRG, an empty text for colorless, or <see langword="null"/> for a text that is not valid.</returns>
+    internal static string? ReadColors(string colors)
+    {
+        var letters = colors.Trim().ToUpperInvariant();
+        if (letters == "C")
+        {
+            return string.Empty;
+        }
+
+        return letters.Length > 0 && letters.All(DeckRules.ColorOrder.Contains) && letters.Distinct().Count() == letters.Length
+            ? string.Concat(DeckRules.ColorOrder.Where(letters.Contains))
+            : null;
     }
 
     private static async Task<Results<Created<DeckResponse>, ProblemHttpResult>> CreateAsync(
@@ -166,6 +336,22 @@ internal static class DeckEndpoints
         }
 
         ValidateDeckFields(errors, request.Name?.Trim(), request.Format, request.Visibility, request.Description);
+        if (request.Tags is { } deckTags)
+        {
+            if (DeckRules.NormalizeDeckTags(deckTags).Length > DeckRules.MaxDeckTags)
+            {
+                errors.Add(new FieldError("tags", FieldErrorCodes.TooLong, $"A deck can have {DeckRules.MaxDeckTags} deck tags or fewer."));
+            }
+
+            for (var index = 0; index < deckTags.Count; index++)
+            {
+                if (deckTags[index] is { Length: > DeckRules.MaxLabelLength })
+                {
+                    errors.Add(new FieldError($"tags[{index}]", FieldErrorCodes.TooLong, $"A deck tag must have {DeckRules.MaxLabelLength} characters or fewer."));
+                }
+            }
+        }
+
         if (errors.Count > 0)
         {
             return ApiProblems.Validation(errors);
@@ -174,7 +360,7 @@ internal static class DeckEndpoints
         var view = await decks.UpdateAsync(
             user.GetAccountId(),
             deckId,
-            new DeckChanges(request.Name, request.Format, request.Visibility, request.FolderId, request.ClearFolder == true, request.Description, request.Pinned, request.Archived, request.ExpectedVersion),
+            new DeckChanges(request.Name, request.Format, request.Visibility, request.FolderId, request.ClearFolder == true, request.Description, request.Pinned, request.Archived, request.ExpectedVersion, request.Tags),
             cancellationToken);
         return TypedResults.Ok(await ToResponseAsync(view, catalog, cancellationToken));
     }
@@ -412,6 +598,14 @@ internal static class DeckEndpoints
 
     private const int MaxColumnHeaderLength = 100;
 
+    private const int MaxGroupDecks = 500;
+
+    private static readonly string[] ArchivedChoices = ["exclude", "include", "only"];
+
+    private static readonly string[] SortChoices = ["updated", "created", "name", "format"];
+
+    private static readonly string[] GroupActions = ["move", "tag", "untag", "pin", "unpin", "archive", "unarchive", "delete"];
+
     private static void ValidateDeckFields(List<FieldError> errors, string? name, string? format, string? visibility, string? description)
     {
         if (name is { Length: > DeckRules.MaxNameLength })
@@ -594,12 +788,14 @@ internal static class DeckEndpoints
                 pair.Value.DefaultPrintingId,
                 [.. pair.Value.Faces.Select(face => new DeckCardFaceResponse(face.Name, face.ManaCost, face.TypeLine))])),
             printings.ToDictionary(pair => pair.Key, pair => new DeckPrintingResponse(pair.Value.SetCode, pair.Value.CollectorNumber, pair.Value.Lang, pair.Value.ImageUri)),
-            view.Tags.ToDictionary(tag => tag.Id, tag => new DeckTagResponse(tag.Name, tag.IsGlobal)));
+            view.Tags.ToDictionary(tag => tag.Id, tag => new DeckTagResponse(tag.Name, tag.IsGlobal)),
+            view.IsOwner ? deck.Tags : [],
+            deck.ColorIdentity);
     }
 
     private static DateTimeOffset Utc(DateTime value) => new(DateTime.SpecifyKind(value, DateTimeKind.Utc));
 
-    private sealed record DeckCursor(DateTime UpdatedAt, Guid Id);
+    private sealed record DeckListCursor(int Offset);
 }
 
 /// <summary>

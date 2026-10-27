@@ -48,4 +48,24 @@ public static class DeckRules
 
     /// <summary>The maximum quantity of a deck line.</summary>
     public const int MaxQuantity = 999;
+
+    /// <summary>The maximum number of deck tags on a deck.</summary>
+    public const int MaxDeckTags = 20;
+
+    /// <summary>The maximum length of a deck tag or of a folder name.</summary>
+    public const int MaxLabelLength = 50;
+
+    /// <summary>The maximum depth of the folders. A folder at the top has the depth 1.</summary>
+    public const int MaxFolderDepth = 8;
+
+    /// <summary>The letters of the colors in the order of a color identity.</summary>
+    public const string ColorOrder = "WUBRG";
+
+    /// <summary>
+    /// Removes the spaces at the ends of the deck tags, the empty tags and the tags that differ only by case.
+    /// </summary>
+    /// <param name="tags">The deck tags.</param>
+    /// <returns>The deck tags, in their first order.</returns>
+    public static string[] NormalizeDeckTags(IEnumerable<string> tags) =>
+        [.. tags.Select(tag => tag.Trim()).Where(tag => tag.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase)];
 }

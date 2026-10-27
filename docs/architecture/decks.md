@@ -11,10 +11,13 @@ The OpenAPI document gives the bodies and the responses.
 
 | Endpoint | Access | Effect |
 | --- | --- | --- |
-| `GET /decks` | Owner | Lists the decks of the user, the most recent change first. |
+| `GET /decks` | Owner | Lists the decks of the user, with filters. See [deck list](#deck-list). |
+| `GET /decks/tags` | Owner | Lists the deck tags of the user, with the number of decks of each tag. |
+| `POST /decks/group` | Owner | Applies one action to several decks. See [group actions](#group-actions). |
+| `POST /decks/export` | Owner | Gives several decks in one ZIP file, with one file for each deck. |
 | `POST /decks` | User | Creates a deck, with its first lines. |
 | `GET /decks/{id}` | Owner, or anyone for an unlisted or public deck | Gets a deck with its lines, cards, printings and tags. |
-| `PATCH /decks/{id}` | Owner | Changes the name, the format, the visibility, the folder or the description. |
+| `PATCH /decks/{id}` | Owner | Changes the name, the format, the visibility, the folder, the description, the pin, the archive or the deck tags. |
 | `DELETE /decks/{id}` | Owner | Deletes a deck. |
 | `POST /decks/{id}/lines` | Owner | Adds cards. |
 | `PUT /decks/{id}/lines` | Owner | Replaces all the lines. |
@@ -30,6 +33,10 @@ The OpenAPI document gives the bodies and the responses.
 | `GET /tags` | User | Lists the global tags of the user. |
 | `PATCH /tags/{id}` | Owner | Renames a tag, or merges it with a tag of the same name. |
 | `DELETE /tags/{id}` | Owner | Deletes a tag. |
+| `GET /deck-folders` | User | Lists all the folders of the user, with the parent of each folder. |
+| `POST /deck-folders` | User | Creates a folder, at the top or in another folder. |
+| `PATCH /deck-folders/{id}` | Owner | Renames a folder or moves it into another folder. |
+| `DELETE /deck-folders/{id}` | Owner | Deletes a folder and its subfolders. Their decks stay, with no folder. |
 
 ## Copy of a deck
 
@@ -71,3 +78,39 @@ The response gives each problem with a stable code:
 | `companion_not_allowed` | The card in the companion zone has no companion ability. |
 
 The check does not read the deck building conditions of the companions.
+
+## Deck list
+
+The query of `GET /decks` accepts these parameters:
+
+| Parameter | Values | Default |
+| --- | --- | --- |
+| `folderId` | The ID of a folder, or `none` for the decks with no folder | All the decks |
+| `format` | A format, for example `modern` | All the formats |
+| `colors` | The exact color identity: the letters `W`, `U`, `B`, `R` and `G` in any order, or `C` for colorless | All the colors |
+| `tag` | A deck tag. The comparison ignores the case. | All the decks |
+| `archived` | `exclude`, `include` or `only` | `exclude` |
+| `sort` | `updated`, `created`, `name` or `format` | `updated` |
+
+The pinned decks always come first. Then the sort applies.
+
+The color identity of a deck is the color identity of its commanders.
+A deck with no commander uses the cards of its main deck and its companions.
+Each change of the lines calculates the color identity again.
+
+A deck tag is a label on a deck. A deck has 20 deck tags or fewer.
+A folder can contain other folders, with 8 levels or fewer.
+
+## Group actions
+
+The body of `POST /decks/group` gives the deck IDs, 500 or fewer, and one action:
+
+| Action | Effect |
+| --- | --- |
+| `move` | Moves the decks to the folder `folderId`. With no `folderId`, the decks leave their folder. |
+| `tag`, `untag` | Adds or removes the deck tag `tag`. |
+| `pin`, `unpin` | Puts the decks at the top of the list, or not. |
+| `archive`, `unarchive` | Archives the decks, or not. The deck list does not show the archived decks by default. |
+| `delete` | Deletes the decks. |
+
+When a deck is not a deck of the user, the API changes no deck and gives the status 404.

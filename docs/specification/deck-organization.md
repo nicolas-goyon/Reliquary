@@ -20,4 +20,5 @@ The project delivers the features of this file in this [milestone](../roadmap.md
 
 | Milestone | Features |
 | --- | --- |
-| M1 (Commander deck MVP) | All the features of this file |
+| M1 (Commander deck MVP) | All the features of this file, except the filters "assembled deck or not" and "completeness against the available cards" |
+| M2 (Versions and collection) | The filters "assembled deck or not" and "completeness against the available cards", because they need the collection |

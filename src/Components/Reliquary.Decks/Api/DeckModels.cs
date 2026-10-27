@@ -19,7 +19,8 @@ public sealed record CreateDeckRequest(string? Name, string? Format, string? Vis
 /// <param name="Pinned">Whether the deck is at the top of the list.</param>
 /// <param name="Archived">Whether the deck is archived.</param>
 /// <param name="ExpectedVersion">The version that the client read. The API refuses the change when the deck has another version.</param>
-public sealed record UpdateDeckRequest(string? Name, string? Format, string? Visibility, Guid? FolderId, bool? ClearFolder, string? Description, bool? Pinned, bool? Archived, int? ExpectedVersion);
+/// <param name="Tags">The deck tags. The list replaces the current deck tags.</param>
+public sealed record UpdateDeckRequest(string? Name, string? Format, string? Visibility, Guid? FolderId, bool? ClearFolder, string? Description, bool? Pinned, bool? Archived, int? ExpectedVersion, IReadOnlyList<string>? Tags = null);
 
 /// <summary>A line to add or to set.</summary>
 /// <param name="OracleId">The Oracle card. Give the card or its name.</param>
@@ -96,6 +97,8 @@ public sealed record UpdateLineRequest(
 /// <param name="Cards">The cards of the lines, by Oracle ID.</param>
 /// <param name="Printings">The printings of the lines and the default printings of the cards, by ID.</param>
 /// <param name="Tags">The tags of the lines, by ID.</param>
+/// <param name="DeckTags">The deck tags. Only the owner gets them.</param>
+/// <param name="ColorIdentity">The color identity of the deck, with the letters W, U, B, R and G. An empty text is colorless.</param>
 public sealed record DeckResponse(
     Guid Id,
     Guid OwnerId,
@@ -115,7 +118,9 @@ public sealed record DeckResponse(
     IReadOnlyList<DeckLineResponse> Lines,
     IReadOnlyDictionary<Guid, DeckCardResponse> Cards,
     IReadOnlyDictionary<Guid, DeckPrintingResponse> Printings,
-    IReadOnlyDictionary<Guid, DeckTagResponse> Tags);
+    IReadOnlyDictionary<Guid, DeckTagResponse> Tags,
+    IReadOnlyList<string> DeckTags,
+    string ColorIdentity);
 
 /// <summary>A tag of a deck line.</summary>
 /// <param name="Name">The name of the tag.</param>
@@ -216,6 +221,8 @@ public sealed record DeckPrintingResponse(string SetCode, string CollectorNumber
 /// <param name="CommanderIds">The Oracle IDs of the commanders.</param>
 /// <param name="CreatedAt">The time of the creation.</param>
 /// <param name="UpdatedAt">The time of the last change.</param>
+/// <param name="Tags">The deck tags.</param>
+/// <param name="ColorIdentity">The color identity, with the letters W, U, B, R and G. An empty text is colorless.</param>
 public sealed record DeckSummaryResponse(
     Guid Id,
     string Name,
@@ -227,7 +234,9 @@ public sealed record DeckSummaryResponse(
     int CardCount,
     IReadOnlyList<Guid> CommanderIds,
     DateTimeOffset CreatedAt,
-    DateTimeOffset UpdatedAt);
+    DateTimeOffset UpdatedAt,
+    IReadOnlyList<string> Tags,
+    string ColorIdentity);
 
 /// <summary>The legality of a deck in its format.</summary>
 /// <param name="Format">The format of the deck.</param>
@@ -260,3 +269,42 @@ public sealed record ImportDeckResponse(DeckResponse Deck, IReadOnlyList<DeckTex
 /// <param name="ContentType">The media type of the file.</param>
 /// <param name="Content">The content of the file.</param>
 public sealed record ExportDeckResponse(string FileName, string ContentType, string Content);
+
+/// <summary>A group action on several decks.</summary>
+/// <param name="DeckIds">The decks. They must all be decks of the user.</param>
+/// <param name="Action">The action: <c>move</c>, <c>tag</c>, <c>untag</c>, <c>pin</c>, <c>unpin</c>, <c>archive</c>, <c>unarchive</c> or <c>delete</c>.</param>
+/// <param name="FolderId">The folder of the action <c>move</c>. <see langword="null"/> removes the decks from their folder.</param>
+/// <param name="Tag">The deck tag of the actions <c>tag</c> and <c>untag</c>.</param>
+public sealed record DeckGroupRequest(IReadOnlyList<Guid>? DeckIds, string? Action, Guid? FolderId, string? Tag);
+
+/// <summary>The result of a group action.</summary>
+/// <param name="Count">The number of changed decks.</param>
+public sealed record DeckGroupResponse(int Count);
+
+/// <summary>An export of several decks in one ZIP file.</summary>
+/// <param name="DeckIds">The decks. They must all be decks of the user.</param>
+/// <param name="Format">The file format of each deck.</param>
+public sealed record ExportDecksRequest(IReadOnlyList<Guid>? DeckIds, string? Format);
+
+/// <summary>A deck tag of the user.</summary>
+/// <param name="Name">The deck tag.</param>
+/// <param name="DeckCount">The number of decks with this tag.</param>
+public sealed record DeckTagSummaryResponse(string Name, int DeckCount);
+
+/// <summary>A folder of decks.</summary>
+/// <param name="Id">The ID of the folder.</param>
+/// <param name="ParentId">The parent folder, or <see langword="null"/> for a folder at the top.</param>
+/// <param name="Name">The name.</param>
+/// <param name="DeckCount">The number of decks directly in the folder.</param>
+public sealed record FolderResponse(Guid Id, Guid? ParentId, string Name, int DeckCount);
+
+/// <summary>A new folder.</summary>
+/// <param name="Name">The name.</param>
+/// <param name="ParentId">The parent folder, or <see langword="null"/> for a folder at the top.</param>
+public sealed record CreateFolderRequest(string? Name, Guid? ParentId);
+
+/// <summary>The changes of a folder. A <see langword="null"/> field does not change.</summary>
+/// <param name="Name">The new name.</param>
+/// <param name="ParentId">The new parent folder.</param>
+/// <param name="MoveToTop">Set to <see langword="true"/> to move the folder to the top.</param>
+public sealed record UpdateFolderRequest(string? Name, Guid? ParentId, bool? MoveToTop);
