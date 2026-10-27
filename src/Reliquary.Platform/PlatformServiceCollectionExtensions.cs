@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Reliquary.BuildingBlocks.Data;
 using Reliquary.BuildingBlocks.Email;
 using Reliquary.BuildingBlocks.Events;
+using Reliquary.Platform.Backup;
 using Reliquary.Platform.Data;
 using Reliquary.Platform.Email;
 using Reliquary.Platform.Events;
@@ -41,6 +42,8 @@ public static class PlatformServiceCollectionExtensions
         services.AddMemoryCache();
         services.TryAddSingleton(TimeProvider.System);
         services.TryAddSingleton<DataSources>();
+        services.Configure<BackupOptions>(configuration.GetSection(BackupOptions.Section));
+        services.TryAddSingleton<InstanceBackup>();
         services.TryAddSingleton<IShardDirectory, ShardDirectory>();
         services.TryAddSingleton<IDatabase, Database>();
         services.TryAddSingleton<IDomainEventWriter, OutboxWriter>();

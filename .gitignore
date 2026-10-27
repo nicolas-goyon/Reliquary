@@ -32,3 +32,6 @@ Thumbs.db
 
 # Redis data of a local server
 dump.rdb
+
+# The backups of the local instance
+backups/
