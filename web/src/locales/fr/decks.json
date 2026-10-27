@@ -61,7 +61,12 @@
     "empty": "Vous n’avez aucun deck. Créez votre premier deck.",
     "cards": "Cartes",
     "updated": "Dernière modification",
-    "more": "Afficher plus de decks"
+    "more": "Afficher plus de decks",
+    "colors": "Couleurs",
+    "tags": "Étiquettes",
+    "pinned": "Épinglé",
+    "archived": "Archivé",
+    "colorless": "Incolore"
   },
   "editor": {
     "loading": "L’application charge le deck.",
@@ -307,5 +312,60 @@
         "other": "L’analyse ne vérifie pas encore certaines règles. Le deck peut être dans un bracket plus élevé."
       }
     }
+  },
+  "folders": {
+    "title": "Dossiers",
+    "all": "Tous les decks",
+    "none": "Sans dossier",
+    "create": "Nouveau dossier",
+    "createIn": "Nouveau dossier dans le dossier choisi",
+    "createSubmit": "Ajouter",
+    "rename": "Renommer le dossier {{name}}",
+    "renameLabel": "Nouveau nom du dossier {{name}}",
+    "delete": "Supprimer le dossier {{name}}",
+    "deleteConfirm": "Supprimer le dossier « {{name}} » et ses sous-dossiers ? Les decks restent, sans dossier."
+  },
+  "filters": {
+    "allFormats": "Tous les formats",
+    "colors": "Identité de couleur",
+    "color": {
+      "W": "Blanc",
+      "U": "Bleu",
+      "B": "Noir",
+      "R": "Rouge",
+      "G": "Vert"
+    },
+    "tag": "Étiquette de deck",
+    "allTags": "Toutes les étiquettes",
+    "archived": "Decks archivés",
+    "archivedExclude": "Masquer",
+    "archivedInclude": "Afficher",
+    "archivedOnly": "Afficher uniquement",
+    "sort": "Tri",
+    "sorts": {
+      "updated": "Dernière modification",
+      "created": "Date de création",
+      "name": "Nom",
+      "format": "Format"
+    }
+  },
+  "group": {
+    "title_one": "{{count}} deck sélectionné",
+    "title_other": "{{count}} decks sélectionnés",
+    "select": "Sélectionner {{name}}",
+    "selectAll": "Sélectionner tous les decks",
+    "folder": "Dossier",
+    "move": "Déplacer",
+    "tag": "Étiquette de deck",
+    "addTag": "Ajouter l’étiquette",
+    "removeTag": "Retirer l’étiquette",
+    "pin": "Épingler",
+    "unpin": "Désépingler",
+    "archive": "Archiver",
+    "unarchive": "Désarchiver",
+    "export": "Exporter",
+    "delete": "Supprimer",
+    "deleteConfirm_one": "Supprimer {{count}} deck ? Cette opération est définitive.",
+    "deleteConfirm_other": "Supprimer {{count}} decks ? Cette opération est définitive."
   }
 }

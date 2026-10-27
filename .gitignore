@@ -29,3 +29,6 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Redis data of a local server
+dump.rdb

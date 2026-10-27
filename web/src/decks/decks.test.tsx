@@ -58,6 +58,8 @@ describe('decks', () => {
     const calls = mockApi({
       'POST /auth/refresh': () => session(),
       'GET /decks': () => Response.json({ items: [], nextCursor: null }),
+      'GET /deck-folders': () => Response.json([]),
+      'GET /decks/tags': () => Response.json([]),
       'POST /decks': () => Response.json(deck({ lines: [], counts: { commander: 0, companion: 0, main: 0, sideboard: 0, considering: 0, tokens: 0 } }), { status: 201 }),
       [`GET /decks/${deckId}`]: () => Response.json(deck()),
       [`GET /decks/${deckId}/legality`]: () => Response.json(notLegal),
@@ -254,5 +256,87 @@ describe('file formats', () => {
   it('reads the headers of a CSV file', () => {
     expect(csvHeaders('"sep=;"\nCard;"Qty"\n')).toEqual(['Card', 'Qty'])
     expect(csvHeaders('﻿Name\tCount\r\n')).toEqual(['Name', 'Count'])
+  })
+})
+
+describe('deck organization', () => {
+  beforeEach(async () => {
+    await i18n.changeLanguage('en')
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  const summary = (index: number) => ({
+    id: `0190a000-0000-7000-8000-00000000010${index}`,
+    name: `Deck ${index}`,
+    format: 'commander',
+    visibility: 'private',
+    folderId: null,
+    pinned: false,
+    archived: false,
+    cardCount: 100,
+    commanderIds: [],
+    createdAt: '2026-10-27T10:00:00Z',
+    updatedAt: '2026-10-27T10:00:00Z',
+    tags: index === 0 ? ['Casual'] : [],
+    colorIdentity: index === 0 ? 'WUBG' : '',
+  })
+
+  it('moves five decks to a folder in one action', async () => {
+    window.history.replaceState(null, '', '/decks')
+    const folder = { id: '0190a000-0000-7000-8000-0000000000f1', parentId: null, name: 'Commander', deckCount: 0 }
+    const calls = mockApi({
+      'POST /auth/refresh': () => session(),
+      'GET /decks': () => Response.json({ items: [0, 1, 2, 3, 4, 5].map(summary), nextCursor: null }),
+      'GET /deck-folders': () => Response.json([folder]),
+      'GET /decks/tags': () => Response.json([{ name: 'Casual', deckCount: 1 }]),
+      'POST /decks/group': () => Response.json({ count: 5 }),
+    })
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.click(await screen.findByRole('checkbox', { name: 'Select Deck 0' }))
+    await user.keyboard('{Shift>}')
+    await user.click(screen.getByRole('checkbox', { name: 'Select Deck 4' }))
+    await user.keyboard('{/Shift}')
+    const toolbar = screen.getByRole('toolbar', { name: '5 decks selected' })
+    await user.selectOptions(within(toolbar).getByLabelText('Folder'), 'Commander')
+    await user.click(within(toolbar).getByRole('button', { name: 'Move' }))
+
+    await waitFor(() =>
+      expect(calls.find((call) => call.key === 'POST /decks/group')?.body).toEqual({
+        deckIds: [0, 1, 2, 3, 4].map((index) => summary(index).id),
+        action: 'move',
+        folderId: folder.id,
+      }),
+    )
+    await waitFor(() => expect(screen.queryByRole('toolbar', { name: /selected/ })).not.toBeInTheDocument())
+  })
+
+  it('filters the deck list and creates a folder', async () => {
+    window.history.replaceState(null, '', '/decks')
+    const calls = mockApi({
+      'POST /auth/refresh': () => session(),
+      'GET /decks': () => Response.json({ items: [summary(0)], nextCursor: null }),
+      'GET /deck-folders': () => Response.json([]),
+      'GET /decks/tags': () => Response.json([{ name: 'Casual', deckCount: 1 }]),
+      'POST /deck-folders': () => Response.json({ id: 'f2', parentId: null, name: 'Modern', deckCount: 0 }, { status: 201 }),
+    })
+    const user = userEvent.setup()
+    render(<App />)
+
+    expect(await screen.findByText('Casual')).toBeInTheDocument()
+    await user.click(screen.getByRole('checkbox', { name: 'Green' }))
+    await user.click(screen.getByRole('checkbox', { name: 'White' }))
+    await user.selectOptions(screen.getByLabelText('Deck tag'), 'Casual')
+    await user.selectOptions(screen.getByLabelText('Sort'), 'name')
+    await user.type(screen.getByLabelText('New folder'), 'Modern')
+    await user.click(screen.getByRole('button', { name: 'Add' }))
+
+    await waitFor(() => expect(calls.some((call) => call.key === 'POST /deck-folders')).toBe(true))
+    const lastList = (fetch as unknown as { mock: { calls: [string][] } }).mock.calls.map(([url]) => url).filter((url) => url.startsWith('/api/v1/decks?')).at(-1)
+    expect(lastList).toBe('/api/v1/decks?limit=100&colors=WG&tag=Casual&sort=name')
   })
 })

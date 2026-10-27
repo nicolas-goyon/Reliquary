@@ -36,6 +36,8 @@ export interface RequestOptions {
   body?: unknown
   accessToken?: string
   signal?: AbortSignal
+  /** Set to `blob` to get the body of a file response as a Blob. */
+  responseType?: 'json' | 'blob'
 }
 
 /**
@@ -45,7 +47,7 @@ export interface RequestOptions {
  * @throws ApiError when the API answers with an error, or when the API is not available.
  */
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const headers: Record<string, string> = { Accept: 'application/json' }
+  const headers: Record<string, string> = { Accept: options.responseType === 'blob' ? '*/*' : 'application/json' }
   if (options.body !== undefined) {
     headers['Content-Type'] = 'application/json'
   }
@@ -75,6 +77,10 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
 
   if (response.status === 204 || response.status === 202 || response.headers.get('Content-Length') === '0') {
     return undefined as T
+  }
+
+  if (options.responseType === 'blob') {
+    return (await response.blob()) as T
   }
 
   const text = await response.text()
