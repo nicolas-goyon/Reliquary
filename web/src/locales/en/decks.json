@@ -1,0 +1,128 @@
+{
+  "fields": {
+    "name": "Name",
+    "format": "Format",
+    "visibility": "Visibility"
+  },
+  "formats": {
+    "commander": "Commander",
+    "brawl": "Brawl",
+    "standardbrawl": "Standard Brawl",
+    "oathbreaker": "Oathbreaker",
+    "paupercommander": "Pauper Commander",
+    "standard": "Standard",
+    "pioneer": "Pioneer",
+    "modern": "Modern",
+    "legacy": "Legacy",
+    "vintage": "Vintage",
+    "pauper": "Pauper",
+    "freeform": "Freeform"
+  },
+  "visibility": {
+    "private": "Private",
+    "unlisted": "Unlisted",
+    "public": "Public"
+  },
+  "visibilityHint": {
+    "private": "Only you can open the deck.",
+    "unlisted": "The people with the link can open the deck.",
+    "public": "All the people can find and open the deck."
+  },
+  "zones": {
+    "commander": "Commander",
+    "companion": "Companion",
+    "main": "Main deck",
+    "sideboard": "Sideboard",
+    "considering": "Considering",
+    "tokens": "Tokens"
+  },
+  "finishes": {
+    "foil": "Foil",
+    "etched": "Etched"
+  },
+  "categories": {
+    "ramp": "Ramp",
+    "card_draw": "Card draw",
+    "targeted_interaction": "Targeted interaction",
+    "board_wipe": "Board wipe",
+    "synergy": "Synergy",
+    "land": "Land",
+    "win_condition": "Win condition",
+    "protection": "Protection"
+  },
+  "actions": {
+    "save": "Save",
+    "cancel": "Cancel"
+  },
+  "list": {
+    "title": "My decks",
+    "create": "Make a deck",
+    "createSubmit": "Make the deck",
+    "empty": "You have no deck. Make your first deck.",
+    "cards": "Cards",
+    "updated": "Last change",
+    "more": "Show more decks"
+  },
+  "editor": {
+    "loading": "The application loads the deck.",
+    "actions": "Deck actions",
+    "rename": "Rename",
+    "textMode": "Text mode",
+    "visualMode": "Card mode",
+    "copy": "Copy the deck",
+    "delete": "Delete the deck",
+    "deleteConfirm": "Delete the deck \"{{name}}\"? You cannot undo this operation.",
+    "cardCount_one": "{{count}} card",
+    "cardCount_other": "{{count}} cards",
+    "original": "Original deck",
+    "addCard": "Add a card",
+    "addCardPlaceholder": "Type a card name in any language",
+    "zone": "Zone",
+    "emptyZone": "This zone has no card.",
+    "decrease": "Remove one {{name}}",
+    "increase": "Add one {{name}}",
+    "quantity": "Quantity of {{name}}",
+    "moveTo": "Zone of {{name}}",
+    "remove": "Remove {{name}} from the deck"
+  },
+  "legality": {
+    "legal": "The deck is legal in {{format}}.",
+    "title": "The deck is not legal in {{format}}",
+    "problems": {
+      "deck_size": "The deck has {{count}} cards. It must have {{limit}} cards.",
+      "too_many_copies": "The deck has {{count}} copies of {{card}}. The limit is {{limit}}.",
+      "sideboard_size": "The sideboard has {{count}} cards. The limit is {{limit}}.",
+      "card_banned": "This format bans {{card}}.",
+      "card_not_legal": "{{card}} is not legal in this format.",
+      "card_restricted": "This format restricts {{card}}: the deck can have one copy only.",
+      "commander_missing": "The deck has no commander. Put a card in the commander zone.",
+      "commander_not_allowed": "{{card}} cannot be a commander.",
+      "too_many_commanders": "The deck has more than two commanders.",
+      "commanders_cannot_pair": "The two commanders cannot be together. They need Partner, Friends forever, a Background or a Doctor pair.",
+      "outside_color_identity": "{{card}} is outside the color identity of the commanders.",
+      "companion_not_allowed": "{{card}} has no companion ability.",
+      "other": "The deck has a problem."
+    }
+  },
+  "text": {
+    "title": "Text mode",
+    "help": "One card for each line: quantity, name, optional set and number, #tags and -- note. The sections are Commander, Main, Sideboard, Considering and Tokens.",
+    "label": "Deck list",
+    "save": "Save the list",
+    "errors": "Some lines are not correct. The deck did not change.",
+    "lineError": {
+      "missing_name": "Line {{line}}: the line has no card name. \"{{text}}\"",
+      "quantity_out_of_range": "Line {{line}}: the quantity must be from 1 to 999. \"{{text}}\"",
+      "tag_too_long": "Line {{line}}: a tag is too long. \"{{text}}\"",
+      "unknown_category": "Line {{line}}: the category is not known. \"{{text}}\"",
+      "card_not_found": "Line {{line}}: no card has this name. \"{{text}}\"",
+      "printing_not_found": "Line {{line}}: the set and the number do not give a printing of this card. \"{{text}}\"",
+      "other": "Line {{line}}: the line is not correct. \"{{text}}\""
+    }
+  },
+  "copy": {
+    "defaultName": "Copy of {{name}}",
+    "submit": "Make the copy",
+    "signIn": "Sign in to copy this deck."
+  }
+}
