@@ -39,7 +39,23 @@ public interface ICardCatalog
     /// <param name="cancellationToken">A token that stops the operation.</param>
     /// <returns>The printing of each ID that exists.</returns>
     Task<IReadOnlyDictionary<Guid, PrintingFacts>> GetPrintingsAsync(IReadOnlyCollection<Guid> printingIds, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets the Oracle tags of Scryfall Tagger that the import of the card data stored for Oracle cards. See ADR 0031.
+    /// </summary>
+    /// <param name="oracleIds">The IDs of the Oracle cards.</param>
+    /// <param name="cancellationToken">A token that stops the operation.</param>
+    /// <returns>The tags of each card that has tags, by ID. A card with no tag is not in the result.</returns>
+    Task<IReadOnlyDictionary<Guid, IReadOnlyList<CardOracleTag>>> GetOracleTagsAsync(IReadOnlyCollection<Guid> oracleIds, CancellationToken cancellationToken = default);
 }
+
+/// <summary>
+/// One Oracle tag of Scryfall Tagger on an Oracle card.
+/// </summary>
+/// <param name="Slug">The slug of the tag, for example <c>mana-rock</c>.</param>
+/// <param name="Weight">The weight of the link between the tag and the card, for example <c>median</c> or <c>very_strong</c>.</param>
+/// <param name="Ancestors">The slugs of the parent tags of the tag, of their parent tags, and so on. The list does not contain the tag.</param>
+public sealed record CardOracleTag(string Slug, string Weight, IReadOnlyList<string> Ancestors);
 
 /// <summary>
 /// The facts of an Oracle card that the other core components need.

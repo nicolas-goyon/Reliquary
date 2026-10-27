@@ -164,4 +164,23 @@ public sealed class CardCatalogTests(ImportedCardsFixture fixture)
         Assert.Equal(bolt, match.Value.OracleId);
         Assert.StartsWith("https://", printing.ImageUri, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public async Task OracleTagsComeWithTheirAncestors()
+    {
+        var catalog = await CatalogAsync();
+        var names = await catalog.ResolveNamesAsync(["Sol Ring", "Cultivate"], TestContext.Current.CancellationToken);
+        var solRing = names["Sol Ring"].OracleId!.Value;
+        var cultivate = names["Cultivate"].OracleId!.Value;
+
+        var tags = await catalog.GetOracleTagsAsync([solRing, cultivate, Guid.NewGuid()], TestContext.Current.CancellationToken);
+
+        // mana-rock is below mana-producer, and mana-producer is below ramp.
+        var manaRock = Assert.Single(tags[solRing], tag => tag.Slug == "mana-rock");
+        Assert.Equal(["mana-producer", "ramp"], manaRock.Ancestors);
+        Assert.DoesNotContain("mana-rock", manaRock.Ancestors);
+        Assert.Contains(tags[cultivate], tag => tag.Slug == "land-ramp" && tag.Ancestors.Contains("ramp"));
+        Assert.Equal(2, tags.Count);
+        Assert.Empty(await catalog.GetOracleTagsAsync([], TestContext.Current.CancellationToken));
+    }
 }

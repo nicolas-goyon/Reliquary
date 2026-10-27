@@ -61,3 +61,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Card recommendations for the commanders of a deck, from the public API of recommander.cards: `GET /api/v1/decks/{id}/recommendations` (ADR 0028).
   The administrator enables them with `Recommendations:Enabled`. Redis keeps the list of each commander pair for 24 hours, and all the replicas share one rate limit.
 - Web app: the recommendations panel of the deck page, with the credit of the source. The owner adds a recommended card to the main deck or to the considering zone with one button.
+
+- Auto-tag: `GET /api/v1/decks/{id}/auto-tag` suggests the categories of the lines from the Oracle tags of Scryfall Tagger and from rules on the card text.
+  `POST` applies the accepted categories in one change. Each change becomes a category rule of the user.
+  The deck page has an auto-tag dialog (ADR 0031).

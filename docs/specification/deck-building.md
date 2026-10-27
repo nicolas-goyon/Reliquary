@@ -44,8 +44,9 @@ For example, the text "add one mana" gives the ramp tag.
 The user accepts or corrects each suggested tag.
 Each correction becomes a rule of that user.
 
-The project must still check the feasibility of auto-tag.
-Scryfall Tagger has no official API, so auto-tag will need to use the `otag:` search of Scryfall.
+Auto-tag suggests the categories of the analysis.
+It reads the Oracle tags that the import of the card data stores, so it sends no request to Scryfall.
+[ADR 0031](../decisions/0031-auto-tag.md) gives the decision, and [Auto-tag](../architecture/auto-tag.md) gives the rules.
 
 ## Purchase preferences
 

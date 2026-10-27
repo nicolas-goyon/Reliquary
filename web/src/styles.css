@@ -1331,3 +1331,43 @@ tr[aria-selected='true'] {
   border-color: var(--color-primary);
   font-weight: 600;
 }
+
+/* Auto-tag */
+.dialog-wide {
+  max-width: none;
+}
+
+.auto-tag-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.auto-tag-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.auto-tag-table th,
+.auto-tag-table td {
+  padding: 0.375rem 0.5rem;
+  border-bottom: 1px solid var(--color-border);
+  text-align: start;
+  vertical-align: top;
+}
+
+.auto-tag-table .badge:first-child {
+  margin-left: 0;
+}
+
+.auto-tag-editor {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  margin: 0.5rem 0 0;
+  padding: 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.375rem;
+}

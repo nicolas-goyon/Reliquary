@@ -375,14 +375,14 @@ internal sealed class DeckService(DeckStore store, ICardCatalog catalog, IDomain
         }
 
         var tagInput = new LineInput(Guid.Empty, null, null, 1, "main", string.Empty, changes.Tags ?? [], changes.GlobalTags ?? [], []);
-        return await MutateAsync(ownerId, deckId, null, [tagInput], (_, _, _, current, tags) =>
+        return await MutateAsync(ownerId, deckId, null, [tagInput], async (_, transaction, _, current, tags) =>
         {
             var line = current.FirstOrDefault(candidate => candidate.Id == lineId)
                 ?? throw new DeckException(StatusCodes.Status404NotFound, ErrorCodes.NotFound, "The deck line does not exist.");
             if (changes.Quantity == 0)
             {
                 current.Remove(line);
-                return Task.CompletedTask;
+                return;
             }
 
             if (newPrintingOracle is { } oracle && oracle != line.OracleId)
@@ -401,7 +401,13 @@ internal sealed class DeckService(DeckStore store, ICardCatalog catalog, IDomain
                 line.TagIds = [.. kept.Concat(tags.IdsOf(tagInput)).Distinct()];
             }
 
-            line.Categories = changes.Categories is { } categories ? [.. categories.Distinct()] : line.Categories;
+            if (changes.Categories is { } categories && !categories.ToHashSet().SetEquals(line.Categories))
+            {
+                // A change of the categories becomes a rule of the user for the next suggestions of auto-tag. See ADR 0031.
+                line.Categories = [.. categories.Distinct()];
+                await CategoryRuleStore.UpsertAsync(transaction, ownerId, line.OracleId, line.Categories, time.GetUtcNow().UtcDateTime, cancellationToken);
+            }
+
             line.UpdatedAt = time.GetUtcNow().UtcDateTime;
 
             // A change can give the key of another line, for example a move to another zone. The two lines become one line.
@@ -414,8 +420,6 @@ internal sealed class DeckService(DeckStore store, ICardCatalog catalog, IDomain
                 same.UpdatedAt = line.UpdatedAt;
                 current.Remove(line);
             }
-
-            return Task.CompletedTask;
         }, cancellationToken);
     }
 
@@ -504,7 +508,7 @@ internal sealed class DeckService(DeckStore store, ICardCatalog catalog, IDomain
     /// <param name="inputs">The lines of the request. The method finds or creates their tags before the change.</param>
     /// <param name="change">The change.</param>
     /// <param name="cancellationToken">A token that stops the operation.</param>
-    private async Task<DeckView> MutateAsync(
+    internal async Task<DeckView> MutateAsync(
         Guid ownerId,
         Guid deckId,
         int? expectedVersion,

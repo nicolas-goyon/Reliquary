@@ -21,6 +21,8 @@
     <!-- The card fixtures of the Cards tests: the decks need real card data. -->
     <None Include="..\Reliquary.Cards.Tests\Fixtures\**\*" Link="Fixtures\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <None Update="Recommendations\*.json" CopyToOutputDirectory="PreserveNewest" />
+    <!-- The cards, the Oracle tags and the reference decks of the auto-tag tests. -->
+    <None Update="Fixtures\AutoTag\**\*" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

@@ -51,6 +51,42 @@
     "win_condition": "Condition de victoire",
     "protection": "Protection"
   },
+  "autoTag": {
+    "open": "Tag automatique",
+    "title": "Tag automatique",
+    "help": "Le tag automatique suggère les catégories de chaque carte à partir des tags Scryfall et du texte des cartes. Sélectionnez les lignes à modifier, corrigez les catégories si nécessaire, puis appliquez.",
+    "loading": "Chargement des suggestions…",
+    "empty": "Le deck n’a aucune carte à catégoriser.",
+    "noChange": "Chaque ligne a déjà les catégories suggérées.",
+    "onlyChanges": "Afficher seulement les changements",
+    "selectChanges": "Sélectionner tous les changements",
+    "selectNone": "Vider la sélection",
+    "tableCaption": "Catégories suggérées pour les cartes",
+    "columns": {
+      "apply": "Appliquer",
+      "card": "Carte",
+      "current": "Catégories actuelles",
+      "suggested": "Catégories suggérées",
+      "reason": "Raison"
+    },
+    "select": "Appliquer la suggestion pour {{name}}",
+    "edit": "Modifier les catégories de {{name}}",
+    "editorLegend": "Catégories de {{name}}",
+    "noCategory": "Aucune catégorie",
+    "source": {
+      "user_rule": "Votre choix précédent",
+      "oracle_tag": "Tag Scryfall",
+      "text_rule": "Texte de la carte",
+      "none": "Aucune suggestion"
+    },
+    "reason": {
+      "oracleTag": "Tag Scryfall : {{tag}}"
+    },
+    "ruleHint": "Chaque modification d’une suggestion devient votre règle pour cette carte. Les prochaines suggestions utilisent d’abord vos règles.",
+    "conflict": "Le deck a changé après la lecture du tag automatique. Fermez le tag automatique et ouvrez-le de nouveau.",
+    "apply_one": "Appliquer {{count}} changement",
+    "apply_other": "Appliquer {{count}} changements"
+  },
   "actions": {
     "save": "Enregistrer",
     "cancel": "Annuler"

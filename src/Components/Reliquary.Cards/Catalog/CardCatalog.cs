@@ -167,6 +167,38 @@ internal sealed class CardCatalog(IDatabase database) : ICardCatalog
         return rows.ToDictionary(row => row.Id, row => row.ToFacts());
     }
 
+    /// <inheritdoc />
+    public async Task<IReadOnlyDictionary<Guid, IReadOnlyList<CardOracleTag>>> GetOracleTagsAsync(IReadOnlyCollection<Guid> oracleIds, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(oracleIds);
+        if (oracleIds.Count == 0)
+        {
+            return new Dictionary<Guid, IReadOnlyList<CardOracleTag>>();
+        }
+
+        var ids = oracleIds.Distinct().ToArray();
+        await using var connection = await database.OpenReferenceAsync(cancellationToken);
+
+        // The closure contains each tag with itself, so the query removes the tag from its ancestors.
+        var rows = await connection.QueryAsync<OracleTagRow>(new CommandDefinition(
+            """
+            select ot.oracle_id as OracleId, t.slug, ot.weight,
+                coalesce(array_agg(a.slug order by a.slug) filter (where a.id <> t.id), '{}') as Ancestors
+            from reference.oracle_taggings ot
+            join reference.tags t on t.id = ot.tag_id
+            left join reference.tag_closure tc on tc.descendant_id = t.id
+            left join reference.tags a on a.id = tc.ancestor_id
+            where ot.oracle_id = any(@ids)
+            group by ot.oracle_id, t.id, t.slug, ot.weight
+            order by ot.oracle_id, t.slug
+            """,
+            new { ids },
+            cancellationToken: cancellationToken));
+        return rows.GroupBy(row => row.OracleId).ToDictionary(
+            group => group.Key,
+            group => (IReadOnlyList<CardOracleTag>)[.. group.Select(row => new CardOracleTag(row.Slug, row.Weight, row.Ancestors))]);
+    }
+
     /// <summary>
     /// Normalizes a name for the lookup. Some tools write the halves of a split card with three slashes.
     /// </summary>
@@ -222,6 +254,17 @@ internal sealed class CardCatalog(IDatabase database) : ICardCatalog
         public string? OracleText { get; set; }
 
         public string[] Colors { get; set; } = [];
+    }
+
+    private sealed class OracleTagRow
+    {
+        public Guid OracleId { get; set; }
+
+        public string Slug { get; set; } = string.Empty;
+
+        public string Weight { get; set; } = "median";
+
+        public string[] Ancestors { get; set; } = [];
     }
 
     private sealed class NameRow

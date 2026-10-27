@@ -30,7 +30,8 @@ The French column gives the term for the French interface.
 | Assembled version | The deck version that agrees with the physical cards of an assembled deck. | Version montée |
 | Tag | A label on a deck line. A global tag exists in all the decks of a user. A local tag exists in one deck only. | Tag global, tag local |
 | Category | A predefined tag that the analysis uses: ramp, card draw, targeted interaction, board wipe, synergy, land, win condition or protection. | Catégorie |
-| Auto-tag | A feature that suggests tags for deck lines. It uses Scryfall Tagger data and rules on the card text. | Tag automatique |
+| Auto-tag | A feature that suggests the categories of deck lines. It uses the Oracle tags of Scryfall Tagger, rules on the card text and the category rules of the user. | Tag automatique |
+| Category rule | The categories that one user chose for one Oracle card. Auto-tag suggests these categories first in all the decks of the user. | Règle de catégorie |
 | Recommendation | A card that an external source suggests for the commanders of a deck. The administrator enables the recommendations. | Recommandation |
 | Visibility | Who can open a deck: only the owner (private), people with the link (unlisted) or everyone (public). | Visibilité : privé, non listé, public |
 | Purchase preferences | The rules of one deck line for purchases: wanted or avoided printings, languages, minimum condition, foil and maximum price. | Préférences d'achat |
