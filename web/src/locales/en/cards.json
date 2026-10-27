@@ -1,0 +1,53 @@
+{
+  "manaCost": "Mana cost {{cost}}",
+  "search": {
+    "title": "Card search",
+    "label": "Search",
+    "placeholder": "For example: t:creature c:g mv<=2",
+    "submit": "Search",
+    "help": "The search accepts the Scryfall syntax and the card names in all the languages.",
+    "syntaxGuide": "Read the syntax guide of Scryfall",
+    "loading": "The application searches the cards.",
+    "total_one": "{{count}} card",
+    "total_other": "{{count}} cards",
+    "more": "Show more",
+    "syntaxError": "The search has a syntax error at the character {{position}}. Correct the search, then try again."
+  },
+  "suggestions": {
+    "keyword": "Keyword"
+  },
+  "warnings": {
+    "unknown_keyword": "The search does not know the keyword of \"{{term}}\". It ignored this term.",
+    "unsupported_keyword": "Reliquary does not support \"{{term}}\". It ignored this term.",
+    "invalid_value": "The value of \"{{term}}\" is not correct. The search ignored this term.",
+    "invalid_operator": "The operator of \"{{term}}\" is not correct. The search ignored this term.",
+    "other": "The search ignored \"{{term}}\"."
+  },
+  "card": {
+    "loading": "The application loads the card.",
+    "legalities": "Legalities",
+    "names": "Other names",
+    "rulings": "Rulings",
+    "printings": "Printings",
+    "language": "Language",
+    "allLanguages": "All the languages"
+  },
+  "legality": {
+    "legal": "Legal",
+    "not_legal": "Not legal",
+    "banned": "Banned",
+    "restricted": "Restricted"
+  },
+  "formats": {
+    "commander": "Commander",
+    "standard": "Standard",
+    "pioneer": "Pioneer",
+    "modern": "Modern",
+    "legacy": "Legacy",
+    "vintage": "Vintage",
+    "pauper": "Pauper",
+    "brawl": "Brawl",
+    "oathbreaker": "Oathbreaker",
+    "paupercommander": "Pauper Commander"
+  }
+}

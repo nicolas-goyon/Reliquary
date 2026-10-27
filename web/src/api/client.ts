@@ -10,13 +10,16 @@ export class ApiError extends Error {
   readonly status: number
   readonly code: string
   readonly fieldErrors: FieldError[]
+  /** The other members of the problem response, for example `position` or `lineErrors`. */
+  readonly details: Record<string, unknown>
 
-  constructor(status: number, code: string, message: string, fieldErrors: FieldError[] = []) {
+  constructor(status: number, code: string, message: string, fieldErrors: FieldError[] = [], details: Record<string, unknown> = {}) {
     super(message)
     this.name = 'ApiError'
     this.status = status
     this.code = code
     this.fieldErrors = fieldErrors
+    this.details = details
   }
 
   /** Gets the error code of a field, or undefined when the field has no error. */
@@ -80,8 +83,8 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
 
 async function readError(response: Response): Promise<ApiError> {
   try {
-    const problem = (await response.json()) as { code?: string; detail?: string; errors?: FieldError[] }
-    return new ApiError(response.status, problem.code ?? 'internal_error', problem.detail ?? response.statusText, problem.errors ?? [])
+    const problem = (await response.json()) as { code?: string; detail?: string; errors?: FieldError[] } & Record<string, unknown>
+    return new ApiError(response.status, problem.code ?? 'internal_error', problem.detail ?? response.statusText, problem.errors ?? [], problem)
   } catch {
     return new ApiError(response.status, response.status >= 500 ? 'internal_error' : 'bad_request', response.statusText)
   }

@@ -29,7 +29,8 @@
     "account": "Account",
     "signIn": "Sign in",
     "register": "Make an account",
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "cards": "Cards"
   },
   "notFound": {
     "title": "Page not found",

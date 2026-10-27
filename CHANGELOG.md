@@ -25,6 +25,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Emails in English and French, and a Mailpit service in the local infrastructure.
 - Web app: sign-in, registration, email check, password reset and OAuth sign-in, in French and English.
   An account page shows the profile, the password and the API keys.
+- Card search page with the Scryfall syntax, the autocomplete of the keywords and of the card names, and the position of the syntax errors.
+- Card page: the faces, the legalities, the other names, the rulings and the printings.
 - Interface slots: the core renders its navigation and its account panels through named slots.
 - Container images of the API, the worker, the CLI and the web app. `just up` builds and starts a full local instance with the demo data.
 - The CLI command `demo load` loads the demo cards and the demo accounts.

@@ -29,7 +29,8 @@
     "account": "Compte",
     "signIn": "Se connecter",
     "register": "Créer un compte",
-    "signOut": "Se déconnecter"
+    "signOut": "Se déconnecter",
+    "cards": "Cartes"
   },
   "notFound": {
     "title": "Page introuvable",

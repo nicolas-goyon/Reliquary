@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AccountPage } from './pages/AccountPage'
+import { CardPage } from './pages/CardPage'
+import { CardSearchPage } from './pages/CardSearchPage'
 import { AuthCompletePage, CheckEmailPage, ForgotPasswordPage, ResetPasswordPage } from './pages/EmailLinkPages'
 import { HomePage, NotFoundPage } from './pages/HomePage'
 import { RegisterPage } from './pages/RegisterPage'
@@ -15,7 +17,13 @@ import { registerCoreContributions } from './slots/coreContributions'
 
 const repositoryUrl = 'https://github.com/nicolas-goyon/reliquary'
 
+/** The pages with a parameter in their path. */
+const patternRoutes: { pattern: RegExp; render(match: RegExpMatchArray): ReactNode }[] = [
+  { pattern: /^\/cards\/([0-9a-f-]{36})$/, render: (match) => <CardPage key={match[1]} id={match[1]} /> },
+]
+
 const routes: Record<string, () => ReactNode> = {
+  '/cards': () => <CardSearchPage />,
   '/': () => <HomePage />,
   '/sign-in': () => <SignInPage />,
   '/register': () => <RegisterPage />,
@@ -24,6 +32,16 @@ const routes: Record<string, () => ReactNode> = {
   '/reset-password': () => <ResetPasswordPage />,
   '/auth/complete': () => <AuthCompletePage />,
   '/account': () => <AccountPage />,
+}
+
+function patternPage(path: string): () => ReactNode {
+  for (const route of patternRoutes) {
+    const match = path.match(route.pattern)
+    if (match) {
+      return () => route.render(match)
+    }
+  }
+  return () => <NotFoundPage />
 }
 
 function createCoreRegistry(): SlotRegistry {
@@ -50,7 +68,7 @@ function Shell() {
   const { state } = useAuth()
   const location = useLocation()
   const account = state.status === 'authenticated' ? state.account : null
-  const page = routes[location.pathname] ?? (() => <NotFoundPage />)
+  const page = routes[location.pathname] ?? patternPage(location.pathname)
   const main = useRef<HTMLElement>(null)
 
   // Move the focus to the new page, so a screen reader announces it.

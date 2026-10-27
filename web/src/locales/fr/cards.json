@@ -1,0 +1,53 @@
+{
+  "manaCost": "Coût de mana {{cost}}",
+  "search": {
+    "title": "Recherche de cartes",
+    "label": "Recherche",
+    "placeholder": "Par exemple : t:creature c:g mv<=2",
+    "submit": "Rechercher",
+    "help": "La recherche accepte la syntaxe de Scryfall et les noms de cartes dans toutes les langues.",
+    "syntaxGuide": "Lire le guide de la syntaxe de Scryfall",
+    "loading": "L’application recherche les cartes.",
+    "total_one": "{{count}} carte",
+    "total_other": "{{count}} cartes",
+    "more": "Afficher plus",
+    "syntaxError": "La recherche contient une erreur de syntaxe au caractère {{position}}. Corrigez la recherche, puis réessayez."
+  },
+  "suggestions": {
+    "keyword": "Mot-clé"
+  },
+  "warnings": {
+    "unknown_keyword": "La recherche ne connaît pas le mot-clé de « {{term}} ». Ce terme est ignoré.",
+    "unsupported_keyword": "Reliquary ne gère pas « {{term}} ». Ce terme est ignoré.",
+    "invalid_value": "La valeur de « {{term}} » est incorrecte. Ce terme est ignoré.",
+    "invalid_operator": "L’opérateur de « {{term}} » est incorrect. Ce terme est ignoré.",
+    "other": "La recherche a ignoré « {{term}} »."
+  },
+  "card": {
+    "loading": "L’application charge la carte.",
+    "legalities": "Légalités",
+    "names": "Autres noms",
+    "rulings": "Règles",
+    "printings": "Impressions",
+    "language": "Langue",
+    "allLanguages": "Toutes les langues"
+  },
+  "legality": {
+    "legal": "Légale",
+    "not_legal": "Non légale",
+    "banned": "Bannie",
+    "restricted": "Restreinte"
+  },
+  "formats": {
+    "commander": "Commander",
+    "standard": "Standard",
+    "pioneer": "Pioneer",
+    "modern": "Modern",
+    "legacy": "Legacy",
+    "vintage": "Vintage",
+    "pauper": "Pauper",
+    "brawl": "Brawl",
+    "oathbreaker": "Oathbreaker",
+    "paupercommander": "Pauper Commander"
+  }
+}
