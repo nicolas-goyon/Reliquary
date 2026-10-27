@@ -41,7 +41,7 @@ backup name:
     {{ compose }} --profile app run --rm --volume "{{ justfile_directory() }}/backups:/backups" migrate backup /backups/{{ name }}
 
 # Restore the backup backups/NAME into the local instance. It stops the API and the worker, and replaces the data.
-restore name:
+restore-backup name:
     {{ compose }} up --detach --wait postgres redis mailpit
     {{ compose }} --profile app stop api worker
     {{ compose }} --profile app run --rm --volume "{{ justfile_directory() }}/backups:/backups" migrate restore /backups/{{ name }} --replace

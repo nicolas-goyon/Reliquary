@@ -60,7 +60,7 @@ The copies of two different databases can be some seconds apart.
 
 5. Start the API and the worker.
 
-With the local instance, run `just restore NAME`. It does the steps 1 to 5 and replaces the data.
+With the local instance, run `just restore-backup NAME`. It does the steps 1 to 5 and replaces the data.
 
 ## Test of the procedure
 

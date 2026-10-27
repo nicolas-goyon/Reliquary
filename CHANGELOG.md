@@ -7,7 +7,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Added
 
-- The CLI commands `reliquary backup` and `reliquary restore` for all the databases of an instance, and the recipes `just backup` and `just restore`.
+- The CLI commands `reliquary backup` and `reliquary restore` for all the databases of an instance, and the recipes `just backup` and `just restore-backup`.
 - The export of all the data of an account as a ZIP archive, and the deletion of an account after 7 days (ADR 0032).
 - Repository rules, the English documentation with checks for ASD-STE100, and the backlog of the roadmap.
 - .NET 10 solution skeleton with the five core components and the architecture tests.
