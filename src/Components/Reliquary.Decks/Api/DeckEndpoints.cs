@@ -310,6 +310,11 @@ internal static class DeckEndpoints
             errors.Add(new FieldError("content", FieldErrorCodes.TooLong, $"The file must have {MaxTextLength} characters or fewer."));
         }
 
+        if (request.Columns is { Count: > 0 })
+        {
+            ValidateColumns(errors, request.Format, request.Columns);
+        }
+
         var name = string.IsNullOrWhiteSpace(request.Name) ? "Imported deck" : request.Name.Trim();
         ValidateDeckFields(errors, name, request.DeckFormat, request.Visibility, null);
         if (errors.Count > 0)
@@ -317,9 +322,15 @@ internal static class DeckEndpoints
             return ApiProblems.Validation(errors);
         }
 
+        var format = DeckFormats.All[request.Format!];
+        if (request.Columns is { Count: > 0 } && format is CsvDeckFormat csv)
+        {
+            format = csv.WithColumns(request.Columns);
+        }
+
         var (deck, warnings) = await exchange.ImportAsync(
             user.GetAccountId(),
-            DeckFormats.All[request.Format!],
+            format,
             request.Content!,
             new NewDeck(name, request.DeckFormat ?? "commander", request.Visibility ?? "private", null, string.Empty, null),
             cancellationToken);
@@ -327,6 +338,27 @@ internal static class DeckEndpoints
         return TypedResults.Created(
             $"{ApiRoutes.Base}/decks/{deck.Id}",
             new ImportDeckResponse(await ToResponseAsync(view, catalog, cancellationToken), [.. warnings.Select(warning => new DeckTextLineError(warning.Line, warning.Code, warning.Text))]));
+    }
+
+    private static void ValidateColumns(List<FieldError> errors, string? format, IReadOnlyDictionary<string, string> columns)
+    {
+        if (format != CsvFormats.GenericName)
+        {
+            errors.Add(new FieldError("columns", FieldErrorCodes.NotAllowed, $"Only the format {CsvFormats.GenericName} accepts a column map."));
+            return;
+        }
+
+        foreach (var (field, header) in columns)
+        {
+            if (!CsvFields.All.Contains(field))
+            {
+                errors.Add(new FieldError($"columns.{field}", FieldErrorCodes.NotAllowed, $"The field is not known. Use one of these fields: {string.Join(", ", CsvFields.All)}."));
+            }
+            else if (string.IsNullOrWhiteSpace(header) || header.Length > MaxColumnHeaderLength)
+            {
+                errors.Add(new FieldError($"columns.{field}", FieldErrorCodes.TooLong, $"The header must have 1 to {MaxColumnHeaderLength} characters."));
+            }
+        }
     }
 
     private static async Task<Results<Ok<ExportDeckResponse>, ProblemHttpResult>> ExportAsync(Guid deckId, string? format, ClaimsPrincipal user, DeckExchangeService exchange, CancellationToken cancellationToken)
@@ -364,6 +396,9 @@ internal static class DeckEndpoints
     }
 
     private const int MaxTextLength = 200_000;
+
+
+    private const int MaxColumnHeaderLength = 100;
 
     private static void ValidateDeckFields(List<FieldError> errors, string? name, string? format, string? visibility, string? description)
     {

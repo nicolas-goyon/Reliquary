@@ -34,15 +34,17 @@ internal interface IDeckFormat
 internal static class DeckFormats
 {
     /// <summary>Gets all the formats, by name.</summary>
-    public static IReadOnlyDictionary<string, IDeckFormat> All { get; } = new IDeckFormat[]
-    {
+    public static IReadOnlyDictionary<string, IDeckFormat> All { get; } = ((IDeckFormat[])
+    [
         new ReliquaryTextFormat(),
         new MoxfieldFormat(),
         new ArenaFormat(),
         new MtgoTextFormat(),
         new MtgoDekFormat(),
         new ArchidektFormat(),
-    }.ToDictionary(format => format.Name, StringComparer.Ordinal);
+        CsvFormats.Generic,
+        .. CsvFormats.Tools,
+    ]).ToDictionary(format => format.Name, StringComparer.Ordinal);
 }
 
 /// <summary>The deck text format of Reliquary.</summary>
@@ -421,4 +423,10 @@ internal static class DeckFormatCodes
 {
     /// <summary>The file is not a valid file of its format.</summary>
     public const string InvalidFile = "invalid_file";
+
+    /// <summary>The CSV file has no column for the card names.</summary>
+    public const string MissingColumn = "missing_column";
+
+    /// <summary>The zone of a CSV line is not a known zone.</summary>
+    public const string UnknownZone = "unknown_zone";
 }
