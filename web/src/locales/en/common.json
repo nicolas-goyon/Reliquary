@@ -30,7 +30,8 @@
     "signIn": "Sign in",
     "register": "Make an account",
     "signOut": "Sign out",
-    "cards": "Cards"
+    "cards": "Cards",
+    "decks": "Decks"
   },
   "notFound": {
     "title": "Page not found",

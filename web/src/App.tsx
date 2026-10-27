@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { AccountPage } from './pages/AccountPage'
 import { CardPage } from './pages/CardPage'
 import { CardSearchPage } from './pages/CardSearchPage'
+import { DeckListPage } from './pages/DeckListPage'
+import { DeckPage } from './pages/DeckPage'
 import { AuthCompletePage, CheckEmailPage, ForgotPasswordPage, ResetPasswordPage } from './pages/EmailLinkPages'
 import { HomePage, NotFoundPage } from './pages/HomePage'
 import { RegisterPage } from './pages/RegisterPage'
@@ -20,10 +22,12 @@ const repositoryUrl = 'https://github.com/nicolas-goyon/reliquary'
 /** The pages with a parameter in their path. */
 const patternRoutes: { pattern: RegExp; render(match: RegExpMatchArray): ReactNode }[] = [
   { pattern: /^\/cards\/([0-9a-f-]{36})$/, render: (match) => <CardPage key={match[1]} id={match[1]} /> },
+  { pattern: /^\/decks\/([0-9a-f-]{36})$/, render: (match) => <DeckPage key={match[1]} id={match[1]} /> },
 ]
 
 const routes: Record<string, () => ReactNode> = {
   '/cards': () => <CardSearchPage />,
+  '/decks': () => <DeckListPage />,
   '/': () => <HomePage />,
   '/sign-in': () => <SignInPage />,
   '/register': () => <RegisterPage />,

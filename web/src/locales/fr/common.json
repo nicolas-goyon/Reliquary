@@ -30,7 +30,8 @@
     "signIn": "Se connecter",
     "register": "Créer un compte",
     "signOut": "Se déconnecter",
-    "cards": "Cartes"
+    "cards": "Cartes",
+    "decks": "Decks"
   },
   "notFound": {
     "title": "Page introuvable",

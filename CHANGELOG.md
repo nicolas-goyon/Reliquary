@@ -27,6 +27,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
   An account page shows the profile, the password and the API keys.
 - Card search page with the Scryfall syntax, the autocomplete of the keywords and of the card names, and the position of the syntax errors.
 - Card page: the faces, the legalities, the other names, the rulings and the printings.
+- Deck list and deck page: make, rename, copy and delete a deck, and see the legality problems.
+  On the deck page, the user adds cards with the autocomplete, changes the quantities and moves the cards between the zones by drag and drop.
+- Text mode of the deck page, with the error of each line.
 - Interface slots: the core renders its navigation and its account panels through named slots.
 - Container images of the API, the worker, the CLI and the web app. `just up` builds and starts a full local instance with the demo data.
 - The CLI command `demo load` loads the demo cards and the demo accounts.

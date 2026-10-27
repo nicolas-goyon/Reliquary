@@ -1,0 +1,128 @@
+{
+  "fields": {
+    "name": "Nom",
+    "format": "Format",
+    "visibility": "Visibilité"
+  },
+  "formats": {
+    "commander": "Commander",
+    "brawl": "Brawl",
+    "standardbrawl": "Standard Brawl",
+    "oathbreaker": "Oathbreaker",
+    "paupercommander": "Pauper Commander",
+    "standard": "Standard",
+    "pioneer": "Pioneer",
+    "modern": "Modern",
+    "legacy": "Legacy",
+    "vintage": "Vintage",
+    "pauper": "Pauper",
+    "freeform": "Freeform"
+  },
+  "visibility": {
+    "private": "Privé",
+    "unlisted": "Non répertorié",
+    "public": "Public"
+  },
+  "visibilityHint": {
+    "private": "Vous seul pouvez ouvrir le deck.",
+    "unlisted": "Les personnes qui ont le lien peuvent ouvrir le deck.",
+    "public": "Tout le monde peut trouver et ouvrir le deck."
+  },
+  "zones": {
+    "commander": "Commandant",
+    "companion": "Compagnon",
+    "main": "Deck principal",
+    "sideboard": "Réserve",
+    "considering": "À l’étude",
+    "tokens": "Jetons"
+  },
+  "finishes": {
+    "foil": "Foil",
+    "etched": "Gravé"
+  },
+  "categories": {
+    "ramp": "Accélération",
+    "card_draw": "Pioche",
+    "targeted_interaction": "Interaction ciblée",
+    "board_wipe": "Balayage",
+    "synergy": "Synergie",
+    "land": "Terrain",
+    "win_condition": "Condition de victoire",
+    "protection": "Protection"
+  },
+  "actions": {
+    "save": "Enregistrer",
+    "cancel": "Annuler"
+  },
+  "list": {
+    "title": "Mes decks",
+    "create": "Créer un deck",
+    "createSubmit": "Créer le deck",
+    "empty": "Vous n’avez aucun deck. Créez votre premier deck.",
+    "cards": "Cartes",
+    "updated": "Dernière modification",
+    "more": "Afficher plus de decks"
+  },
+  "editor": {
+    "loading": "L’application charge le deck.",
+    "actions": "Actions du deck",
+    "rename": "Renommer",
+    "textMode": "Mode texte",
+    "visualMode": "Mode cartes",
+    "copy": "Copier le deck",
+    "delete": "Supprimer le deck",
+    "deleteConfirm": "Supprimer le deck « {{name}} » ? Cette opération est définitive.",
+    "cardCount_one": "{{count}} carte",
+    "cardCount_other": "{{count}} cartes",
+    "original": "Deck d’origine",
+    "addCard": "Ajouter une carte",
+    "addCardPlaceholder": "Saisissez un nom de carte dans n’importe quelle langue",
+    "zone": "Zone",
+    "emptyZone": "Cette zone ne contient aucune carte.",
+    "decrease": "Retirer un exemplaire de {{name}}",
+    "increase": "Ajouter un exemplaire de {{name}}",
+    "quantity": "Quantité de {{name}}",
+    "moveTo": "Zone de {{name}}",
+    "remove": "Retirer {{name}} du deck"
+  },
+  "legality": {
+    "legal": "Le deck est légal en {{format}}.",
+    "title": "Le deck n’est pas légal en {{format}}",
+    "problems": {
+      "deck_size": "Le deck contient {{count}} cartes. Il doit en contenir {{limit}}.",
+      "too_many_copies": "Le deck contient {{count}} exemplaires de {{card}}. La limite est de {{limit}}.",
+      "sideboard_size": "La réserve contient {{count}} cartes. La limite est de {{limit}}.",
+      "card_banned": "{{card}} est bannie dans ce format.",
+      "card_not_legal": "{{card}} n’est pas légale dans ce format.",
+      "card_restricted": "{{card}} est restreinte : le deck ne peut en contenir qu’un exemplaire.",
+      "commander_missing": "Le deck n’a pas de commandant. Placez une carte dans la zone Commandant.",
+      "commander_not_allowed": "{{card}} ne peut pas être un commandant.",
+      "too_many_commanders": "Le deck a plus de deux commandants.",
+      "commanders_cannot_pair": "Les deux commandants ne peuvent pas être associés. Il leur faut Partenaire, Amis pour toujours, un Historique ou une paire Docteur.",
+      "outside_color_identity": "{{card}} est en dehors de l’identité de couleur des commandants.",
+      "companion_not_allowed": "{{card}} n’a pas la capacité Compagnon.",
+      "other": "Le deck a un problème."
+    }
+  },
+  "text": {
+    "title": "Mode texte",
+    "help": "Une carte par ligne : quantité, nom, puis édition et numéro facultatifs, #tags et -- note. Les sections sont Commander, Main, Sideboard, Considering et Tokens.",
+    "label": "Liste du deck",
+    "save": "Enregistrer la liste",
+    "errors": "Certaines lignes sont incorrectes. Le deck n’a pas changé.",
+    "lineError": {
+      "missing_name": "Ligne {{line}} : la ligne n’a pas de nom de carte. « {{text}} »",
+      "quantity_out_of_range": "Ligne {{line}} : la quantité doit être comprise entre 1 et 999. « {{text}} »",
+      "tag_too_long": "Ligne {{line}} : un tag est trop long. « {{text}} »",
+      "unknown_category": "Ligne {{line}} : la catégorie est inconnue. « {{text}} »",
+      "card_not_found": "Ligne {{line}} : aucune carte ne porte ce nom. « {{text}} »",
+      "printing_not_found": "Ligne {{line}} : l’édition et le numéro ne correspondent à aucune impression de cette carte. « {{text}} »",
+      "other": "Ligne {{line}} : la ligne est incorrecte. « {{text}} »"
+    }
+  },
+  "copy": {
+    "defaultName": "Copie de {{name}}",
+    "submit": "Créer la copie",
+    "signIn": "Connectez-vous pour copier ce deck."
+  }
+}

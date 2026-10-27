@@ -5,10 +5,12 @@ import enAccount from '../locales/en/account.json'
 import enAuth from '../locales/en/auth.json'
 import enCards from '../locales/en/cards.json'
 import enCommon from '../locales/en/common.json'
+import enDecks from '../locales/en/decks.json'
 import frAccount from '../locales/fr/account.json'
 import frAuth from '../locales/fr/auth.json'
 import frCards from '../locales/fr/cards.json'
 import frCommon from '../locales/fr/common.json'
+import frDecks from '../locales/fr/decks.json'
 
 /** The interface languages. English is the source language. */
 export const supportedLanguages = ['en', 'fr'] as const
@@ -18,8 +20,8 @@ export const defaultNamespace = 'common'
 
 /** The translation resources. English gives the TypeScript types of the keys. */
 export const resources = {
-  en: { common: enCommon, auth: enAuth, account: enAccount, cards: enCards },
-  fr: { common: frCommon, auth: frAuth, account: frAccount, cards: frCards },
+  en: { common: enCommon, auth: enAuth, account: enAccount, cards: enCards, decks: enDecks },
+  fr: { common: frCommon, auth: frAuth, account: frAccount, cards: frCards, decks: frDecks },
 } as const
 
 /** The local storage key that keeps the language that the user chose. */
@@ -42,7 +44,7 @@ void i18n
     fallbackLng: 'en',
     nonExplicitSupportedLngs: true,
     defaultNS: defaultNamespace,
-    ns: [defaultNamespace, 'auth', 'account', 'cards'],
+    ns: [defaultNamespace, 'auth', 'account', 'cards', 'decks'],
     initAsync: false,
     interpolation: {
       // React escapes the values. Escaping them twice shows HTML entities.
