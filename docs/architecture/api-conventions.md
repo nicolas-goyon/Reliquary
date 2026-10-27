@@ -109,6 +109,7 @@ Rules for the error codes:
 | `api_key_limit` | 409 | The account has the maximum number of API keys. |
 | `provider_not_enabled` | 404 | The OAuth provider is not enabled on the instance. |
 | `core_version_not_supported` | 409 | The extension does not support the current version of the core API. |
+| `deck_version_conflict` | 409 | The deck changed since the client read it. Read the deck again, then repeat the change. |
 | `search_syntax_error` | 400 | The card search query has a syntax error. The member `position` gives the index of the character. |
 | `search_query_empty` | 400 | The card search query has no search condition. The member `warnings` gives the ignored terms. |
 | `search_timeout` | 400 | The card search took more than 5 seconds. |
@@ -126,6 +127,7 @@ The OpenAPI document of the endpoint lists its specific codes.
 | `out_of_range` | The value is outside the permitted range. |
 | `invalid_format` | The value does not have the correct format. |
 | `not_allowed` | The value is not one of the permitted values. |
+| `card_not_found` | No card has this name. |
 
 ## Statelessness
 
