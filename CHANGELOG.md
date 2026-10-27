@@ -47,6 +47,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
   For Commander, the analysis also gives the category needs and an indicative bracket (ADR 0027).
 - Web app: the analysis panels of the deck page, in tabs. Extensions can add tabs.
 - The legality check of a deck: deck size, copies, card legalities, commanders, pairs and color identity.
+- Web app: the folders, the filters, the selection and the group actions of the deck list.
 - Web app: the import page of decks, with the column map of a CSV file, and the export dialog of the deck page.
 - Deck import and export in the CSV formats of Deckbox, ManaBox and Dragon Shield, and in a generic CSV format with a column map.
 - Deck import and export in the formats of Moxfield, MTG Arena, Magic Online and Archidekt, and in the Reliquary text. A test proves the Moxfield round trip of the M1 gate.

@@ -61,7 +61,12 @@
     "empty": "You have no deck. Make your first deck.",
     "cards": "Cards",
     "updated": "Last change",
-    "more": "Show more decks"
+    "more": "Show more decks",
+    "colors": "Colors",
+    "tags": "Deck tags",
+    "pinned": "Pinned",
+    "archived": "Archived",
+    "colorless": "Colorless"
   },
   "editor": {
     "loading": "The application loads the deck.",
@@ -307,5 +312,60 @@
         "other": "The analysis does not check some rules yet. The deck can be in a higher bracket."
       }
     }
+  },
+  "folders": {
+    "title": "Folders",
+    "all": "All the decks",
+    "none": "No folder",
+    "create": "New folder",
+    "createIn": "New folder in the selected folder",
+    "createSubmit": "Add",
+    "rename": "Rename the folder {{name}}",
+    "renameLabel": "New name of the folder {{name}}",
+    "delete": "Delete the folder {{name}}",
+    "deleteConfirm": "Delete the folder \"{{name}}\" and its subfolders? The decks stay, with no folder."
+  },
+  "filters": {
+    "allFormats": "All the formats",
+    "colors": "Color identity",
+    "color": {
+      "W": "White",
+      "U": "Blue",
+      "B": "Black",
+      "R": "Red",
+      "G": "Green"
+    },
+    "tag": "Deck tag",
+    "allTags": "All the deck tags",
+    "archived": "Archived decks",
+    "archivedExclude": "Hide",
+    "archivedInclude": "Show",
+    "archivedOnly": "Show only",
+    "sort": "Sort",
+    "sorts": {
+      "updated": "Last change",
+      "created": "Creation date",
+      "name": "Name",
+      "format": "Format"
+    }
+  },
+  "group": {
+    "title_one": "{{count}} deck selected",
+    "title_other": "{{count}} decks selected",
+    "select": "Select {{name}}",
+    "selectAll": "Select all the decks",
+    "folder": "Folder",
+    "move": "Move",
+    "tag": "Deck tag",
+    "addTag": "Add the tag",
+    "removeTag": "Remove the tag",
+    "pin": "Pin",
+    "unpin": "Unpin",
+    "archive": "Archive",
+    "unarchive": "Unarchive",
+    "export": "Export",
+    "delete": "Delete",
+    "deleteConfirm_one": "Delete {{count}} deck? You cannot undo this operation.",
+    "deleteConfirm_other": "Delete {{count}} decks? You cannot undo this operation."
   }
 }

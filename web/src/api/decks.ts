@@ -22,6 +22,73 @@ export interface DeckSummary {
   commanderIds: string[]
   createdAt: string
   updatedAt: string
+  tags: string[]
+  colorIdentity: string
+}
+
+export interface DeckFolder {
+  id: string
+  parentId: string | null
+  name: string
+  deckCount: number
+}
+
+export interface DeckTagSummary {
+  name: string
+  deckCount: number
+}
+
+/** The group actions on several decks. See docs/architecture/decks.md. */
+export const groupActions = ['move', 'tag', 'untag', 'pin', 'unpin', 'archive', 'unarchive', 'delete'] as const
+export type GroupAction = (typeof groupActions)[number]
+
+/** The sorts of the deck list. */
+export const deckSorts = ['updated', 'created', 'name', 'format'] as const
+export type DeckSort = (typeof deckSorts)[number]
+
+/** The colors of a color identity, in the WUBRG order. */
+export const identityColors = ['W', 'U', 'B', 'R', 'G'] as const
+
+/** The filters of the deck list. */
+export interface DeckListFilters {
+  /** A folder ID, `none` for the decks with no folder, or empty for all the decks. */
+  folderId: string
+  format: string
+  /** The letters of the exact color identity, `C` for colorless, or empty for all the colors. */
+  colors: string
+  tag: string
+  archived: 'exclude' | 'include' | 'only'
+  sort: DeckSort
+}
+
+/** Gets the query of the deck list for the filters. */
+export function deckListQuery(filters: DeckListFilters): string {
+  const query = new URLSearchParams({ limit: '100' })
+  for (const key of ['folderId', 'format', 'colors', 'tag'] as const) {
+    if (filters[key]) {
+      query.set(key, filters[key])
+    }
+  }
+  if (filters.archived !== 'exclude') {
+    query.set('archived', filters.archived)
+  }
+  if (filters.sort !== 'updated') {
+    query.set('sort', filters.sort)
+  }
+  return query.toString()
+}
+
+/** Puts the folders in tree order, with the depth of each folder. A folder at the top has the depth 0. */
+export function folderTree(folders: DeckFolder[]): { folder: DeckFolder; depth: number }[] {
+  const result: { folder: DeckFolder; depth: number }[] = []
+  const visit = (parentId: string | null, depth: number) => {
+    for (const folder of folders.filter((candidate) => candidate.parentId === parentId)) {
+      result.push({ folder, depth })
+      visit(folder.id, depth + 1)
+    }
+  }
+  visit(null, 0)
+  return result
 }
 
 export interface DeckLine {
