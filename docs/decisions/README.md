@@ -35,6 +35,7 @@ Each record gives the context, the decision and its consequences.
 | [0025](0025-multi-face-analysis-rules.md) | Analysis rules for cards with more than one face | Accepted |
 | [0026](0026-deck-model.md) | Deck model of milestone M1 | Accepted |
 | [0027](0027-deck-analysis.md) | Deck analysis on the server, with rules and tables as data in code | Accepted |
+| [0029](0029-public-deck-read-model.md) | Read model of the public decks in the users database, filled by the domain events | Accepted |
 
 ## Open decisions
 

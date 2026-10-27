@@ -12,6 +12,7 @@ using Reliquary.Accounts.Emails;
 using Reliquary.Accounts.Profile;
 using Reliquary.Accounts.Quotas;
 using Reliquary.BuildingBlocks;
+using Reliquary.BuildingBlocks.Accounts;
 using Reliquary.BuildingBlocks.Api;
 using Reliquary.BuildingBlocks.Data;
 using Reliquary.BuildingBlocks.Demo;
@@ -40,6 +41,7 @@ public sealed class AccountsComponent : ICoreComponent
         services.Configure<QuotaOptions>(configuration.GetSection(QuotaOptions.Section));
         services.TryAddSingleton(TimeProvider.System);
         services.AddSingleton<AccountStore>();
+        services.AddSingleton<IAccountDirectory, AccountDirectory>();
         services.AddSingleton<AccessTokens>();
         services.AddSingleton<AccountEmails>();
         services.AddSingleton<AccountService>();
