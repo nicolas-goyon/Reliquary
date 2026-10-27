@@ -31,6 +31,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Extension registry: the administrator installs, enables and uninstalls extensions. The API refuses an extension for another version of the core API.
 - The card catalog: the other core components get the card facts, resolve card names and find printings through `ICardCatalog`.
 - The analysis rules of the cards with more than one face (ADR 0025).
+- Decks: create, read, change and delete a deck and its lines, with the zones, the visibility and the version of the deck (ADR 0026).
 - Card search with the Scryfall syntax: `GET /api/v1/cards/search`, with all the names of a card, paging, warnings and errors with a position.
 - Parity tests of the card search against the examples of the Scryfall syntax guide, on the demo dataset in `data/demo`.
 - The search benchmark in `bench/Reliquary.Cards.Benchmark` and its GitHub workflow.

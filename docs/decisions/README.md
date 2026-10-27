@@ -33,6 +33,7 @@ Each record gives the context, the decision and its consequences.
 | [0023](0023-extension-registry.md) | Extension registry and core API version | Accepted |
 | [0024](0024-container-images.md) | Container images and the full local instance | Accepted |
 | [0025](0025-multi-face-analysis-rules.md) | Analysis rules for cards with more than one face | Accepted |
+| [0026](0026-deck-model.md) | Deck model of milestone M1 | Accepted |
 
 ## Open decisions
 
