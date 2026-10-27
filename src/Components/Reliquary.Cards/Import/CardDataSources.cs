@@ -17,9 +17,10 @@ internal static class SourceKinds
     public const string IllustrationTags = "art_tags";
     public const string Rulings = "rulings";
     public const string Identifiers = "card_identifiers";
+    public const string Combos = "combos";
 
-    /// <summary>Gets the kinds in the order of the import.</summary>
-    public static IReadOnlyList<string> InOrder { get; } = [Sets, Cards, OracleTags, IllustrationTags, Rulings, Identifiers];
+    /// <summary>Gets the kinds in the order of the import. The combos come after the cards, because the import of the combos keeps only the known cards.</summary>
+    public static IReadOnlyList<string> InOrder { get; } = [Sets, Cards, OracleTags, IllustrationTags, Rulings, Identifiers, Combos];
 }
 
 /// <summary>
@@ -59,6 +60,7 @@ internal sealed class LocalCardDataSources(string directory) : ICardDataSources
         [SourceKinds.IllustrationTags] = "art_tags.jsonl",
         [SourceKinds.Rulings] = "rulings.jsonl",
         [SourceKinds.Identifiers] = "card_identifiers.csv",
+        [SourceKinds.Combos] = "variants.json",
     };
 
     public Task<SourceFile?> FindAsync(string kind, CancellationToken cancellationToken)
@@ -81,7 +83,7 @@ internal sealed class LocalCardDataSources(string directory) : ICardDataSources
 }
 
 /// <summary>
-/// Gives the source files from Scryfall and MTGJSON. Each file goes to a temporary file before the import reads it.
+/// Gives the source files from Scryfall, MTGJSON and Commander Spellbook. Each file goes to a temporary file before the import reads it.
 /// </summary>
 /// <param name="http">The HTTP client. Its base address is not used.</param>
 /// <param name="options">The settings of the import.</param>
@@ -114,6 +116,20 @@ internal sealed class RemoteCardDataSources(HttpClient http, IOptions<CardImport
 
             case SourceKinds.IllustrationTags when !settings.IncludeIllustrationTags:
                 return null;
+
+            case SourceKinds.Combos:
+                if (!settings.IncludeCombos)
+                {
+                    return null;
+                }
+
+                // The bulk file has no index, so the time of the last change comes from the HTTP header.
+                using (var request = new HttpRequestMessage(HttpMethod.Head, settings.SpellbookCombos))
+                using (var response = await http.SendAsync(request, cancellationToken))
+                {
+                    response.EnsureSuccessStatusCode();
+                    return new SourceFile(kind, "spellbook:variants", response.Content.Headers.LastModified, token => DownloadAsync(settings.SpellbookCombos, token));
+                }
 
             default:
                 var type = kind == SourceKinds.Cards ? settings.BulkType : kind;

@@ -15,7 +15,7 @@ using Reliquary.Cards.Search;
 namespace Reliquary.Cards;
 
 /// <summary>
-/// Registers the Cards core component: card reference data, card search and deck analysis.
+/// Registers the Cards core component: card reference data, combos, card search and deck analysis.
 /// </summary>
 public sealed class CardsComponent : ICoreComponent
 {
@@ -34,6 +34,7 @@ public sealed class CardsComponent : ICoreComponent
         services.AddSingleton<CardQueries>();
         services.AddSingleton<CardSearch>();
         services.AddSingleton<ICardCatalog, CardCatalog>();
+        services.AddSingleton<IComboCatalog, ComboCatalog>();
     }
 
     /// <inheritdoc />
@@ -42,7 +43,7 @@ public sealed class CardsComponent : ICoreComponent
         services.Configure<CardImportOptions>(configuration.GetSection(CardImportOptions.Section));
         services.AddHttpClient(CardDataImport.HttpClientName, client =>
         {
-            // Scryfall asks each client for a User-Agent and an Accept header.
+            // Scryfall asks each client for a User-Agent and an Accept header. Commander Spellbook asks for a User-Agent with the name of the service.
             var version = typeof(CardsComponent).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion?.Split('+')[0] ?? "0";
             client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Reliquary", version));
             client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("(+https://github.com/nicolas-goyon/reliquary)"));
@@ -52,6 +53,7 @@ public sealed class CardsComponent : ICoreComponent
         });
         services.AddSingleton<CardFileImporter>();
         services.AddSingleton<ReferenceImporters>();
+        services.AddSingleton<ComboImporter>();
         services.AddSingleton<CardDataImport>();
 
         if (configuration.GetValue($"{CardImportOptions.Section}:Enabled", true))

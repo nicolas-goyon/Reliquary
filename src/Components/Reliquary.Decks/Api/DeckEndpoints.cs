@@ -88,7 +88,7 @@ internal static class DeckEndpoints
 
         decks.MapGet("/{deckId:guid}/analysis", GetAnalysisAsync)
             .WithName("GetDeckAnalysis")
-            .WithSummary("Analyzes a deck: mana curve, distributions, mana sources, draw probabilities, and for Commander the category needs and the indicative bracket.");
+            .WithSummary("Analyzes a deck: mana curve, distributions, mana sources, draw probabilities, combos of Commander Spellbook, and for Commander the category needs and the indicative bracket.");
 
         decks.MapGet("/{deckId:guid}/text", GetTextAsync)
             .WithName("GetDeckText")
@@ -631,12 +631,23 @@ internal static class DeckEndpoints
         return TypedResults.Ok(new ExportDeckResponse(file.FileName, file.ContentType, file.Content));
     }
 
-    private static async Task<Ok<Analysis.DeckAnalysis>> GetAnalysisAsync(Guid deckId, ClaimsPrincipal user, DeckService decks, ICardCatalog catalog, CancellationToken cancellationToken)
+    private static async Task<Ok<Analysis.DeckAnalysis>> GetAnalysisAsync(
+        Guid deckId,
+        ClaimsPrincipal user,
+        DeckService decks,
+        ICardCatalog catalog,
+        IComboCatalog combos,
+        CancellationToken cancellationToken)
     {
         var view = await decks.GetAsync(user.FindAccountId(), deckId, cancellationToken);
-        var cards = await catalog.GetCardsAsync([.. view.Lines.Select(line => line.OracleId).Distinct()], cancellationToken);
+        var deckCards = view.Lines.Where(line => Analysis.DeckAnalyzer.Zones.Contains(line.Zone)).Select(line => line.OracleId).Distinct().ToList();
+        var search = await combos.FindCombosAsync(deckCards, cancellationToken);
+
+        // The facts of the cards of the combos give the names of the missing cards.
+        var oracleIds = view.Lines.Select(line => line.OracleId).Concat(search.Combos.SelectMany(combo => combo.Cards).Select(card => card.OracleId)).Distinct().ToList();
+        var cards = await catalog.GetCardsAsync(oracleIds, cancellationToken);
         var lines = view.Lines.Select(line => new Analysis.AnalysisLine(line.Zone, line.OracleId, line.Quantity, line.Categories));
-        return TypedResults.Ok(Analysis.DeckAnalyzer.Analyze(view.Deck.Format, lines, cards));
+        return TypedResults.Ok(Analysis.DeckAnalyzer.Analyze(view.Deck.Format, lines, cards, search.Available ? search : null));
     }
 
     private static async Task<Ok<DeckTextResponse>> GetTextAsync(Guid deckId, ClaimsPrincipal user, DeckTextService texts, CancellationToken cancellationToken)

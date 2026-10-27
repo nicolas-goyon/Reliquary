@@ -43,6 +43,8 @@ The French column gives the term for the French interface.
 | Modal land | A modal double-faced card with a spell face and a land face. The analysis counts it as a land and as a spell. | Terrain modal |
 | Mana source | A card that produces mana of a color: a land, a modal land or a permanent with a mana ability. | Source de mana |
 | Category need | The comparison of the number of cards in a category with a target for the format. | Besoin |
+| Combo | A group of cards that together give a strong result, for example "Win the game". The combos come from Commander Spellbook, which calls them "variants". Do not call a combo a variant. | Combo |
+| Near combo | A combo that needs one more card: the deck contains all its cards except one. | Combo auquel il manque une carte |
 
 ## Collection
 

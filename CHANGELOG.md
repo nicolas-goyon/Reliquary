@@ -65,3 +65,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Auto-tag: `GET /api/v1/decks/{id}/auto-tag` suggests the categories of the lines from the Oracle tags of Scryfall Tagger and from rules on the card text.
   `POST` applies the accepted categories in one change. Each change becomes a category rule of the user.
   The deck page has an auto-tag dialog (ADR 0031).
+
+- Combos of Commander Spellbook: the card import reads the bulk file of combos.
+  The deck analysis gives the complete combos and the combos that need one more card.
+  The bracket uses the two-card combos, and the deck page has a "Combos" tab (ADR 0030).

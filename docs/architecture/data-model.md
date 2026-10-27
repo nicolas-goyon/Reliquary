@@ -24,7 +24,7 @@ Reliquary uses these sources:
 - [MTGJSON](https://mtgjson.com/): external IDs (Cardmarket, TCGplayer, Card Kingdom and others) and preconstructed decks.
 - [recommander.cards](https://recommander.cards): Commander recommendations, through its public API, when the administrator enables them.
   [ADR 0028](../decisions/0028-card-recommendations-source.md) gives the reasons.
-- [Commander Spellbook](https://commanderspellbook.com/): combo detection.
+- [Commander Spellbook](https://commanderspellbook.com/): combo detection, from its bulk file of combos.
 
 A scheduled job imports the card data every 12 hours.
 The table `reference.import_runs` records each import, so that the job can skip a file that did not change.
@@ -47,6 +47,7 @@ The Cards core component owns the tables of the `reference` schema.
 | Tag | `tags`, `tag_closure` | Oracle tags and illustration tags of Scryfall Tagger, with their parent tags | `tag_closure` gives all the descendants of each tag. |
 | Tagging | `oracle_taggings`, `illustration_taggings` | The links between the tags and the cards or the illustrations | — |
 | Ruling | `rulings` | The rulings of each card | — |
+| Combo | `combos` | The combos of Commander Spellbook: the Oracle cards, the quantities, the results and the mana needed | Only the combos with known cards and no template. See [ADR 0030](../decisions/0030-combos-from-commander-spellbook.md). |
 | ImportRun | `import_runs` | Each import of a source file: source, date of the file, result | — |
 
 ### Rules of the card data

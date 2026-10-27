@@ -1090,6 +1090,42 @@ button:disabled {
   font-weight: 700;
 }
 
+.combo-list {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.combo {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+}
+
+.combo p {
+  margin: 0 0 0.25rem;
+}
+
+.combo-cards {
+  font-weight: 600;
+}
+
+/* The missing card of a near combo. The text "Missing card" gives the same information without the style. */
+.combo-missing {
+  color: var(--color-warning);
+  text-decoration: underline dotted;
+}
+
+.combo-results {
+  color: var(--color-text-muted);
+}
+
+.combo-credit {
+  margin-top: 1.5rem;
+}
+
 .analysis-reasons {
   padding-left: 1.25rem;
 

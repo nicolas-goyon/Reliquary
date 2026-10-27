@@ -19,6 +19,7 @@ The [architecture page](../architecture/deck-analysis.md) gives the formulas, th
   Known Commander templates inspire each target, and the analysis adjusts the target to the curve and the strategy.
   The analysis shows the categories with too few cards and the categories with too many cards.
 - Reliquary detects combos with Commander Spellbook, and shows an indicative power level or bracket.
+  The analysis also shows the combos that need one more card.
 - Plugins can add their own analysis panels.
 
 ## Milestones

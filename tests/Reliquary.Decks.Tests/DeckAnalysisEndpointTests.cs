@@ -67,7 +67,69 @@ public sealed class DeckAnalysisEndpointTests(DecksInstance instance)
         Assert.Equal(31, analysis.Draws.Lands);
         Assert.Equal(CommanderNeeds.Low, analysis.Needs!.Single(need => need.Category == "ramp").Status);
         Assert.Equal(1, analysis.Bracket!.Bracket);
-        Assert.Equal([CommanderBracket.TwoCardCombos], analysis.Bracket.Unchecked);
+
+        // The fixtures contain combo data, so the analysis checks the two-card combos.
+        Assert.True(analysis.Combos.Available);
+        Assert.Empty(analysis.Combos.Complete);
+        Assert.Empty(analysis.Bracket.Unchecked);
+    }
+
+    [Fact]
+    public async Task EndpointFindsTheThassasOracleCombo()
+    {
+        using var owner = await instance.NewUserAsync();
+        var created = await owner.PostAsJsonAsync("/api/v1/decks", new
+        {
+            name = "Oracle",
+            lines = new object[]
+            {
+                new { name = "Atraxa, Praetors' Voice", zone = "commander" },
+                new { name = "Thassa's Oracle" },
+                new { name = "Demonic Consultation" },
+            },
+        }, Cancel);
+        created.EnsureSuccessStatusCode();
+        var deck = await created.Content.ReadFromJsonAsync<DeckResponse>(Cancel);
+
+        var analysis = await owner.GetFromJsonAsync<DeckAnalysis>(new Uri($"/api/v1/decks/{deck!.Id}/analysis", UriKind.Relative), Cancel);
+
+        var combo = Assert.Single(analysis!.Combos.Complete);
+        Assert.Equal("742-1295", combo.Id);
+        Assert.Equal(new Uri("https://commanderspellbook.com/combo/742-1295/"), combo.Url);
+        Assert.Equal(["Demonic Consultation", "Thassa's Oracle"], combo.Cards.Select(card => card.Name));
+        Assert.Equal(["Exile your library", "Win the game"], combo.Results);
+        Assert.Equal("{U}{U}{B}", combo.ManaNeeded);
+        Assert.Equal(3, combo.ManaValue);
+
+        // Thassa's Oracle and Demonic Consultation cost 3 mana: an early-game two-card combo.
+        Assert.Equal(4, analysis.Bracket!.Bracket);
+        var reason = Assert.Single(analysis.Bracket.Reasons, reason => reason.Code == CommanderBracket.TwoCardCombos);
+        Assert.Equal(["742-1295"], reason.ComboIds);
+        Assert.Empty(analysis.Bracket.Unchecked);
+    }
+
+    [Fact]
+    public async Task EndpointGivesTheMissingCardOfANearCombo()
+    {
+        using var owner = await instance.NewUserAsync();
+        var created = await owner.PostAsJsonAsync("/api/v1/decks", new
+        {
+            name = "Almost",
+            format = "legacy",
+            lines = new object[] { new { name = "Thassa's Oracle", quantity = 4 } },
+        }, Cancel);
+        created.EnsureSuccessStatusCode();
+        var deck = await created.Content.ReadFromJsonAsync<DeckResponse>(Cancel);
+
+        var analysis = await owner.GetFromJsonAsync<DeckAnalysis>(new Uri($"/api/v1/decks/{deck!.Id}/analysis", UriKind.Relative), Cancel);
+
+        Assert.Empty(analysis!.Combos.Complete);
+        var near = Assert.Single(analysis.Combos.Near);
+        Assert.Equal("742-1295", near.Id);
+        var missing = near.Cards.Single(card => card.OracleId == near.MissingOracleId);
+        Assert.Equal("Demonic Consultation", missing.Name);
+        Assert.False(missing.InDeck);
+        Assert.Null(analysis.Bracket);
     }
 
     [Fact]

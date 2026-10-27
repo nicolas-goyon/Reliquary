@@ -10,6 +10,7 @@ The dataset contains 342 Oracle cards and 1,476 printings:
 - At most 3 English printings and 1 French printing of each card.
 - The tokens and the meld results of these cards.
 - The Oracle tags and the illustration tags of these cards, with all their parent tags.
+- The combos of [Commander Spellbook](https://commanderspellbook.com/) whose cards are all in the dataset, in `variants.json.gz`.
 - All the sets of Scryfall, so that the keywords `b:` and `g:` of the search find the blocks and the parent sets.
 
 The files use the names of the local import.
@@ -20,4 +21,5 @@ Cards__Import__Directory=data/demo just cli jobs run cards.import --force
 ```
 
 The card data comes from [Scryfall](https://scryfall.com) and [MTGJSON](https://mtgjson.com).
+The combos come from [Commander Spellbook](https://commanderspellbook.com/).
 Wizards of the Coast owns the content of the cards.

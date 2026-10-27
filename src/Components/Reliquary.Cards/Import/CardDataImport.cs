@@ -13,13 +13,18 @@ namespace Reliquary.Cards.Import;
 /// <param name="Source">The name of the source, for example <c>scryfall:all_cards</c>.</param>
 /// <param name="Status">The status: <c>succeeded</c>, <c>failed</c>, <c>unchanged</c> or <c>missing</c>.</param>
 /// <param name="ItemCount">The number of items that the import read or changed.</param>
-public sealed record SourceImportResult(string Source, string Status, int ItemCount);
+public sealed record SourceImportResult(string Source, string Status, int ItemCount)
+{
+    /// <summary>Gets the kind of the source, for example <c>cards</c> or <c>combos</c>.</summary>
+    public string Kind { get; init; } = string.Empty;
+}
 
 /// <summary>
-/// Imports all the card data: sets, cards, Oracle tags, illustration tags, rulings and MTGJSON identifiers.
+/// Imports all the card data: sets, cards, Oracle tags, illustration tags, rulings, MTGJSON identifiers and the combos of Commander Spellbook.
 /// </summary>
 /// <remarks>
 /// The import skips a source file when its date did not change since the last successful import, except for a forced run.
+/// The import of the combos also runs when the import of the cards changed the cards in the same run, because the combos keep only the known cards.
 /// The table <c>reference.import_runs</c> records each import.
 /// </remarks>
 internal sealed class CardDataImport(
@@ -27,6 +32,7 @@ internal sealed class CardDataImport(
     IOptions<CardImportOptions> options,
     CardFileImporter cards,
     ReferenceImporters references,
+    ComboImporter combos,
     IDatabase database,
     TimeProvider time,
     ILogger<CardDataImport> logger)
@@ -51,18 +57,19 @@ internal sealed class CardDataImport(
             var file = await sources.Value.FindAsync(kind, cancellationToken);
             if (file is null)
             {
-                results.Add(new SourceImportResult(kind, "missing", 0));
+                results.Add(new SourceImportResult(kind, "missing", 0) { Kind = kind });
                 continue;
             }
 
-            if (!force && file.UpdatedAt is { } updatedAt && await LastSuccessAsync(file.Name, cancellationToken) == updatedAt)
+            var cardsChanged = kind == SourceKinds.Combos && results.Any(result => result.Kind == SourceKinds.Cards && result.Status == "succeeded");
+            if (!force && !cardsChanged && file.UpdatedAt is { } updatedAt && await LastSuccessAsync(file.Name, cancellationToken) == updatedAt)
             {
                 logger.SourceUnchanged(file.Name);
-                results.Add(new SourceImportResult(file.Name, "unchanged", 0));
+                results.Add(new SourceImportResult(file.Name, "unchanged", 0) { Kind = kind });
                 continue;
             }
 
-            results.Add(await ImportFileAsync(file, cancellationToken));
+            results.Add(await ImportFileAsync(file, cancellationToken) with { Kind = kind });
         }
 
         var failed = results.Where(result => result.Status == "failed").Select(result => result.Source).ToList();
@@ -97,6 +104,7 @@ internal sealed class CardDataImport(
                 SourceKinds.IllustrationTags => await references.ImportTagsAsync("illustration", content, cancellationToken),
                 SourceKinds.Rulings => await references.ImportRulingsAsync(content, cancellationToken),
                 SourceKinds.Identifiers => await references.ImportIdentifiersAsync(content, cancellationToken),
+                SourceKinds.Combos => (await combos.ImportAsync(content, cancellationToken)).Kept,
                 _ => throw new InvalidOperationException($"The source kind \"{file.Kind}\" is not known."),
             };
 

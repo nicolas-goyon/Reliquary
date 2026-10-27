@@ -26,6 +26,7 @@ public sealed record AnalysisLine(string Zone, Guid OracleId, int Quantity, IRea
 /// <param name="Draws">The probabilities to draw lands.</param>
 /// <param name="Needs">The needs of each category for a Commander deck, or <see langword="null"/> for the other formats.</param>
 /// <param name="Bracket">The indicative Commander bracket, or <see langword="null"/> for the other formats.</param>
+/// <param name="Combos">The combos of Commander Spellbook in the deck, and the combos that need one more card.</param>
 public sealed record DeckAnalysis(
     string Format,
     int CardCount,
@@ -40,7 +41,8 @@ public sealed record DeckAnalysis(
     ManaAnalysis Mana,
     DrawAnalysis Draws,
     IReadOnlyList<CategoryNeed>? Needs,
-    BracketAnalysis? Bracket);
+    BracketAnalysis? Bracket,
+    ComboAnalysis Combos);
 
 /// <summary>
 /// One point of the mana curve.
@@ -130,13 +132,56 @@ public sealed record CategoryNeed(string Category, int Count, int? Target, int? 
 /// </summary>
 /// <param name="Bracket">The lowest bracket that the deck fits, from 1 to 4. The analysis never gives bracket 5, because bracket 5 is an intention.</param>
 /// <param name="Reasons">The reasons for a bracket higher than 1.</param>
-/// <param name="Unchecked">The rules that the analysis does not check, for example <c>two_card_combos</c>.</param>
+/// <param name="Unchecked">The rules that the analysis does not check, for example <c>two_card_combos</c> when the instance has no combo data.</param>
 public sealed record BracketAnalysis(int Bracket, IReadOnlyList<BracketReason> Reasons, IReadOnlyList<string> Unchecked);
 
 /// <summary>
 /// One reason for a bracket.
 /// </summary>
-/// <param name="Code">The stable code: <c>game_changers</c>, <c>mass_land_denial</c> or <c>extra_turns</c>.</param>
+/// <param name="Code">The stable code: <c>game_changers</c>, <c>mass_land_denial</c>, <c>extra_turns</c>, <c>two_card_combos</c> or <c>late_two_card_combos</c>.</param>
 /// <param name="Bracket">The lowest bracket that this reason permits.</param>
 /// <param name="OracleIds">The cards of the reason.</param>
-public sealed record BracketReason(string Code, int Bracket, IReadOnlyList<Guid> OracleIds);
+/// <param name="ComboIds">The IDs of the combos of the reason on Commander Spellbook. The list is empty for a reason that is not a combo.</param>
+public sealed record BracketReason(string Code, int Bracket, IReadOnlyList<Guid> OracleIds, IReadOnlyList<string> ComboIds);
+
+/// <summary>
+/// The combos of Commander Spellbook in a deck. See ADR 0030.
+/// </summary>
+/// <param name="Available">
+/// <see langword="true"/> when the instance has combo data.
+/// When it is <see langword="false"/>, the analysis did not check the combos and the lists are empty.
+/// </param>
+/// <param name="Complete">The combos with all their cards in the deck, from the most popular.</param>
+/// <param name="Near">The combos that need one more card, from the most popular. The list has <see cref="DeckCombos.MaxNearCombos"/> combos at most.</param>
+/// <param name="NearCount">The number of combos that need one more card, also the combos that are not in <paramref name="Near"/>.</param>
+public sealed record ComboAnalysis(bool Available, IReadOnlyList<DeckCombo> Complete, IReadOnlyList<DeckCombo> Near, int NearCount);
+
+/// <summary>
+/// One combo of Commander Spellbook for a deck.
+/// </summary>
+/// <param name="Id">The ID of the combo on Commander Spellbook, for example <c>742-1295</c>.</param>
+/// <param name="Url">The page of the combo on Commander Spellbook.</param>
+/// <param name="Cards">The cards of the combo.</param>
+/// <param name="Results">The names of the results, in English, as Commander Spellbook gives them. For example <c>Win the game</c>.</param>
+/// <param name="GameEnding">Whether a result is infinite or near-infinite, or a standalone result of Commander Spellbook such as <c>Win the game</c>.</param>
+/// <param name="ManaNeeded">The mana that the combo needs, as Commander Spellbook gives it, for example <c>{U}{U}{B}</c>, or <see langword="null"/>.</param>
+/// <param name="ManaValue">The mana value of the combo: the larger of the mana value of <paramref name="ManaNeeded"/> and the sum of the mana values of the cards.</param>
+/// <param name="MissingOracleId">The card that the deck does not contain, for a combo that needs one more card. Otherwise <see langword="null"/>.</param>
+public sealed record DeckCombo(
+    string Id,
+    Uri Url,
+    IReadOnlyList<DeckComboCard> Cards,
+    IReadOnlyList<string> Results,
+    bool GameEnding,
+    string? ManaNeeded,
+    int ManaValue,
+    Guid? MissingOracleId);
+
+/// <summary>
+/// One card of a combo.
+/// </summary>
+/// <param name="OracleId">The Oracle card.</param>
+/// <param name="Name">The Oracle name of the card.</param>
+/// <param name="Quantity">The number of copies that the combo needs.</param>
+/// <param name="InDeck">Whether the deck contains the card in this quantity, in the commander, companion or main zone.</param>
+public sealed record DeckComboCard(Guid OracleId, string Name, int Quantity, bool InDeck);

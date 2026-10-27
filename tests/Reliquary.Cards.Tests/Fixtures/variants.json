@@ -1,0 +1,203 @@
+{
+  "timestamp": "2026-10-27T21:12:19.172047+00:00",
+  "version": "7.3.2",
+  "variants": [
+    {
+      "id": "742-1295",
+      "status": "OK",
+      "uses": [
+        {
+          "card": {
+            "id": 742,
+            "name": "Demonic Consultation",
+            "oracleId": "9a1412db-45ad-46ea-8f12-a85d203113d8",
+            "spoiler": false,
+            "faces": 1,
+            "typeLine": "Instant"
+          },
+          "zoneLocations": [
+            "H"
+          ],
+          "mustBeCommander": false,
+          "quantity": 1
+        },
+        {
+          "card": {
+            "id": 1295,
+            "name": "Thassa's Oracle",
+            "oracleId": "1de1b591-a73f-4974-b507-8c63e07a0868",
+            "spoiler": false,
+            "faces": 1,
+            "typeLine": "Creature — Merfolk Wizard"
+          },
+          "zoneLocations": [
+            "H"
+          ],
+          "mustBeCommander": false,
+          "quantity": 1
+        }
+      ],
+      "requires": [],
+      "produces": [
+        {
+          "feature": {
+            "id": 88,
+            "name": "Exile your library",
+            "uncountable": true,
+            "status": "H"
+          },
+          "quantity": 1
+        },
+        {
+          "feature": {
+            "id": 2,
+            "name": "Win the game",
+            "uncountable": true,
+            "status": "S"
+          },
+          "quantity": 1
+        }
+      ],
+      "identity": "UB",
+      "manaNeeded": "{U}{U}{B}",
+      "manaValueNeeded": 3,
+      "description": "Cast Demonic Consultation by paying {B}, naming Thassa's Oracle and thus exiling your library due to you not having a card named Thassa's Oracle in your library.\nCast Thassa's Oracle by paying {U}{U}.\nThassa's Oracle enters the battlefield, causing you to win the game.",
+      "popularity": 149925,
+      "spoiler": false,
+      "bracketTag": "R"
+    },
+    {
+      "id": "1295-3093",
+      "status": "OK",
+      "uses": [
+        {
+          "card": {
+            "id": 3093,
+            "name": "Tainted Pact",
+            "oracleId": "1a85ba2b-ae10-4917-954a-7709b75a9740",
+            "spoiler": false,
+            "faces": 1,
+            "typeLine": "Instant"
+          },
+          "zoneLocations": [
+            "H"
+          ],
+          "mustBeCommander": false,
+          "quantity": 1
+        },
+        {
+          "card": {
+            "id": 1295,
+            "name": "Thassa's Oracle",
+            "oracleId": "1de1b591-a73f-4974-b507-8c63e07a0868",
+            "spoiler": false,
+            "faces": 1,
+            "typeLine": "Creature — Merfolk Wizard"
+          },
+          "zoneLocations": [
+            "H"
+          ],
+          "mustBeCommander": false,
+          "quantity": 1
+        }
+      ],
+      "requires": [],
+      "produces": [
+        {
+          "feature": {
+            "id": 2,
+            "name": "Win the game",
+            "uncountable": true,
+            "status": "S"
+          },
+          "quantity": 1
+        }
+      ],
+      "identity": "UB",
+      "manaNeeded": "{1}{U}{U}{B}",
+      "manaValueNeeded": 4,
+      "description": "Cast Tainted Pact by paying {1}{B}, exiling your library.\nCast Thassa's Oracle by paying {U}{U}.\nThassa's Oracle enters the battlefield, causing you to win the game.",
+      "popularity": 131906,
+      "spoiler": false,
+      "bracketTag": "R"
+    },
+    {
+      "id": "513-5034--46",
+      "status": "OK",
+      "uses": [
+        {
+          "card": {
+            "id": 513,
+            "name": "Hullbreaker Horror",
+            "oracleId": "d4a84e78-d9b9-4c67-8a4b-4329e65f0f15",
+            "spoiler": false,
+            "faces": 1,
+            "typeLine": "Creature — Kraken Horror"
+          },
+          "zoneLocations": [
+            "B"
+          ],
+          "mustBeCommander": false,
+          "quantity": 1
+        },
+        {
+          "card": {
+            "id": 5034,
+            "name": "Sol Ring",
+            "oracleId": "6ad8011d-3471-4369-9d68-b264cc027487",
+            "spoiler": false,
+            "faces": 1,
+            "typeLine": "Artifact"
+          },
+          "zoneLocations": [
+            "B"
+          ],
+          "mustBeCommander": false,
+          "quantity": 1
+        }
+      ],
+      "requires": [
+        {
+          "template": {
+            "id": 46,
+            "name": "Permanent Castable for {C}",
+            "scryfallQuery": "mv<=1 (mana={0} or mana={1} or mana={C}) is:permanent"
+          },
+          "zoneLocations": [
+            "H"
+          ],
+          "mustBeCommander": false,
+          "quantity": 1
+        }
+      ],
+      "produces": [
+        {
+          "feature": {
+            "id": 11,
+            "name": "Infinite colorless mana",
+            "uncountable": true,
+            "status": "S"
+          },
+          "quantity": 1
+        },
+        {
+          "feature": {
+            "id": 17,
+            "name": "Infinite storm count",
+            "uncountable": true,
+            "status": "H"
+          },
+          "quantity": 1
+        }
+      ],
+      "identity": "U",
+      "manaNeeded": "",
+      "manaValueNeeded": 0,
+      "description": "Activate Sol Ring by tapping it, adding {C} {C}.\nCast the permanent that can be cast using {C} by paying its mana cost.\nHullbreaker Horror triggers, returning Sol Ring from the battlefield to your hand.\nCast Sol Ring by paying {1}. \nHullbreaker Horror triggers, returning the permanent cast in step 2 from the battlefield to your hand.\nRepeat.\nIf the permanent can be cast by paying {0}, this combo nets infinite colorless mana.",
+      "popularity": 363517,
+      "spoiler": false,
+      "bracketTag": "E"
+    }
+  ],
+  "aliases": []
+}

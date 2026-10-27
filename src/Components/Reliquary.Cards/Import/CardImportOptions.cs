@@ -29,7 +29,8 @@ public sealed class CardImportOptions
     /// </summary>
     /// <remarks>
     /// The import reads these files, each with or without the extension <c>.gz</c>:
-    /// <c>sets.json</c>, <c>cards.jsonl</c>, <c>oracle_tags.jsonl</c>, <c>art_tags.jsonl</c>, <c>rulings.jsonl</c> and <c>card_identifiers.csv</c>.
+    /// <c>sets.json</c>, <c>cards.jsonl</c>, <c>oracle_tags.jsonl</c>, <c>art_tags.jsonl</c>, <c>rulings.jsonl</c>, <c>card_identifiers.csv</c>
+    /// and <c>variants.json</c> (the combos of Commander Spellbook).
     /// A missing file skips its step.
     /// </remarks>
     public string? Directory { get; set; }
@@ -40,11 +41,17 @@ public sealed class CardImportOptions
     /// <summary>Gets or sets whether the import reads the identifiers of MTGJSON.</summary>
     public bool IncludeMtgjsonIdentifiers { get; set; } = true;
 
+    /// <summary>Gets or sets whether the import reads the combos of Commander Spellbook.</summary>
+    public bool IncludeCombos { get; set; } = true;
+
     /// <summary>Gets or sets the address of the Scryfall API.</summary>
     public Uri ScryfallApi { get; set; } = new("https://api.scryfall.com/");
 
     /// <summary>Gets or sets the address of the MTGJSON files.</summary>
     public Uri MtgjsonApi { get; set; } = new("https://mtgjson.com/api/v5/");
+
+    /// <summary>Gets or sets the address of the bulk file of the combos of Commander Spellbook.</summary>
+    public Uri SpellbookCombos { get; set; } = new("https://json.commanderspellbook.com/variants.json.gz");
 
     /// <summary>Gets or sets the folder for the downloaded files. The default is the temporary folder of the system.</summary>
     public string? DownloadDirectory { get; set; }

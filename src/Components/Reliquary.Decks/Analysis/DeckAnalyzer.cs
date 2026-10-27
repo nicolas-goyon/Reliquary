@@ -64,9 +64,10 @@ public static class DeckAnalyzer
     /// </summary>
     /// <param name="format">The format of the deck.</param>
     /// <param name="lines">The lines of the deck. The lines of the other zones and the lines of unknown cards have no effect.</param>
-    /// <param name="cards">The facts of the cards of the lines.</param>
+    /// <param name="cards">The facts of the cards of the lines, and of the cards of the combos.</param>
+    /// <param name="combos">The combos of the cards of the deck, or <see langword="null"/> when the instance has no combo data.</param>
     /// <returns>The analysis.</returns>
-    public static DeckAnalysis Analyze(string format, IEnumerable<AnalysisLine> lines, IReadOnlyDictionary<Guid, CardFacts> cards)
+    public static DeckAnalysis Analyze(string format, IEnumerable<AnalysisLine> lines, IReadOnlyDictionary<Guid, CardFacts> cards, ComboSearch? combos = null)
     {
         ArgumentNullException.ThrowIfNull(lines);
         ArgumentNullException.ThrowIfNull(cards);
@@ -87,6 +88,9 @@ public static class DeckAnalyzer
             ? 0m
             : Math.Round(spells.Sum(entry => entry.Card.Analysis.CurveManaValue * entry.Line.Quantity) / spellCount, 2, MidpointRounding.AwayFromZero);
 
+        var quantities = deck.GroupBy(entry => entry.Card.OracleId).ToDictionary(group => group.Key, group => group.Sum(entry => entry.Line.Quantity));
+        var comboAnalysis = DeckCombos.Find(quantities, cards, combos);
+
         var categories = CountCategories(deck);
         IReadOnlyList<CategoryNeed>? needs = null;
         BracketAnalysis? bracket = null;
@@ -97,7 +101,7 @@ public static class DeckAnalyzer
                     && entry.Line.Categories.Any(category => category is "ramp" or "card_draw"))
                 .Sum(entry => entry.Line.Quantity);
             needs = CommanderNeeds.Calculate(categories.ToDictionary(entry => entry.Key, entry => entry.Count, StringComparer.Ordinal), averageManaValue, cheap);
-            bracket = CommanderBracket.Evaluate(deck.Select(entry => entry.Card));
+            bracket = CommanderBracket.Evaluate(deck.Select(entry => entry.Card), comboAnalysis.Available ? comboAnalysis.Complete : null);
         }
 
         return new DeckAnalysis(
@@ -114,7 +118,8 @@ public static class DeckAnalyzer
             Mana(deck, isCommander ? 99 : 60),
             Draws(deck),
             needs,
-            bracket);
+            bracket,
+            comboAnalysis);
     }
 
     /// <summary>
