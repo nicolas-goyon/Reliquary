@@ -34,6 +34,12 @@ internal sealed class DeckRow
     public DateTime CreatedAt { get; set; }
 
     public DateTime UpdatedAt { get; set; }
+
+    /// <summary>Gets or sets the deck tags.</summary>
+    public string[] Tags { get; set; } = [];
+
+    /// <summary>Gets or sets the color identity, with the letters W, U, B, R and G in this order.</summary>
+    public string ColorIdentity { get; set; } = string.Empty;
 }
 
 /// <summary>
@@ -62,7 +68,52 @@ internal sealed class DeckSummaryRow
     public DateTime CreatedAt { get; set; }
 
     public DateTime UpdatedAt { get; set; }
+
+    public string[] Tags { get; set; } = [];
+
+    public string ColorIdentity { get; set; } = string.Empty;
 }
+
+/// <summary>
+/// A folder of decks.
+/// </summary>
+internal sealed class FolderRow
+{
+    public Guid Id { get; set; }
+
+    public Guid? ParentId { get; set; }
+
+    public string Name { get; set; } = string.Empty;
+
+    public int DeckCount { get; set; }
+
+    public DateTime CreatedAt { get; set; }
+
+    public DateTime UpdatedAt { get; set; }
+}
+
+/// <summary>
+/// The filters, the sort and the page of the deck list.
+/// </summary>
+/// <param name="FolderId">Only the decks of this folder, or <see langword="null"/>.</param>
+/// <param name="NoFolder">Only the decks with no folder.</param>
+/// <param name="Format">Only the decks of this format, or <see langword="null"/>.</param>
+/// <param name="ColorIdentity">Only the decks with exactly this color identity, or <see langword="null"/>.</param>
+/// <param name="Tag">Only the decks with this deck tag, or <see langword="null"/>.</param>
+/// <param name="Archived"><c>exclude</c>, <c>include</c> or <c>only</c>.</param>
+/// <param name="Sort"><c>updated</c>, <c>created</c>, <c>name</c> or <c>format</c>.</param>
+/// <param name="Offset">The number of decks before the page.</param>
+/// <param name="Limit">The maximum number of decks.</param>
+internal sealed record DeckListQuery(
+    Guid? FolderId,
+    bool NoFolder,
+    string? Format,
+    string? ColorIdentity,
+    string? Tag,
+    string Archived,
+    string Sort,
+    int Offset,
+    int Limit);
 
 /// <summary>
 /// A line of the working list of a deck.
@@ -122,7 +173,7 @@ internal sealed class DeckStore(IDatabase database)
 {
     private const string DeckColumns = """
         id, owner_id as OwnerId, name, format, visibility, folder_id as FolderId, description, source_deck_id as SourceDeckId,
-        pinned, archived_at as ArchivedAt, version, created_at as CreatedAt, updated_at as UpdatedAt
+        pinned, archived_at as ArchivedAt, version, created_at as CreatedAt, updated_at as UpdatedAt, tags, color_identity as ColorIdentity
         """;
 
     private const string LineColumns = """
@@ -179,27 +230,108 @@ internal sealed class DeckStore(IDatabase database)
             transaction,
             cancellationToken: cancellationToken))).ToList();
 
-    public static async Task<IReadOnlyList<DeckSummaryRow>> ListDecksAsync(NpgsqlConnection connection, Guid ownerId, (DateTime UpdatedAt, Guid Id)? after, int limit, CancellationToken cancellationToken) =>
-        (await connection.QueryAsync<DeckSummaryRow>(new CommandDefinition(
-            """
+    /// <summary>
+    /// Lists the decks of an owner with filters. The pinned decks come first, then the sort applies.
+    /// </summary>
+    public static async Task<IReadOnlyList<DeckSummaryRow>> ListDecksAsync(NpgsqlConnection connection, Guid ownerId, DeckListQuery query, CancellationToken cancellationToken)
+    {
+        var order = query.Sort switch
+        {
+            "created" => "d.created_at desc",
+            "name" => "lower(d.name), d.name",
+            "format" => "d.format, d.updated_at desc",
+            _ => "d.updated_at desc",
+        };
+        return (await connection.QueryAsync<DeckSummaryRow>(new CommandDefinition(
+            $"""
             select d.id, d.name, d.format, d.visibility, d.folder_id as FolderId, d.pinned, d.archived_at as ArchivedAt,
-                d.created_at as CreatedAt, d.updated_at as UpdatedAt,
+                d.created_at as CreatedAt, d.updated_at as UpdatedAt, d.tags, d.color_identity as ColorIdentity,
                 coalesce((select sum(l.quantity) from content.deck_lines l where l.deck_id = d.id and l.zone in ('commander', 'companion', 'main')), 0)::int as CardCount,
-                coalesce((select array_agg(l.oracle_id order by l.created_at) from content.deck_lines l where l.deck_id = d.id and l.zone = 'commander'), '{}') as CommanderIds
+                coalesce((select array_agg(l.oracle_id order by l.created_at) from content.deck_lines l where l.deck_id = d.id and l.zone = 'commander'), array[]::uuid[]) as CommanderIds
             from content.decks d
             where d.owner_id = @ownerId
-                and (@hasCursor = false or (d.updated_at, d.id) < (@afterUpdatedAt, @afterId))
-            order by d.updated_at desc, d.id desc
+                and (@folderId::uuid is null or d.folder_id = @folderId)
+                and (@noFolder = false or d.folder_id is null)
+                and (@format::text is null or d.format = @format)
+                and (@colorIdentity::text is null or d.color_identity = @colorIdentity)
+                and (@tag::text is null or exists (select 1 from unnest(d.tags) t where lower(t) = lower(@tag)))
+                and (@archived = 'include' or (@archived = 'only') = (d.archived_at is not null))
+            order by d.pinned desc, {order}, d.id desc
+            offset @offset
             limit @limit
             """,
-            new { ownerId, hasCursor = after is not null, afterUpdatedAt = after?.UpdatedAt ?? DateTime.MinValue, afterId = after?.Id ?? Guid.Empty, limit },
+            new { ownerId, query.FolderId, query.NoFolder, query.Format, query.ColorIdentity, query.Tag, query.Archived, query.Offset, query.Limit },
+            cancellationToken: cancellationToken))).ToList();
+    }
+
+    /// <summary>
+    /// Lists the deck tags of an owner, with the number of decks of each tag.
+    /// </summary>
+    public static async Task<IReadOnlyList<(string Name, int DeckCount)>> ListDeckTagsAsync(NpgsqlConnection connection, Guid ownerId, CancellationToken cancellationToken) =>
+        (await connection.QueryAsync<(string, int)>(new CommandDefinition(
+            """
+            select min(t) as name, count(*)::int as deck_count
+            from content.decks d, unnest(d.tags) t
+            where d.owner_id = @ownerId
+            group by lower(t)
+            order by lower(min(t))
+            """,
+            new { ownerId },
+            cancellationToken: cancellationToken))).ToList();
+
+    public static async Task<IReadOnlyList<FolderRow>> ListFoldersAsync(NpgsqlConnection connection, Guid ownerId, CancellationToken cancellationToken, NpgsqlTransaction? transaction = null) =>
+        (await connection.QueryAsync<FolderRow>(new CommandDefinition(
+            """
+            select f.id, f.parent_id as ParentId, f.name, f.created_at as CreatedAt, f.updated_at as UpdatedAt,
+                (select count(*) from content.decks d where d.folder_id = f.id)::int as DeckCount
+            from content.deck_folders f
+            where f.owner_id = @ownerId
+            order by lower(f.name), f.id
+            """,
+            new { ownerId },
+            transaction,
+            cancellationToken: cancellationToken))).ToList();
+
+    public static Task InsertFolderAsync(NpgsqlConnection connection, Guid ownerId, FolderRow folder, CancellationToken cancellationToken) =>
+        connection.ExecuteAsync(new CommandDefinition(
+            """
+            insert into content.deck_folders (id, owner_id, parent_id, name, created_at, updated_at)
+            values (@Id, @ownerId, @ParentId, @Name, @CreatedAt, @UpdatedAt)
+            """,
+            new { folder.Id, ownerId, folder.ParentId, folder.Name, folder.CreatedAt, folder.UpdatedAt },
+            cancellationToken: cancellationToken));
+
+    public static Task UpdateFolderAsync(NpgsqlTransaction transaction, Guid ownerId, FolderRow folder, CancellationToken cancellationToken) =>
+        transaction.Connection!.ExecuteAsync(new CommandDefinition(
+            "update content.deck_folders set parent_id = @ParentId, name = @Name, updated_at = @UpdatedAt where id = @Id and owner_id = @ownerId",
+            new { folder.Id, ownerId, folder.ParentId, folder.Name, folder.UpdatedAt },
+            transaction,
+            cancellationToken: cancellationToken));
+
+    /// <summary>
+    /// Deletes a folder and its subfolders. Their decks stay, with no folder.
+    /// </summary>
+    public static Task<int> DeleteFolderAsync(NpgsqlConnection connection, Guid ownerId, Guid folderId, CancellationToken cancellationToken) =>
+        connection.ExecuteAsync(new CommandDefinition(
+            "delete from content.deck_folders where id = @folderId and owner_id = @ownerId",
+            new { folderId, ownerId },
+            cancellationToken: cancellationToken));
+
+    /// <summary>
+    /// Finds the decks of an owner from a list of IDs, and locks them.
+    /// </summary>
+    public static async Task<IReadOnlyList<DeckRow>> FindDecksForUpdateAsync(NpgsqlTransaction transaction, Guid ownerId, IReadOnlyCollection<Guid> deckIds, CancellationToken cancellationToken) =>
+        (await transaction.Connection!.QueryAsync<DeckRow>(new CommandDefinition(
+            $"select {DeckColumns} from content.decks where owner_id = @ownerId and id = any(@deckIds) order by id for update",
+            new { ownerId, deckIds = deckIds.ToArray() },
+            transaction,
             cancellationToken: cancellationToken))).ToList();
 
     public static Task InsertDeckAsync(NpgsqlTransaction transaction, DeckRow deck, CancellationToken cancellationToken) =>
         transaction.Connection!.ExecuteAsync(new CommandDefinition(
             """
-            insert into content.decks (id, owner_id, name, format, visibility, folder_id, description, source_deck_id, pinned, archived_at, version, created_at, updated_at)
-            values (@Id, @OwnerId, @Name, @Format, @Visibility, @FolderId, @Description, @SourceDeckId, @Pinned, @ArchivedAt, @Version, @CreatedAt, @UpdatedAt)
+            insert into content.decks (id, owner_id, name, format, visibility, folder_id, description, source_deck_id, pinned, archived_at, version, created_at, updated_at, tags, color_identity)
+            values (@Id, @OwnerId, @Name, @Format, @Visibility, @FolderId, @Description, @SourceDeckId, @Pinned, @ArchivedAt, @Version, @CreatedAt, @UpdatedAt, @Tags, @ColorIdentity)
             """,
             deck,
             transaction,
@@ -213,7 +345,8 @@ internal sealed class DeckStore(IDatabase database)
             """
             update content.decks
             set name = @Name, format = @Format, visibility = @Visibility, folder_id = @FolderId, description = @Description,
-                pinned = @Pinned, archived_at = @ArchivedAt, version = @Version, updated_at = @UpdatedAt
+                pinned = @Pinned, archived_at = @ArchivedAt, version = @Version, updated_at = @UpdatedAt,
+                tags = @Tags, color_identity = @ColorIdentity
             where id = @Id and owner_id = @OwnerId
             """,
             deck,

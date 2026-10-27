@@ -23,6 +23,7 @@ The French column gives the term for the French interface.
 | Zone | A part of a deck: commanders, companion, main deck, sideboard, considering or tokens. | Zone |
 | Considering | The zone for cards that the user thinks about for the deck. Other tools call it the maybeboard. | À l'étude |
 | Deck line | One line of a deck version: an Oracle card, a quantity, a zone, tags, a note and purchase preferences. | Ligne |
+| Deck tag | A label on a deck, for example "Casual". The user filters the deck list with deck tags. A tag is on a deck line, not on a deck. | Étiquette de deck |
 | Deck version | A frozen copy of a deck list, with a message, a date and parent versions. A deck version never changes, like a Git commit. | Version |
 | Variant | An alternative list of a deck that starts from one deck version. Examples: a budget list, a cEDH list, an anti-aggro list. | Variante |
 | Assembled deck | A deck that exists as physical cards. Its cards are in a location of the type "assembled deck". | Deck monté |

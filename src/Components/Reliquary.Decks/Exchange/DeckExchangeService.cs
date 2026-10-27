@@ -1,3 +1,5 @@
+using System.IO.Compression;
+using System.Text;
 using Reliquary.Decks.Data;
 using Reliquary.Decks.Text;
 
@@ -40,6 +42,47 @@ internal sealed class DeckExchangeService(DeckService decks, DeckTextService tex
         var lines = await texts.ToTextLinesAsync(view, cancellationToken);
         var content = format.Write(view.Deck.Format, lines);
         return new ExportedDeck(FileName(view.Deck.Name) + format.Extension, format.ContentType, content);
+    }
+
+    /// <summary>
+    /// Exports several decks of the owner into one ZIP file, with one file for each deck.
+    /// Two decks with the same name get the files "Name.txt" and "Name (2).txt".
+    /// </summary>
+    /// <exception cref="DeckException">A deck does not exist.</exception>
+    public async Task<byte[]> ExportArchiveAsync(Guid ownerId, IReadOnlyCollection<Guid> deckIds, IDeckFormat format, CancellationToken cancellationToken)
+    {
+        var files = new List<ExportedDeck>();
+        foreach (var deckId in deckIds)
+        {
+            var view = await decks.GetAsync(ownerId, deckId, cancellationToken);
+            if (!view.IsOwner)
+            {
+                throw DeckException.NotFound();
+            }
+
+            files.Add(await ExportAsync(ownerId, deckId, format, cancellationToken));
+        }
+
+        using var stream = new MemoryStream();
+        using (var archive = new ZipArchive(stream, ZipArchiveMode.Create, leaveOpen: true))
+        {
+            var used = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var file in files)
+            {
+                var stem = file.FileName[..^format.Extension.Length];
+                var name = file.FileName;
+                for (var number = 2; !used.Add(name); number++)
+                {
+                    name = $"{stem} ({number}){format.Extension}";
+                }
+
+                var entry = archive.CreateEntry(name, CompressionLevel.Optimal);
+                await using var entryStream = await entry.OpenAsync(cancellationToken);
+                await entryStream.WriteAsync(Encoding.UTF8.GetBytes(file.Content), cancellationToken);
+            }
+        }
+
+        return stream.ToArray();
     }
 
     /// <summary>

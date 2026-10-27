@@ -33,6 +33,7 @@ public sealed class DecksComponent : ICoreComponent
         services.AddSingleton<DeckStore>();
         services.AddSingleton<DeckService>();
         services.AddSingleton<TagService>();
+        services.AddSingleton<FolderService>();
         services.AddSingleton<DeckTextService>();
         services.AddSingleton<DeckExchangeService>();
     }
@@ -42,5 +43,6 @@ public sealed class DecksComponent : ICoreComponent
     {
         DeckEndpoints.Map(api);
         TagEndpoints.Map(api);
+        FolderEndpoints.Map(api);
     }
 }

@@ -30,12 +30,20 @@ internal sealed class DeckException(int status, string code, string message, IRe
 /// <summary>
 /// The fields of a new deck.
 /// </summary>
-internal sealed record NewDeck(string Name, string Format, string Visibility, Guid? FolderId, string Description, Guid? SourceDeckId);
+internal sealed record NewDeck(string Name, string Format, string Visibility, Guid? FolderId, string Description, Guid? SourceDeckId, IReadOnlyList<string>? Tags = null);
 
 /// <summary>
 /// The changes of a deck. A <see langword="null"/> field does not change.
 /// </summary>
-internal sealed record DeckChanges(string? Name, string? Format, string? Visibility, Guid? FolderId, bool ClearFolder, string? Description, bool? Pinned, bool? Archived, int? ExpectedVersion);
+internal sealed record DeckChanges(string? Name, string? Format, string? Visibility, Guid? FolderId, bool ClearFolder, string? Description, bool? Pinned, bool? Archived, int? ExpectedVersion, IReadOnlyList<string>? Tags = null);
+
+/// <summary>
+/// A group action on several decks of a user.
+/// </summary>
+/// <param name="Action">The action: <c>move</c>, <c>tag</c>, <c>untag</c>, <c>pin</c>, <c>unpin</c>, <c>archive</c> or <c>unarchive</c>.</param>
+/// <param name="FolderId">The folder of the action <c>move</c>. <see langword="null"/> removes the decks from their folder.</param>
+/// <param name="Tag">The deck tag of the actions <c>tag</c> and <c>untag</c>.</param>
+internal sealed record DeckGroupAction(string Action, Guid? FolderId, string? Tag);
 
 /// <summary>
 /// The wanted content of a deck line.
@@ -98,8 +106,10 @@ internal sealed class DeckService(DeckStore store, ICardCatalog catalog, IDomain
             Version = 1,
             CreatedAt = now,
             UpdatedAt = now,
+            Tags = [.. input.Tags ?? []],
         };
         await ValidateLinesAsync(lines, cancellationToken);
+        deck.ColorIdentity = await ColorIdentityAsync(lines.Select(line => (line.Zone, line.OracleId)), cancellationToken);
 
         // The directory comes first: a directory entry with no deck has no effect, but a deck with no entry cannot be shared.
         await store.AddToDirectoryAsync(deck.Id, ownerId, cancellationToken);
@@ -170,10 +180,78 @@ internal sealed class DeckService(DeckStore store, ICardCatalog catalog, IDomain
             cancellationToken);
     }
 
-    public async Task<IReadOnlyList<DeckSummaryRow>> ListAsync(Guid ownerId, (DateTime UpdatedAt, Guid Id)? after, int limit, CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<DeckSummaryRow>> ListAsync(Guid ownerId, DeckListQuery query, CancellationToken cancellationToken)
     {
         await using var connection = await store.OpenAsync(ownerId, ContentAccess.Read, cancellationToken);
-        return await DeckStore.ListDecksAsync(connection, ownerId, after, limit, cancellationToken);
+        return await DeckStore.ListDecksAsync(connection, ownerId, query, cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<(string Name, int DeckCount)>> ListDeckTagsAsync(Guid ownerId, CancellationToken cancellationToken)
+    {
+        await using var connection = await store.OpenAsync(ownerId, ContentAccess.Read, cancellationToken);
+        return await DeckStore.ListDeckTagsAsync(connection, ownerId, cancellationToken);
+    }
+
+    /// <summary>
+    /// Applies one action to several decks of the user in one transaction. Each deck gets a new version.
+    /// </summary>
+    /// <returns>The number of changed decks.</returns>
+    /// <exception cref="DeckException">A deck does not exist, or the folder does not exist.</exception>
+    public async Task<int> ApplyGroupActionAsync(Guid ownerId, IReadOnlyCollection<Guid> deckIds, DeckGroupAction action, CancellationToken cancellationToken)
+    {
+        await using var connection = await store.OpenAsync(ownerId, ContentAccess.Write, cancellationToken);
+        await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+        var decks = await DeckStore.FindDecksForUpdateAsync(transaction, ownerId, deckIds, cancellationToken);
+        if (decks.Count != deckIds.Count)
+        {
+            throw DeckException.NotFound();
+        }
+
+        if (action is { Action: "move", FolderId: { } folderId } && !await DeckStore.FolderExistsAsync(connection, ownerId, folderId, cancellationToken, transaction))
+        {
+            throw DeckException.Validation(new FieldError("folderId", FieldErrorCodes.NotAllowed, "The folder does not exist."));
+        }
+
+        var now = time.GetUtcNow().UtcDateTime;
+        foreach (var deck in decks)
+        {
+            switch (action.Action)
+            {
+                case "move":
+                    deck.FolderId = action.FolderId;
+                    break;
+                case "tag":
+                    deck.Tags = DeckRules.NormalizeDeckTags([.. deck.Tags, action.Tag!]);
+                    break;
+                case "untag":
+                    deck.Tags = [.. deck.Tags.Where(tag => !string.Equals(tag, action.Tag, StringComparison.OrdinalIgnoreCase))];
+                    break;
+                case "pin" or "unpin":
+                    deck.Pinned = action.Action == "pin";
+                    break;
+                case "archive":
+                    deck.ArchivedAt ??= now;
+                    break;
+                case "unarchive":
+                    deck.ArchivedAt = null;
+                    break;
+                default:
+                    throw new ArgumentException($"The action {action.Action} is not known.", nameof(action));
+            }
+
+            if (action.Action == "tag" && deck.Tags.Length > DeckRules.MaxDeckTags)
+            {
+                throw DeckException.Validation(new FieldError("tag", FieldErrorCodes.TooLong, $"A deck can have {DeckRules.MaxDeckTags} deck tags or fewer."));
+            }
+
+            deck.Version++;
+            deck.UpdatedAt = now;
+            await DeckStore.UpdateDeckAsync(transaction, deck, cancellationToken);
+            await events.WriteAsync(DatabaseTarget.Content, transaction, new DeckUpdated(deck.Id, deck.Version, deck.Format, deck.Visibility), ownerId, cancellationToken);
+        }
+
+        await transaction.CommitAsync(cancellationToken);
+        return decks.Count;
     }
 
     public Task<DeckView> UpdateAsync(Guid ownerId, Guid deckId, DeckChanges changes, CancellationToken cancellationToken) =>
@@ -190,6 +268,11 @@ internal sealed class DeckService(DeckStore store, ICardCatalog catalog, IDomain
             deck.FolderId = changes.ClearFolder ? null : changes.FolderId ?? deck.FolderId;
             deck.Description = changes.Description ?? deck.Description;
             deck.Pinned = changes.Pinned ?? deck.Pinned;
+            if (changes.Tags is { } deckTags)
+            {
+                deck.Tags = DeckRules.NormalizeDeckTags(deckTags);
+            }
+
             if (changes.Archived is { } archived)
             {
                 deck.ArchivedAt = archived ? deck.ArchivedAt ?? time.GetUtcNow().UtcDateTime : null;
@@ -366,12 +449,31 @@ internal sealed class DeckService(DeckStore store, ICardCatalog catalog, IDomain
         }
 
         await WriteLinesAsync(transaction, ownerId, deckId, before, lines, cancellationToken);
+        deck.ColorIdentity = await ColorIdentityAsync(lines.Select(line => (line.Zone, line.OracleId)), cancellationToken);
         deck.Version++;
         deck.UpdatedAt = time.GetUtcNow().UtcDateTime;
         await DeckStore.UpdateDeckAsync(transaction, deck, cancellationToken);
         await events.WriteAsync(DatabaseTarget.Content, transaction, new DeckUpdated(deck.Id, deck.Version, deck.Format, deck.Visibility), ownerId, cancellationToken);
         await transaction.CommitAsync(cancellationToken);
         return new DeckView(deck, lines, true, await TagsOfLinesAsync(connection, lines, cancellationToken));
+    }
+
+    /// <summary>
+    /// Gets the color identity of a deck: the identity of the commanders, or of the main deck and the companions when the deck has no commander.
+    /// </summary>
+    private async Task<string> ColorIdentityAsync(IEnumerable<(string Zone, Guid OracleId)> lines, CancellationToken cancellationToken)
+    {
+        var list = lines.ToList();
+        var commanders = list.Where(line => line.Zone == "commander").Select(line => line.OracleId).ToList();
+        var oracleIds = (commanders.Count > 0 ? commanders : list.Where(line => line.Zone is "main" or "companion").Select(line => line.OracleId)).Distinct().ToList();
+        if (oracleIds.Count == 0)
+        {
+            return string.Empty;
+        }
+
+        var cards = await catalog.GetCardsAsync(oracleIds, cancellationToken);
+        var colors = cards.Values.SelectMany(card => card.ColorIdentity).ToHashSet(StringComparer.Ordinal);
+        return string.Concat(DeckRules.ColorOrder.Where(color => colors.Contains(color.ToString())));
     }
 
     /// <summary>
