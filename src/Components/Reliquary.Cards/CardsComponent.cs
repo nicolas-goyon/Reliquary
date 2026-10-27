@@ -4,9 +4,11 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Reliquary.BuildingBlocks;
+using Reliquary.BuildingBlocks.Cards;
 using Reliquary.BuildingBlocks.Data;
 using Reliquary.BuildingBlocks.Jobs;
 using Reliquary.Cards.Api;
+using Reliquary.Cards.Catalog;
 using Reliquary.Cards.Import;
 using Reliquary.Cards.Search;
 
@@ -31,6 +33,7 @@ public sealed class CardsComponent : ICoreComponent
     {
         services.AddSingleton<CardQueries>();
         services.AddSingleton<CardSearch>();
+        services.AddSingleton<ICardCatalog, CardCatalog>();
     }
 
     /// <inheritdoc />

@@ -32,6 +32,7 @@ Each record gives the context, the decision and its consequences.
 | [0022](0022-authentication-and-api-keys.md) | Authentication, web sessions and API keys | Accepted |
 | [0023](0023-extension-registry.md) | Extension registry and core API version | Accepted |
 | [0024](0024-container-images.md) | Container images and the full local instance | Accepted |
+| [0025](0025-multi-face-analysis-rules.md) | Analysis rules for cards with more than one face | Accepted |
 
 ## Open decisions
 

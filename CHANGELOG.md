@@ -29,6 +29,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Container images of the API, the worker, the CLI and the web app. `just up` builds and starts a full local instance with the demo data.
 - The CLI command `demo load` loads the demo cards and the demo accounts.
 - Extension registry: the administrator installs, enables and uninstalls extensions. The API refuses an extension for another version of the core API.
+- The card catalog: the other core components get the card facts, resolve card names and find printings through `ICardCatalog`.
+- The analysis rules of the cards with more than one face (ADR 0025).
 - Card search with the Scryfall syntax: `GET /api/v1/cards/search`, with all the names of a card, paging, warnings and errors with a position.
 - Parity tests of the card search against the examples of the Scryfall syntax guide, on the demo dataset in `data/demo`.
 - The search benchmark in `bench/Reliquary.Cards.Benchmark` and its GitHub workflow.
