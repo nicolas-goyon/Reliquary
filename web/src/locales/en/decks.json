@@ -83,7 +83,8 @@
     "increase": "Add one {{name}}",
     "quantity": "Quantity of {{name}}",
     "moveTo": "Zone of {{name}}",
-    "remove": "Remove {{name}} from the deck"
+    "remove": "Remove {{name}} from the deck",
+    "export": "Export"
   },
   "legality": {
     "legal": "The deck is legal in {{format}}.",
@@ -117,6 +118,9 @@
       "unknown_category": "Line {{line}}: the category is not known. \"{{text}}\"",
       "card_not_found": "Line {{line}}: no card has this name. \"{{text}}\"",
       "printing_not_found": "Line {{line}}: the set and the number do not give a printing of this card. \"{{text}}\"",
+      "invalid_file": "Line {{line}}: the application cannot read the file. \"{{text}}\"",
+      "missing_column": "Line {{line}}: the file has no column for the card names. Select the column of the card names. \"{{text}}\"",
+      "unknown_zone": "Line {{line}}: the zone is not known. \"{{text}}\"",
       "other": "Line {{line}}: the line is not correct. \"{{text}}\""
     }
   },
@@ -124,5 +128,59 @@
     "defaultName": "Copy of {{name}}",
     "submit": "Make the copy",
     "signIn": "Sign in to copy this deck."
+  },
+  "fileFormats": {
+    "text": "Reliquary text",
+    "moxfield": "Moxfield",
+    "mtga": "MTG Arena",
+    "mtgo": "Magic Online (text)",
+    "dek": "Magic Online (.dek)",
+    "archidekt": "Archidekt",
+    "csv": "CSV",
+    "deckbox": "Deckbox (CSV)",
+    "manabox": "ManaBox (CSV)",
+    "dragonshield": "Dragon Shield (CSV)"
+  },
+  "csvFields": {
+    "quantity": "Quantity",
+    "name": "Card name",
+    "setCode": "Set code",
+    "collectorNumber": "Collector number",
+    "finish": "Finish",
+    "zone": "Zone",
+    "tags": "Tags",
+    "globalTags": "Global tags",
+    "categories": "Categories",
+    "note": "Note"
+  },
+  "import": {
+    "title": "Import a deck",
+    "file": "File",
+    "fileHint": "Select a file, or paste the list in the field below.",
+    "content": "Content of the file",
+    "fileFormat": "File format",
+    "columns": "Columns of the CSV file",
+    "automatic": "Automatic: {{header}}",
+    "noColumn": "No column",
+    "submit": "Import the deck",
+    "errors": "Some lines are not correct. The application did not make the deck.",
+    "warnings": "The application made the deck. Some lines changed:",
+    "open": "Open the deck \"{{name}}\""
+  },
+  "export": {
+    "title": "Export the deck",
+    "submit": "Download the file",
+    "hint": {
+      "text": "The file keeps all the data of the deck.",
+      "moxfield": "Moxfield has no tokens zone. The file does not contain the tokens.",
+      "mtga": "The file contains the commanders, the companions, the main deck and the sideboard, with no tags and no notes.",
+      "mtgo": "The file contains the main deck and the sideboard. In Commander, the commanders are in the sideboard.",
+      "dek": "The file contains the main deck and the sideboard. In Commander, the commanders are in the sideboard.",
+      "archidekt": "The zones and the tags become Archidekt categories.",
+      "csv": "The file keeps all the data of the deck.",
+      "deckbox": "The file contains the commanders, the companions and the main deck.",
+      "manabox": "The file contains the commanders, the companions and the main deck.",
+      "dragonshield": "The file contains the commanders, the companions and the main deck."
+    }
   }
 }

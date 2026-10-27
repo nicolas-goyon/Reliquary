@@ -7,7 +7,9 @@ import { useAuth } from '../auth/session'
 import { CardImage } from '../components/CardImage'
 import { Combobox, type Suggestion } from '../components/Combobox'
 import { FormatSelect, VisibilitySelect } from '../components/DeckFields'
+import { DeckExportDialog } from '../components/DeckExportDialog'
 import { ErrorAlert, TextField } from '../components/Forms'
+import { LineErrorList } from '../components/LineErrors'
 import { ManaCost } from '../components/ManaCost'
 import { Link } from '../router/Link'
 import { navigate } from '../router/navigation'
@@ -50,6 +52,7 @@ function DeckEditor({ deck, onChange }: EditorProps) {
   const [error, setError] = useState<unknown>(null)
   const [mode, setMode] = useState<'visual' | 'text'>('visual')
   const [copying, setCopying] = useState(false)
+  const [exporting, setExporting] = useState(false)
   const [legality, setLegality] = useState<DeckLegality | null>(null)
   const owner = deck.isOwner
 
@@ -96,6 +99,9 @@ function DeckEditor({ deck, onChange }: EditorProps) {
         <button type="button" onClick={() => setCopying(true)}>
           {t('editor.copy')}
         </button>
+        <button type="button" onClick={() => setExporting(true)}>
+          {t('editor.export')}
+        </button>
         {owner && (
           <button type="button" className="button-danger" onClick={() => void remove()}>
             {t('editor.delete')}
@@ -104,6 +110,7 @@ function DeckEditor({ deck, onChange }: EditorProps) {
         <Slot name="deck.actions" context={{ deckId: deck.id }} className="slot-inline" />
       </div>
       {copying && <CopyDialog deck={deck} onClose={() => setCopying(false)} />}
+      {exporting && <DeckExportDialog deckId={deck.id} onClose={() => setExporting(false)} />}
       <ErrorAlert error={error} />
       {legality && <LegalityPanel deck={deck} legality={legality} />}
 
@@ -431,30 +438,13 @@ function TextMode({ deck, onSaved }: { deck: Deck; onSaved(deck: Deck): void }) 
         {t('text.label')}
       </label>
       <textarea id="deck-text" className="deck-text" rows={24} spellCheck={false} value={text} onChange={(event) => setText(event.target.value)} />
-      {lineErrors.length > 0 && (
-        <div className="alert alert-error" role="alert">
-          <p>{t('text.errors')}</p>
-          <ul>
-            {lineErrors.map((lineError) => (
-              <li key={lineError.line}>
-                {t(`text.lineError.${lineErrorKey(lineError.code)}`, { line: lineError.line, text: lineError.text.trim() })}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      <LineErrorList title={t('text.errors')} lines={lineErrors} />
       <ErrorAlert error={error} />
       <button type="button" className="button-primary" onClick={() => void save()}>
         {t('text.save')}
       </button>
     </section>
   )
-}
-
-const knownLineErrors = ['missing_name', 'quantity_out_of_range', 'tag_too_long', 'unknown_category', 'card_not_found', 'printing_not_found'] as const
-
-function lineErrorKey(code: string): (typeof knownLineErrors)[number] | 'other' {
-  return knownLineErrors.find((known) => known === code) ?? 'other'
 }
 
 /** The dialog of the copy of a deck: name, visibility and folder of the copy. */

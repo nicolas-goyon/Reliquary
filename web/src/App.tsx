@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { AccountPage } from './pages/AccountPage'
 import { CardPage } from './pages/CardPage'
 import { CardSearchPage } from './pages/CardSearchPage'
+import { DeckImportPage } from './pages/DeckImportPage'
 import { DeckListPage } from './pages/DeckListPage'
 import { DeckPage } from './pages/DeckPage'
 import { AuthCompletePage, CheckEmailPage, ForgotPasswordPage, ResetPasswordPage } from './pages/EmailLinkPages'
@@ -28,6 +29,7 @@ const patternRoutes: { pattern: RegExp; render(match: RegExpMatchArray): ReactNo
 const routes: Record<string, () => ReactNode> = {
   '/cards': () => <CardSearchPage />,
   '/decks': () => <DeckListPage />,
+  '/decks/import': () => <DeckImportPage />,
   '/': () => <HomePage />,
   '/sign-in': () => <SignInPage />,
   '/register': () => <RegisterPage />,

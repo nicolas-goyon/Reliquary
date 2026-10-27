@@ -83,7 +83,8 @@
     "increase": "Ajouter un exemplaire de {{name}}",
     "quantity": "Quantité de {{name}}",
     "moveTo": "Zone de {{name}}",
-    "remove": "Retirer {{name}} du deck"
+    "remove": "Retirer {{name}} du deck",
+    "export": "Exporter"
   },
   "legality": {
     "legal": "Le deck est légal en {{format}}.",
@@ -117,6 +118,9 @@
       "unknown_category": "Ligne {{line}} : la catégorie est inconnue. « {{text}} »",
       "card_not_found": "Ligne {{line}} : aucune carte ne porte ce nom. « {{text}} »",
       "printing_not_found": "Ligne {{line}} : l’édition et le numéro ne correspondent à aucune impression de cette carte. « {{text}} »",
+      "invalid_file": "Ligne {{line}} : le fichier est illisible. « {{text}} »",
+      "missing_column": "Ligne {{line}} : le fichier n’a pas de colonne pour les noms de cartes. Choisissez la colonne des noms de cartes. « {{text}} »",
+      "unknown_zone": "Ligne {{line}} : la zone est inconnue. « {{text}} »",
       "other": "Ligne {{line}} : la ligne est incorrecte. « {{text}} »"
     }
   },
@@ -124,5 +128,59 @@
     "defaultName": "Copie de {{name}}",
     "submit": "Créer la copie",
     "signIn": "Connectez-vous pour copier ce deck."
+  },
+  "fileFormats": {
+    "text": "Texte Reliquary",
+    "moxfield": "Moxfield",
+    "mtga": "MTG Arena",
+    "mtgo": "Magic Online (texte)",
+    "dek": "Magic Online (.dek)",
+    "archidekt": "Archidekt",
+    "csv": "CSV",
+    "deckbox": "Deckbox (CSV)",
+    "manabox": "ManaBox (CSV)",
+    "dragonshield": "Dragon Shield (CSV)"
+  },
+  "csvFields": {
+    "quantity": "Quantité",
+    "name": "Nom de la carte",
+    "setCode": "Code de l’extension",
+    "collectorNumber": "Numéro de collection",
+    "finish": "Finition",
+    "zone": "Zone",
+    "tags": "Tags",
+    "globalTags": "Tags globaux",
+    "categories": "Catégories",
+    "note": "Note"
+  },
+  "import": {
+    "title": "Importer un deck",
+    "file": "Fichier",
+    "fileHint": "Choisissez un fichier, ou collez la liste dans le champ ci-dessous.",
+    "content": "Contenu du fichier",
+    "fileFormat": "Format du fichier",
+    "columns": "Colonnes du fichier CSV",
+    "automatic": "Automatique : {{header}}",
+    "noColumn": "Aucune colonne",
+    "submit": "Importer le deck",
+    "errors": "Certaines lignes sont incorrectes. Le deck n’a pas été créé.",
+    "warnings": "Le deck a été créé. Certaines lignes ont changé :",
+    "open": "Ouvrir le deck « {{name}} »"
+  },
+  "export": {
+    "title": "Exporter le deck",
+    "submit": "Télécharger le fichier",
+    "hint": {
+      "text": "Le fichier garde toutes les données du deck.",
+      "moxfield": "Moxfield n’a pas de zone de jetons. Le fichier ne contient pas les jetons.",
+      "mtga": "Le fichier contient les commandants, les compagnons, le deck principal et la réserve, sans tags ni notes.",
+      "mtgo": "Le fichier contient le deck principal et la réserve. En Commander, les commandants sont dans la réserve.",
+      "dek": "Le fichier contient le deck principal et la réserve. En Commander, les commandants sont dans la réserve.",
+      "archidekt": "Les zones et les tags deviennent des catégories Archidekt.",
+      "csv": "Le fichier garde toutes les données du deck.",
+      "deckbox": "Le fichier contient les commandants, les compagnons et le deck principal.",
+      "manabox": "Le fichier contient les commandants, les compagnons et le deck principal.",
+      "dragonshield": "Le fichier contient les commandants, les compagnons et le deck principal."
+    }
   }
 }
