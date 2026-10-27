@@ -230,6 +230,25 @@ public static partial class DeckText
         return builder.ToString();
     }
 
+    /// <summary>
+    /// Reads the name of a zone: a zone of the API, for example <c>considering</c>, or a section name, for example <c>Maybeboard</c>.
+    /// </summary>
+    /// <param name="name">The name.</param>
+    /// <param name="zone">The zone, when the name is known.</param>
+    /// <returns><see langword="true"/> when the name is known.</returns>
+    public static bool TryReadZone(string name, out string zone)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+        if (SectionZones.TryGetValue(WhiteSpace().Replace(name.Trim(), " "), out var found))
+        {
+            zone = found;
+            return true;
+        }
+
+        zone = "main";
+        return false;
+    }
+
     private static bool TryReadHeader(string line, out string zone)
     {
         var header = HeaderPattern().Match(line);

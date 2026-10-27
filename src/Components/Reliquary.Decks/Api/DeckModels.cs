@@ -242,12 +242,13 @@ public sealed record DeckLegalityResponse(string Format, bool Legal, IReadOnlyLi
 public sealed record CopyDeckRequest(string? Name, string? Visibility, Guid? FolderId);
 
 /// <summary>A file to import as a new deck.</summary>
-/// <param name="Format">The format of the file: <c>text</c>, <c>moxfield</c>, <c>mtga</c>, <c>mtgo</c>, <c>dek</c> or <c>archidekt</c>.</param>
+/// <param name="Format">The format of the file: <c>text</c>, <c>moxfield</c>, <c>mtga</c>, <c>mtgo</c>, <c>dek</c>, <c>archidekt</c>, <c>csv</c>, <c>deckbox</c>, <c>manabox</c> or <c>dragonshield</c>.</param>
 /// <param name="Content">The content of the file.</param>
 /// <param name="Name">The name of the new deck.</param>
 /// <param name="DeckFormat">The format of the new deck. The default is <c>commander</c>.</param>
 /// <param name="Visibility">The visibility of the new deck. The default is <c>private</c>.</param>
-public sealed record ImportDeckRequest(string? Format, string? Content, string? Name, string? DeckFormat, string? Visibility);
+/// <param name="Columns">For the format <c>csv</c> only: the header of the column of each field, for example <c>{"name": "Card"}</c>.</param>
+public sealed record ImportDeckRequest(string? Format, string? Content, string? Name, string? DeckFormat, string? Visibility, IReadOnlyDictionary<string, string>? Columns = null);
 
 /// <summary>The result of an import.</summary>
 /// <param name="Deck">The new deck.</param>

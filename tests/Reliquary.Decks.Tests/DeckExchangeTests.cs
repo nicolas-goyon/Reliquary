@@ -79,6 +79,41 @@ public sealed class DeckExchangeTests(DecksInstance instance)
         Assert.StartsWith(format, export.FileName, StringComparison.Ordinal);
     }
 
+    [Theory]
+    [InlineData("deckbox", "Count,Name,Edition Code,Card Number,Foil\n1,Sol Ring,,,foil\n4,Forest,,,\n")]
+    [InlineData("manabox", "Name,Set code,Collector number,Foil,Quantity\nSol Ring,,,foil,1\nForest,,,normal,4\n")]
+    [InlineData("dragonshield", "\"sep=,\"\nFolder Name,Quantity,Card Name,Set Code,Card Number,Printing\nDeck,1,Sol Ring,,,Foil\nDeck,4,Forest,,,Normal\n")]
+    [InlineData("csv", "Quantity,Name,Finish,Zone\n1,Sol Ring,foil,main\n4,Forest,,main\n")]
+    public async Task EachCsvFormatImportsAndExports(string format, string content)
+    {
+        using var client = await instance.NewUserAsync();
+
+        var import = await client.PostAsJsonAsync("/api/v1/decks/import", new { format, content, name = format, deckFormat = "freeform" }, Cancel);
+        var deck = (await import.Content.ReadFromJsonAsync<ImportDeckResponse>(Cancel))!.Deck;
+        var export = await client.GetFromJsonAsync<ExportDeckResponse>(new Uri($"/api/v1/decks/{deck.Id}/export?format={format}", UriKind.Relative), Cancel);
+
+        Assert.Equal(HttpStatusCode.Created, import.StatusCode);
+        Assert.Equal(5, deck.Counts["main"]);
+        Assert.Equal("foil", deck.Lines.Single(line => deck.Cards[line.OracleId].Name == "Sol Ring").Finish);
+        Assert.Equal(("text/csv", $"{format}.csv"), (export!.ContentType, export.FileName));
+        Assert.Contains("Sol Ring", export.Content, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ColumnMapIsOnlyForTheGenericCsv()
+    {
+        using var client = await instance.NewUserAsync();
+
+        var mapped = await client.PostAsJsonAsync("/api/v1/decks/import", new { format = "csv", content = "Card;Qty\nSol Ring;1\n", columns = new { name = "Card" } }, Cancel);
+        var refused = await client.PostAsJsonAsync("/api/v1/decks/import", new { format = "manabox", content = "Name\nSol Ring\n", columns = new { name = "Card" } }, Cancel);
+        var unknown = await client.PostAsJsonAsync("/api/v1/decks/import", new { format = "csv", content = "Card\nSol Ring\n", columns = new { price = "Card" } }, Cancel);
+
+        Assert.Equal(HttpStatusCode.Created, mapped.StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, refused.StatusCode);
+        Assert.Contains("\"columns\"", await refused.Content.ReadAsStringAsync(Cancel), StringComparison.Ordinal);
+        Assert.Contains("columns.price", await unknown.Content.ReadAsStringAsync(Cancel), StringComparison.Ordinal);
+    }
+
     [Fact]
     public async Task ImportReportsEachLineAndMakesNoDeck()
     {
