@@ -31,6 +31,10 @@ internal static class CardEndpoints
                 + "The keywords unique:, order:, dir: and prefer: in the query win over the parameters unique, order and dir. "
                 + "Specific error codes: search_syntax_error (with the member position), search_query_empty and search_timeout.");
 
+        cards.MapGet("/autocomplete", AutocompleteAsync)
+            .WithName("AutocompleteCardNames")
+            .WithSummary("Suggests cards for the start of a name, in all the languages. The parameter q needs 2 characters or more.");
+
         cards.MapGet("/named", GetCardByNameAsync)
             .WithName("GetCardByName")
             .WithSummary("Gets a card by one of its names: the Oracle name, a face name, a localized name or an alternate name.");
@@ -56,6 +60,31 @@ internal static class CardEndpoints
             .WithTags("Cards")
             .WithName("GetSets")
             .WithSummary("Gets all the sets, the most recent first.");
+    }
+
+    /// <summary>The maximum number of suggestions of the autocomplete.</summary>
+    public const int MaxAutocompleteLimit = 20;
+
+    private static async Task<Results<Ok<IReadOnlyList<AutocompleteItem>>, ProblemHttpResult>> AutocompleteAsync(
+        string? q, string? lang, int? limit, bool? includeExtras, CardQueries queries, CancellationToken cancellationToken)
+    {
+        if (limit is < 1 or > MaxAutocompleteLimit)
+        {
+            return ApiProblems.Validation(new FieldError("limit", FieldErrorCodes.OutOfRange, $"The limit must be from 1 to {MaxAutocompleteLimit}."));
+        }
+
+        if (q is null || q.Trim().Length < 2)
+        {
+            return TypedResults.Ok<IReadOnlyList<AutocompleteItem>>([]);
+        }
+
+        if (q.Length > 100)
+        {
+            return ApiProblems.Validation(new FieldError("q", FieldErrorCodes.TooLong, "The text must have 100 characters or fewer."));
+        }
+
+        var items = await queries.AutocompleteAsync(q, lang, limit ?? 10, includeExtras == true, cancellationToken);
+        return TypedResults.Ok(items);
     }
 
     private static async Task<Results<Ok<CardSearchResponse>, ProblemHttpResult>> SearchCardsAsync(
