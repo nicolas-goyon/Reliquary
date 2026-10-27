@@ -185,3 +185,12 @@ public sealed record RulingResponse(string Source, DateOnly PublishedAt, string 
 /// <param name="Digital">Whether the set exists only in digital form.</param>
 /// <param name="IconSvgUri">The address of the icon of the set.</param>
 public sealed record SetResponse(string Code, string Name, string SetType, DateOnly? ReleasedAt, int CardCount, bool Digital, string? IconSvgUri);
+
+/// <summary>
+/// A card that the autocomplete suggests.
+/// </summary>
+/// <param name="OracleId">The Oracle card.</param>
+/// <param name="Name">The Oracle name of the card.</param>
+/// <param name="MatchedName">The name that matches the text: the Oracle name, a face name, a localized name or an alternate name.</param>
+/// <param name="Lang">The language of the matched name.</param>
+public sealed record AutocompleteItem(Guid OracleId, string Name, string MatchedName, string Lang);

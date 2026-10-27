@@ -110,6 +110,47 @@ internal sealed class CardQueries(IDatabase database)
     /// <param name="fuzzy">When <see langword="true"/> and no name is equal, the search gives the most similar name.</param>
     /// <param name="cancellationToken">A token that stops the operation.</param>
     /// <returns>The Oracle identifier, or <see langword="null"/> when no card has this name.</returns>
+    /// <summary>
+    /// Finds the cards whose names start with a text, then the cards whose names contain it.
+    /// </summary>
+    /// <param name="text">The text that the user typed.</param>
+    /// <param name="lang">The language of the user. A name in this language wins over the other names of the card.</param>
+    /// <param name="limit">The maximum number of cards.</param>
+    /// <param name="includeExtras">Whether the result contains tokens and the other extra cards.</param>
+    /// <param name="cancellationToken">A token that stops the operation.</param>
+    /// <returns>The cards, the best match first.</returns>
+    public async Task<IReadOnlyList<AutocompleteItem>> AutocompleteAsync(string text, string? lang, int limit, bool includeExtras, CancellationToken cancellationToken)
+    {
+        var normalized = NameNormalizer.Normalize(text);
+        var escaped = normalized.Replace(@"\", @"\\", StringComparison.Ordinal).Replace("%", @"\%", StringComparison.Ordinal).Replace("_", @"\_", StringComparison.Ordinal);
+        await using var connection = await database.OpenReferenceAsync(cancellationToken);
+        var rows = await connection.QueryAsync<AutocompleteRow>(new CommandDefinition(
+            """
+            with candidates as (
+                (select oracle_id, name, lang, kind, true as prefix
+                 from reference.card_names where name_normalized like @prefix escape '\' limit 500)
+                union all
+                (select oracle_id, name, lang, kind, false
+                 from reference.card_names where @contains and name_normalized like @infix escape '\' limit 500)
+            ),
+            best as (
+                select distinct on (c.oracle_id) c.oracle_id, c.name as matched, c.lang, c.prefix, o.name, o.is_extra, o.edhrec_rank
+                from candidates c
+                join reference.oracle_cards o on o.id = c.oracle_id
+                where @extras or not o.is_extra
+                order by c.oracle_id, c.prefix desc, (c.lang = @lang) desc, (c.lang = 'en') desc,
+                    case c.kind when 'oracle' then 0 when 'face' then 1 when 'printed' then 2 else 3 end
+            )
+            select oracle_id as OracleId, name, matched as MatchedName, lang
+            from best
+            order by prefix desc, is_extra, edhrec_rank nulls last, length(name), name
+            limit @limit
+            """,
+            new { prefix = escaped + "%", infix = "%" + escaped + "%", contains = normalized.Length >= 3, lang = lang ?? "en", extras = includeExtras, limit },
+            cancellationToken: cancellationToken));
+        return [.. rows.Select(row => new AutocompleteItem(row.OracleId, row.Name, row.MatchedName, row.Lang))];
+    }
+
     public async Task<Guid?> FindByNameAsync(string name, bool fuzzy, CancellationToken cancellationToken)
     {
         var normalized = NameNormalizer.Normalize(name);
@@ -280,6 +321,17 @@ internal sealed class CardQueries(IDatabase database)
 
     private static Dictionary<string, string> Dictionary(string? json) =>
         json is null ? [] : JsonSerializer.Deserialize<Dictionary<string, string>>(json) ?? [];
+
+    private sealed class AutocompleteRow
+    {
+        public Guid OracleId { get; set; }
+
+        public string Name { get; set; } = string.Empty;
+
+        public string MatchedName { get; set; } = string.Empty;
+
+        public string Lang { get; set; } = "en";
+    }
 
     private sealed class CardRow
     {
