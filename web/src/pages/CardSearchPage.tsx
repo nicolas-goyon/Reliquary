@@ -6,6 +6,7 @@ import { keywordsFor, wordAt } from '../api/searchKeywords'
 import { CardImage } from '../components/CardImage'
 import { Combobox, type Suggestion } from '../components/Combobox'
 import { ErrorAlert } from '../components/Forms'
+import { SearchFilterPanel } from '../components/SearchFilterPanel'
 import { Link } from '../router/Link'
 import { navigate, useLocation } from '../router/navigation'
 
@@ -111,6 +112,7 @@ function CardSearch({ query }: { query: string }) {
         <button type="submit" className="button-primary">
           {t('search.submit')}
         </button>
+        <SearchFilterPanel query={text} onChange={setText} />
       </form>
       <p className="field-hint">
         {t('search.help')}{' '}
