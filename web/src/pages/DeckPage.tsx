@@ -4,6 +4,7 @@ import type { AutocompleteItem } from '../api/cards'
 import { ApiError, apiRequest } from '../api/client'
 import { formatKey, lineImage, zones, type Deck, type DeckLegality, type DeckLine, type DeckTextLineError, type Visibility, type Zone } from '../api/decks'
 import { useAuth } from '../auth/session'
+import { AnalysisSection } from '../components/analysis/AnalysisSection'
 import { CardImage } from '../components/CardImage'
 import { Combobox, type Suggestion } from '../components/Combobox'
 import { FormatSelect, VisibilitySelect } from '../components/DeckFields'
@@ -125,6 +126,7 @@ function DeckEditor({ deck, onChange }: EditorProps) {
           <Zones deck={deck} owner={owner} change={change} />
         </>
       )}
+      <AnalysisSection deck={deck} />
     </article>
   )
 }

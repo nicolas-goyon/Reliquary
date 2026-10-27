@@ -1,4 +1,6 @@
 import { createContext, useContext, useSyncExternalStore, type ReactNode } from 'react'
+import type { DeckAnalysis } from '../api/analysis'
+import type { Deck } from '../api/decks'
 import type { Account } from '../api/types'
 
 /**
@@ -12,8 +14,8 @@ export interface SlotContexts {
   'app.menu': { account: Account | null }
   /** The action bar of a deck. */
   'deck.actions': { deckId: string }
-  /** The tabs of the deck analysis. */
-  'analysis.tabs': { deckId: string }
+  /** The tabs of the deck analysis. Each contribution is one tab, and its title is the name of the tab. */
+  'analysis.tabs': { deckId: string; deck: Deck; analysis: DeckAnalysis }
   /** The columns of the table mode. */
   'table.columns': { deckId: string }
   /** The page of a card. */
@@ -40,6 +42,11 @@ export interface SlotContribution<Name extends SlotName> {
   id: string
   /** The position in the slot. A small number comes first. The default is 100. */
   order?: number
+  /**
+   * Gives the title of the element, for a slot that shows titles. For example, the slot "analysis.tabs" shows it as the name of the tab.
+   * Return null to hide the element for this context.
+   */
+  title?(context: SlotContexts[Name]): string | null
   /** Renders the element. Return null to show nothing for this context. */
   render(context: SlotContexts[Name]): ReactNode
 }

@@ -12,6 +12,15 @@
   --color-danger: #b42318;
   --color-success: #2e7d32;
   --color-warning: #9a6700;
+  --color-chart-bar: #3f72b0;
+  --color-chart-track: #ece8e2;
+  --color-chart-heat: #1f5fa8;
+  --color-mana-w: #e6dfa8;
+  --color-mana-u: #3f86c4;
+  --color-mana-b: #5b524c;
+  --color-mana-r: #d0573a;
+  --color-mana-g: #3b8a57;
+  --color-mana-c: #a39d96;
 
   color-scheme: light dark;
   font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -34,6 +43,15 @@
     --color-danger: #f3877b;
     --color-success: #8fd19e;
     --color-warning: #e3b341;
+    --color-chart-bar: #7fa9de;
+    --color-chart-track: #2c2a27;
+    --color-chart-heat: #8cb8f0;
+    --color-mana-w: #efe7b4;
+    --color-mana-u: #6aa8dc;
+    --color-mana-b: #9a8f87;
+    --color-mana-r: #ea8467;
+    --color-mana-g: #6cbf89;
+    --color-mana-c: #c2bcb4;
   }
 }
 
@@ -852,4 +870,226 @@ button:disabled {
 .text-mode {
   display: grid;
   gap: 0.75rem;
+}
+
+/* Deck analysis */
+.analysis {
+  margin-top: 2rem;
+}
+
+.tab-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.tab {
+  margin-bottom: -1px;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  background-color: var(--color-background);
+  color: var(--color-text-muted);
+}
+
+.tab[aria-selected='true'] {
+  border-bottom-color: var(--color-surface);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.tab-panel {
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--color-border);
+  border-top: 0;
+  border-radius: 0 0 0.5rem 0.5rem;
+  background-color: var(--color-surface);
+}
+
+.analysis-panel h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1.05rem;
+}
+
+.analysis-panel section + section {
+  margin-top: 1.5rem;
+}
+
+.analysis-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: 1.5rem;
+}
+
+.analysis-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  margin: 0 0 1rem;
+}
+
+.analysis-summary dt {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
+.analysis-summary dd {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.bar-chart {
+  margin: 0 0 1rem;
+}
+
+.bar-chart-title {
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.bar-chart-bars {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.bar-chart-item {
+  display: grid;
+  gap: 0.5rem;
+  align-items: center;
+  font-size: 0.85rem;
+}
+
+.bar-chart-rows .bar-chart-item {
+  grid-template-columns: minmax(6rem, 9rem) 1fr 2.5rem;
+}
+
+.bar-chart-track {
+  position: relative;
+  display: block;
+  border-radius: 0.25rem;
+  background-color: var(--color-chart-track);
+}
+
+.bar-chart-rows .bar-chart-track {
+  height: 1rem;
+}
+
+.bar-chart-bar {
+  position: absolute;
+  display: block;
+  border-radius: 0.25rem;
+  background-color: var(--color-chart-bar);
+}
+
+.bar-chart-rows .bar-chart-bar {
+  inset: 0 auto 0 0;
+  width: var(--bar-size);
+}
+
+.bar-chart-value {
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+}
+
+.bar-chart-columns {
+  grid-auto-columns: minmax(2rem, 4rem);
+  grid-auto-flow: column;
+  justify-content: start;
+}
+
+.bar-chart-columns .bar-chart-item {
+  grid-template-rows: auto 8rem auto;
+  justify-items: center;
+  gap: 0.25rem;
+}
+
+.bar-chart-columns .bar-chart-label {
+  order: 3;
+}
+
+.bar-chart-columns .bar-chart-track {
+  order: 2;
+  width: 100%;
+  height: 8rem;
+}
+
+.bar-chart-columns .bar-chart-bar {
+  inset: auto 0 0 0;
+  height: var(--bar-size);
+}
+
+.bar-chart-columns .bar-chart-value {
+  order: 1;
+  text-align: center;
+}
+
+.bar-mana-w {
+  background-color: var(--color-mana-w);
+}
+
+.bar-mana-u {
+  background-color: var(--color-mana-u);
+}
+
+.bar-mana-b {
+  background-color: var(--color-mana-b);
+}
+
+.bar-mana-r {
+  background-color: var(--color-mana-r);
+}
+
+.bar-mana-g {
+  background-color: var(--color-mana-g);
+}
+
+.bar-mana-c {
+  background-color: var(--color-mana-c);
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+.analysis-table th,
+.analysis-table td {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.draws-cell {
+  background-color: color-mix(in srgb, var(--color-chart-heat) calc(var(--probability) * 0.35), transparent);
+}
+
+.status {
+  font-weight: 600;
+}
+
+.status-good {
+  color: var(--color-success);
+}
+
+.status-bad {
+  color: var(--color-danger);
+}
+
+.status-warn {
+  color: var(--color-warning);
+}
+
+.status-none {
+  color: var(--color-text-muted);
+  font-weight: 400;
+}
+
+.analysis-bracket {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.analysis-reasons {
+  padding-left: 1.25rem;
 }
