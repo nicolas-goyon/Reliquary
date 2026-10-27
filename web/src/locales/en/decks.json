@@ -249,6 +249,7 @@
       "distribution": "Distribution",
       "mana": "Mana sources",
       "draws": "Draw probabilities",
+      "combos": "Combos",
       "commander": "Commander needs"
     },
     "summary": {
@@ -355,12 +356,30 @@
         "game_changers": "Game Changers",
         "mass_land_denial": "Mass land denial",
         "extra_turns": "Extra turn cards",
+        "two_card_combos": "Early-game two-card combos",
+        "late_two_card_combos": "Late-game two-card combos",
         "other": "Other rule"
       },
       "unchecked": {
-        "two_card_combos": "The analysis does not check two-card combos yet. A combo can put the deck in a higher bracket.",
+        "two_card_combos": "The instance has no combo data, so the analysis does not check two-card combos. A combo can put the deck in a higher bracket.",
         "other": "The analysis does not check some rules yet. The deck can be in a higher bracket."
       }
+    },
+    "combos": {
+      "unavailable": "The instance has no combo data. The administrator must import the combos of Commander Spellbook.",
+      "complete_one": "{{count}} complete combo",
+      "complete_other": "{{count}} complete combos",
+      "noComplete": "The deck contains no complete combo.",
+      "near_one": "{{count}} combo that needs one more card",
+      "near_other": "{{count}} combos that need one more card",
+      "noNear": "No combo needs only one more card.",
+      "nearLimit": "The list shows the {{shown}} most popular combos of {{total}}.",
+      "copies": "{{card}} ×{{quantity}}",
+      "missing": "Missing card: {{card}}",
+      "results": "Results:",
+      "open": "Open on Commander Spellbook",
+      "openLabel": "Open the combo {{cards}} on Commander Spellbook",
+      "credit": "Combos by"
     }
   },
   "folders": {

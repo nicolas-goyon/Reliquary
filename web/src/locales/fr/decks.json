@@ -249,6 +249,7 @@
       "distribution": "Répartition",
       "mana": "Sources de mana",
       "draws": "Probabilités de pioche",
+      "combos": "Combos",
       "commander": "Besoins Commander"
     },
     "summary": {
@@ -355,12 +356,30 @@
         "game_changers": "Game Changers",
         "mass_land_denial": "Destruction massive de terrains",
         "extra_turns": "Cartes de tours supplémentaires",
+        "two_card_combos": "Combos à deux cartes en début de partie",
+        "late_two_card_combos": "Combos à deux cartes en fin de partie",
         "other": "Autre règle"
       },
       "unchecked": {
-        "two_card_combos": "L’analyse ne vérifie pas encore les combos à deux cartes. Un combo peut placer le deck dans un bracket plus élevé.",
+        "two_card_combos": "L’instance n’a pas de données de combos, donc l’analyse ne vérifie pas les combos à deux cartes. Un combo peut placer le deck dans un bracket plus élevé.",
         "other": "L’analyse ne vérifie pas encore certaines règles. Le deck peut être dans un bracket plus élevé."
       }
+    },
+    "combos": {
+      "unavailable": "L’instance n’a pas de données de combos. L’administrateur doit importer les combos de Commander Spellbook.",
+      "complete_one": "{{count}} combo complet",
+      "complete_other": "{{count}} combos complets",
+      "noComplete": "Le deck ne contient aucun combo complet.",
+      "near_one": "{{count}} combo auquel il manque une carte",
+      "near_other": "{{count}} combos auxquels il manque une carte",
+      "noNear": "Aucun combo ne demande une seule carte de plus.",
+      "nearLimit": "La liste montre les {{shown}} combos les plus populaires sur {{total}}.",
+      "copies": "{{card}} ×{{quantity}}",
+      "missing": "Carte manquante : {{card}}",
+      "results": "Résultats :",
+      "open": "Ouvrir sur Commander Spellbook",
+      "openLabel": "Ouvrir le combo {{cards}} sur Commander Spellbook",
+      "credit": "Combos par"
     }
   },
   "folders": {

@@ -19,6 +19,7 @@ export interface DeckAnalysis {
   draws: DrawAnalysis
   needs: CategoryNeed[] | null
   bracket: BracketAnalysis | null
+  combos: ComboAnalysis
 }
 
 export interface CurvePoint {
@@ -83,6 +84,45 @@ export interface BracketReason {
   code: string
   bracket: number
   oracleIds: string[]
+  /** The IDs of the combos of the reason on Commander Spellbook. The list is empty for a reason that is not a combo. */
+  comboIds: string[]
+}
+
+/** The combos of Commander Spellbook in the deck. See docs/decisions/0030-combos-from-commander-spellbook.md. */
+export interface ComboAnalysis {
+  /** False when the instance has no combo data. The lists are then empty. */
+  available: boolean
+  complete: DeckCombo[]
+  /** The combos that need one more card, from the most popular. The list has 50 combos at most. */
+  near: DeckCombo[]
+  nearCount: number
+}
+
+export interface DeckCombo {
+  id: string
+  url: string
+  cards: DeckComboCard[]
+  /** The results, in English, as Commander Spellbook gives them. */
+  results: string[]
+  gameEnding: boolean
+  manaNeeded: string | null
+  manaValue: number
+  missingOracleId: string | null
+}
+
+export interface DeckComboCard {
+  oracleId: string
+  name: string
+  quantity: number
+  inDeck: boolean
+}
+
+/** The home page of Commander Spellbook, for the credit of the combo data. */
+export const commanderSpellbookUrl = 'https://commanderspellbook.com/'
+
+/** Accepts only the pages of Commander Spellbook, so the page never shows a link to another site from the API data. */
+export function comboUrl(combo: DeckCombo): string {
+  return combo.url.startsWith(commanderSpellbookUrl) ? combo.url : `${commanderSpellbookUrl}combo/${encodeURIComponent(combo.id)}/`
 }
 
 /** Finds a known code in a list. An unknown code gives the fallback, so a new code of the API does not break the page. */
@@ -96,7 +136,7 @@ export const categoryKeys = ['ramp', 'card_draw', 'targeted_interaction', 'board
 export const manaStatuses = ['ok', 'low', 'no_requirement'] as const
 export const needStatuses = ['low', 'ok', 'high', 'no_target'] as const
 export const checkpointCodes = ['opening_hand', 'turn_2_play', 'turn_2_draw', 'turn_3_play', 'turn_3_draw', 'turn_4_play', 'turn_4_draw'] as const
-export const reasonCodes = ['game_changers', 'mass_land_denial', 'extra_turns'] as const
+export const reasonCodes = ['game_changers', 'mass_land_denial', 'extra_turns', 'two_card_combos', 'late_two_card_combos'] as const
 export const uncheckedCodes = ['two_card_combos'] as const
 
 export const typeKey = (key: string) => known(typeKeys, key, 'other')

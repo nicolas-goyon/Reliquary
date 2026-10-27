@@ -9,7 +9,8 @@ namespace Reliquary.Decks.Analysis;
 /// <remarks>
 /// Sources: "Introducing Commander Brackets Beta" (Wizards of the Coast, 11 February 2025),
 /// "Commander Brackets Beta Update" (21 October 2025) and the update of 9 February 2026.
-/// The Game Changers list comes from the card data. See docs/architecture/deck-analysis.md.
+/// The Game Changers list comes from the card data. The combos come from Commander Spellbook (ADR 0030).
+/// See docs/architecture/deck-analysis.md.
 /// </remarks>
 public static partial class CommanderBracket
 {
@@ -22,8 +23,19 @@ public static partial class CommanderBracket
     /// <summary>The deck has extra turn cards.</summary>
     public const string ExtraTurns = "extra_turns";
 
-    /// <summary>The analysis does not find two-card combos. Issue #103 adds them.</summary>
+    /// <summary>
+    /// The deck has an early-game two-card combo. As a code of <see cref="BracketAnalysis.Unchecked"/>, the instance has no combo data.
+    /// </summary>
     public const string TwoCardCombos = "two_card_combos";
+
+    /// <summary>The deck has a two-card combo that is not an early-game combo.</summary>
+    public const string LateTwoCardCombos = "late_two_card_combos";
+
+    /// <summary>
+    /// The highest mana value of an early-game combo. Bracket 3 forbids two-card combos that "can happen cheaply and in about the first six or so turns".
+    /// A player has about six mana on turn six. Reliquary chose this value.
+    /// </summary>
+    public const int EarlyGameManaValue = 6;
 
     /// <summary>The highest number of Game Changers in bracket 3.</summary>
     public const int MaxGameChangers = 3;
@@ -35,8 +47,9 @@ public static partial class CommanderBracket
     /// Finds the lowest bracket that a deck fits.
     /// </summary>
     /// <param name="cards">The distinct cards of the commander, companion and main zones.</param>
+    /// <param name="combos">The complete combos of the deck, or <see langword="null"/> when the instance has no combo data.</param>
     /// <returns>The bracket and its reasons.</returns>
-    public static BracketAnalysis Evaluate(IEnumerable<CardFacts> cards)
+    public static BracketAnalysis Evaluate(IEnumerable<CardFacts> cards, IReadOnlyList<DeckCombo>? combos = null)
     {
         ArgumentNullException.ThrowIfNull(cards);
         var list = cards.DistinctBy(card => card.OracleId).OrderBy(card => card.Name, StringComparer.Ordinal).ToList();
@@ -45,23 +58,51 @@ public static partial class CommanderBracket
         var gameChangers = list.Where(card => card.GameChanger).Select(card => card.OracleId).ToList();
         if (gameChangers.Count > 0)
         {
-            reasons.Add(new BracketReason(GameChangers, gameChangers.Count > MaxGameChangers ? 4 : 3, gameChangers));
+            reasons.Add(new BracketReason(GameChangers, gameChangers.Count > MaxGameChangers ? 4 : 3, gameChangers, []));
         }
 
         var landDenial = list.Where(IsMassLandDenial).Select(card => card.OracleId).ToList();
         if (landDenial.Count > 0)
         {
-            reasons.Add(new BracketReason(MassLandDenial, 4, landDenial));
+            reasons.Add(new BracketReason(MassLandDenial, 4, landDenial, []));
         }
 
         var extraTurns = list.Where(IsExtraTurn).Select(card => card.OracleId).ToList();
         if (extraTurns.Count > 0)
         {
-            reasons.Add(new BracketReason(ExtraTurns, extraTurns.Count > MaxExtraTurns ? 4 : 2, extraTurns));
+            reasons.Add(new BracketReason(ExtraTurns, extraTurns.Count > MaxExtraTurns ? 4 : 2, extraTurns, []));
+        }
+
+        if (combos is not null)
+        {
+            // Brackets 1 and 2 forbid the two-card infinite combos. Bracket 3 forbids the early-game ones.
+            var twoCard = combos.Where(combo => combo.GameEnding && DeckCombos.IsTwoCard(combo)).ToList();
+            AddComboReason(reasons, TwoCardCombos, 4, [.. twoCard.Where(IsEarlyGame)]);
+            AddComboReason(reasons, LateTwoCardCombos, 3, [.. twoCard.Where(combo => !IsEarlyGame(combo))]);
         }
 
         var bracket = reasons.Count == 0 ? 1 : reasons.Max(reason => reason.Bracket);
-        return new BracketAnalysis(bracket, reasons, [TwoCardCombos]);
+        return new BracketAnalysis(bracket, reasons, combos is null ? [TwoCardCombos] : []);
+    }
+
+    /// <summary>
+    /// Tells whether a combo is an early-game combo: its mana value is <see cref="EarlyGameManaValue"/> or less.
+    /// </summary>
+    /// <param name="combo">The combo.</param>
+    /// <returns><see langword="true"/> for an early-game combo.</returns>
+    public static bool IsEarlyGame(DeckCombo combo)
+    {
+        ArgumentNullException.ThrowIfNull(combo);
+        return combo.ManaValue <= EarlyGameManaValue;
+    }
+
+    private static void AddComboReason(List<BracketReason> reasons, string code, int bracket, List<DeckCombo> combos)
+    {
+        if (combos.Count > 0)
+        {
+            var cards = combos.SelectMany(combo => combo.Cards).Select(card => card.OracleId).Distinct().ToList();
+            reasons.Add(new BracketReason(code, bracket, cards, [.. combos.Select(combo => combo.Id)]));
+        }
     }
 
     /// <summary>

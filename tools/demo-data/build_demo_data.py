@@ -3,7 +3,7 @@
 
 The dataset uses the file names of the local import (Cards:Import:Directory):
 sets.json, cards.jsonl.gz, oracle_tags.jsonl.gz, art_tags.jsonl.gz,
-rulings.jsonl.gz and card_identifiers.csv.gz.
+rulings.jsonl.gz, card_identifiers.csv.gz and variants.json.gz.
 
 Usage:
     python3 tools/demo-data/build_demo_data.py --source DIR --output DIR [--profile demo|fixture]
@@ -11,6 +11,10 @@ Usage:
 The source folder contains the downloaded bulk files:
     all_cards.jsonl.gz, oracle_tags.jsonl.gz, art_tags.jsonl.gz, rulings.jsonl.gz,
     cardIdentifiers.csv.gz and sets.json (the response of https://api.scryfall.com/sets).
+    Optional: variants.json.gz, the combos of Commander Spellbook
+    (https://json.commanderspellbook.com/variants.json.gz).
+    The script keeps the combos whose cards are all in the dataset.
+    The test fixture variants.json is not from this script: it is a small extract that a person selected.
 
 Profiles:
     fixture  About 25 cards that cover each card layout, for the automatic tests.
@@ -51,6 +55,8 @@ FIXTURE_CARDS = [
     "Cultivate",                            # ramp tag
     "Swords to Plowshares",                 # removal tag
     "Forest",                               # basic land
+    "Thassa's Oracle",                      # two-card combo of Commander Spellbook
+    "Demonic Consultation",                 # two-card combo of Commander Spellbook
 ]
 
 FIXTURE_LANGUAGES = {"en", "fr", "ja"}
@@ -185,6 +191,23 @@ def write_identifiers(source, output, printing_ids):
         handle.write(buffer.getvalue())
 
 
+def write_combos(source, output, oracle_ids):
+    """Write the combos of Commander Spellbook whose cards are all in the dataset."""
+    path = source / "variants.json.gz"
+    if not path.exists():
+        return 0
+    with gzip.open(path, "rt", encoding="utf-8") as handle:
+        document = json.load(handle)
+    document["variants"] = [
+        combo for combo in document["variants"]
+        if all(use["card"].get("oracleId") in oracle_ids for use in combo["uses"])
+    ]
+    document["aliases"] = []
+    with gzip.open(output / "variants.json.gz", "wt", encoding="utf-8") as handle:
+        json.dump(document, handle, ensure_ascii=False, separators=(",", ":"))
+    return len(document["variants"])
+
+
 def write_sets(source, output, set_codes, profile):
     """Write the sets. The demo keeps all the sets, because the keywords b: and g: of the search use the parent sets and the blocks."""
     sets = json.loads((source / "sets.json").read_text(encoding="utf-8"))
@@ -213,8 +236,9 @@ def main():
     write_rulings(arguments.source, arguments.output, oracle_ids)
     write_identifiers(arguments.source, arguments.output, {card["id"] for card in printings})
     write_sets(arguments.source, arguments.output, {card["set"] for card in printings}, arguments.profile)
+    combos = write_combos(arguments.source, arguments.output, oracle_ids) if arguments.profile == "demo" else 0
 
-    print(f"{len(oracle_ids)} cards, {len(printings)} printings, {oracle_tags} Oracle tags, {art_tags} illustration tags.")
+    print(f"{len(oracle_ids)} cards, {len(printings)} printings, {oracle_tags} Oracle tags, {art_tags} illustration tags, {combos} combos.")
 
 
 if __name__ == "__main__":

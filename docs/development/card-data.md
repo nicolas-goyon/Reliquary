@@ -16,6 +16,7 @@ The scheduled job `cards.import` imports these files:
 | `art_tags.jsonl` | Scryfall bulk file `art_tags` | The illustration tags and their links to the illustrations |
 | `rulings.jsonl` | Scryfall bulk file `rulings` | The rulings |
 | `card_identifiers.csv` | MTGJSON `csv/cardIdentifiers.csv.gz` | The IDs of each printing on other sites |
+| `variants.json` | Commander Spellbook `https://json.commanderspellbook.com/variants.json.gz` | The combos. [ADR 0030](../decisions/0030-combos-from-commander-spellbook.md) gives the rules. |
 
 Each file can have the extension `.gz`.
 
@@ -28,7 +29,7 @@ To run it now, use the CLI:
 just cli jobs run cards.import --force
 ```
 
-The job downloads about 450 MB and needs about 3 GB in the database.
+The job downloads about 480 MB and needs about 3 GB in the database.
 
 To download less, use the smaller card file:
 
@@ -53,6 +54,7 @@ The script `tools/demo-data/build_demo_data.py` creates a small dataset from the
 1. Download the bulk files of Scryfall and the identifiers of MTGJSON into a folder.
    The [Scryfall bulk data API](https://scryfall.com/docs/api/bulk-data) gives the addresses.
 2. Save the response of `https://api.scryfall.com/sets` as `sets.json` in the same folder.
+   Optional: download the combo file of Commander Spellbook as `variants.json.gz` in the same folder.
 3. Run the script:
 
    ```shell
@@ -61,6 +63,9 @@ The script `tools/demo-data/build_demo_data.py` creates a small dataset from the
 
 The profile `fixture` creates the test data of `tests/Reliquary.Cards.Tests/Fixtures`.
 The profile `demo` adds the 300 most popular Commander cards, and keeps all the sets.
+It also keeps the combos whose cards are all in the dataset.
+The file `variants.json` of the test fixtures does not come from the script.
+It contains three combos of Commander Spellbook that a person selected.
 The folder [`data/demo`](../../data/demo/README.md) contains the result of the profile `demo`.
 
 The tag files keep the parent tags of each tag, also when a parent tag has no card of the dataset.
@@ -87,6 +92,8 @@ Until this import, the search uses the printings in all the languages, and `is:s
 | `Cards:Import:Directory` | — | A folder with local files. The job then downloads nothing. |
 | `Cards:Import:IncludeIllustrationTags` | `true` | The job imports the illustration tags. |
 | `Cards:Import:IncludeMtgjsonIdentifiers` | `true` | The job imports the identifiers of MTGJSON. |
+| `Cards:Import:IncludeCombos` | `true` | The job imports the combos of Commander Spellbook. |
+| `Cards:Import:SpellbookCombos` | `https://json.commanderspellbook.com/variants.json.gz` | The address of the combo file of Commander Spellbook. |
 | `Cards:Import:DownloadDirectory` | The temporary folder | The folder for the downloaded files. |
 
 ## Rules of Scryfall
@@ -94,3 +101,11 @@ Until this import, the search uses the printings in all the languages, and `is:s
 - The import sends a `User-Agent` header and an `Accept` header, as Scryfall asks.
 - Reliquary shows the images from the Scryfall servers. It does not store them.
 - The prices of Scryfall are estimates. Do not use them for a sale.
+
+## Rules of Commander Spellbook
+
+- The import reads the bulk file of combos. It never reads the paginated API, as Commander Spellbook asks.
+- The import sends the same `User-Agent` header, with the name of Reliquary.
+- The interface shows the credit "Combos by Commander Spellbook" with a link to the site. Keep this credit.
+- The import keeps only the combos whose cards are all known Oracle cards.
+  The job imports the cards before the combos.

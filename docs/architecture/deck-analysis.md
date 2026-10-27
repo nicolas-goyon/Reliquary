@@ -4,6 +4,7 @@ This page tells what the deck analysis calculates, with the formulas, the tables
 The [specification](../specification/deck-analysis.md) gives the features.
 [ADR 0025](../decisions/0025-multi-face-analysis-rules.md) gives the rules for the cards with more than one face.
 [ADR 0027](../decisions/0027-deck-analysis.md) gives the reasons for the design.
+[ADR 0030](../decisions/0030-combos-from-commander-spellbook.md) gives the source and the rules of the combos.
 Terms follow the [glossary](../glossary.md).
 
 ## Endpoint
@@ -14,7 +15,7 @@ The owner gets each deck, and the other users and the visitors get the unlisted 
 The response uses stable codes in `snake_case`, so that the web app can translate them.
 
 The class `DeckAnalyzer` in `src/Components/Reliquary.Decks/Analysis` calculates the analysis.
-It has no input or output operations: it reads the deck lines and the card facts of `ICardCatalog` only.
+It has no input or output operations: it reads the deck lines, the card facts of `ICardCatalog` and the combos of `IComboCatalog` only.
 For a deck of 100 cards, the engine takes less than 1 ms on a Release build.
 The query of the card facts takes most of the time of the request.
 
@@ -43,6 +44,7 @@ A line with a card that the catalog does not know has no effect.
 | `draws` | The draw probabilities. See [Draw probabilities](#draw-probabilities). |
 | `needs` | The category needs of a Commander deck, or `null`. See [Commander needs](#commander-needs). |
 | `bracket` | The indicative bracket of a Commander deck, or `null`. See [Bracket](#bracket). |
+| `combos` | The combos of Commander Spellbook in the deck, for all the formats. See [Combos](#combos). |
 
 The Commander formats are `commander`, `duel`, `predh`, `paupercommander` and `brawl`.
 These formats have 100 cards, with the commander.
@@ -267,6 +269,8 @@ The analysis applies these rules to the distinct cards of the three zones:
 | `game_changers` | The card data marks the card as a Game Changer. 1 to 3 cards give bracket 3, and 4 or more give bracket 4. | 3 or 4 |
 | `mass_land_denial` | The text of the card agrees with a rule below. | 4 |
 | `extra_turns` | The text of the card says that a player takes one or more extra turns. 1 to 3 cards give bracket 2, and 4 or more give bracket 4. | 2 or 4 |
+| `two_card_combos` | The deck has a complete two-card combo that is game-ending and early-game. See [Combos](#combos). | 4 |
+| `late_two_card_combos` | The deck has a complete two-card combo that is game-ending, but not early-game. | 3 |
 
 The official rules do not give a number for "low quantities".
 The analysis accepts 3 extra turn cards or fewer.
@@ -283,8 +287,56 @@ The analysis finds these texts in all the faces of a card:
 4. "Nonbasic lands are" a basic land type, for example Blood Moon.
 
 Each reason has a `code`, the `bracket` that it permits and the `oracleIds` of its cards.
-The member `unchecked` gives the rules that the analysis does not check: `two_card_combos`.
-Issue [#103](https://github.com/nicolas-goyon/reliquary/issues/103) adds the combos from Commander Spellbook.
+A combo reason also gives the `comboIds` of its combos.
+For the other reasons, `comboIds` is empty.
+
+The official rules for the two-card combos are:
+
+- Brackets 1 and 2: "No intentional two-card infinite combos".
+- Bracket 3: "No intentional early-game two-card infinite combos".
+  The text adds that these combos "can happen cheaply and in about the first six or so turns of the game".
+- Bracket 4: no limit.
+
+The member `unchecked` gives the rules that the analysis does not check.
+When the instance has no combo data, it contains `two_card_combos`.
+Otherwise it is empty.
+
+## Combos
+
+The member `combos` compares the combos of [Commander Spellbook](https://commanderspellbook.com/) with the commander, companion and main zones.
+The Cards component imports the combos with the card data ([ADR 0030](../decisions/0030-combos-from-commander-spellbook.md)).
+It keeps only the combos whose cards are all known Oracle cards and that need no template.
+
+| Member | Content |
+| --- | --- |
+| `available` | `false` when the instance has no combo data. The lists are then empty. |
+| `complete` | The combos with all their cards in the deck, from the most popular. |
+| `near` | The combos that need one more card, from the most popular. The list has 50 combos at most. |
+| `nearCount` | The number of all the combos that need one more card. |
+
+Each combo has these members:
+
+| Member | Content |
+| --- | --- |
+| `id` | The ID of the combo on Commander Spellbook, for example `742-1295`. |
+| `url` | The page of the combo on Commander Spellbook. |
+| `cards` | A list of `{ oracleId, name, quantity, inDeck }`. A card is in the deck when the deck has the quantity that the combo needs. |
+| `results` | The names of the results, in English, for example `Win the game`. |
+| `gameEnding` | `true` when a result is infinite or near-infinite, or when Commander Spellbook marks a result as standalone. |
+| `manaNeeded` | The mana that the combo needs, as Commander Spellbook gives it, for example `{U}{U}{B}`, or `null`. |
+| `manaValue` | The larger of the mana value of `manaNeeded` and the sum of the mana values of the cards. |
+| `missingOracleId` | The missing card of a near combo, or `null`. |
+
+For the bracket, the analysis uses these definitions:
+
+- A two-card combo uses two cards: two distinct cards, or two copies of one card.
+- A combo is game-ending when `gameEnding` is `true`.
+- A combo is early-game when its `manaValue` is 6 or less.
+  The official rules give no number.
+  A player has about six mana on turn six, so Reliquary chose 6.
+
+For example, Thassa's Oracle and Demonic Consultation make a game-ending two-card combo with a mana value of 3.
+A Commander deck with these two cards gets bracket 4.
 
 ## Limits
 
@@ -292,4 +344,6 @@ Issue [#103](https://github.com/nicolas-goyon/reliquary/issues/103) adds the com
 - Lands and spells that search the library for a land are not mana sources.
 - Hybrid symbols and the combined sources of gold cards are not in the mana requirements.
 - The text rules of the bracket can miss a card, or find a card with an unusual text.
-- The bracket does not include two-card combos.
+- The analysis does not check the combos with a template, for example "a creature with a sacrifice ability".
+- The analysis ignores the condition "must be the commander" and the starting zones of the cards of a combo.
+- The analysis cannot know if the player put a combo in the deck intentionally.

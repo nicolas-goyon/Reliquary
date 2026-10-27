@@ -2,6 +2,7 @@ import { AccountMenu, MainNavigation } from '../components/Navigation'
 import { ApiKeysPanel, LoginsPanel, PasswordPanel, ProfilePanel } from '../account/AccountPanels'
 import { AccountDeletionPanel, DataExportPanel } from '../account/PersonalDataPanels'
 import { CommanderPanel, CurvePanel, DistributionPanel, DrawsPanel, ManaPanel } from '../components/analysis/AnalysisPanels'
+import { CombosPanel } from '../components/analysis/CombosPanel'
 import i18n from '../i18n'
 import type { SlotRegistry } from './registry'
 
@@ -30,4 +31,5 @@ export function registerCoreContributions(registry: SlotRegistry): void {
     title: ({ analysis }) => (analysis.needs || analysis.bracket ? i18n.t('decks:analysis.tabs.commander') : null),
     render: (context) => <CommanderPanel {...context} />,
   })
+  registry.register('analysis.tabs', { id: 'core.combos', order: 55, title: () => i18n.t('decks:analysis.tabs.combos'), render: (context) => <CombosPanel {...context} /> })
 }
