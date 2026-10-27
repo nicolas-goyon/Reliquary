@@ -114,3 +114,34 @@ The body of `POST /decks/group` gives the deck IDs, 500 or fewer, and one action
 | `delete` | Deletes the decks. |
 
 When a deck is not a deck of the user, the API changes no deck and gives the status 404.
+
+## Public decks
+
+[ADR 0029](../decisions/0029-public-deck-read-model.md) describes the read model of the public decks.
+
+| Endpoint | Access | Effect |
+| --- | --- | --- |
+| `GET /public-decks` | Anyone | Searches the public decks. See the parameters below. |
+| `GET /public-decks/favorites` | User | Lists the favorite decks of the user. |
+| `GET /public-decks/following` | User | Lists the public decks of the authors that the user follows. |
+| `GET /public-decks/{id}/social` | Anyone | Tells whether the deck is public and a favorite of the user, and gives its counts and its author. |
+| `PUT /public-decks/{id}/favorite` | User | Adds a public deck to the favorites. |
+| `DELETE /public-decks/{id}/favorite` | User | Removes a deck from the favorites. |
+| `GET /authors/{id}` | Anyone | Gets the profile of an author. |
+| `GET /authors/following` | User | Lists the authors that the user follows. |
+| `PUT /authors/{id}/follow` | User | Follows an author. A user cannot follow themselves. |
+| `DELETE /authors/{id}/follow` | User | Stops to follow an author. |
+
+The query of `GET /public-decks` accepts these parameters:
+
+| Parameter | Values |
+| --- | --- |
+| `q` | A part of the deck name |
+| `format` | A format, for example `commander` |
+| `commander` | The Oracle ID or the name of a commander, in any language |
+| `card` | The Oracle ID or the name of a card of the main zones, in any language |
+| `colors` | The exact color identity, like the deck list |
+| `author` | The account ID of the author |
+| `sort` | `recent` (default) or `popular`: the number of copies by other users plus the number of favorites |
+
+A visitor with no account opens an unlisted or public deck with its link: `GET /decks/{id}`.

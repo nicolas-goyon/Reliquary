@@ -185,6 +185,10 @@ internal sealed class DeckStore(IDatabase database)
     public ValueTask<NpgsqlConnection> OpenAsync(Guid ownerId, ContentAccess access, CancellationToken cancellationToken) =>
         database.OpenContentAsync(ownerId, access, cancellationToken);
 
+    /// <summary>Opens the users database, for the deck directory and the read model of the public decks.</summary>
+    public ValueTask<NpgsqlConnection> OpenUsersAsync(CancellationToken cancellationToken) =>
+        database.OpenUsersAsync(cancellationToken);
+
     /// <summary>
     /// Finds the owner of a deck in the deck directory.
     /// </summary>

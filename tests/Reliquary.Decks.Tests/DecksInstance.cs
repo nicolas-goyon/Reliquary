@@ -7,6 +7,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Reliquary.BuildingBlocks.Jobs;
 using Reliquary.Hosting;
+using Reliquary.Platform.Events;
 using Reliquary.Platform.Migrations;
 using Reliquary.Testing;
 
@@ -21,6 +22,7 @@ public sealed class DecksInstance : IAsyncDisposable
     private readonly SemaphoreSlim gate = new(1, 1);
     private TestDatabase? database;
     private WebApplicationFactory<Program>? factory;
+    private ServiceProvider? worker;
     private int accounts;
 
     public static string FixturesDirectory { get; } = Path.Combine(AppContext.BaseDirectory, "Fixtures");
@@ -57,6 +59,39 @@ public sealed class DecksInstance : IAsyncDisposable
     public string ConnectionString => database!.ConnectionString;
 
     /// <summary>
+    /// Sends the domain events that wait in the outboxes to the consumers of the worker, as the worker does.
+    /// </summary>
+    public async Task PublishEventsAsync()
+    {
+        await GetAsync();
+        await gate.WaitAsync(TestContext.Current.CancellationToken);
+        try
+        {
+            if (worker is null)
+            {
+                var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["ConnectionStrings:Users"] = database!.ConnectionString,
+                    ["ConnectionStrings:Redis"] = TestServers.Redis,
+                }).Build();
+                var services = new ServiceCollection();
+                services.AddSingleton<IConfiguration>(configuration);
+                services.AddLogging();
+                services.AddReliquaryCore(configuration);
+                services.AddReliquaryWorker(configuration);
+                worker = services.BuildServiceProvider();
+            }
+        }
+        finally
+        {
+            gate.Release();
+        }
+
+        var publisher = worker.GetRequiredService<OutboxPublisher>();
+        await publisher.PublishPendingAsync(TestContext.Current.CancellationToken);
+    }
+
+    /// <summary>
     /// Registers a new account and returns a client with its access token.
     /// </summary>
     public async Task<HttpClient> NewUserAsync()
@@ -78,6 +113,11 @@ public sealed class DecksInstance : IAsyncDisposable
         if (factory is not null)
         {
             await factory.DisposeAsync();
+        }
+
+        if (worker is not null)
+        {
+            await worker.DisposeAsync();
         }
 
         if (database is not null)

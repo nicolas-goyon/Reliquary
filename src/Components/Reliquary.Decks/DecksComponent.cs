@@ -4,9 +4,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Reliquary.BuildingBlocks;
 using Reliquary.BuildingBlocks.Data;
+using Reliquary.BuildingBlocks.Events;
 using Reliquary.Decks.Api;
 using Reliquary.Decks.Data;
 using Reliquary.Decks.Exchange;
+using Reliquary.Decks.Exploration;
 using Reliquary.Decks.Text;
 
 namespace Reliquary.Decks;
@@ -34,9 +36,15 @@ public sealed class DecksComponent : ICoreComponent
         services.AddSingleton<DeckService>();
         services.AddSingleton<TagService>();
         services.AddSingleton<FolderService>();
+        services.AddSingleton<PublicDeckIndexer>();
+        services.AddSingleton<PublicDeckService>();
         services.AddSingleton<DeckTextService>();
         services.AddSingleton<DeckExchangeService>();
     }
+
+    /// <inheritdoc />
+    public void AddWorkerServices(IServiceCollection services, IConfiguration configuration) =>
+        services.AddSingleton<IDomainEventConsumer, PublicDeckConsumer>();
 
     /// <inheritdoc />
     public void MapEndpoints(IEndpointRouteBuilder api)
@@ -44,5 +52,6 @@ public sealed class DecksComponent : ICoreComponent
         DeckEndpoints.Map(api);
         TagEndpoints.Map(api);
         FolderEndpoints.Map(api);
+        PublicDeckEndpoints.Map(api);
     }
 }
