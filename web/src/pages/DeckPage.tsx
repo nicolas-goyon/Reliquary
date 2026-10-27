@@ -9,6 +9,7 @@ import { CardImage } from '../components/CardImage'
 import { Combobox, type Suggestion } from '../components/Combobox'
 import { FormatSelect, VisibilitySelect } from '../components/DeckFields'
 import { DeckExportDialog } from '../components/DeckExportDialog'
+import { DeckTable } from '../components/deck-table/DeckTable'
 import { ErrorAlert, TextField } from '../components/Forms'
 import { LineErrorList } from '../components/LineErrors'
 import { ManaCost } from '../components/ManaCost'
@@ -51,7 +52,7 @@ function DeckEditor({ deck, onChange }: EditorProps) {
   const { t } = useTranslation('decks')
   const { request } = useAuth()
   const [error, setError] = useState<unknown>(null)
-  const [mode, setMode] = useState<'visual' | 'text'>('visual')
+  const [mode, setMode] = useState<'visual' | 'text' | 'table'>('visual')
   const [copying, setCopying] = useState(false)
   const [exporting, setExporting] = useState(false)
   const [legality, setLegality] = useState<DeckLegality | null>(null)
@@ -92,11 +93,12 @@ function DeckEditor({ deck, onChange }: EditorProps) {
     <article className="page page-wide deck-page">
       <DeckHeader deck={deck} onSave={(fields) => void change('', 'PATCH', fields)} />
       <div className="deck-actions" role="toolbar" aria-label={t('editor.actions')}>
-        {owner && (
-          <button type="button" aria-pressed={mode === 'text'} onClick={() => setMode(mode === 'text' ? 'visual' : 'text')}>
-            {mode === 'text' ? t('editor.visualMode') : t('editor.textMode')}
-          </button>
-        )}
+        {owner &&
+          (['visual', 'text', 'table'] as const).map((value) => (
+            <button key={value} type="button" aria-pressed={mode === value} onClick={() => setMode(value)}>
+              {t(`editor.${value}Mode`)}
+            </button>
+          ))}
         <button type="button" onClick={() => setCopying(true)}>
           {t('editor.copy')}
         </button>
@@ -120,6 +122,8 @@ function DeckEditor({ deck, onChange }: EditorProps) {
           onChange(saved)
           setMode('visual')
         }} />
+      ) : mode === 'table' && owner ? (
+        <DeckTable deck={deck} onChange={onChange} />
       ) : (
         <>
           {owner && <AddCard onAdd={(oracleId, zone) => void change('/lines', 'POST', { lines: [{ oracleId, zone }] })} />}

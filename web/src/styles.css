@@ -1178,6 +1178,17 @@ button:disabled {
 .color-filter legend {
   padding: 0;
   margin-bottom: 0.25rem;
+
+/* Table mode of the deck page */
+.deck-table {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.deck-table-filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: 0.75rem;
 }
 
 .group-actions {
@@ -1188,6 +1199,17 @@ button:disabled {
 }
 
 .group-count {
+
+  gap: 0.75rem 1.5rem;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  background-color: var(--color-surface);
+}
+
+.group-actions-count {
+  flex-basis: 100%;
   margin: 0;
   font-weight: 600;
 }
@@ -1203,4 +1225,55 @@ button:disabled {
 
 tr[aria-selected='true'] {
   background-color: var(--color-surface);
+
+.group-action {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.group-action input:not([type='checkbox']),
+.group-action select {
+  min-height: 2.75rem;
+  padding: 0 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.375rem;
+  background-color: var(--color-background);
+  color: inherit;
+  font: inherit;
+}
+
+.group-action .checkbox {
+  display: inline-flex;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.deck-table-scroll {
+  overflow-x: auto;
+}
+
+.deck-table-grid th .button-link {
+  color: inherit;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.deck-table-row {
+  cursor: default;
+  user-select: none;
+}
+
+.deck-table-row:hover {
+  background-color: color-mix(in srgb, var(--color-primary) 6%, transparent);
+}
+
+.deck-table-row-selected,
+.deck-table-row-selected:hover {
+  background-color: color-mix(in srgb, var(--color-primary) 16%, transparent);
+}
+
+.deck-table-row a {
+  color: inherit;
 }

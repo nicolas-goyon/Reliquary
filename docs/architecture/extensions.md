@@ -72,6 +72,12 @@ Plugins have two purposes:
 - Each contribution of the slot `analysis.tabs` is one tab of the deck analysis.
   The optional `title` of the contribution gives the name of the tab, and a `null` title hides the tab for a deck.
   The context gives the deck and its analysis, so an extension can add its own analysis panel.
+- The slot `table.columns` adds columns to the table mode of the deck page.
+  The table renders each contribution in the header with the context `{ deckId, part: "header" }`.
+  It also renders the contribution in each row with the context `{ deckId, part: "cell", line, card }`.
+  `line` is the deck line of the row, and `card` is the data of its card, or `null`.
+  Each header and each cell has its own error boundary.
+  The column comes after the columns of the core, in the order of the contributions.
 - The core keeps control of the layout:
   - Each slot has a maximum size.
   - The user can change the order of the contributions and hide them.

@@ -81,6 +81,27 @@ internal sealed record LineChanges(
     IReadOnlyList<string>? Categories = null);
 
 /// <summary>
+/// A group action on several lines of one deck.
+/// </summary>
+/// <param name="Action">The action: <c>move</c>, <c>tag</c>, <c>untag</c>, <c>printing</c>, <c>quantity</c> or <c>remove</c>.</param>
+/// <param name="Zone">The zone of the action <c>move</c>.</param>
+/// <param name="Tags">The local tags of the actions <c>tag</c> and <c>untag</c>.</param>
+/// <param name="GlobalTags">The global tags of the actions <c>tag</c> and <c>untag</c>.</param>
+/// <param name="Categories">The categories of the actions <c>tag</c> and <c>untag</c>.</param>
+/// <param name="QuantityDelta">The number of cards to add to each line in the action <c>quantity</c>. A negative number removes cards.</param>
+/// <param name="Finish">The finish of the action <c>printing</c>, or <see langword="null"/> to keep the finish.</param>
+/// <param name="ClearPrinting">For the action <c>printing</c>: <see langword="true"/> removes the printing, so the default printing applies.</param>
+internal sealed record LineGroupAction(
+    string Action,
+    string? Zone,
+    IReadOnlyList<string> Tags,
+    IReadOnlyList<string> GlobalTags,
+    IReadOnlyList<string> Categories,
+    int QuantityDelta,
+    string? Finish,
+    bool ClearPrinting);
+
+/// <summary>
 /// A deck and its lines, as a user can see them, with the tags of the lines.
 /// </summary>
 internal sealed record DeckView(DeckRow Deck, IReadOnlyList<DeckLineRow> Lines, bool IsOwner, IReadOnlyList<TagRow> Tags);
@@ -398,6 +419,70 @@ internal sealed class DeckService(DeckStore store, ICardCatalog catalog, IDomain
         }, cancellationToken);
     }
 
+    /// <summary>
+    /// Applies one action to several lines of a deck in one transaction. The deck gets one new version and one event.
+    /// Lines that get the same key become one line, with the sum of their quantities.
+    /// </summary>
+    /// <exception cref="DeckException">The deck or a line does not exist, or a line gets too many tags.</exception>
+    public Task<DeckView> ApplyLineGroupActionAsync(Guid ownerId, Guid deckId, IReadOnlyCollection<Guid> lineIds, LineGroupAction action, int? expectedVersion, CancellationToken cancellationToken)
+    {
+        var tagInput = new LineInput(Guid.Empty, null, null, 1, "main", string.Empty, action.Tags, action.GlobalTags, action.Categories);
+        IReadOnlyList<LineInput> inputs = action.Action == "tag" ? [tagInput] : [];
+        return MutateAsync(ownerId, deckId, expectedVersion, inputs, (_, _, _, current, tags) =>
+        {
+            var selected = current.Where(line => lineIds.Contains(line.Id)).ToList();
+            if (selected.Count != lineIds.Count)
+            {
+                throw new DeckException(StatusCodes.Status404NotFound, ErrorCodes.NotFound, "One or more deck lines do not exist.");
+            }
+
+            var now = time.GetUtcNow().UtcDateTime;
+            HashSet<Guid> removedTagIds = action.Action == "untag"
+                ? action.Tags.Select(name => tags.Find(name, false)?.Id).Concat(action.GlobalTags.Select(name => tags.Find(name, true)?.Id)).OfType<Guid>().ToHashSet()
+                : [];
+            foreach (var line in selected)
+            {
+                switch (action.Action)
+                {
+                    case "move":
+                        line.Zone = action.Zone!;
+                        break;
+                    case "tag":
+                        line.TagIds = [.. line.TagIds.Union(tags.IdsOf(tagInput))];
+                        line.Categories = [.. line.Categories.Union(action.Categories)];
+                        break;
+                    case "untag":
+                        line.TagIds = [.. line.TagIds.Where(id => !removedTagIds.Contains(id))];
+                        line.Categories = [.. line.Categories.Except(action.Categories)];
+                        break;
+                    case "printing":
+                        line.PrintingId = action.ClearPrinting ? null : line.PrintingId;
+                        line.Finish = action.Finish ?? line.Finish;
+                        break;
+                    case "quantity":
+                        line.Quantity = Math.Min(DeckRules.MaxQuantity, line.Quantity + action.QuantityDelta);
+                        break;
+                    case "remove":
+                        line.Quantity = 0;
+                        break;
+                    default:
+                        throw new ArgumentException($"The action {action.Action} is not known.", nameof(action));
+                }
+
+                line.UpdatedAt = now;
+            }
+
+            current.RemoveAll(line => line.Quantity <= 0);
+            MergeSameKeys(current, lineIds, now);
+            if (current.Any(line => line.TagIds.Length > DeckRules.MaxTagsPerLine || line.Categories.Length > DeckRules.MaxTagsPerLine))
+            {
+                throw DeckException.Validation(new FieldError("tags", FieldErrorCodes.TooLong, $"A line can have {DeckRules.MaxTagsPerLine} tags and {DeckRules.MaxTagsPerLine} categories or fewer."));
+            }
+
+            return Task.CompletedTask;
+        }, cancellationToken);
+    }
+
     public Task<DeckView> DeleteLineAsync(Guid ownerId, Guid deckId, Guid lineId, CancellationToken cancellationToken) =>
         MutateAsync(ownerId, deckId, null, [], (_, _, _, current, _) =>
         {
@@ -556,6 +641,30 @@ internal sealed class DeckService(DeckStore store, ICardCatalog catalog, IDomain
                 CreatedAt = now,
                 UpdatedAt = now,
             });
+        }
+    }
+
+    /// <summary>
+    /// Joins the lines that have the same key. The line that the action did not change keeps its ID.
+    /// It gets the sum of the quantities, the tags, the categories and the first note that is not empty.
+    /// </summary>
+    private static void MergeSameKeys(List<DeckLineRow> lines, IReadOnlyCollection<Guid> changedIds, DateTime now)
+    {
+        var kept = new Dictionary<(string Zone, Guid OracleId, Guid? PrintingId, string? Finish), DeckLineRow>();
+        foreach (var line in lines.OrderBy(line => changedIds.Contains(line.Id) ? 1 : 0).ToList())
+        {
+            if (!kept.TryGetValue(line.Key, out var same))
+            {
+                kept[line.Key] = line;
+                continue;
+            }
+
+            same.Quantity = Math.Min(DeckRules.MaxQuantity, same.Quantity + line.Quantity);
+            same.TagIds = [.. same.TagIds.Union(line.TagIds)];
+            same.Categories = [.. same.Categories.Union(line.Categories)];
+            same.Note = same.Note.Length > 0 ? same.Note : line.Note;
+            same.UpdatedAt = now;
+            lines.Remove(line);
         }
     }
 

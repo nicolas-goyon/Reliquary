@@ -70,6 +70,10 @@ internal static class DeckEndpoints
             .WithName("UpdateDeckLine")
             .WithSummary("Changes the quantity, the zone, the printing, the finish or the note of a line. A quantity of 0 removes the line.");
 
+        owner.MapPost("/{deckId:guid}/lines/group", ApplyLineGroupActionAsync)
+            .WithName("ApplyDeckLineGroupAction")
+            .WithSummary("Applies one action to several lines of a deck in one change: move, tag, untag, printing, quantity or remove. Lines that get the same zone, card, printing and finish become one line.");
+
         owner.MapPost("/{deckId:guid}/copy", CopyAsync)
             .WithName("CopyDeck")
             .WithSummary("Copies a deck into a new deck of the user: one of their decks, or an unlisted or public deck of another user.");
@@ -444,6 +448,71 @@ internal static class DeckEndpoints
         return TypedResults.Ok(await ToResponseAsync(view, catalog, cancellationToken));
     }
 
+    private static async Task<Results<Ok<DeckResponse>, ProblemHttpResult>> ApplyLineGroupActionAsync(
+        Guid deckId, LineGroupRequest request, ClaimsPrincipal user, DeckService decks, ICardCatalog catalog, CancellationToken cancellationToken)
+    {
+        var errors = new List<FieldError>();
+        if (request.LineIds is not { Count: > 0 })
+        {
+            errors.Add(new FieldError("lineIds", FieldErrorCodes.Required, "Give one line or more."));
+        }
+        else if (request.LineIds.Count > DeckRules.MaxLines)
+        {
+            errors.Add(new FieldError("lineIds", FieldErrorCodes.TooLong, $"Give {DeckRules.MaxLines} lines or fewer."));
+        }
+
+        if (string.IsNullOrEmpty(request.Action))
+        {
+            errors.Add(new FieldError("action", FieldErrorCodes.Required, "The action is necessary."));
+        }
+        else
+        {
+            AddChoiceError(errors, "action", request.Action, LineGroupActions);
+        }
+
+        ValidateLineFields(errors, string.Empty, request.Zone, request.Finish, null);
+        switch (request.Action)
+        {
+            case "move" when request.Zone is null:
+                errors.Add(new FieldError("zone", FieldErrorCodes.Required, "The zone is necessary for the action move."));
+                break;
+            case "tag" or "untag":
+                ValidateTags(errors, string.Empty, request.Tags, request.GlobalTags, request.Categories);
+                if ((request.Tags?.Count ?? 0) + (request.GlobalTags?.Count ?? 0) + (request.Categories?.Count ?? 0) == 0)
+                {
+                    errors.Add(new FieldError("tags", FieldErrorCodes.Required, "Give one tag, global tag or category or more."));
+                }
+
+                break;
+            case "printing" when request.ClearPrinting != true && request.Finish is null:
+                errors.Add(new FieldError("finish", FieldErrorCodes.Required, "Give a finish, or set clearPrinting to true."));
+                break;
+            case "quantity" when request.QuantityDelta is null or 0:
+                errors.Add(new FieldError("quantityDelta", FieldErrorCodes.Required, "Give a number of cards that is not 0."));
+                break;
+            case "quantity" when request.QuantityDelta is < -DeckRules.MaxQuantity or > DeckRules.MaxQuantity:
+                errors.Add(new FieldError("quantityDelta", FieldErrorCodes.OutOfRange, $"The number of cards must be from -{DeckRules.MaxQuantity} to {DeckRules.MaxQuantity}."));
+                break;
+        }
+
+        if (errors.Count > 0)
+        {
+            return ApiProblems.Validation(errors);
+        }
+
+        var action = new LineGroupAction(
+            request.Action!,
+            request.Zone,
+            Clean(request.Tags) ?? [],
+            Clean(request.GlobalTags) ?? [],
+            [.. (request.Categories ?? []).Distinct()],
+            request.QuantityDelta ?? 0,
+            request.Finish,
+            request.ClearPrinting == true);
+        var view = await decks.ApplyLineGroupActionAsync(user.GetAccountId(), deckId, request.LineIds!.ToHashSet(), action, request.ExpectedVersion, cancellationToken);
+        return TypedResults.Ok(await ToResponseAsync(view, catalog, cancellationToken));
+    }
+
     private static async Task<Ok<DeckResponse>> DeleteLineAsync(Guid deckId, Guid lineId, ClaimsPrincipal user, DeckService decks, ICardCatalog catalog, CancellationToken cancellationToken)
     {
         var view = await decks.DeleteLineAsync(user.GetAccountId(), deckId, lineId, cancellationToken);
@@ -605,6 +674,8 @@ internal static class DeckEndpoints
     private static readonly string[] SortChoices = ["updated", "created", "name", "format"];
 
     private static readonly string[] GroupActions = ["move", "tag", "untag", "pin", "unpin", "archive", "unarchive", "delete"];
+
+    private static readonly string[] LineGroupActions = ["move", "tag", "untag", "printing", "quantity", "remove"];
 
     private static void ValidateDeckFields(List<FieldError> errors, string? name, string? format, string? visibility, string? description)
     {

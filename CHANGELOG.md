@@ -55,3 +55,4 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Card search with the Scryfall syntax: `GET /api/v1/cards/search`, with all the names of a card, paging, warnings and errors with a position.
 - Parity tests of the card search against the examples of the Scryfall syntax guide, on the demo dataset in `data/demo`.
 - The search benchmark in `bench/Reliquary.Cards.Benchmark` and its GitHub workflow.
+- Table mode of the deck page: sort, filters and a selection of lines, with group actions in one request (`POST /api/v1/decks/{id}/lines/group`) and the `table.columns` slot.
