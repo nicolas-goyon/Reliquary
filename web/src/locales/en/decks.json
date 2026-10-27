@@ -38,7 +38,8 @@
   },
   "finishes": {
     "foil": "Foil",
-    "etched": "Etched"
+    "etched": "Etched",
+    "nonfoil": "Nonfoil"
   },
   "categories": {
     "ramp": "Ramp",
@@ -89,7 +90,8 @@
     "quantity": "Quantity of {{name}}",
     "moveTo": "Zone of {{name}}",
     "remove": "Remove {{name}} from the deck",
-    "export": "Export"
+    "export": "Export",
+    "tableMode": "Table mode"
   },
   "legality": {
     "legal": "The deck is legal in {{format}}.",
@@ -367,5 +369,49 @@
     "delete": "Delete",
     "deleteConfirm_one": "Delete {{count}} deck? You cannot undo this operation.",
     "deleteConfirm_other": "Delete {{count}} decks? You cannot undo this operation."
+  },
+  "table": {
+    "title": "Table of the deck lines",
+    "caption": "The lines of the deck. Select lines, then apply a group action.",
+    "filterName": "Card name",
+    "filterZone": "Zone",
+    "filterLabel": "Tag or category",
+    "allZones": "All the zones",
+    "allLabels": "All the tags and categories",
+    "tags": "Tags",
+    "categories": "Categories",
+    "columns": {
+      "quantity": "Quantity",
+      "name": "Card",
+      "zone": "Zone",
+      "manaValue": "Mana value",
+      "type": "Type",
+      "labels": "Tags and categories",
+      "printing": "Printing"
+    },
+    "selectAll": "Select all the lines",
+    "select": "Select {{name}}",
+    "empty": "No line agrees with the filters.",
+    "defaultPrintingShort": "Default printing",
+    "groupActions": "Group actions",
+    "selected_one": "{{count}} selected line",
+    "selected_other": "{{count}} selected lines",
+    "zone": "New zone",
+    "move": "Move",
+    "tag": "Tag",
+    "globalTag": "Global tag",
+    "addTag": "Add the tag",
+    "removeTag": "Remove the tag",
+    "category": "Category",
+    "addCategory": "Add the category",
+    "removeCategory": "Remove the category",
+    "finish": "Finish",
+    "setFinish": "Set the finish",
+    "defaultPrinting": "Use the default printing",
+    "addOne": "Add one card to each line",
+    "removeOne": "Remove one card from each line",
+    "removeLines": "Remove the lines",
+    "removeConfirm_one": "Remove {{count}} line from the deck?",
+    "removeConfirm_other": "Remove {{count}} lines from the deck?"
   }
 }

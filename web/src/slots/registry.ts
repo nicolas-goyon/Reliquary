@@ -1,7 +1,15 @@
 import { createContext, useContext, useSyncExternalStore, type ReactNode } from 'react'
 import type { DeckAnalysis } from '../api/analysis'
-import type { Deck } from '../api/decks'
+import type { Deck, DeckCard, DeckLine } from '../api/decks'
 import type { Account } from '../api/types'
+
+/**
+ * The context of a column of the table mode. The table renders each contribution once in the header,
+ * with the part "header", and once in each row, with the part "cell" and the line of the row.
+ */
+export type TableColumnContext =
+  | { deckId: string; part: 'header' }
+  | { deckId: string; part: 'cell'; line: DeckLine; card: DeckCard | null }
 
 /**
  * The named places of the interface where the core, and later the extensions, add interface elements.
@@ -16,8 +24,8 @@ export interface SlotContexts {
   'deck.actions': { deckId: string }
   /** The tabs of the deck analysis. Each contribution is one tab, and its title is the name of the tab. */
   'analysis.tabs': { deckId: string; deck: Deck; analysis: DeckAnalysis }
-  /** The columns of the table mode. */
-  'table.columns': { deckId: string }
+  /** The columns of the table mode: one column for each contribution. */
+  'table.columns': TableColumnContext
   /** The page of a card. */
   'card.page': { oracleId: string }
   /** The account page. */

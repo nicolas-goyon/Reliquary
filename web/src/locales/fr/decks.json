@@ -38,7 +38,8 @@
   },
   "finishes": {
     "foil": "Foil",
-    "etched": "Gravé"
+    "etched": "Gravé",
+    "nonfoil": "Non foil"
   },
   "categories": {
     "ramp": "Accélération",
@@ -89,7 +90,8 @@
     "quantity": "Quantité de {{name}}",
     "moveTo": "Zone de {{name}}",
     "remove": "Retirer {{name}} du deck",
-    "export": "Exporter"
+    "export": "Exporter",
+    "tableMode": "Mode tableau"
   },
   "legality": {
     "legal": "Le deck est légal en {{format}}.",
@@ -367,5 +369,49 @@
     "delete": "Supprimer",
     "deleteConfirm_one": "Supprimer {{count}} deck ? Cette opération est définitive.",
     "deleteConfirm_other": "Supprimer {{count}} decks ? Cette opération est définitive."
+  },
+  "table": {
+    "title": "Tableau des lignes du deck",
+    "caption": "Les lignes du deck. Sélectionnez des lignes, puis appliquez une action groupée.",
+    "filterName": "Nom de la carte",
+    "filterZone": "Zone",
+    "filterLabel": "Tag ou catégorie",
+    "allZones": "Toutes les zones",
+    "allLabels": "Tous les tags et catégories",
+    "tags": "Tags",
+    "categories": "Catégories",
+    "columns": {
+      "quantity": "Quantité",
+      "name": "Carte",
+      "zone": "Zone",
+      "manaValue": "Valeur de mana",
+      "type": "Type",
+      "labels": "Tags et catégories",
+      "printing": "Impression"
+    },
+    "selectAll": "Sélectionner toutes les lignes",
+    "select": "Sélectionner {{name}}",
+    "empty": "Aucune ligne ne correspond aux filtres.",
+    "defaultPrintingShort": "Impression par défaut",
+    "groupActions": "Actions groupées",
+    "selected_one": "{{count}} ligne sélectionnée",
+    "selected_other": "{{count}} lignes sélectionnées",
+    "zone": "Nouvelle zone",
+    "move": "Déplacer",
+    "tag": "Tag",
+    "globalTag": "Tag global",
+    "addTag": "Ajouter le tag",
+    "removeTag": "Retirer le tag",
+    "category": "Catégorie",
+    "addCategory": "Ajouter la catégorie",
+    "removeCategory": "Retirer la catégorie",
+    "finish": "Finition",
+    "setFinish": "Appliquer la finition",
+    "defaultPrinting": "Utiliser l’impression par défaut",
+    "addOne": "Ajouter un exemplaire à chaque ligne",
+    "removeOne": "Retirer un exemplaire de chaque ligne",
+    "removeLines": "Retirer les lignes",
+    "removeConfirm_one": "Retirer {{count}} ligne du deck ?",
+    "removeConfirm_other": "Retirer {{count}} lignes du deck ?"
   }
 }
