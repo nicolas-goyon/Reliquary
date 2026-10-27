@@ -13,6 +13,7 @@ import { DeckTable } from '../components/deck-table/DeckTable'
 import { ErrorAlert, TextField } from '../components/Forms'
 import { LineErrorList } from '../components/LineErrors'
 import { ManaCost } from '../components/ManaCost'
+import { RecommendationsPanel } from '../components/recommendations/RecommendationsPanel'
 import { Link } from '../router/Link'
 import { navigate } from '../router/navigation'
 import { Slot } from '../slots/Slot'
@@ -116,6 +117,7 @@ function DeckEditor({ deck, onChange }: EditorProps) {
       {exporting && <DeckExportDialog deckId={deck.id} onClose={() => setExporting(false)} />}
       <ErrorAlert error={error} />
       {legality && <LegalityPanel deck={deck} legality={legality} />}
+      {owner && <RecommendationsPanel deck={deck} onAdd={(oracleId, zone) => change('/lines', 'POST', { lines: [{ oracleId, zone }] })} />}
 
       {mode === 'text' && owner ? (
         <TextMode deck={deck} onSaved={(saved) => {

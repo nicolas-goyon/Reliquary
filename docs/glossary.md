@@ -31,6 +31,7 @@ The French column gives the term for the French interface.
 | Tag | A label on a deck line. A global tag exists in all the decks of a user. A local tag exists in one deck only. | Tag global, tag local |
 | Category | A predefined tag that the analysis uses: ramp, card draw, targeted interaction, board wipe, synergy, land, win condition or protection. | Catégorie |
 | Auto-tag | A feature that suggests tags for deck lines. It uses Scryfall Tagger data and rules on the card text. | Tag automatique |
+| Recommendation | A card that an external source suggests for the commanders of a deck. The administrator enables the recommendations. | Recommandation |
 | Visibility | Who can open a deck: only the owner (private), people with the link (unlisted) or everyone (public). | Visibilité : privé, non listé, public |
 | Purchase preferences | The rules of one deck line for purchases: wanted or avoided printings, languages, minimum condition, foil and maximum price. | Préférences d'achat |
 | Purchase list | The cards to buy to complete a deck or a variant. It is the deck list minus the available cards. | Liste d'achat |

@@ -16,6 +16,7 @@ x-backend-environment: &backend-environment
   Email__Smtp__Port: "1025"
   Email__Smtp__Security: None
   Cards__Import__Directory: /data/cards
+  Recommendations__Enabled: ${RELIQUARY_RECOMMENDATIONS:-false}
 
 services:
   postgres:
