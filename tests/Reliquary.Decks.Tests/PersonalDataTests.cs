@@ -42,7 +42,8 @@ public sealed class PersonalDataTests(DecksInstance instance)
         Assert.Equal("ready", ready.Status);
         Assert.Equal("application/zip", download.Content.Headers.ContentType!.MediaType);
         Assert.Equal(
-            ["README.txt", "account/account.json", "decks/category-rules.json", "decks/decks.json", "decks/favorites.json", "decks/folders.json", "decks/following.json", "decks/global-tags.json", "decks/text/Atraxa (2).txt", "decks/text/Atraxa.txt"],
+            ["README.txt", "account/account.json", "decks/category-rules.json", "decks/decks.json", "decks/favorites.json", "decks/folders.json", "decks/following.json", "decks/global-tags.json", "decks/text/Atraxa (2).txt", "decks/text/Atraxa.txt",
+                "moderation/hidden-content.json", "moderation/moderation-actions.json", "moderation/reports.json"],
             entries);
         Assert.Equal("Tester", account.GetProperty("displayName").GetString());
         Assert.False(account.TryGetProperty("passwordHash", out _));
@@ -69,6 +70,14 @@ public sealed class PersonalDataTests(DecksInstance instance)
         await other.PutAsync(new Uri($"/api/v1/authors/{accountId}/follow", UriKind.Relative), null, Cancel);
         await other.PostAsJsonAsync($"/api/v1/decks/{deck.Id}/copy", new { }, Cancel);
         await instance.PublishEventsAsync();
+
+        // The moderation data: a report by the user, a report about the user, and a hidden deck with its log entries.
+        using var administrator = await instance.AdministratorAsync();
+        var reportByUser = await client.PostAsJsonAsync("/api/v1/reports", new { itemType = "deck", itemId = theirs.Id, reason = "spam" }, Cancel);
+        var reportAboutUser = await other.PostAsJsonAsync("/api/v1/reports", new { itemType = "author", itemId = accountId, reason = "other" }, Cancel);
+        await other.PostAsJsonAsync("/api/v1/reports", new { itemType = "deck", itemId = deck.Id, reason = "offensive" }, Cancel);
+        var hide = await administrator.PutAsJsonAsync($"/api/v1/moderation/hidden/deck/{deck.Id}", new { reason = "Offensive" }, Cancel);
+        Assert.Equal((HttpStatusCode.Created, HttpStatusCode.Created, HttpStatusCode.NoContent), (reportByUser.StatusCode, reportAboutUser.StatusCode, hide.StatusCode));
 
         var wrong = await client.PostAsJsonAsync("/api/v1/me/deletion", new { password = "wrong password" }, Cancel);
         var requested = await client.PostAsJsonAsync("/api/v1/me/deletion", new { password = "correct horse battery" }, Cancel);

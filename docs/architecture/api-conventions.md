@@ -111,6 +111,8 @@ Rules for the error codes:
 | `core_version_not_supported` | 409 | The extension does not support the current version of the core API. |
 | `deck_text_invalid` | 400 | The deck text has lines that the API cannot use. The member `lineErrors` gives the number, the reason code and the text of each line. |
 | `deck_version_conflict` | 409 | The deck changed since the client read it. Read the deck again, then repeat the change. |
+| `report_exists` | 409 | The user has an open report about the item. |
+| `report_closed` | 409 | An administrator closed the report before. Read the list of the reports again. |
 | `search_syntax_error` | 400 | The card search query has a syntax error. The member `position` gives the index of the character. |
 | `search_query_empty` | 400 | The card search query has no search condition. The member `warnings` gives the ignored terms. |
 | `search_timeout` | 400 | The card search took more than 5 seconds. |

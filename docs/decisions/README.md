@@ -42,6 +42,7 @@ Each record gives the context, the decision and its consequences.
 | [0032](0032-personal-data.md) | Export and deletion of the personal data through providers of each core component | Accepted |
 | [0033](0033-deck-versions-and-variants.md) | Deck versions as frozen commits, variants as deck rows, and the assembled version | Accepted |
 | [0034](0034-collection-model.md) | Collection model in the shard, availability rules and the interfaces with the decks | Accepted |
+| [0035](0035-moderation-of-public-content.md) | Moderation of the public content in the Decks component, with the data in the users database | Accepted |
 
 ## Open decisions
 

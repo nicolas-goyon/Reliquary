@@ -25,6 +25,12 @@ public sealed class DecksInstance : IAsyncDisposable
     private ServiceProvider? worker;
     private int accounts;
 
+    /// <summary>The email address of the administrator of the instance, in the setting <c>Auth:AdministratorEmails</c>.</summary>
+    public const string AdministratorEmail = "moderator@decks.example.org";
+
+    /// <summary>The maximum number of reports of one user in 24 hours, in the setting <c>Moderation:ReportsPerDay</c>.</summary>
+    public const int ReportsPerDay = 3;
+
     public static string FixturesDirectory { get; } = Path.Combine(AppContext.BaseDirectory, "Fixtures");
 
     public async Task<WebApplicationFactory<Program>> GetAsync()
@@ -45,6 +51,8 @@ public sealed class DecksInstance : IAsyncDisposable
                     builder.UseSetting("Auth:SigningKey", "dGVzdC1zaWduaW5nLWtleS1mb3ItdGhlLWRlY2tzLXRlc3RzLW9ubHk=");
                     builder.UseSetting("Auth:RequireCheckedEmail", "false");
                     builder.UseSetting("Auth:RequestsPerMinute", "100000");
+                    builder.UseSetting("Auth:AdministratorEmails:0", AdministratorEmail);
+                    builder.UseSetting("Moderation:ReportsPerDay", ReportsPerDay.ToString(System.Globalization.CultureInfo.InvariantCulture));
                 });
             }
 
@@ -102,11 +110,18 @@ public sealed class DecksInstance : IAsyncDisposable
     /// <summary>
     /// Registers a new account and returns a client with its access token.
     /// </summary>
-    public async Task<HttpClient> NewUserAsync()
+    public Task<HttpClient> NewUserAsync() =>
+        SignInAsync($"user{Interlocked.Increment(ref accounts)}-{Guid.NewGuid():N}@example.org");
+
+    /// <summary>
+    /// Returns a client with the access token of the administrator. The first call registers the account.
+    /// </summary>
+    public Task<HttpClient> AdministratorAsync() => SignInAsync(AdministratorEmail);
+
+    private async Task<HttpClient> SignInAsync(string email)
     {
         var api = await GetAsync();
         var client = api.CreateClient();
-        var email = $"user{Interlocked.Increment(ref accounts)}-{Guid.NewGuid():N}@example.org";
         var credentials = new { email, password = "correct horse battery", displayName = "Tester", language = "en" };
         (await client.PostAsJsonAsync("/api/v1/auth/register", credentials, TestContext.Current.CancellationToken)).EnsureSuccessStatusCode();
         var signIn = await client.PostAsJsonAsync("/api/v1/auth/sign-in", credentials, TestContext.Current.CancellationToken);

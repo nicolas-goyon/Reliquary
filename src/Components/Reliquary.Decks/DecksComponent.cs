@@ -14,6 +14,7 @@ using Reliquary.Decks.AutoTag;
 using Reliquary.Decks.Data;
 using Reliquary.Decks.Exchange;
 using Reliquary.Decks.Exploration;
+using Reliquary.Decks.Moderation;
 using Reliquary.Decks.Recommendations;
 using Reliquary.Decks.Text;
 using Reliquary.Decks.Versions;
@@ -50,6 +51,9 @@ public sealed class DecksComponent : ICoreComponent
         services.AddSingleton<DeckExchangeService>();
         services.AddSingleton<IPersonalDataProvider, DeckPersonalData>();
         services.AddSingleton<AutoTagService>();
+        services.Configure<ModerationOptions>(configuration.GetSection(ModerationOptions.Section));
+        services.AddSingleton<ModerationService>();
+        services.AddSingleton<IPersonalDataProvider, ModerationPersonalData>();
     }
 
     /// <inheritdoc />
@@ -85,5 +89,6 @@ public sealed class DecksComponent : ICoreComponent
         PublicDeckEndpoints.Map(api);
         RecommendationEndpoints.Map(api);
         AutoTagEndpoints.Map(api);
+        ModerationEndpoints.Map(api);
     }
 }

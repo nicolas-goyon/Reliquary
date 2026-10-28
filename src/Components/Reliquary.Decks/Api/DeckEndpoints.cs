@@ -861,7 +861,8 @@ internal static class DeckEndpoints
             deck.VariantOf,
             deck.BaseVersionId,
             deck.HeadVersionId,
-            deck.AssembledVersionId);
+            deck.AssembledVersionId,
+            view.Hidden);
     }
 
     /// <summary>

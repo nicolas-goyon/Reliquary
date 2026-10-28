@@ -3,6 +3,7 @@ using Reliquary.BuildingBlocks.Accounts;
 using Reliquary.BuildingBlocks.Api;
 using Reliquary.BuildingBlocks.Cards;
 using Reliquary.Decks.Data;
+using Reliquary.Decks.Moderation;
 
 namespace Reliquary.Decks.Exploration;
 
@@ -83,7 +84,7 @@ internal sealed class PublicDeckService(DeckStore store, ICardCatalog catalog, I
     /// <summary>
     /// Gets the profile of an author.
     /// </summary>
-    /// <exception cref="DeckException">The account does not exist.</exception>
+    /// <exception cref="DeckException">The account does not exist, or an administrator hid the profile and the user is not the author.</exception>
     public async Task<AuthorResponse> GetAuthorAsync(Guid? userId, Guid authorId, CancellationToken cancellationToken)
     {
         var profiles = await accounts.GetProfilesAsync([authorId], cancellationToken);
@@ -93,9 +94,15 @@ internal sealed class PublicDeckService(DeckStore store, ICardCatalog catalog, I
         }
 
         await using var connection = await store.OpenUsersAsync(cancellationToken);
+        var hidden = await ModerationStore.IsHiddenAsync(connection, ModerationValues.Author, authorId, cancellationToken);
+        if (hidden && userId != authorId)
+        {
+            throw AuthorNotFound();
+        }
+
         var (decks, followers) = await PublicDeckStore.CountAuthorAsync(connection, authorId, cancellationToken);
         var following = userId is { } id && await PublicDeckStore.IsFollowingAsync(connection, id, authorId, cancellationToken);
-        return new AuthorResponse(authorId, profile.DisplayName, decks, followers, following);
+        return new AuthorResponse(authorId, profile.DisplayName, decks, followers, following, hidden);
     }
 
     /// <summary>
@@ -115,6 +122,11 @@ internal sealed class PublicDeckService(DeckStore store, ICardCatalog catalog, I
         }
 
         await using var connection = await store.OpenUsersAsync(cancellationToken);
+        if (follow && await ModerationStore.IsHiddenAsync(connection, ModerationValues.Author, authorId, cancellationToken))
+        {
+            throw AuthorNotFound();
+        }
+
         await PublicDeckStore.SetFollowAsync(connection, userId, authorId, follow, time.GetUtcNow().UtcDateTime, cancellationToken);
     }
 
@@ -142,6 +154,6 @@ internal sealed class PublicDeckService(DeckStore store, ICardCatalog catalog, I
     private static AuthorSummaryResponse Author(Guid ownerId, IReadOnlyDictionary<Guid, AccountProfile> profiles) =>
         new(ownerId, profiles.TryGetValue(ownerId, out var profile) ? profile.DisplayName : string.Empty);
 
-    private static DeckException AuthorNotFound() =>
+    internal static DeckException AuthorNotFound() =>
         new(StatusCodes.Status404NotFound, ErrorCodes.NotFound, "The author does not exist.");
 }
