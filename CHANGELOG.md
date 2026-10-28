@@ -15,6 +15,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - The purchase list page of the web app, and a dialog for the purchase preferences of each deck line.
   The page exports the cards to buy as a Cardmarket wants list, as a TCGplayer mass entry or as plain text, and prints their proxies.
+
+- The import and the export of the collection: text, CSV, `.dek`, MTG Arena, Magic Online, Moxfield, Archidekt, Deckbox, ManaBox and Dragon Shield.
+  The import adds the cards of a file to a location, and gives each line that it cannot use with its number.
+  The export writes a location, a location with its sections, or all the collection.
 - The assembled version of a deck: the location of the assembled deck in the collection gets its cards.
   A release gives the cards to another location.
 - Printable proxies: the deck page makes a PDF of the card images (ADR 0038).

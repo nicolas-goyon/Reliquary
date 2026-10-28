@@ -11,6 +11,7 @@ using Reliquary.BuildingBlocks.Data;
 using Reliquary.BuildingBlocks.Security;
 using Reliquary.Collection.Api;
 using Reliquary.Collection.Data;
+using Reliquary.Collection.Exchange;
 
 namespace Reliquary.Collection;
 
@@ -44,6 +45,7 @@ public sealed class CollectionComponent : ICoreComponent
         services.AddSingleton<InventoryService>();
         services.AddSingleton<LocationService>();
         services.AddSingleton<EntryService>();
+        services.AddSingleton<CollectionExchangeService>();
         services.AddSingleton<ICollectionCatalog, CollectionCatalog>();
         services.AddSingleton<IAssembledDeckLocations, AssembledDeckLocations>();
         services.AddSingleton<IPersonalDataProvider, CollectionPersonalData>();
@@ -63,5 +65,6 @@ public sealed class CollectionComponent : ICoreComponent
         StorageRuleEndpoints.Map(collection);
         MovementEndpoints.Map(collection);
         InventoryEndpoints.Map(collection);
+        ExchangeEndpoints.Map(collection);
     }
 }

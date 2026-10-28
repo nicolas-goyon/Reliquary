@@ -5,6 +5,7 @@ import { CardPage } from './pages/CardPage'
 import { AuthorPage } from './pages/AuthorPage'
 import { CardSearchPage } from './pages/CardSearchPage'
 import { ComparePage } from './pages/ComparePage'
+import { CollectionExchangePage } from './pages/CollectionExchangePage'
 import { CollectionPage } from './pages/CollectionPage'
 import { DeckImportPage } from './pages/DeckImportPage'
 import { DeckListPage } from './pages/DeckListPage'
@@ -57,6 +58,7 @@ const routes: Record<string, () => ReactNode> = {
   '/collection': () => <CollectionPage />,
   '/collection/locations': () => <LocationsPage />,
   '/collection/movements': () => <MovementsPage />,
+  '/collection/exchange': () => <CollectionExchangePage />,
   '/': () => <HomePage />,
   '/sign-in': () => <SignInPage />,
   '/register': () => <RegisterPage />,

@@ -82,6 +82,7 @@ export function CollectionPage() {
         <div className="form-actions">
           <Link to="/collection/locations">{t('view.locationsLink')}</Link>
           <Link to="/collection/movements">{t('movements.link')}</Link>
+          <Link to="/collection/exchange">{t('exchange.link')}</Link>
         </div>
       </div>
       <ErrorAlert error={error} />
