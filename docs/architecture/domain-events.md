@@ -62,14 +62,19 @@ A test compares the list with this table, so a new event type must come with a n
 When the test fails, it gives the correct table.
 
 <!-- event-catalog:start -->
+
 | Type | Version | Payload |
 | --- | --- | --- |
 | `accounts.account.created` | 1 | `accountId` (uuid), `language` (string), `shard` (string), `createdAt` (date-time) |
 | `accounts.account.deleted` | 1 | `accountId` (uuid) |
 | `cards.card_data.imported` | 1 | `source` (string), `changedCards` (integer), `changedPrintings` (integer), `deletedPrintings` (integer) |
-| `decks.deck.created` | 1 | `deckId` (uuid), `format` (string), `visibility` (string), `sourceDeckId` (uuid or null) |
+| `decks.content.hidden` | 1 | `itemType` (string), `itemId` (uuid) |
+| `decks.content.shown` | 1 | `itemType` (string), `itemId` (uuid) |
+| `decks.deck.created` | 1 | `deckId` (uuid), `format` (string), `visibility` (string), `sourceDeckId` (uuid or null), `variantOf` (uuid or null) |
 | `decks.deck.deleted` | 1 | `deckId` (uuid) |
-| `decks.deck.updated` | 1 | `deckId` (uuid), `version` (integer), `format` (string), `visibility` (string) |
+| `decks.deck.updated` | 1 | `deckId` (uuid), `version` (integer), `format` (string), `visibility` (string), `variantOf` (uuid or null) |
+| `decks.deck_version.created` | 1 | `deckId` (uuid), `versionId` (uuid), `number` (integer), `kind` (string) |
+
 <!-- event-catalog:end -->
 
 Each event also has an envelope with the event ID, the type, the version, the owner ID and the time of the change.
