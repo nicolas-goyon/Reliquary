@@ -25,3 +25,19 @@ The **Milestone** column gives the [milestone](../roadmap.md) of each feature.
 | Comments and discussion under a deck | Discussions about a public deck | v2 | Later |
 | Deck co-editing | Use by a group | Later | Later |
 | Notifications (for example, a banned card in one of my decks) | Continuous added value | Later | Later |
+
+## Printable proxies
+
+The **Print proxies** action of the deck page makes a PDF file of [proxies](../glossary.md) for each user who can see the deck.
+The PDF has 9 cards on each page, at the real size of 63 × 88 mm, with cut marks, on A4 or Letter paper.
+[ADR 0038](../decisions/0038-proxy-pdf-in-the-browser.md) tells how the web app makes the PDF.
+
+- The user prints all the cards of the deck, or the deck lines that the user selects.
+  All the cards of the deck are the commander, companion and main zones. The user can add the sideboard, considering and tokens zones.
+  Each line gives as many proxies as its quantity.
+- An option adds the back face of each double-faced card, after its front face.
+  Only a printing with one image for each face has a back face image.
+- The default paper is Letter for a browser language of the United States, for example `en-US`, and A4 for other languages.
+- A card with no image, or with an image that does not load, gets a frame with its name.
+  After the PDF, the dialog gives the names of the cards whose image did not load.
+- The user must print the PDF at 100% scale, so that each card has the real size.

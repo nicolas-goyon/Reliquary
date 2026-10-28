@@ -125,7 +125,7 @@ function DeckEditor({ deck, onChange }: EditorProps) {
             {t('editor.delete')}
           </button>
         )}
-        <Slot name="deck.actions" context={{ deckId: deck.id }} className="slot-inline" />
+        <Slot name="deck.actions" context={{ deckId: deck.id, deck }}className="slot-inline" />
       </div>
       {copying && <CopyDialog deck={deck} onClose={() => setCopying(false)} />}
       {exporting && <DeckExportDialog deckId={deck.id} onClose={() => setExporting(false)} />}

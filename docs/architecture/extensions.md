@@ -69,6 +69,8 @@ Plugins have two purposes:
   `web/src/slots/registry.ts` gives the names of the slots and the context of each slot.
   `web/src/slots/coreContributions.tsx` registers the panels of the core, for example the panels of the account page.
   Each contribution renders in its own container with its own error boundary, so a contribution that fails does not stop the page.
+- The slot `deck.actions` adds buttons to the action bar of the deck page, for each user who can see the deck.
+  The context is `{ deckId, deck }`. The core uses the slot for the button that prints proxies.
 - Each contribution of the slot `analysis.tabs` is one tab of the deck analysis.
   The optional `title` of the contribution gives the name of the tab, and a `null` title hides the tab for a deck.
   The context gives the deck and its analysis, so an extension can add its own analysis panel.
