@@ -25,6 +25,11 @@ export function MainNavigation({ account }: { account: Account | null }) {
       )}
       {account && (
         <li>
+          <Link to="/collection">{t('navigation.collection')}</Link>
+        </li>
+      )}
+      {account && (
+        <li>
           <Link to="/account">{t('navigation.account')}</Link>
         </li>
       )}

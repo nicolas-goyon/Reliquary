@@ -60,6 +60,7 @@ The French column gives the term for the French interface.
 | Pickable location | A location whose cards are available cards. A location that is not pickable can change, but its cards are not available cards. | Emplacement piochable |
 | Available cards | The cards that can complete a deck. They are the cards in pickable locations, and the cards of collections that other users share with you, if you enable this option. The cards of an assembled deck are never available cards. | Cartes disponibles |
 | Inventory | A dated record of the content of one location. | Inventaire |
+| Storage rule | A card search with a location and a priority. It suggests where to store a new card, for example "This rack is for the blue cards". | Règle de rangement |
 | Movement | A record of cards that enter a location, leave a location or go to another location. | Mouvement |
 | Advanced collection | A setting that adds optional fields to location entries: foil, condition, purchase price, entry date and notes. | Collection avancée |
 | Collection share | An access that a user gives to another user on some locations, with read, difference or edit rights. | Partage de collection |

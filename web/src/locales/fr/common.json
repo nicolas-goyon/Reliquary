@@ -56,7 +56,8 @@
     "cards": "Cartes",
     "decks": "Decks",
     "explore": "Explorer",
-    "moderation": "Modération"
+    "moderation": "Modération",
+    "collection": "Collection"
   },
   "notFound": {
     "title": "Page introuvable",
@@ -95,7 +96,12 @@
     "search_timeout": "La recherche a pris trop de temps. Précisez la recherche.",
     "report_exists": "Vous avez déjà signalé cet élément. Un administrateur lira bientôt votre signalement.",
     "report_closed": "Un administrateur a déjà fermé ce signalement. Rechargez la liste.",
-    "unknown": "Une erreur s’est produite. Réessayez."
+    "unknown": "Une erreur s’est produite. Réessayez.",
+    "location_locked": "L’emplacement est verrouillé. Déverrouillez-le, puis réessayez.",
+    "location_not_empty": "L’emplacement ou une de ses boîtes contient des cartes. Déplacez ou retirez les cartes, puis réessayez.",
+    "deck_location": "Cet emplacement est un deck monté. Modifiez le deck pour modifier l’emplacement.",
+    "not_enough_cards": "L’origine n’a pas assez d’exemplaires de la carte. Indiquez une quantité plus faible.",
+    "inventory_applied": "Reliquary a déjà appliqué cet inventaire. Commencez un nouvel inventaire."
   },
   "fieldErrors": {
     "required": "Ce champ est obligatoire.",

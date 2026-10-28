@@ -27,6 +27,11 @@ export const translatedErrorCodes = [
   'search_timeout',
   'report_exists',
   'report_closed',
+  'location_locked',
+  'location_not_empty',
+  'deck_location',
+  'not_enough_cards',
+  'inventory_applied',
 ] as const
 
 export type TranslatedErrorCode = (typeof translatedErrorCodes)[number]

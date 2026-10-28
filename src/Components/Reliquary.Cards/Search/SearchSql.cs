@@ -62,6 +62,17 @@ internal static class SearchSql
         };
     }
 
+    /// <summary>
+    /// Builds the statement that gives the cards of a list that match the search. The parameter <c>@matchIds</c> gives the list.
+    /// </summary>
+    /// <param name="search">The compiled search.</param>
+    /// <returns>The SQL statement.</returns>
+    public static string Match(CompiledSearch search)
+    {
+        ArgumentNullException.ThrowIfNull(search);
+        return $"select o.id from reference.oracle_cards o where o.id = any(@matchIds) and {CardWhere(search)}";
+    }
+
     private static bool PrintingOrder(SearchOrder order) =>
         order is SearchOrder.Set or SearchOrder.Usd or SearchOrder.Eur or SearchOrder.Tix or SearchOrder.Rarity or SearchOrder.Released or SearchOrder.Artist;
 

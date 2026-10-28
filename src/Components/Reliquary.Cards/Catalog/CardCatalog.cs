@@ -1,7 +1,9 @@
 using System.Text.Json;
 using Dapper;
+using Npgsql;
 using Reliquary.BuildingBlocks.Cards;
 using Reliquary.BuildingBlocks.Data;
+using Reliquary.Cards.Search;
 using Reliquary.Cards.Text;
 
 namespace Reliquary.Cards.Catalog;
@@ -209,6 +211,54 @@ internal sealed class CardCatalog(IDatabase database) : ICardCatalog
         p.id, p.oracle_id as OracleId, p.set_code as SetCode, p.collector_number as CollectorNumber, p.lang, p.finishes,
         coalesce(p.image_uris ->> 'normal', (select f.image_uris ->> 'normal' from reference.printing_faces f where f.printing_id = p.id and f.face_index = 0)) as ImageUri
         """;
+
+    /// <inheritdoc />
+    public async Task<IReadOnlySet<Guid>> MatchAsync(string query, IReadOnlyCollection<Guid> oracleIds, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        ArgumentNullException.ThrowIfNull(oracleIds);
+        var parsed = SearchParser.Parse(query);
+        if (parsed.Error is { } syntax)
+        {
+            throw new CardQueryException(CardSearchErrorCodes.SyntaxError, syntax.Message, syntax.Position);
+        }
+
+        var search = SearchCompiler.Compile(query, parsed.Root, new SearchDefaults());
+        if (search.IsEmpty)
+        {
+            throw new CardQueryException(CardSearchErrorCodes.EmptyQuery, "The query has no search condition. Write a condition, for example a card name or \"t:creature\".");
+        }
+
+        var parameters = new DynamicParameters();
+        foreach (var (name, value) in search.Parameters)
+        {
+            parameters.Add(name, value);
+        }
+
+        parameters.Add("matchIds", oracleIds.Distinct().ToArray());
+        try
+        {
+            await using var connection = await database.OpenReferenceAsync(cancellationToken);
+            await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+            await connection.ExecuteAsync(new CommandDefinition(
+                $"set local statement_timeout = {CardSearch.StatementTimeoutMilliseconds}; set local jit = off",
+                transaction: transaction,
+                cancellationToken: cancellationToken));
+
+            // With no card, the statement still runs, so PostgreSQL checks the regular expressions of the query.
+            var matched = await connection.QueryAsync<Guid>(new CommandDefinition(SearchSql.Match(search), parameters, transaction, cancellationToken: cancellationToken));
+            await transaction.CommitAsync(cancellationToken);
+            return matched.ToHashSet();
+        }
+        catch (PostgresException exception) when (exception.SqlState == PostgresErrorCodes.QueryCanceled && !cancellationToken.IsCancellationRequested)
+        {
+            throw new CardQueryException(CardSearchErrorCodes.Timeout, $"The search took more than {CardSearch.StatementTimeoutMilliseconds / 1000} seconds and stopped. Make the query simpler.");
+        }
+        catch (PostgresException exception) when (exception.SqlState == PostgresErrorCodes.InvalidRegularExpression)
+        {
+            throw new CardQueryException(CardSearchErrorCodes.SyntaxError, "A regular expression of the query is not valid. Correct the regular expression.");
+        }
+    }
 
     private sealed class CardRow
     {

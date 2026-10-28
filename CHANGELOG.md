@@ -32,6 +32,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
   The module gets short delegation tokens and acts for the user on the deck endpoints and on the profile.
 
 - Web app: the history panel and the variant bar of the deck page, and the comparison page `/compare` for two lists.
+
+- Collection: locations with sections, the locked and pickable flags, location entries and movements in the API (ADR 0034).
+  The Decks component gets the copies of the collection and the locations of the assembled decks through two interfaces.
+- Advanced collection: the user enables the finish, the condition, the purchase price, the entry date and the note of the entries.
+- Collection pages: the global view of the cards and their locations, the list of the locations and the page of a location.
+  The global view of 50,000 entries gives its first page in less than 500 ms.
+- Movements: the user adds, removes and moves cards in one request, and reads the history of the movements.
+- Inventories: the user counts a location and gives the origin or the destination of each difference.
+  The history gives the content of the location at the date of each inventory.
+- Storage rules: a card search suggests the location of a new card. The user marks the tokens of each assembled deck as owned or not.
 - The CLI commands `reliquary backup` and `reliquary restore` for all the databases of an instance, and the recipes `just backup` and `just restore-backup`.
 - The export of all the data of an account as a ZIP archive, and the deletion of an account after 7 days (ADR 0032).
 - Repository rules, the English documentation with checks for ASD-STE100, and the backlog of the roadmap.

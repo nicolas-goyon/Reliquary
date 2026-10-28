@@ -1697,3 +1697,24 @@ kbd {
     min-height: 2.75rem;
   }
 }
+
+/* Collection */
+.inline-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.collection-panels {
+  display: grid;
+  gap: 1rem;
+  margin-block: 1rem;
+}
+
+.collection-suggestion {
+  margin: 0.25rem 0 0;
+  color: var(--color-text-muted);
+}

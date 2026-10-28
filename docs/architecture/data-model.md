@@ -85,12 +85,12 @@ Reliquary can split all the user data by `owner_id`.
 | Deck | Name, format, visibility, folder, tags, and the location if the deck is an assembled deck | Refers to its current deck version |
 | DeckVersion | Frozen list of deck lines, message, parent versions, variant | Never changes, like a Git commit |
 | DeckLine | OracleCard, quantity, zone, tags, note, purchase preferences (wanted or avoided printings, languages, minimum condition, foil, maximum price) | The printing is optional |
-| Location | Name, type (rack, binder, storage box, assembled deck or cube), optional parent location (for a section), `locked`, `pickable` | Two levels at most: the location, then the section |
+| Location | Name, type (rack, binder, storage box, assembled deck or cube), optional parent location (for a section), `locked`, `pickable`, the deck of an assembled deck | Two levels at most: the location, then the section. See [Collection](collection.md). |
 | LocationEntry | Location, OracleCard, quantity, language, optional printing, optional advanced fields | The collection is the sum of the location entries |
-| Inventory | Location, date, recorded content | A dated record of one location |
-| Movement | Type (cards in, cards out or a move), origin and destination (a location, a purchase, a sale, a gift or "nowhere"), quantity, date | A simple log |
+| Inventory | Location, date, status (open or applied), recorded content | A dated record of one location. An applied inventory never changes. |
+| Movement | Type (cards in, cards out or a move), origin and destination, the card fields, quantity, date, batch ID. An origin or a destination is a location, a purchase, a sale, a gift, a trade or "nowhere". | A simple log. A movement never changes. |
 | Tag, Folder | Global tags, or local tags of one deck. Nested folders. | — |
-| CollectionShare | Owner, guest, locations, rights (read, difference or edit) | In the model from the start. A later milestone delivers the feature. |
+| CollectionShare | Owner, guest, locations, rights (read, difference or edit) | In the table `users.collection_shares`. A later milestone delivers the feature. |
 | ApiKey, UsageCounter | API keys, daily request counters | Basis of the quotas |
 | ExtensionInstall, PluginActivation | Kind (plugin or module), version, core API range, permissions, slots, settings, activation flag. The activation of a plugin for each user. | The instance installs each extension one time (`users.extensions`). Each user activates the plugins (`content.plugin_activations`). |
 | AccountLink | User, external site, extension, authentication method, encrypted access tokens, state, last synchronization, consent to act while the user is not connected | Source of the **Linked accounts** panel |

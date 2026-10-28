@@ -21,6 +21,7 @@
     <Project Path="tests/Reliquary.Architecture.Tests/Reliquary.Architecture.Tests.csproj" />
     <Project Path="tests/Reliquary.BuildingBlocks.Tests/Reliquary.BuildingBlocks.Tests.csproj" />
     <Project Path="tests/Reliquary.Cards.Tests/Reliquary.Cards.Tests.csproj" />
+    <Project Path="tests/Reliquary.Collection.Tests/Reliquary.Collection.Tests.csproj" />
     <Project Path="tests/Reliquary.Decks.Tests/Reliquary.Decks.Tests.csproj" />
     <Project Path="tests/Reliquary.Platform.Tests/Reliquary.Platform.Tests.csproj" />
   </Folder>

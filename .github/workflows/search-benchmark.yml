@@ -51,16 +51,16 @@ jobs:
         run: |
           mkdir -p "$CARD_DATA"
           agent="Reliquary/0.1 (+https://github.com/nicolas-goyon/reliquary)"
-          curl --fail --silent --show-error --location --user-agent "$agent" --header "Accept: application/json" \
+          curl --fail --silent --show-error --location --http1.1 --retry 5 --retry-all-errors --retry-delay 10 --user-agent "$agent" --header "Accept: application/json" \
             https://api.scryfall.com/bulk-data --output "$CARD_DATA/bulk-data.json"
           download() {
             uri=$(jq --raw-output --arg type "$1" '.data[] | select(.type == $type) | .jsonl_download_uri' "$CARD_DATA/bulk-data.json")
-            curl --fail --silent --show-error --location --user-agent "$agent" "$uri" --output "$CARD_DATA/$2"
+            curl --fail --silent --show-error --location --http1.1 --retry 5 --retry-all-errors --retry-delay 10 --user-agent "$agent" "$uri" --output "$CARD_DATA/$2"
           }
           download default_cards cards.jsonl.gz
           download oracle_tags oracle_tags.jsonl.gz
           download art_tags art_tags.jsonl.gz
-          curl --fail --silent --show-error --location --user-agent "$agent" --header "Accept: application/json" \
+          curl --fail --silent --show-error --location --http1.1 --retry 5 --retry-all-errors --retry-delay 10 --user-agent "$agent" --header "Accept: application/json" \
             https://api.scryfall.com/sets --output "$CARD_DATA/sets.json"
           rm "$CARD_DATA/bulk-data.json"
           ls -l "$CARD_DATA"
