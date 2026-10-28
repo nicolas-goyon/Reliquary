@@ -1,3 +1,5 @@
+import { csvHeaders } from './exchange'
+
 /** The kinds of locations that a user creates. Only an assembled deck has the kind `deck`. */
 export const locationKinds = ['rack', 'binder', 'box', 'cube'] as const
 export type LocationKind = (typeof locationKinds)[number] | 'deck'
@@ -218,4 +220,85 @@ export function cardViewQuery(filters: { q: string; locationId: string; language
     query.set('cursor', cursor)
   }
   return query.toString()
+}
+
+/** The file formats of the collection import and export. See docs/architecture/collection.md. */
+export const exchangeFormats = ['text', 'csv', 'dek', 'mtga', 'mtgo', 'moxfield', 'archidekt', 'deckbox', 'manabox', 'dragonshield'] as const
+export type ExchangeFormat = (typeof exchangeFormats)[number]
+
+/** The reason codes of the lines of an import that the page translates. */
+export const importLineCodes = [
+  'missing_name',
+  'quantity_out_of_range',
+  'invalid_file',
+  'missing_column',
+  'card_not_found',
+  'unknown_language',
+  'unknown_condition',
+  'invalid_price',
+  'invalid_date',
+  'note_too_long',
+  'printing_not_found',
+  'finish_not_available',
+] as const
+export type ImportLineCode = (typeof importLineCodes)[number]
+
+/** A line of a file that the import ignored or changed. */
+export interface ImportLine {
+  line: number
+  code: string
+  text: string
+}
+
+/** The result of an import. */
+export interface ImportResult {
+  batchId: string | null
+  lineCount: number
+  cardCount: number
+  errors: ImportLine[]
+  warnings: ImportLine[]
+}
+
+/** Gets the translation key of the reason code of a line, or "other" for an unknown code. */
+export function importLineKey(code: string): ImportLineCode | 'other' {
+  return importLineCodes.find((known) => known === code) ?? 'other'
+}
+
+/** Finds the probable format of a collection file from its name and its content. */
+export function detectCollectionFormat(fileName: string, content: string): ExchangeFormat {
+  const lowerName = fileName.toLowerCase()
+  if (lowerName.endsWith('.dek') || content.trimStart().startsWith('<')) {
+    return 'dek'
+  }
+  if (lowerName.endsWith('.csv')) {
+    const headers = csvHeaders(content).map((header) => header.replace(/[\s_-]/g, '').toLowerCase())
+    if (headers.includes('manaboxid')) {
+      return 'manabox'
+    }
+    if (headers.includes('foldername') && headers.includes('cardname')) {
+      return 'dragonshield'
+    }
+    if (headers.includes('tradelistcount') && headers.includes('editioncode')) {
+      return 'deckbox'
+    }
+    if (headers.includes('tradelistcount') && headers.includes('edition')) {
+      return 'moxfield'
+    }
+    return 'csv'
+  }
+  if (/\[[^\]]*\]\s*$/m.test(content) && /^\d+x /m.test(content)) {
+    return 'archidekt'
+  }
+  if (/^(Deck|About)\s*$/m.test(content)) {
+    return 'mtga'
+  }
+  return 'text'
+}
+
+/** Makes the path of an export: a location, a location with its sections, or all the collection. */
+export function exportPath(format: ExchangeFormat, locationId: string, sections: boolean): string {
+  if (!locationId) {
+    return `/collection/export?format=${format}`
+  }
+  return `/collection/locations/${locationId}/export?format=${format}${sections ? '&sections=true' : ''}`
 }

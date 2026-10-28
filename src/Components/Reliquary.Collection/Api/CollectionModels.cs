@@ -170,3 +170,30 @@ public sealed record CollectionSettingsResponse(IReadOnlyList<string> AdvancedFi
 /// <summary>The new collection settings of the user.</summary>
 /// <param name="AdvancedFields">The advanced fields to enable. The other advanced fields become disabled.</param>
 public sealed record CollectionSettingsRequest(IReadOnlyList<string>? AdvancedFields);
+
+/// <summary>A file to import into a location.</summary>
+/// <param name="Format">The format of the file: <c>text</c>, <c>csv</c>, <c>dek</c>, <c>mtga</c>, <c>mtgo</c>, <c>moxfield</c>, <c>archidekt</c>, <c>deckbox</c>, <c>manabox</c> or <c>dragonshield</c>.</param>
+/// <param name="Content">The content of the file.</param>
+/// <param name="Origin">Where the cards come from: <c>purchase</c>, <c>gift</c>, <c>trade</c> or <c>nowhere</c>. The default is <c>nowhere</c>.</param>
+/// <param name="Currency">The currency of a purchase price that has no currency in the file, for example <c>EUR</c>. The default is <c>USD</c>.</param>
+public sealed record ImportEntriesRequest(string? Format, string? Content, string? Origin = null, string? Currency = null);
+
+/// <summary>A line of an imported file that the import cannot use, or that the import changed.</summary>
+/// <param name="Line">The number of the line. The first line has the number 1.</param>
+/// <param name="Code">The reason code, for example <c>card_not_found</c>.</param>
+/// <param name="Text">The text of the line.</param>
+public sealed record ImportLineResponse(int Line, string Code, string Text);
+
+/// <summary>The result of an import.</summary>
+/// <param name="BatchId">The batch ID of the movements, or <see langword="null"/> when the import added no card.</param>
+/// <param name="LineCount">The number of lines that the import added.</param>
+/// <param name="CardCount">The number of copies that the import added.</param>
+/// <param name="Errors">The lines that the import cannot use. The import ignored these lines.</param>
+/// <param name="Warnings">The lines that the import added with a change, for example a card with no printing.</param>
+public sealed record ImportEntriesResponse(Guid? BatchId, int LineCount, int CardCount, IReadOnlyList<ImportLineResponse> Errors, IReadOnlyList<ImportLineResponse> Warnings);
+
+/// <summary>Cards of the collection as a file.</summary>
+/// <param name="FileName">The name of the file.</param>
+/// <param name="ContentType">The media type of the file.</param>
+/// <param name="Content">The content of the file.</param>
+public sealed record ExportCollectionResponse(string FileName, string ContentType, string Content);

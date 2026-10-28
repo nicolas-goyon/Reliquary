@@ -20,6 +20,8 @@
     <Compile Include="..\Shared\**\*.cs" Link="Shared\%(RecursiveDir)%(Filename)%(Extension)" />
     <!-- The card fixtures of the Cards tests: the collection needs real card data. -->
     <None Include="..\Reliquary.Cards.Tests\Fixtures\**\*" Link="Fixtures\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <!-- One example file of each format of the collection import. -->
+    <None Include="ImportFiles\**\*" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

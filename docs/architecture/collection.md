@@ -42,6 +42,9 @@ The OpenAPI document gives the bodies and the responses.
 | `DELETE /locations/{id}/tokens/{oracleId}` | Removes a token from the list of an assembled deck. |
 | `GET /settings` | Gets the advanced fields that the user enabled. |
 | `PUT /settings` | Sets the advanced fields that the user enabled. |
+| `POST /locations/{id}/import` | Adds the cards of a file to a location. See [import and export](#import-and-export). |
+| `GET /locations/{id}/export?format=` | Gives the cards of a location as a file. `sections=true` adds the cards of the sections. |
+| `GET /export?format=` | Gives the cards of all the locations as a file. |
 
 ## Locations
 
@@ -155,6 +158,108 @@ Example: "4 Sol Ring: Rack 1 (2), Rack 1 / Box A (1), Atraxa (1)".
   The first page of 50 cards takes 11 ms, and a search by name takes 69 ms, on the computer of the test.
   The test fails when a page takes 500 ms or more.
 
+## Import and export
+
+The import adds the cards of a file to one location or section that the user selects.
+The export writes a location, a location with its sections, or all the collection to a file.
+
+### Formats
+
+| Format | Name in the API | Fields of the file |
+| --- | --- | --- |
+| Reliquary text | `text` | Quantity, name, set code, collector number and finish, in the syntax of the [deck text format](../development/deck-text-format.md) |
+| Generic CSV | `csv` | All the fields, and the location of each entry |
+| Magic Online XML | `dek` | Quantity and name |
+| MTG Arena | `mtga` | Quantity, name, set code and collector number |
+| Magic Online text | `mtgo` | Quantity and name |
+| Moxfield | `moxfield` | The collection CSV file of Moxfield: quantity, name, set code, collector number, language, finish, condition and purchase price. The import also reads the text of Moxfield. |
+| Archidekt | `archidekt` | Quantity, name, set code, collector number and finish. The import ignores the categories and the labels. |
+| Deckbox | `deckbox` | Quantity, name, set code, collector number, language, finish and condition |
+| ManaBox | `manabox` | Quantity, name, set code, collector number, language, finish, condition, purchase price and currency |
+| Dragon Shield | `dragonshield` | Quantity, name, set code, collector number, language, finish, condition, purchase price, entry date and location |
+
+The import of a CSV file finds the columns from the header.
+The comparison of the header names ignores the case, the spaces, the hyphens and the underscores.
+The separator can be a comma, a semicolon or a tab, and the import ignores a first line `sep=,`.
+
+The generic CSV format accepts these header names:
+
+| Field | Header names |
+| --- | --- |
+| Quantity | `Quantity`, `Count`, `Qty`, `Amount` |
+| Name | `Name`, `Card name`, `Card` |
+| Set code | `Set code`, `Set`, `Edition code` |
+| Collector number | `Collector number`, `Card number`, `Number` |
+| Language | `Language`, `Lang` |
+| Finish | `Finish`, `Foil`, `Printing` |
+| Condition | `Condition` |
+| Purchase price | `Purchase price`, `Price bought`, `Price` |
+| Currency | `Purchase currency`, `Purchase price currency`, `Currency` |
+| Entry date | `Entry date`, `Acquired on`, `Date bought`, `Date added` |
+| Note | `Note`, `Notes` |
+
+### Rules of the import
+
+- The import uses the same code as `POST /locations/{id}/entries`.
+  It writes one movement for each line, with the origin of the request: `purchase`, `gift`, `trade` or `nowhere` (the default).
+  All the movements of the import have one batch ID.
+- The import adds the lines that it can use, and ignores the other lines.
+  The response gives each ignored line in `errors`, with its number, its reason code and its text.
+- A locked location refuses the import with the error `location_locked`.
+  The location of an assembled deck refuses the import with the error `deck_location`.
+- A file can have 4,000,000 characters and 20,000 card lines at most.
+- The import accepts all the card names: Oracle names, face names, localized names and alternate names.
+- A set code and a collector number give the printing in the language of the line.
+  When the import finds no printing, the card has no printing, and the response gives a warning `printing_not_found`.
+  When the printing does not have the finish, the card has no finish, and the response gives a warning `finish_not_available`.
+- The import reads an advanced field only when the user enabled it. It ignores the other columns.
+- A language is a code, for example `fr`, or an English name, for example `French`.
+- A finish is `foil`, `etched` or a different value for a nonfoil card. The values `true`, `yes` and `1` also give a foil card.
+- A price can have a symbol `$`, `€` or `£`, which gives the currency.
+  A price with no currency gets the currency of the request (`currency`, by default `USD`).
+- A date has the form `2026-10-28` or `10/28/2026`.
+
+The import reads the conditions of three scales:
+
+| Condition | Values of the files |
+| --- | --- |
+| `mint` | Mint, M, MT |
+| `near_mint` | Near Mint, NM |
+| `excellent` | Excellent, EX |
+| `good` | Good, GD, Good (Lightly Played) |
+| `light_played` | Light Played, Lightly Played, LP |
+| `played` | Played, PL, Moderately Played, MP, Heavily Played, HP |
+| `poor` | Poor, PO, Damaged |
+
+The reason codes of the lines are:
+
+| Code | Kind | Meaning |
+| --- | --- | --- |
+| `missing_name` | Error | The line has no card name. |
+| `quantity_out_of_range` | Error | The quantity is not from 1 to 100,000. |
+| `invalid_file` | Error | The import cannot read the XML file. |
+| `missing_column` | Error | The CSV file has no column for the card names. The line is the header. |
+| `card_not_found` | Error | No card has this name. |
+| `unknown_language` | Error | The language is not a known language. |
+| `unknown_condition` | Error | The condition is not a known condition. |
+| `invalid_price` | Error | The purchase price or its currency is not valid. |
+| `invalid_date` | Error | The entry date is not a date. |
+| `note_too_long` | Error | The note has more than 500 characters. |
+| `printing_not_found` | Warning | The import found no printing. The card has no printing. |
+| `finish_not_available` | Warning | The printing does not have the finish. The card has no finish. |
+
+### Rules of the export
+
+- The response gives the name of the file, its media type and its content.
+- The export writes only the advanced fields that the user enabled.
+- The export writes the locations in the order of the list. The sections come after their location.
+- The Reliquary text starts the cards of each location with a comment line, for example `// Rack 1 / Box A`, when the file has more than one location.
+- The formats with fewer fields add the quantities of the cards that they write in the same way.
+  For example, the Magic Online export gives one line for each card name.
+- Moxfield, Deckbox and Dragon Shield have other scales of conditions.
+  The export of Moxfield writes `excellent`, `good` and `light_played` as Lightly Played, `played` as Moderately Played and `poor` as Damaged.
+  The export of Deckbox writes `excellent`, `good` and `light_played` as Good (Lightly Played).
+
 ## Web pages
 
 | Page | Content |
@@ -163,6 +268,7 @@ Example: "4 Sol Ring: Rack 1 (2), Rack 1 / Box A (1), Atraxa (1)".
 | `/collection/locations` | The locations and their sections: create, rename, change the kind, lock, unlock, the pickable flag and delete |
 | `/collection/locations/{id}` | The cards of a location and of its sections. The form adds cards with the card autocomplete and the enabled advanced fields. The user selects entries and moves all their copies in one request. |
 | `/collection/movements` | The history of the movements, with a filter by location |
+| `/collection/exchange` | The import of a file into a location, and the export of a location, of a location with its sections, or of all the collection |
 | `/collection/locations/{id}/inventory` | The count of a location, the differences with their answers and group answers, and the history of the inventories with the content at each date |
 
 The navigation shows the link **Collection** to the signed-in users.

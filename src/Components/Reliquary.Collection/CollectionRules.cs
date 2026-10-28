@@ -41,6 +41,12 @@ public static class CollectionRules
     /// <summary>The maximum number of cards in one request.</summary>
     public const int MaxCardsPerRequest = 1000;
 
+    /// <summary>The maximum number of characters in a file of an import.</summary>
+    public const int MaxImportLength = 4_000_000;
+
+    /// <summary>The maximum number of card lines in a file of an import.</summary>
+    public const int MaxImportCards = 20_000;
+
     /// <summary>The maximum number of locations of an owner, with the sections.</summary>
     public const int MaxLocations = 1000;
 

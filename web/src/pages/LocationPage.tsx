@@ -186,6 +186,8 @@ function LocationContent({ location, parent, settings, locations, onChanged }: C
             <Link to={`/collection/locations/${location.id}/inventory`}>{t('inventory.link')}</Link>
           </>
         )}
+        {' · '}
+        <Link to={`/collection/exchange?locationId=${location.id}`}>{t('exchange.locationLink')}</Link>
       </p>
       <div className="page-header">
         <h1>{parent ? `${parent.name} / ${location.name}` : location.name}</h1>
