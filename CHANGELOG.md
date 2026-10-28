@@ -7,6 +7,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Added
 
+- The assembled version of a deck: the location of the assembled deck in the collection gets its cards.
+  A release gives the cards to another location.
 - Printable proxies: the deck page makes a PDF of the card images (ADR 0038).
   Each A4 or Letter page has 9 cards of 63 × 88 mm and cut marks.
 - The comparison of any two lists, with the effect on the curve, the types and the categories, and the changes of the notes.

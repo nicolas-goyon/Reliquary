@@ -74,6 +74,7 @@ When the test fails, it gives the correct table.
 | `collection.location.updated` | 1 | `locationId` (uuid), `kind` (string), `locked` (boolean), `pickable` (boolean) |
 | `decks.content.hidden` | 1 | `itemType` (string), `itemId` (uuid) |
 | `decks.content.shown` | 1 | `itemType` (string), `itemId` (uuid) |
+| `decks.deck.assembled` | 1 | `deckId` (uuid), `assembledVersionId` (uuid or null) |
 | `decks.deck.created` | 1 | `deckId` (uuid), `format` (string), `visibility` (string), `sourceDeckId` (uuid or null), `variantOf` (uuid or null) |
 | `decks.deck.deleted` | 1 | `deckId` (uuid) |
 | `decks.deck.updated` | 1 | `deckId` (uuid), `version` (integer), `format` (string), `visibility` (string), `variantOf` (uuid or null) |

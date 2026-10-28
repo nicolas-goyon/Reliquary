@@ -351,7 +351,7 @@ internal static class DeckEndpoints
     }
 
     private static async Task<Results<Ok<DeckResponse>, ProblemHttpResult>> UpdateAsync(
-        Guid deckId, UpdateDeckRequest request, ClaimsPrincipal user, DeckService decks, ICardCatalog catalog, CancellationToken cancellationToken)
+        Guid deckId, UpdateDeckRequest request, ClaimsPrincipal user, DeckService decks, Versions.AssembledDeckService assembled, ICardCatalog catalog, CancellationToken cancellationToken)
     {
         var errors = new List<FieldError>();
         if (request.Name is not null && string.IsNullOrWhiteSpace(request.Name))
@@ -386,6 +386,11 @@ internal static class DeckEndpoints
             deckId,
             new DeckChanges(request.Name, request.Format, request.Visibility, request.FolderId, request.ClearFolder == true, request.Description, request.Pinned, request.Archived, request.ExpectedVersion, request.Tags),
             cancellationToken);
+        if (request.Name is not null)
+        {
+            await assembled.RenameLocationAsync(view.Deck, cancellationToken);
+        }
+
         return TypedResults.Ok(await ToResponseAsync(view, catalog, cancellationToken));
     }
 

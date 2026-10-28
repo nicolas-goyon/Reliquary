@@ -61,6 +61,16 @@ internal static class VersionEndpoints
             .WithSummary("Creates a variant of a deck from one of its versions. A variant is a deck: the deck endpoints change it.")
             .RequireScope(Scopes.DecksWrite);
 
+        owner.MapPut("/assembled", AssembleAsync)
+            .WithName("AssembleDeck")
+            .WithSummary("Marks a version as the assembled version. The location of the assembled deck gets the cards of the commander, companion, main and sideboard zones.")
+            .RequireScope(Scopes.DecksWrite);
+
+        owner.MapDelete("/assembled", ReleaseAsync)
+            .WithName("ReleaseAssembledDeck")
+            .WithSummary("Releases an assembled deck. Its cards go to the location targetLocationId, or leave the collection when the request has no target.")
+            .RequireScope(Scopes.DecksWrite);
+
         owner.MapPost("/merge", MergeAsync)
             .WithName("MergeDeckVariant")
             .WithSummary("Merges a variant into its main deck, as a new version of the main deck with two parents.")
@@ -159,6 +169,20 @@ internal static class VersionEndpoints
 
         var version = await versions.MergeAsync(user.GetAccountId(), deckId, request.Message, cancellationToken);
         return TypedResults.Created($"{ApiRoutes.Base}/decks/{version.DeckId}/versions/{version.Id}", ToResponse(version, null));
+    }
+
+    private static async Task<Ok<AssembledDeckResponse>> AssembleAsync(
+        Guid deckId, AssembleDeckRequest request, ClaimsPrincipal user, AssembledDeckService assembled, CancellationToken cancellationToken)
+    {
+        var deck = await assembled.AssembleAsync(user.GetAccountId(), deckId, request.VersionId, cancellationToken);
+        return TypedResults.Ok(new AssembledDeckResponse(deck.Id, deck.AssembledVersionId));
+    }
+
+    private static async Task<Ok<AssembledDeckResponse>> ReleaseAsync(
+        Guid deckId, Guid? targetLocationId, ClaimsPrincipal user, AssembledDeckService assembled, CancellationToken cancellationToken)
+    {
+        var deck = await assembled.ReleaseAsync(user.GetAccountId(), deckId, targetLocationId, cancellationToken);
+        return TypedResults.Ok(new AssembledDeckResponse(deck.Id, deck.AssembledVersionId));
     }
 
     internal static async Task<ListChangesResponse> ToResponseAsync(ListComparison comparison, ICardCatalog catalog, CancellationToken cancellationToken)

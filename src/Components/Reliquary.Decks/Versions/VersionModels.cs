@@ -95,3 +95,12 @@ public sealed record VersionMessageRequest(string? Message);
 /// <param name="Name">The name of the variant, for example "Budget".</param>
 /// <param name="BaseVersionId">The version of the main deck where the variant starts. The default is the most recent version.</param>
 public sealed record CreateVariantRequest(string? Name, Guid? BaseVersionId);
+
+/// <summary>The body of the assembly of a deck.</summary>
+/// <param name="VersionId">The assembled version. The default is the most recent version, after a commit of the working list when it changed.</param>
+public sealed record AssembleDeckRequest(Guid? VersionId);
+
+/// <summary>The assembled version of a deck.</summary>
+/// <param name="DeckId">The deck.</param>
+/// <param name="AssembledVersionId">The assembled version, or <see langword="null"/> when the deck is not assembled.</param>
+public sealed record AssembledDeckResponse(Guid DeckId, Guid? AssembledVersionId);
