@@ -28,6 +28,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Service accounts for the modules, with the CLI command `reliquary service-accounts` and the admin API (ADR 0037).
   A user gives a delegation to a module on the account page, with scopes and a duration, and revokes it there.
   The module gets short delegation tokens and acts for the user on the deck endpoints and on the profile.
+
+- Web app: the history panel and the variant bar of the deck page, and the comparison page `/compare` for two lists.
 - The CLI commands `reliquary backup` and `reliquary restore` for all the databases of an instance, and the recipes `just backup` and `just restore-backup`.
 - The export of all the data of an account as a ZIP archive, and the deletion of an account after 7 days (ADR 0032).
 - Repository rules, the English documentation with checks for ASD-STE100, and the backlog of the roadmap.

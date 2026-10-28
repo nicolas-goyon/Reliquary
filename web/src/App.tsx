@@ -4,6 +4,7 @@ import { AccountPage } from './pages/AccountPage'
 import { CardPage } from './pages/CardPage'
 import { AuthorPage } from './pages/AuthorPage'
 import { CardSearchPage } from './pages/CardSearchPage'
+import { ComparePage } from './pages/ComparePage'
 import { DeckImportPage } from './pages/DeckImportPage'
 import { DeckListPage } from './pages/DeckListPage'
 import { DeckPage } from './pages/DeckPage'
@@ -39,6 +40,7 @@ const routes: Record<string, () => ReactNode> = {
   '/cards': () => <CardSearchPage />,
   '/decks': () => <DeckListPage />,
   '/decks/import': () => <DeckImportPage />,
+  '/compare': () => <ComparePage />,
   '/explore': () => <ExplorePage />,
   '/': () => <HomePage />,
   '/sign-in': () => <SignInPage />,
