@@ -73,6 +73,33 @@ The web app shows the plan on the page `/decks/{id}/transition-plan`, with a che
 The browser keeps the checked steps of each assembled version in its local storage.
 The history panel of a main deck marks a version as the assembled version, and releases the assembled deck.
 
+## Web app
+
+The owner of a deck sets the purchase preferences of a line on the deck page, with the "Preferences" button of the line.
+The dialog loads the printings of the card from `GET /cards/{id}/printings`.
+A line with purchase preferences shows a marker.
+
+The page `/decks/{id}/purchase-list` shows the purchase list of a deck or a variant.
+The deck page gives a link to it for the owner.
+The table gives the cards in the deck, the cards from the collection and the cards to buy of each line.
+A copy in a locked location shows a message that tells the user to unlock the location first.
+The page writes each closest copy as a sentence from its reasons and the preferences of the line.
+For example, the page shows "Not in French: 1 English copy in Rack 2".
+
+The web app makes the exports of the cards to buy, with no request to the API.
+The functions are in `web/src/purchases/exports.ts`.
+The exports add the cards to buy of the same card in different zones into one line, and use the English card name.
+
+| Format | Line | Use |
+| --- | --- | --- |
+| Cardmarket wants list | `<quantity> <card name>` | Paste the text in a wants list of Cardmarket. |
+| TCGplayer mass entry | `<quantity> <card name> [SET]` | Paste the text in the mass entry of TCGplayer. The set code is only on a card whose lines want exactly one printing. |
+| Plain text | `<quantity> <card name> (SET number, max price)` | The printing and the maximum price are only on the cards that have them. |
+
+The text formats of the marketplaces cannot give a maximum price, so only the plain text shows it.
+The user copies the text to the clipboard or downloads it as a `.txt` file.
+The page also prints proxies of the cards to buy with the PDF function of the deck page ([ADR 0038](../decisions/0038-proxy-pdf-in-the-browser.md)).
+
 ## Gate of milestone M2
 
 The test `PurchaseListGateTests` checks the purchase list of a reference dataset, card by card.

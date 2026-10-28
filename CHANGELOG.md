@@ -12,6 +12,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
   When a card is missing, the list shows the closest copies of the collection with the reasons.
 - The transition plan from the assembled version to a variant.
   It gives the cards to remove, the cards to take with their locations, and the cards to buy.
+
+- The purchase list page of the web app, and a dialog for the purchase preferences of each deck line.
+  The page exports the cards to buy as a Cardmarket wants list, as a TCGplayer mass entry or as plain text, and prints their proxies.
 - The assembled version of a deck: the location of the assembled deck in the collection gets its cards.
   A release gives the cards to another location.
 - Printable proxies: the deck page makes a PDF of the card images (ADR 0038).

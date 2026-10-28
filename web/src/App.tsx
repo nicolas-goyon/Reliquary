@@ -13,6 +13,7 @@ import { AuthCompletePage, CheckEmailPage, ForgotPasswordPage, ResetPasswordPage
 import { ExplorePage } from './pages/ExplorePage'
 import { HomePage, NotFoundPage } from './pages/HomePage'
 import { ModerationPage } from './pages/ModerationPage'
+import { PurchaseListPage } from './pages/PurchaseListPage'
 import { InventoryPage } from './pages/InventoryPage'
 import { LocationPage } from './pages/LocationPage'
 import { LocationsPage } from './pages/LocationsPage'
@@ -40,6 +41,8 @@ const patternRoutes: { pattern: RegExp; render(match: RegExpMatchArray): ReactNo
   { pattern: /^\/cards\/([0-9a-f-]{36})$/, render: (match) => <CardPage key={match[1]} id={match[1]} /> },
   { pattern: /^\/decks\/([0-9a-f-]{36})$/, render: (match) => <DeckPage key={match[1]} id={match[1]} /> },
   { pattern: /^\/decks\/([0-9a-f-]{36})\/transition-plan$/, render: (match) => <TransitionPlanPage key={match[1]} id={match[1]} /> },
+
+  { pattern: /^\/decks\/([0-9a-f-]{36})\/purchase-list$/, render: (match) => <PurchaseListPage key={match[1]} id={match[1]} /> },
   { pattern: /^\/authors\/([0-9a-f-]{36})$/, render: (match) => <AuthorPage key={match[1]} id={match[1]} /> },
   { pattern: /^\/collection\/locations\/([0-9a-f-]{36})$/, render: (match) => <LocationPage key={match[1]} id={match[1]} /> },
   { pattern: /^\/collection\/locations\/([0-9a-f-]{36})\/inventory$/, render: (match) => <InventoryPage key={match[1]} id={match[1]} /> },

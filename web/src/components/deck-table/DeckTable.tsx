@@ -1,6 +1,7 @@
 import { useState, type MouseEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { categories, zones, type Deck, type Zone } from '../../api/decks'
+import { hasPreferences } from '../../api/purchases'
 import { useAuth } from '../../auth/session'
 import { Link } from '../../router/Link'
 import { useSlotContributions } from '../../slots/registry'
@@ -28,6 +29,7 @@ interface DeckTableProps {
  */
 export function DeckTable({ deck, onChange }: DeckTableProps) {
   const { t } = useTranslation('decks')
+  const { t: tPurchases } = useTranslation('purchases')
   const { request } = useAuth()
   const [filters, setFilters] = useState<TableFilters>(noFilters)
   const [sort, setSort] = useState<TableSort>({ key: 'name', direction: 'ascending' })
@@ -203,6 +205,7 @@ export function DeckTable({ deck, onChange }: DeckTableProps) {
                         {categories.some((known) => known === category) ? t(`categories.${category as (typeof categories)[number]}`) : category}
                       </span>
                     ))}
+                    {hasPreferences(line.purchasePreferences) && <span className="badge">{tPurchases('preferences.marker')}</span>}
                   </td>
                   <td>
                     {printing ? `${printing.setCode.toUpperCase()} ${printing.collectorNumber} (${printing.lang})` : t('table.defaultPrintingShort')}

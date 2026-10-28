@@ -8,6 +8,7 @@ import enCollection from '../locales/en/collection.json'
 import enCommon from '../locales/en/common.json'
 import enDecks from '../locales/en/decks.json'
 import enModeration from '../locales/en/moderation.json'
+import enPurchases from '../locales/en/purchases.json'
 import enVersions from '../locales/en/versions.json'
 import frAccount from '../locales/fr/account.json'
 import frAuth from '../locales/fr/auth.json'
@@ -16,6 +17,7 @@ import frCollection from '../locales/fr/collection.json'
 import frCommon from '../locales/fr/common.json'
 import frDecks from '../locales/fr/decks.json'
 import frModeration from '../locales/fr/moderation.json'
+import frPurchases from '../locales/fr/purchases.json'
 import frVersions from '../locales/fr/versions.json'
 
 /** The interface languages. English is the source language. */
@@ -26,8 +28,8 @@ export const defaultNamespace = 'common'
 
 /** The translation resources. English gives the TypeScript types of the keys. */
 export const resources = {
-  en: { common: enCommon, auth: enAuth, account: enAccount, cards: enCards, decks: enDecks, moderation: enModeration, versions: enVersions, collection: enCollection },
-  fr: { common: frCommon, auth: frAuth, account: frAccount, cards: frCards, decks: frDecks, moderation: frModeration, versions: frVersions, collection: frCollection },
+  en: { common: enCommon, auth: enAuth, account: enAccount, cards: enCards, decks: enDecks, moderation: enModeration, versions: enVersions, collection: enCollection, purchases: enPurchases },
+  fr: { common: frCommon, auth: frAuth, account: frAccount, cards: frCards, decks: frDecks, moderation: frModeration, versions: frVersions, collection: frCollection, purchases: frPurchases },
 } as const
 
 /** The local storage key that keeps the language that the user chose. */
@@ -50,7 +52,7 @@ void i18n
     fallbackLng: 'en',
     nonExplicitSupportedLngs: true,
     defaultNS: defaultNamespace,
-    ns: [defaultNamespace, 'auth', 'account', 'cards', 'decks', 'moderation', 'versions', 'collection'],
+    ns: [defaultNamespace, 'auth', 'account', 'cards', 'decks', 'moderation', 'versions', 'collection', 'purchases'],
     initAsync: false,
     interpolation: {
       // React escapes the values. Escaping them twice shows HTML entities.

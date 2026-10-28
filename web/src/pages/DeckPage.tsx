@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import type { AutocompleteItem } from '../api/cards'
 import { ApiError, apiRequest } from '../api/client'
 import { formatKey, lineImage, zones, type Deck, type DeckLegality, type DeckLine, type DeckTextLineError, type Visibility, type Zone } from '../api/decks'
+import { hasPreferences, purchaseListPath } from '../api/purchases'
 import { useAuth } from '../auth/session'
 import { AnalysisSection } from '../components/analysis/AnalysisSection'
 import { AutoTagDialog } from '../components/auto-tag/AutoTagDialog'
@@ -16,6 +17,7 @@ import { HiddenNotice } from '../components/moderation/HiddenNotice'
 import { ErrorAlert, TextField } from '../components/Forms'
 import { LineErrorList } from '../components/LineErrors'
 import { ManaCost } from '../components/ManaCost'
+import { PurchasePreferencesDialog } from '../components/purchases/PurchasePreferencesDialog'
 import { RecommendationsPanel } from '../components/recommendations/RecommendationsPanel'
 import { HistoryPanel } from '../components/versions/HistoryPanel'
 import { VariantBar } from '../components/versions/VariantBar'
@@ -56,6 +58,7 @@ interface EditorProps {
 
 function DeckEditor({ deck, onChange }: EditorProps) {
   const { t } = useTranslation('decks')
+  const { t: tPurchases } = useTranslation('purchases')
   const { request } = useAuth()
   const [error, setError] = useState<unknown>(null)
   const [mode, setMode] = useState<'visual' | 'text' | 'table'>('visual')
@@ -121,6 +124,11 @@ function DeckEditor({ deck, onChange }: EditorProps) {
           {t('editor.export')}
         </button>
         {owner && (
+          <Link className="button" to={purchaseListPath(deck.id)}>
+            {tPurchases('page.open')}
+          </Link>
+        )}
+        {owner && (
           <button type="button" className="button-danger" onClick={() => void remove()}>
             {t('editor.delete')}
           </button>
@@ -144,7 +152,7 @@ function DeckEditor({ deck, onChange }: EditorProps) {
       ) : (
         <>
           {owner && <AddCard onAdd={(oracleId, zone) => void change('/lines', 'POST', { lines: [{ oracleId, zone }] })} />}
-          <Zones deck={deck} owner={owner} change={change} />
+          <Zones deck={deck} owner={owner} change={change} onChange={onChange} />
         </>
       )}
       <AnalysisSection deck={deck} />
@@ -255,7 +263,7 @@ function AddCard({ onAdd }: { onAdd(oracleId: string, zone: Zone): void }) {
 }
 
 /** The zones of the deck. The owner can drag a line to another zone, or use the zone field of the line. */
-function Zones({ deck, owner, change }: { deck: Deck; owner: boolean; change(path: string, method: string, body?: unknown): Promise<void> }) {
+function Zones({ deck, owner, change, onChange }: { deck: Deck; owner: boolean; change(path: string, method: string, body?: unknown): Promise<void>; onChange(deck: Deck): void }) {
   const { t } = useTranslation('decks')
   const [dropZone, setDropZone] = useState<Zone | null>(null)
 
@@ -297,7 +305,7 @@ function Zones({ deck, owner, change }: { deck: Deck; owner: boolean; change(pat
               ) : (
                 <ul className="deck-lines">
                   {lines.map((line) => (
-                    <LineItem key={line.id} deck={deck} line={line} owner={owner} change={change} />
+                    <LineItem key={line.id} deck={deck} line={line} owner={owner} change={change} onChange={onChange} />
                   ))}
                 </ul>
               )}
@@ -308,8 +316,18 @@ function Zones({ deck, owner, change }: { deck: Deck; owner: boolean; change(pat
   )
 }
 
-function LineItem({ deck, line, owner, change }: { deck: Deck; line: DeckLine; owner: boolean; change(path: string, method: string, body?: unknown): Promise<void> }) {
+interface LineItemProps {
+  deck: Deck
+  line: DeckLine
+  owner: boolean
+  change(path: string, method: string, body?: unknown): Promise<void>
+  onChange(deck: Deck): void
+}
+
+function LineItem({ deck, line, owner, change, onChange }: LineItemProps) {
   const { t } = useTranslation('decks')
+  const { t: tPurchases } = useTranslation('purchases')
+  const [preferencesOpen, setPreferencesOpen] = useState(false)
   const card = deck.cards[line.oracleId]
   const name = card?.name ?? line.oracleId
   const tags = line.tagIds.map((id) => deck.tags[id]?.name).filter(Boolean)
@@ -353,6 +371,12 @@ function LineItem({ deck, line, owner, change }: { deck: Deck; line: DeckLine; o
             {t(`categories.${categoryKey(category)}`)}
           </span>
         ))}
+        {owner && hasPreferences(line.purchasePreferences) && (
+          <span className="badge" title={tPurchases('preferences.marker')}>
+            <span aria-hidden="true">🛒</span>
+            <span className="visually-hidden">{tPurchases('preferences.markerLabel', { name })}</span>
+          </span>
+        )}
       </span>
       <ManaCost cost={card?.manaCost} />
       {owner && (
@@ -367,11 +391,15 @@ function LineItem({ deck, line, owner, change }: { deck: Deck; line: DeckLine; o
               </option>
             ))}
           </select>
+          <button type="button" className="button-small" aria-label={tPurchases('preferences.openLabel', { name })} onClick={() => setPreferencesOpen(true)}>
+            {tPurchases('preferences.open')}
+          </button>
           <button type="button" className="button-small button-danger" aria-label={t('editor.remove', { name })} onClick={() => void change(`/lines/${line.id}`, 'DELETE')}>
             ×
           </button>
         </span>
       )}
+      {owner && preferencesOpen && <PurchasePreferencesDialog deck={deck} line={line} onSaved={onChange} onClose={() => setPreferencesOpen(false)} />}
     </li>
   )
 }

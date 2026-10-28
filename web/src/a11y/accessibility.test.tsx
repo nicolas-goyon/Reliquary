@@ -27,6 +27,26 @@ const signedIn: Record<string, Handler> = {
   [`GET /decks/${deckId}/analysis`]: () => Response.json(testAnalysis()),
   [`GET /decks/${deckId}/recommendations`]: () => Response.json({ status: 'ok', source: { name: 'EDHREC', url: 'https://edhrec.com' }, commanders: [atraxa], cards: [] }),
   [`GET /public-decks/${deckId}/social`]: () => problem(404, 'not_found'),
+  [`GET /decks/${deckId}/purchase-list`]: () =>
+    Response.json({
+      deckId,
+      includeTokens: false,
+      lines: [
+        {
+          oracleId: atraxa,
+          zone: 'commander',
+          quantity: 1,
+          purchasePreferences: { languages: ['fr'] },
+          inDeck: 0,
+          fromCollection: [],
+          toBuy: 1,
+          closest: [{ locationId: 'r1', locationName: 'Rack 2', sectionName: null, locationKind: 'rack', locked: true, printingId: null, language: 'en', finish: null, condition: null, quantity: 1, reasons: ['language'] }],
+        },
+      ],
+      totalToBuy: 1,
+      cards: testDeck().cards,
+      printings: {},
+    }),
   'GET /cards/search': () => Response.json({ items: [bolt], nextCursor: null, total: 1, warnings: [] }),
   'GET /me': () => Response.json({ account: testAccount, externalLogins: ['github'] }),
   'GET /me/api-keys': () => Response.json([{ id: 'k1', name: 'Script', prefix: 'abc', createdAt: '2026-10-26T10:00:00Z', lastUsedAt: null }]),
@@ -122,6 +142,11 @@ describe('accessibility of the main pages', () => {
   it('deck page in table mode', async () => {
     await openPage(`/decks/${deckId}`, signedIn, () => screen.findByRole('heading', { level: 1, name: /Atraxa superfriends/ }))
     await userEvent.setup().click(screen.getByRole('button', { name: 'Table mode' }))
+    expect(await seriousAccessibilityProblems()).toEqual([])
+  })
+
+  it('purchase list page', async () => {
+    await openPage(`/decks/${deckId}/purchase-list`, signedIn, () => screen.findByText('Not in French: 1 English copy in Rack 2'))
     expect(await seriousAccessibilityProblems()).toEqual([])
   })
 
