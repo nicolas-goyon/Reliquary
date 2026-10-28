@@ -102,7 +102,7 @@ export function DeckListPage() {
         <h1>{t('list.title')}</h1>
         <div className="form-actions">
           <Link to="/decks/import">{t('import.title')}</Link>
-          <button type="button" className="button-primary" onClick={() => setCreating(true)}>
+          <button type="button" className="button-primary" data-shortcut="new-deck" onClick={() => setCreating(true)}>
             {t('list.create')}
           </button>
         </div>
@@ -125,46 +125,52 @@ export function DeckListPage() {
           )}
           {decks && decks.length === 0 && <p>{t('list.empty')}</p>}
           {decks && decks.length > 0 && (
-            <table className="table">
-              <thead>
-                <tr>
-                  <th scope="col">
-                    <input type="checkbox" aria-label={t('group.selectAll')} checked={allSelected} onChange={() => setSelected(allSelected ? [] : decks.map((deck) => deck.id))} />
-                  </th>
-                  <th scope="col">{t('fields.name')}</th>
-                  <th scope="col">{t('fields.format')}</th>
-                  <th scope="col">{t('list.colors')}</th>
-                  <th scope="col">{t('list.cards')}</th>
-                  <th scope="col">{t('list.tags')}</th>
-                  <th scope="col">{t('list.updated')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {decks.map((deck, index) => (
-                  <tr key={deck.id} aria-selected={selected.includes(deck.id)}>
-                    <td>
-                      <input
-                        type="checkbox"
-                        aria-label={t('group.select', { name: deck.name })}
-                        checked={selected.includes(deck.id)}
-                        onChange={() => undefined}
-                        onClick={(event) => toggle(index, event.shiftKey)}
-                      />
-                    </td>
-                    <td>
-                      {deck.pinned && <span className="deck-badge">{t('list.pinned')}</span>}
-                      {deck.archived && <span className="deck-badge">{t('list.archived')}</span>}
-                      <Link to={`/decks/${deck.id}`}>{deck.name}</Link>
-                    </td>
-                    <td>{t(`formats.${formatKey(deck.format)}`)}</td>
-                    <td>{deck.colorIdentity ? <ManaCost cost={deck.colorIdentity.split('').map((color) => `{${color}}`).join('')} /> : t('list.colorless')}</td>
-                    <td>{deck.cardCount}</td>
-                    <td>{deck.tags.join(', ')}</td>
-                    <td>{dates.format(new Date(deck.updatedAt))}</td>
+            <div className="table-scroll">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th scope="col">
+                      <input type="checkbox" aria-label={t('group.selectAll')} checked={allSelected} onChange={() => setSelected(allSelected ? [] : decks.map((deck) => deck.id))} />
+                    </th>
+                    <th scope="col">{t('fields.name')}</th>
+                    <th scope="col">{t('fields.format')}</th>
+                    <th scope="col">{t('list.colors')}</th>
+                    <th scope="col">{t('list.cards')}</th>
+                    <th scope="col" className="column-optional">
+                      {t('list.tags')}
+                    </th>
+                    <th scope="col" className="column-optional">
+                      {t('list.updated')}
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {decks.map((deck, index) => (
+                    <tr key={deck.id} aria-selected={selected.includes(deck.id)}>
+                      <td>
+                        <input
+                          type="checkbox"
+                          aria-label={t('group.select', { name: deck.name })}
+                          checked={selected.includes(deck.id)}
+                          onChange={() => undefined}
+                          onClick={(event) => toggle(index, event.shiftKey)}
+                        />
+                      </td>
+                      <td>
+                        {deck.pinned && <span className="deck-badge">{t('list.pinned')}</span>}
+                        {deck.archived && <span className="deck-badge">{t('list.archived')}</span>}
+                        <Link to={`/decks/${deck.id}`}>{deck.name}</Link>
+                      </td>
+                      <td>{t(`formats.${formatKey(deck.format)}`)}</td>
+                      <td>{deck.colorIdentity ? <ManaCost cost={deck.colorIdentity.split('').map((color) => `{${color}}`).join('')} /> : t('list.colorless')}</td>
+                      <td>{deck.cardCount}</td>
+                      <td className="column-optional">{deck.tags.join(', ')}</td>
+                      <td className="column-optional">{dates.format(new Date(deck.updatedAt))}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
           {nextCursor && (
             <button type="button" onClick={() => void loadMore()}>

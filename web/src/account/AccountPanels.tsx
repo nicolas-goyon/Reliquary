@@ -188,37 +188,39 @@ export function ApiKeysPanel() {
       )}
       {keys && keys.length === 0 && <p>{t('apiKeys.none')}</p>}
       {keys && keys.length > 0 && (
-        <table className="table">
-          <thead>
-            <tr>
-              <th scope="col">{t('apiKeys.name')}</th>
-              <th scope="col">{t('apiKeys.prefix')}</th>
-              <th scope="col">{t('apiKeys.createdAt')}</th>
-              <th scope="col">{t('apiKeys.lastUsedAt')}</th>
-              <th scope="col">
-                <span className="visually-hidden">{t('apiKeys.actions')}</span>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {keys.map((key) => (
-              <tr key={key.id}>
-                <td>{key.name}</td>
-                <td>
-                  <code>rlq_{key.prefix}_…</code>
-                </td>
-                <td>{dateFormat.format(new Date(key.createdAt))}</td>
-                <td>{key.lastUsedAt ? dateFormat.format(new Date(key.lastUsedAt)) : t('apiKeys.neverUsed')}</td>
-                <td>
-                  <button type="button" className="button-danger" onClick={() => void handleRevoke(key)}>
-                    {t('apiKeys.revoke')}
-                    <span className="visually-hidden"> {key.name}</span>
-                  </button>
-                </td>
+        <div className="table-scroll">
+          <table className="table">
+            <thead>
+              <tr>
+                <th scope="col">{t('apiKeys.name')}</th>
+                <th scope="col">{t('apiKeys.prefix')}</th>
+                <th scope="col">{t('apiKeys.createdAt')}</th>
+                <th scope="col">{t('apiKeys.lastUsedAt')}</th>
+                <th scope="col">
+                  <span className="visually-hidden">{t('apiKeys.actions')}</span>
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {keys.map((key) => (
+                <tr key={key.id}>
+                  <td>{key.name}</td>
+                  <td>
+                    <code>rlq_{key.prefix}_…</code>
+                  </td>
+                  <td>{dateFormat.format(new Date(key.createdAt))}</td>
+                  <td>{key.lastUsedAt ? dateFormat.format(new Date(key.lastUsedAt)) : t('apiKeys.neverUsed')}</td>
+                  <td>
+                    <button type="button" className="button-danger" onClick={() => void handleRevoke(key)}>
+                      {t('apiKeys.revoke')}
+                      <span className="visually-hidden"> {key.name}</span>
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
       <form className="form form-inline" onSubmit={(event) => void handleCreate(event)} noValidate>
         <TextField label={t('apiKeys.newName')} field="name" error={error} maxLength={50} value={name} onChange={(event) => setName(event.target.value)} />

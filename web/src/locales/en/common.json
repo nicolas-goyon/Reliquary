@@ -8,6 +8,29 @@
     "en": "English",
     "fr": "Français"
   },
+  "theme": {
+    "label": "Theme",
+    "system": "System",
+    "light": "Light",
+    "dark": "Dark"
+  },
+  "shortcuts": {
+    "open": "Keyboard shortcuts",
+    "title": "Keyboard shortcuts",
+    "description": "The shortcuts do not work while the focus is in a field.",
+    "then": "then",
+    "close": "Close",
+    "actions": {
+      "search": "Go to the card search field",
+      "home": "Open the home page",
+      "cards": "Open the card search",
+      "decks": "Open your decks",
+      "explore": "Open the public decks",
+      "newDeck": "Make a deck, on the deck list",
+      "addCard": "Go to the field \"Add a card\", on the deck page",
+      "help": "Show the keyboard shortcuts"
+    }
+  },
   "home": {
     "title": "Manage your decks and your collection.",
     "description": "Reliquary is in early development. The first milestone creates the foundations: card data, card search and accounts.",
@@ -38,6 +61,10 @@
   "notFound": {
     "title": "Page not found",
     "description": "This page does not exist. Check the address."
+  },
+  "update": {
+    "available": "A new version of Reliquary is available.",
+    "apply": "Update"
   },
   "slots": {
     "contributionFailed": "This part of the page has an error. The other parts continue to work."

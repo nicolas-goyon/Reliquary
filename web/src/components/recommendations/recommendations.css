@@ -5,7 +5,7 @@
 
 .recommendation-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr));
   gap: 0 1rem;
   max-height: 24rem;
   margin: 0;

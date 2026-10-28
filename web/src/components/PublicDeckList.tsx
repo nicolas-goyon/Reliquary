@@ -5,8 +5,12 @@ import { Link } from '../router/Link'
 import { CardImage } from './CardImage'
 import { ManaCost } from './ManaCost'
 
-/** A list of public decks: commander image, name, format, colors, author and counts. */
-export function PublicDeckList({ decks, showAuthor = true }: { decks: PublicDeck[]; showAuthor?: boolean }) {
+/**
+ * A list of public decks: commander image, name, format, colors, author and counts.
+ * @param headingLevel The level of the deck names: one level below the heading above the list.
+ */
+export function PublicDeckList({ decks, showAuthor = true, headingLevel = 3 }: { decks: PublicDeck[]; showAuthor?: boolean; headingLevel?: 2 | 3 }) {
+  const Heading = headingLevel === 2 ? 'h2' : 'h3'
   const { t, i18n } = useTranslation('decks')
   const dates = new Intl.DateTimeFormat(i18n.resolvedLanguage, { dateStyle: 'medium' })
   if (decks.length === 0) {
@@ -18,9 +22,9 @@ export function PublicDeckList({ decks, showAuthor = true }: { decks: PublicDeck
         <li key={deck.id} className="public-deck panel">
           {deck.commanders[0] && <CardImage src={deck.commanders[0].imageUri ?? undefined} alt={deck.commanders[0].name} className="public-deck-image" />}
           <div className="public-deck-body">
-            <h3>
+            <Heading>
               <Link to={`/decks/${deck.id}`}>{deck.name}</Link>
-            </h3>
+            </Heading>
             <p className="public-deck-meta">
               <span>{t(`formats.${formatKey(deck.format)}`)}</span>
               {deck.colorIdentity ? (
