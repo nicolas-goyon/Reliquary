@@ -28,7 +28,7 @@ The options to act for a user:
 - The API host serves the internal API under `/internal/v1`.
   The OpenAPI document `internal-v1` at `/openapi/internal-v1.json` describes it. The public OpenAPI document does not contain it.
 - Only a service account can use the internal API: the policy `AuthPolicies.ServiceAccount`.
-  ADR 0037 describes the service accounts and the delegation tokens of issue [#163](https://github.com/nicolas-goyon/reliquary/issues/163).
+  [ADR 0037](0037-service-accounts-and-delegation-tokens.md) describes the service accounts and the delegation tokens.
 - The version of the internal API is the core API version of [ADR 0023](0023-extension-registry.md).
   The major version is the version in the path. `GET /internal/v1` gives the full version.
   This change adds the internal API, so the core API version becomes 1.1.0.

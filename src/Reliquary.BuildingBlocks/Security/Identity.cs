@@ -25,8 +25,14 @@ public static class ReliquaryClaims
     /// <summary>The ID of the API key, when the method is <see cref="AuthMethods.ApiKey"/>.</summary>
     public const string ApiKeyId = "rlq_key";
 
-    /// <summary>The ID of the service account, when the method is <see cref="AuthMethods.ServiceAccount"/>.</summary>
+    /// <summary>The ID of the service account, when the method is <see cref="AuthMethods.ServiceAccount"/> or <see cref="AuthMethods.Delegation"/>.</summary>
     public const string ServiceAccountId = "rlq_sa";
+
+    /// <summary>The ID of the delegation, when the method is <see cref="AuthMethods.Delegation"/>.</summary>
+    public const string DelegationId = "rlq_dlg";
+
+    /// <summary>One scope of a delegation token. A principal has one claim for each scope. See <see cref="Scopes"/>.</summary>
+    public const string Scope = "scope";
 }
 
 /// <summary>
@@ -42,6 +48,9 @@ public static class AuthMethods
 
     /// <summary>The secret of a service account. The principal is the service account, not a user.</summary>
     public const string ServiceAccount = "service_account";
+
+    /// <summary>A delegation token: a service account acts for a user, with the scopes of the token.</summary>
+    public const string Delegation = "delegation";
 }
 
 /// <summary>
@@ -58,7 +67,10 @@ public static class Roles
 /// </summary>
 public static class AuthPolicies
 {
-    /// <summary>An authenticated user, with an access token or an API key. A service account is not a user.</summary>
+    /// <summary>
+    /// An authenticated user, with an access token, an API key or a delegation token. A service account is not a user.
+    /// A delegation token also needs the scope of the endpoint. See <see cref="ScopeEndpointExtensions.RequireScope{TBuilder}"/>.
+    /// </summary>
     public const string User = "user";
 
     /// <summary>An authenticated user with the access token of a web session. An API key is not sufficient.</summary>

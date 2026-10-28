@@ -6,6 +6,7 @@ using Dapper;
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
 using Reliquary.Accounts.PersonalData;
+using Reliquary.Accounts.ServiceAccounts;
 using Reliquary.Decks.Api;
 
 namespace Reliquary.Decks.Tests;
@@ -17,6 +18,8 @@ namespace Reliquary.Decks.Tests;
 [Collection(DecksGroup.Name)]
 public sealed class PersonalDataTests(DecksInstance instance)
 {
+    private static readonly string[] DecksRead = ["decks:read"];
+
     private static CancellationToken Cancel => TestContext.Current.CancellationToken;
 
     [Fact]
@@ -26,6 +29,7 @@ public sealed class PersonalDataTests(DecksInstance instance)
         await client.PostAsJsonAsync("/api/v1/deck-folders", new { name = "Commander" }, Cancel);
         await CreateDeckAsync(client, "Atraxa", new { name = "Sol Ring", tags = new[] { "Fast" }, globalTags = new[] { "Mana rock" } });
         await CreateDeckAsync(client, "Atraxa", new { name = "Forest", quantity = 4 });
+        var serviceAccount = await DelegateAsync(client);
 
         var request = await client.PostAsync(new Uri("/api/v1/me/exports", UriKind.Relative), null, Cancel);
         await (await ServiceAsync()).ProcessExportsAsync(Cancel);
@@ -47,6 +51,8 @@ public sealed class PersonalDataTests(DecksInstance instance)
             entries);
         Assert.Equal("Tester", account.GetProperty("displayName").GetString());
         Assert.False(account.TryGetProperty("passwordHash", out _));
+        var delegation = Assert.Single(account.GetProperty("delegations").EnumerateArray());
+        Assert.Equal(serviceAccount, delegation.GetProperty("serviceAccount").GetString());
         Assert.Contains("1 Sol Ring", text, StringComparison.Ordinal);
         Assert.Contains("#Fast", text, StringComparison.Ordinal);
     }
@@ -64,6 +70,7 @@ public sealed class PersonalDataTests(DecksInstance instance)
         await client.PatchAsJsonAsync($"/api/v1/decks/{deck.Id}/lines/{line.Id}", new { categories = new[] { "ramp" } }, Cancel);
         var theirs = await CreateDeckAsync(other, "Theirs", new { name = "Sol Ring" }, "public");
         await client.PostAsJsonAsync("/api/v1/me/api-keys", new { name = "Script" }, Cancel);
+        await DelegateAsync(client);
         await instance.PublishEventsAsync();
         await client.PutAsync(new Uri($"/api/v1/public-decks/{theirs.Id}/favorite", UriKind.Relative), null, Cancel);
         await other.PutAsync(new Uri($"/api/v1/public-decks/{deck.Id}/favorite", UriKind.Relative), null, Cancel);
@@ -105,6 +112,20 @@ public sealed class PersonalDataTests(DecksInstance instance)
         Assert.Equal(HttpStatusCode.NoContent, cancel.StatusCode);
         Assert.Null(state!.RequestedAt);
         Assert.Equal(0, deleted);
+    }
+
+    /// <summary>
+    /// Creates a service account and gives it a delegation of the user.
+    /// </summary>
+    /// <returns>The name of the service account.</returns>
+    private async Task<string> DelegateAsync(HttpClient client)
+    {
+        var api = await instance.GetAsync();
+        var name = $"export-{Guid.NewGuid():N}"[..20];
+        var created = (await api.Services.GetRequiredService<ServiceAccountService>().CreateAsync(name, "A test module.", Cancel)).Created!;
+        var response = await client.PostAsJsonAsync("/api/v1/me/delegations", new { serviceAccountId = created.ServiceAccount.Id, scopes = DecksRead }, Cancel);
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        return name;
     }
 
     private async Task<PersonalDataService> ServiceAsync()

@@ -7,5 +7,6 @@ root.Subcommands.Add(JobsCommand.Create());
 root.Subcommands.Add(DemoCommand.Create());
 root.Subcommands.Add(BackupCommand.CreateBackup());
 root.Subcommands.Add(BackupCommand.CreateRestore());
+root.Subcommands.Add(ServiceAccountsCommand.Create());
 
 return await root.Parse(args).InvokeAsync();

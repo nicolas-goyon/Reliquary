@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Reliquary.Accounts.Data;
+using Reliquary.Accounts.ServiceAccounts;
 using Reliquary.BuildingBlocks;
 using Reliquary.BuildingBlocks.Accounts;
 using Reliquary.BuildingBlocks.Data;
@@ -170,6 +171,7 @@ internal sealed class PersonalDataService(
 
         await using var connection = await store.OpenAsync(cancellationToken);
         await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+        await ServiceAccountStore.DeleteDelegationsOfAccountAsync(transaction, accountId, cancellationToken);
         await PersonalDataStore.DeleteAccountAsync(transaction, accountId, cancellationToken);
         await shards.RemoveAsync(accountId, transaction, cancellationToken);
         await events.WriteAsync(DatabaseTarget.Users, transaction, new AccountDeleted(accountId), null, cancellationToken);
@@ -221,7 +223,7 @@ internal sealed class PersonalDataJob(PersonalDataService service) : IScheduledJ
 /// <summary>
 /// Gives the data of the Accounts component for the export. The deletion of the account row is the last step of the deletion.
 /// </summary>
-internal sealed class AccountPersonalData(AccountStore store) : IPersonalDataProvider
+internal sealed class AccountPersonalData(AccountStore store, ServiceAccountStore serviceAccounts) : IPersonalDataProvider
 {
     public string Name => "account";
 
@@ -233,6 +235,7 @@ internal sealed class AccountPersonalData(AccountStore store) : IPersonalDataPro
             ?? throw new InvalidOperationException($"The account {ownerId} does not exist.");
         var providers = await store.ListExternalProvidersAsync(ownerId, cancellationToken);
         var keys = await store.ListApiKeysAsync(ownerId, cancellationToken);
+        var delegations = await serviceAccounts.ListAllDelegationsOfAccountAsync(ownerId, cancellationToken);
         await archive.WriteJsonAsync("account.json", new
         {
             account.Id,
@@ -245,6 +248,15 @@ internal sealed class AccountPersonalData(AccountStore store) : IPersonalDataPro
             account.LastSignInAt,
             ExternalLogins = providers,
             ApiKeys = keys.Select(key => new { key.Name, key.Prefix, key.CreatedAt, key.LastUsedAt }),
+            Delegations = delegations.Select(delegation => new
+            {
+                ServiceAccount = delegation.ServiceAccountName,
+                delegation.Scopes,
+                delegation.CreatedAt,
+                delegation.ExpiresAt,
+                delegation.LastUsedAt,
+                delegation.RevokedAt,
+            }),
         }, cancellationToken);
     }
 

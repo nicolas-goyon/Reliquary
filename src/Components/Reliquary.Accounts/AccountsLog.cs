@@ -34,4 +34,16 @@ internal static partial class AccountsLog
 
     [LoggerMessage(EventId = 3201, Level = LogLevel.Information, Message = "The worker deleted the account {AccountId} and its data.")]
     public static partial void AccountDeleted(this ILogger logger, Guid accountId);
+
+    [LoggerMessage(EventId = 3300, Level = LogLevel.Information, Message = "The service account {ServiceAccountId} with the name {Name} was created.")]
+    public static partial void ServiceAccountCreated(this ILogger logger, Guid serviceAccountId, string name);
+
+    [LoggerMessage(EventId = 3301, Level = LogLevel.Information, Message = "The service account {ServiceAccountId} and its delegations were revoked.")]
+    public static partial void ServiceAccountRevoked(this ILogger logger, Guid serviceAccountId);
+
+    [LoggerMessage(EventId = 3302, Level = LogLevel.Information, Message = "The account {AccountId} gave the delegation {DelegationId} to the service account {ServiceAccountId} with the scopes {Scopes}.")]
+    public static partial void DelegationCreated(this ILogger logger, Guid accountId, Guid delegationId, Guid serviceAccountId, IReadOnlyList<string> scopes);
+
+    [LoggerMessage(EventId = 3303, Level = LogLevel.Information, Message = "The account {AccountId} revoked the delegation {DelegationId}.")]
+    public static partial void DelegationRevoked(this ILogger logger, Guid accountId, Guid delegationId);
 }

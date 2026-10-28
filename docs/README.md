@@ -23,6 +23,7 @@ All documents are in English and follow the [writing rules](contributing/writing
 | [Card search](architecture/card-search.md) | The search endpoint, the Scryfall syntax, the rules of the search and its indexes |
 | [Extensions](architecture/extensions.md) | Plugins and modules |
 | [Internal API](architecture/internal-api.md) | The versioned API for the modules, its OpenAPI document and the catalog of the domain events |
+| [Service accounts](architecture/service-accounts.md) | Service accounts, delegations, delegation tokens and scopes |
 | [Technology stack](architecture/tech-stack.md) | Technologies and performance targets |
 | [Decision records](decisions/README.md) | The reasons for each important decision |
 

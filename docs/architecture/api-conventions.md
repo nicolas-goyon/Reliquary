@@ -91,7 +91,7 @@ Rules for the error codes:
 | --- | --- | --- |
 | `bad_request` | 400 | The syntax, the JSON body or a parameter type is not correct. |
 | `validation_failed` | 400 | One or more fields are not valid. The `errors` member gives each field. |
-| `authentication_required` | 401 | The request needs an access token or an API key. |
+| `authentication_required` | 401 | The request needs an access token, an API key or a delegation token. |
 | `forbidden` | 403 | The user cannot do this operation. |
 | `not_found` | 404 | The resource does not exist, or the user cannot see it. |
 | `method_not_allowed` | 405 | The resource does not accept this HTTP method. |
@@ -109,6 +109,9 @@ Rules for the error codes:
 | `api_key_limit` | 409 | The account has the maximum number of API keys. |
 | `provider_not_enabled` | 404 | The OAuth provider is not enabled on the instance. |
 | `core_version_not_supported` | 409 | The extension does not support the current version of the core API. |
+| `scope_missing` | 403 | The delegation token does not have the scope of the endpoint, or the endpoint does not accept delegation tokens. |
+| `delegation_limit` | 409 | The account has the maximum number of active delegations. |
+| `service_account_name_taken` | 409 | A service account with the same name exists. |
 | `deck_text_invalid` | 400 | The deck text has lines that the API cannot use. The member `lineErrors` gives the number, the reason code and the text of each line. |
 | `deck_version_conflict` | 409 | The deck changed since the client read it. Read the deck again, then repeat the change. |
 | `report_exists` | 409 | The user has an open report about the item. |

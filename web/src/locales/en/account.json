@@ -58,5 +58,31 @@
     "confirm": "Delete your account and all your data in 7 days?",
     "scheduled": "Reliquary deletes your account and all your data on {{date}}.",
     "cancel": "Cancel the deletion"
+  },
+  "delegations": {
+    "title": "Delegations",
+    "description": "A delegation lets a module of this instance act for you, with the permissions that you choose, until a date. Revoke a delegation when you do not want the module to act for you.",
+    "none": "You have no delegation.",
+    "noServiceAccount": "No module of this instance can receive a delegation.",
+    "module": "Module",
+    "scopes": "Permissions",
+    "expiresAt": "Valid until",
+    "lastUsedAt": "Last use",
+    "neverUsed": "Never",
+    "actions": "Actions",
+    "revoke": "Revoke",
+    "revokeConfirm": "Revoke the delegation to \"{{name}}\"? The module stops acting for you immediately.",
+    "newTitle": "Give a delegation",
+    "duration": "Duration",
+    "days": "{{count}} days",
+    "submit": "Give the delegation",
+    "created": "The module \"{{name}}\" can now act for you until {{date}}.",
+    "scope": {
+      "decks_read": "Read your decks, folders and tags",
+      "decks_write": "Create, change and delete your decks, folders and tags",
+      "collection_read": "Read your collection",
+      "collection_write": "Change your collection",
+      "profile_read": "Read your account: email address, name and language"
+    }
   }
 }

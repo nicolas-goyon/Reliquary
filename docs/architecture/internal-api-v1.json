@@ -79,10 +79,131 @@
           }
         }
       }
+    },
+    "/internal/v1/delegations": {
+      "get": {
+        "tags": [
+          "Delegations"
+        ],
+        "summary": "Lists the active delegations that the users gave to the service account.",
+        "operationId": "ListServiceAccountDelegations",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InternalDelegationResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/v1/delegations/{id}/tokens": {
+      "post": {
+        "tags": [
+          "Delegations"
+        ],
+        "summary": "Gives a short delegation token. The service account sends it to the public API to act for the user, with the scopes of the token.",
+        "operationId": "CreateDelegationToken",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/CreateDelegationTokenRequest"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DelegationTokenResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "CreateDelegationTokenRequest": {
+        "required": [
+          "scopes"
+        ],
+        "type": "object",
+        "properties": {
+          "scopes": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "DelegationTokenResponse": {
+        "required": [
+          "token",
+          "tokenType",
+          "accountId",
+          "scopes",
+          "expiresAt"
+        ],
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string"
+          },
+          "tokenType": {
+            "type": "string"
+          },
+          "accountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "DomainEventField": {
         "required": [
           "name",
@@ -158,6 +279,40 @@
           }
         }
       },
+      "InternalDelegationResponse": {
+        "required": [
+          "id",
+          "accountId",
+          "scopes",
+          "createdAt",
+          "expiresAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "accountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "PublicProfileResponse": {
         "required": [
           "id",
@@ -185,6 +340,9 @@
     },
     {
       "name": "Users"
+    },
+    {
+      "name": "Delegations"
     }
   ]
 }

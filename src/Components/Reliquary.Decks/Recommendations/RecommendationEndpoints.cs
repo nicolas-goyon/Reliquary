@@ -28,7 +28,8 @@ internal static class RecommendationEndpoints
             .RequireAuthorization(AuthPolicies.User)
             .MapGet("/{deckId:guid}/recommendations", GetAsync)
             .WithName("GetDeckRecommendations")
-            .WithSummary("Gets card recommendations for the commanders of a deck, from recommander.cards. Only the owner gets them. The list does not contain the cards of the deck. Show the credit of the source with the list.");
+            .WithSummary("Gets card recommendations for the commanders of a deck, from recommander.cards. Only the owner gets them. The list does not contain the cards of the deck. Show the credit of the source with the list.")
+            .RequireScope(Scopes.DecksRead);
     }
 
     private static async Task<Results<Ok<DeckRecommendationsResponse>, ProblemHttpResult>> GetAsync(

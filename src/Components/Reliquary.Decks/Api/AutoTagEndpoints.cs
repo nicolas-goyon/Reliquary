@@ -24,11 +24,13 @@ internal static class AutoTagEndpoints
 
         autoTag.MapGet(string.Empty, GetAsync)
             .WithName("SuggestDeckCategories")
-            .WithSummary("Suggests the categories of each line of a deck of the user, with the reason of each category: a user rule, an Oracle tag or a text rule.");
+            .WithSummary("Suggests the categories of each line of a deck of the user, with the reason of each category: a user rule, an Oracle tag or a text rule.")
+            .RequireScope(Scopes.DecksRead);
 
         autoTag.MapPost(string.Empty, ApplyAsync)
             .WithName("ApplyDeckCategories")
-            .WithSummary("Sets the categories of lines of a deck of the user in one change. A choice that differs from the automatic suggestion becomes a rule of the user.");
+            .WithSummary("Sets the categories of lines of a deck of the user in one change. A choice that differs from the automatic suggestion becomes a rule of the user.")
+            .RequireScope(Scopes.DecksWrite);
     }
 
     private static async Task<Ok<AutoTagResponse>> GetAsync(Guid deckId, ClaimsPrincipal user, AutoTagService autoTag, CancellationToken cancellationToken)

@@ -143,8 +143,8 @@ Modules are rare and signed, and the instance administrator installs them.
 - **On the server**: a module can add endpoints (`/api/modules/<id>/…`), receive and publish domain events, run scheduled tasks and accept incoming webhooks.
 - **Actions for a user who is not connected**: for example, a module can synchronize an external account each night.
   A module can also process an import that comes from a webhook.
-  For these actions, the user must give explicit consent.
-  The user can revoke the consent in the **Linked accounts** panel.
+  For these actions, the user must give explicit consent: a delegation to the service account of the module.
+  The user can revoke the consent in the **Delegations** panel of the account page.
 - **In the front end**: a module can use the same slots as plugins, and it can add full pages and settings panels.
 - **Services for plugins**: a module can give services to plugins.
   For example, a plugin can show data that a module calculates.
@@ -190,6 +190,7 @@ The core prepares these seven items:
 6. **Service accounts and delegation**: a model of delegation tokens.
    A delegation token means "act for user X, with this scope", and the user can revoke it.
    The `users` schema includes this model.
+   The [service accounts](./service-accounts.md) page describes it.
 7. **Activation for each instance**: a register of the installed extensions.
    For each extension, the register gives an activation flag and the minimum core version.
 
@@ -218,3 +219,4 @@ The extension registry is ready from milestone M0, before any extension can run.
 - [ADR 0011](../decisions/0011-plugin-network-allowlist.md): plugin network access through a declared list of domains
 - [ADR 0023](../decisions/0023-extension-registry.md): the extension registry and the version of the core API
 - [ADR 0036](../decisions/0036-internal-api.md): the internal API for the modules
+- [ADR 0037](../decisions/0037-service-accounts-and-delegation-tokens.md): the service accounts and the delegation tokens

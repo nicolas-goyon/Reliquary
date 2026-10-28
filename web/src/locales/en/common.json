@@ -85,6 +85,7 @@
     "invalid_token": "This link is not valid. It is possible that you used it before, or that it expired. Ask for a new email.",
     "session_expired": "Your session stopped. Sign in again.",
     "api_key_limit": "You have the maximum number of API keys. Revoke a key, then try again.",
+    "delegation_limit": "You have the maximum number of delegations. Revoke a delegation, then try again.",
     "provider_not_enabled": "This sign-in service is not available on this instance.",
     "external_sign_in_failed": "The sign-in with the external service failed. Try again.",
     "external_email_missing": "The external service did not give an email address. Use a different sign-in method.",

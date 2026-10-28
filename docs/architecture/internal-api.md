@@ -8,7 +8,7 @@ Terms follow the [glossary](../glossary.md).
 
 - The internal API is separate from the public API.
   Its endpoints are under `/internal/v1`, and the public endpoints are under `/api/v1`.
-- Only a service account can use the internal API.
+- Only a service account can use the internal API. The module sends the secret of its [service account](service-accounts.md).
   A request with no credential gets the status 401.
   A request with the access token or the API key of a user gets the status 403.
 - The API host serves the internal API. A module calls the API host on the private network of the instance.
@@ -52,6 +52,11 @@ RELIQUARY_UPDATE_SNAPSHOTS=1 dotnet test tests/Reliquary.Api.Tests --filter Inte
 | `GET /internal/v1` | Gets the version of the core API. |
 | `GET /internal/v1/events/types` | Lists the domain event types and versions that modules can consume, with the fields of each payload. |
 | `GET /internal/v1/users/{accountId}/profile` | Gets the public profile of a user: the ID and the display name. |
+| `GET /internal/v1/delegations` | Lists the active delegations that the users gave to the service account. |
+| `POST /internal/v1/delegations/{id}/tokens` | Gives a delegation token. The module uses it on the public API to act for the user. |
+
+The [service accounts](service-accounts.md) page describes the secrets, the delegations and the scopes.
+To act on the decks of a user, a module calls the public API with a delegation token.
 
 The [domain events](domain-events.md#catalog-of-the-event-types) page gives the same catalog of the event types.
 

@@ -11,6 +11,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Reliquary.Accounts.Data;
 using Reliquary.Accounts.Security;
+using Reliquary.Accounts.ServiceAccounts;
 using Reliquary.BuildingBlocks.Api;
 using Reliquary.BuildingBlocks.Security;
 
@@ -21,7 +22,7 @@ namespace Reliquary.Accounts.Auth;
 /// </summary>
 internal static class AuthSchemes
 {
-    /// <summary>The default scheme. It sends an API key to <see cref="ApiKey"/> and an access token to <see cref="Bearer"/>.</summary>
+    /// <summary>The default scheme. It sends each credential to its scheme by the start of the value: <c>rlq_</c>, <c>rls_</c>, <c>rld_</c>, else an access token.</summary>
     public const string Default = "Reliquary";
 
     /// <summary>The access tokens of the web sessions.</summary>
@@ -29,6 +30,12 @@ internal static class AuthSchemes
 
     /// <summary>The personal API keys.</summary>
     public const string ApiKey = "Reliquary.ApiKey";
+
+    /// <summary>The secrets of the service accounts.</summary>
+    public const string ServiceAccount = "Reliquary.ServiceAccount";
+
+    /// <summary>The delegation tokens.</summary>
+    public const string Delegation = "Reliquary.Delegation";
 
     /// <summary>The short cookie that keeps the result of an OAuth provider until the API creates the web session.</summary>
     public const string External = "Reliquary.External";
@@ -63,11 +70,17 @@ internal static class AuthenticationSetup
         var authentication = services
             .AddAuthentication(AuthSchemes.Default)
             .AddPolicyScheme(AuthSchemes.Default, "Reliquary", options => options.ForwardDefaultSelector = context =>
-                context.Request.Headers.Authorization.ToString().StartsWith("Bearer " + ApiKeyFormat.Start, StringComparison.Ordinal)
-                    ? AuthSchemes.ApiKey
-                    : AuthSchemes.Bearer)
+            {
+                var authorization = context.Request.Headers.Authorization.ToString();
+                return PrefixedSecretFormat.ApiKey.Matches(authorization) ? AuthSchemes.ApiKey
+                    : PrefixedSecretFormat.ServiceAccount.Matches(authorization) ? AuthSchemes.ServiceAccount
+                    : PrefixedSecretFormat.Delegation.Matches(authorization) ? AuthSchemes.Delegation
+                    : AuthSchemes.Bearer;
+            })
             .AddJwtBearer(AuthSchemes.Bearer, options => options.MapInboundClaims = false)
             .AddScheme<AuthenticationSchemeOptions, ApiKeyAuthenticationHandler>(AuthSchemes.ApiKey, null)
+            .AddScheme<AuthenticationSchemeOptions, ServiceAccountAuthenticationHandler>(AuthSchemes.ServiceAccount, null)
+            .AddScheme<AuthenticationSchemeOptions, DelegationAuthenticationHandler>(AuthSchemes.Delegation, null)
             .AddCookie(AuthSchemes.External, options =>
             {
                 options.Cookie.Name = "reliquary_external";
