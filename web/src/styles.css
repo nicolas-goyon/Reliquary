@@ -61,6 +61,11 @@
 
 body {
   margin: 0;
+  overflow-wrap: break-word;
+}
+
+img {
+  max-width: 100%;
 }
 
 a {
@@ -181,6 +186,7 @@ a {
 
 .panels {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 1.5rem;
 }
 
@@ -332,7 +338,7 @@ button:disabled {
 
 .column-map {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 12rem), 1fr));
   gap: 0.75rem;
   margin: 0;
   padding: 0.75rem;
@@ -426,7 +432,7 @@ button:disabled {
 
 .filter-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
   gap: 1rem;
   width: 100%;
 }
@@ -536,7 +542,7 @@ button:disabled {
 
 .card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 11rem), 1fr));
   gap: 0.75rem;
   margin: 1rem 0;
   padding: 0;
@@ -544,7 +550,7 @@ button:disabled {
 }
 
 .card-grid-small {
-  grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 8rem), 1fr));
 }
 
 .card-grid figure {
@@ -672,7 +678,7 @@ button:disabled {
 
 .legalities {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 12rem), 1fr));
   gap: 0.25rem;
 }
 
@@ -755,7 +761,7 @@ button:disabled {
 
 .zones {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(22rem, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr));
   gap: 1rem;
 }
 
@@ -918,7 +924,7 @@ button:disabled {
 
 .analysis-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
   gap: 1.5rem;
 }
 
@@ -1049,7 +1055,10 @@ button:disabled {
   background-color: var(--color-mana-c);
 }
 
-.table-scroll {
+/* The position keeps the hidden texts of the table inside the scroll container. */
+.table-scroll,
+.deck-table-scroll {
+  position: relative;
   overflow-x: auto;
 }
 
@@ -1128,6 +1137,7 @@ button:disabled {
 
 .analysis-reasons {
   padding-left: 1.25rem;
+}
 
 .deck-list-layout {
   display: grid;
@@ -1157,6 +1167,18 @@ button:disabled {
   margin: 0 0 1rem;
   padding: 0;
   list-style: none;
+}
+
+.folder-rename input,
+.inline-field input {
+  min-width: 0;
+  min-height: 2.75rem;
+  padding: 0 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.375rem;
+  background-color: var(--color-background);
+  color: inherit;
+  font: inherit;
 }
 
 .folder-row,
@@ -1211,9 +1233,16 @@ button:disabled {
   border: 0;
 }
 
+.color-filter label {
+  display: inline-flex;
+  gap: 0.375rem;
+  align-items: center;
+}
+
 .color-filter legend {
   padding: 0;
   margin-bottom: 0.25rem;
+}
 
 /* Table mode of the deck page */
 .deck-table {
@@ -1223,25 +1252,24 @@ button:disabled {
 
 .deck-table-filters {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr));
   gap: 0.75rem;
 }
 
 .group-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem;
-  align-items: center;
-}
-
-.group-count {
-
   gap: 0.75rem 1.5rem;
   align-items: center;
   padding: 0.75rem 1rem;
   border: 1px solid var(--color-border);
   border-radius: 0.5rem;
   background-color: var(--color-surface);
+}
+
+.group-count {
+  margin: 0;
+  font-weight: 600;
 }
 
 .group-actions-count {
@@ -1261,6 +1289,7 @@ button:disabled {
 
 tr[aria-selected='true'] {
   background-color: var(--color-surface);
+}
 
 .group-action {
   display: inline-flex;
@@ -1284,10 +1313,6 @@ tr[aria-selected='true'] {
   display: inline-flex;
   gap: 0.25rem;
   align-items: center;
-}
-
-.deck-table-scroll {
-  overflow-x: auto;
 }
 
 .deck-table-grid th .button-link {
@@ -1359,6 +1384,7 @@ tr[aria-selected='true'] {
 
 .segmented {
   display: inline-flex;
+  flex-wrap: wrap;
   gap: 0.25rem;
   margin-bottom: 1rem;
 }
@@ -1430,4 +1456,132 @@ tr[aria-selected='true'] {
   display: flex;
   flex-wrap: wrap;
   gap: 0.35rem;
+}
+
+/* Update prompt of the service worker */
+.update-prompt {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+}
+
+.update-prompt p {
+  margin: 0;
+}
+
+/*
+ * Small screens: less than 600 px (37.5rem) wide.
+ * The page must not scroll horizontally. Wide tables scroll in their own container.
+ */
+@media (max-width: 37.5rem) {
+  .app-header {
+    gap: 0.25rem 1rem;
+    padding: 0.5rem 1rem;
+  }
+
+  .app-main {
+    padding: 1.25rem 1rem;
+  }
+
+  .search-form,
+  .form-inline {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .add-card {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .facts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .facts dd + dt {
+    margin-top: 0.5rem;
+  }
+
+  .deck-line {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    padding: 0.25rem 0;
+  }
+
+  .deck-line-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-end;
+  }
+
+  /* The image preview opens on hover. Small screens have no hover. */
+  .deck-line-preview,
+  .deck-line-name:hover .deck-line-preview {
+    display: none;
+  }
+
+  .column-optional {
+    display: none;
+  }
+
+  .bar-chart-rows .bar-chart-item {
+    grid-template-columns: minmax(5rem, 7rem) minmax(0, 1fr) 2.5rem;
+  }
+}
+
+/* Touch screens and small screens: each control is at least 44 px (2.75rem) high and wide. */
+@media (max-width: 37.5rem), (pointer: coarse) {
+  .nav-list a,
+  .nav-list .button-link,
+  .app-footer a,
+  .app-footer .button-link,
+  .button-link,
+  .table td > a,
+  .deck-line-name > a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+  }
+
+  .button-small {
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+  }
+
+  .deck-line-actions select,
+  .group-action input:not([type='checkbox']),
+  .group-action select,
+  .field select {
+    min-height: 2.75rem;
+  }
+
+  .filter-check,
+  .color-filter label,
+  .group-action .checkbox {
+    min-height: 2.75rem;
+  }
+
+  /* The label around the box is the target, so the box can be smaller. */
+  .filter-check input,
+  .color-filter input {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+
+  /* A box in a table has no label around it, so the box itself is the target. */
+  .table input[type='checkbox'],
+  .deck-table-grid input[type='checkbox'] {
+    width: 2.75rem;
+    height: 2.75rem;
+    margin: 0;
+  }
+
+  .folder-entry,
+  .tab,
+  .combobox-option {
+    min-height: 2.75rem;
+  }
 }

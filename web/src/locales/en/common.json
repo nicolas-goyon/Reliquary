@@ -39,6 +39,10 @@
     "title": "Page not found",
     "description": "This page does not exist. Check the address."
   },
+  "update": {
+    "available": "A new version of Reliquary is available.",
+    "apply": "Update"
+  },
   "slots": {
     "contributionFailed": "This part of the page has an error. The other parts continue to work."
   },

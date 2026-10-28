@@ -14,10 +14,13 @@ Run these commands in this folder, or use the `just` recipes from the repository
 | `npm run lint` | Check the code with oxlint |
 | `npm run typecheck` | Check the TypeScript types |
 | `npm test` | Run the tests with Vitest |
-| `npm run build` | Build the app into `dist` |
+| `npm run build` | Build the app into `dist`, with the service worker `dist/sw.js` |
+| `npm run icons` | Make the icons of the web app manifest again from `scripts/generate-icons.mjs` |
 
 The development server sends the `/api` requests to the API on <http://localhost:5080>.
 Set `RELIQUARY_API_URL` to use a different API address.
+
+The [web app guide](../docs/development/web-app.md) tells how the installable web app and its service worker work.
 
 ## Translations
 

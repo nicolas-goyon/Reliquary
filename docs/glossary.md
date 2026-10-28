@@ -129,6 +129,15 @@ The French column gives the term for the French interface.
 | Milestone | A group of features with a gate at the end: M0 to M4, then Later. | Jalon |
 | Gate | A criterion that a test can prove at the end of a milestone. Work on the next milestone starts after the gate passes. | Porte |
 
+## Web app
+
+| Term | Meaning | French interface |
+| --- | --- | --- |
+| Progressive web app (PWA) | A web app that a user can install on a phone or a computer. It opens in its own window. | Application web progressive |
+| Web app manifest | The JSON file that gives the name, the colors, the start page and the icons of the installed web app. It is different from a plugin manifest. | — |
+| Service worker | A script that the browser runs separately from the pages. It keeps the application shell in a cache. | — |
+| Application shell | The files that the web app needs to open: `index.html`, the JavaScript and CSS files, the web app manifest and the icons. | — |
+
 ## Word choices
 
 Use one verb for one action.

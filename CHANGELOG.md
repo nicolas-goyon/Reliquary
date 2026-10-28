@@ -14,6 +14,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Moderation of the public content (ADR 0035): a user reports a public deck or an author profile with a reason and a comment.
   An administrator resolves or dismisses the reports, hides a deck or an author profile and shows it again, on the page `/admin/moderation`.
   A hidden item leaves the search of public decks at once, and a moderation log records each action.
+
+- Installable web app (PWA) with a web app manifest, icons and an update prompt.
+  A service worker keeps the application shell, so the web app opens without a network.
+  The main pages also work on screens less than 600 px wide.
 - The CLI commands `reliquary backup` and `reliquary restore` for all the databases of an instance, and the recipes `just backup` and `just restore-backup`.
 - The export of all the data of an account as a ZIP archive, and the deletion of an account after 7 days (ADR 0032).
 - Repository rules, the English documentation with checks for ASD-STE100, and the backlog of the roadmap.

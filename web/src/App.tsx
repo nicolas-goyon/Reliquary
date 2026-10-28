@@ -16,6 +16,7 @@ import { SignInPage } from './pages/SignInPage'
 import { AuthProvider } from './auth/AuthProvider'
 import { useAuth } from './auth/session'
 import { LanguageSwitcher } from './components/LanguageSwitcher'
+import { UpdatePrompt } from './components/UpdatePrompt'
 import { useLocation } from './router/navigation'
 import { SlotRegistry, SlotRegistryContext } from './slots/registry'
 import { Slot } from './slots/Slot'
@@ -103,6 +104,7 @@ function Shell() {
           <LanguageSwitcher />
         </div>
       </header>
+      <UpdatePrompt />
 
       <main className="app-main" id="main" tabIndex={-1} ref={main}>
         {page()}

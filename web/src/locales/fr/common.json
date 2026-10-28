@@ -39,6 +39,10 @@
     "title": "Page introuvable",
     "description": "Cette page n’existe pas. Vérifiez l’adresse."
   },
+  "update": {
+    "available": "Une nouvelle version de Reliquary est disponible.",
+    "apply": "Mettre à jour"
+  },
   "slots": {
     "contributionFailed": "Cette partie de la page a rencontré une erreur. Le reste de la page fonctionne toujours."
   },
