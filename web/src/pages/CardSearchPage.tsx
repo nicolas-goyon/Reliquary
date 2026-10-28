@@ -106,6 +106,7 @@ function CardSearch({ query }: { query: string }) {
           suggest={suggest}
           onSelect={handleSelect}
           placeholder={t('search.placeholder')}
+          data-shortcut="search"
           spellCheck={false}
           autoCapitalize="off"
         />

@@ -1,6 +1,7 @@
 # Web app
 
 This guide tells how the web app works on phones and as an installed application.
+It also gives the keyboard shortcuts and the themes.
 The code is in the `web` folder.
 Terms follow the [glossary](../glossary.md).
 
@@ -90,3 +91,50 @@ Below 600 px, the layout changes:
 - The deck list hides the tags and the date of the last change.
 
 On small screens and on touch screens, each button, link of the navigation, field and check box is at least 44 px high.
+
+## Keyboard shortcuts
+
+| Keys | Action |
+| --- | --- |
+| `/` | Go to the card search field. On a different page, open the card search first. |
+| `g`, then `h` | Open the home page |
+| `g`, then `c` | Open the card search |
+| `g`, then `d` | Open the deck list |
+| `g`, then `e` | Open the public decks |
+| `n` | On the deck list: open the dialog that makes a deck |
+| `a` | On the deck page: go to the field "Add a card" |
+| `?` | Show the list of the shortcuts |
+
+For a shortcut of two keys, push the second key less than 1.5 seconds after the first key.
+The **Keyboard shortcuts** button at the bottom of each page also shows the list.
+
+The shortcuts do not work in these conditions:
+
+- The focus is in a field: an `input`, a `textarea`, a `select` or an editable element.
+- The user holds Ctrl, Alt or Meta.
+  The shortcuts accept Shift, because some keyboards need Shift for `/` and `?`.
+- A dialog is open.
+
+To add a shortcut, follow these steps:
+
+1. Add the shortcut to the list `shortcuts` in `web/src/shortcuts/shortcuts.ts`.
+2. To focus or select an element of a page, give the element the attribute `data-shortcut`.
+3. Add the description to `shortcuts.actions` in the `common` namespace, in English and in French.
+4. Add the shortcut to the table of this guide.
+
+## Themes
+
+The **Theme** field in the header has three values:
+
+| Value | Effect |
+| --- | --- |
+| System | The colors follow the setting of the operating system. This is the default value. |
+| Light | The light colors |
+| Dark | The dark colors |
+
+The web app sets the attribute `data-theme` on the root element for the values "Light" and "Dark".
+The CSS tokens in `web/src/styles.css` read this attribute.
+
+The browser keeps the choice in its local storage, under the key `reliquary.theme`.
+The account API has no field for the theme, so the choice applies only to one browser.
+When the local storage is not available, the choice applies until the page closes.

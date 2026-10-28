@@ -102,7 +102,7 @@ export function DeckListPage() {
         <h1>{t('list.title')}</h1>
         <div className="form-actions">
           <Link to="/decks/import">{t('import.title')}</Link>
-          <button type="button" className="button-primary" onClick={() => setCreating(true)}>
+          <button type="button" className="button-primary" data-shortcut="new-deck" onClick={() => setCreating(true)}>
             {t('list.create')}
           </button>
         </div>

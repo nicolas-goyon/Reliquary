@@ -8,6 +8,29 @@
     "en": "English",
     "fr": "Français"
   },
+  "theme": {
+    "label": "Thème",
+    "system": "Système",
+    "light": "Clair",
+    "dark": "Sombre"
+  },
+  "shortcuts": {
+    "open": "Raccourcis clavier",
+    "title": "Raccourcis clavier",
+    "description": "Les raccourcis ne fonctionnent pas quand le focus est dans un champ.",
+    "then": "puis",
+    "close": "Fermer",
+    "actions": {
+      "search": "Aller au champ de recherche de cartes",
+      "home": "Ouvrir la page d’accueil",
+      "cards": "Ouvrir la recherche de cartes",
+      "decks": "Ouvrir vos decks",
+      "explore": "Ouvrir les decks publics",
+      "newDeck": "Créer un deck, sur la liste des decks",
+      "addCard": "Aller au champ « Ajouter une carte », sur la page d’un deck",
+      "help": "Afficher les raccourcis clavier"
+    }
+  },
   "home": {
     "title": "Gérez vos decks et votre collection.",
     "description": "Reliquary est au début de son développement. Le premier jalon pose les fondations : données des cartes, recherche de cartes et comptes.",

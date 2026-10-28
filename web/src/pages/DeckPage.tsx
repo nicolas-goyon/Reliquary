@@ -234,6 +234,7 @@ function AddCard({ onAdd }: { onAdd(oracleId: string, zone: Zone): void }) {
           setText('')
         }}
         placeholder={t('editor.addCardPlaceholder')}
+        data-shortcut="add-card"
       />
       <div className="field">
         <label htmlFor="add-card-zone">{t('editor.zone')}</label>

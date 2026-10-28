@@ -16,5 +16,9 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
+    // Some page tests take 3 to 4 seconds alone with user-event, and more when all the test files run in parallel.
+    testTimeout: 15000,
+    // The tests of the theme tokens read the main style sheet. Vitest gives an empty module for other CSS files.
+    css: { include: [/src\/styles\.css/] },
   },
 })

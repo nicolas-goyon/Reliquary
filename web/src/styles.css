@@ -29,8 +29,44 @@
   background-color: var(--color-background);
 }
 
+/*
+ * Themes. The user chooses "system", "light" or "dark" (see src/theme/theme.ts).
+ * - "light" and "dark" set the attribute data-theme on the root element.
+ * - "system" removes the attribute, and the media query follows the setting of the system.
+ * The two dark blocks must contain the same tokens. A test checks it.
+ */
+:root[data-theme='light'] {
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --color-background: #161514;
+  --color-surface: #201f1d;
+  --color-text: #f1eee9;
+  --color-text-muted: #b8b2aa;
+  --color-border: #3a3733;
+  --color-link: #8cb8f0;
+  --color-focus: #8cb8f0;
+  --color-primary: #8cb8f0;
+  --color-on-primary: #10233a;
+  --color-danger: #f3877b;
+  --color-success: #8fd19e;
+  --color-warning: #e3b341;
+  --color-chart-bar: #7fa9de;
+  --color-chart-track: #2c2a27;
+  --color-chart-heat: #8cb8f0;
+  --color-mana-w: #efe7b4;
+  --color-mana-u: #6aa8dc;
+  --color-mana-b: #9a8f87;
+  --color-mana-r: #ea8467;
+  --color-mana-g: #6cbf89;
+  --color-mana-c: #c2bcb4;
+}
+
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
     --color-background: #161514;
     --color-surface: #201f1d;
     --color-text: #f1eee9;
@@ -124,13 +160,15 @@ a {
   color: var(--color-text-muted);
 }
 
-.language-switcher {
+.language-switcher,
+.theme-switcher {
   display: inline-flex;
   gap: 0.5rem;
   align-items: center;
 }
 
-.language-switcher select {
+.language-switcher select,
+.theme-switcher select {
   min-height: 2.75rem;
   padding: 0 0.5rem;
   font: inherit;
@@ -1456,6 +1494,53 @@ tr[aria-selected='true'] {
   display: flex;
   flex-wrap: wrap;
   gap: 0.35rem;
+}
+
+/* Modal dialog: the list of the keyboard shortcuts */
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  overflow-y: auto;
+  background-color: rgb(0 0 0 / 50%);
+}
+
+.dialog-modal {
+  width: min(100%, 32rem);
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+}
+
+.shortcut-list {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0 0 1rem;
+}
+
+.shortcut {
+  display: grid;
+  grid-template-columns: 7.5rem minmax(0, 1fr);
+  gap: 1rem;
+  align-items: baseline;
+}
+
+.shortcut dd {
+  margin: 0;
+}
+
+kbd {
+  display: inline-block;
+  min-width: 1.75em;
+  padding: 0 0.375em;
+  border: 1px solid var(--color-border);
+  border-bottom-width: 2px;
+  border-radius: 0.25rem;
+  background-color: var(--color-background);
+  font-family: ui-monospace, 'Cascadia Code', Menlo, monospace;
+  text-align: center;
 }
 
 /* Update prompt of the service worker */
