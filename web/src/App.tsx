@@ -10,6 +10,7 @@ import { DeckPage } from './pages/DeckPage'
 import { AuthCompletePage, CheckEmailPage, ForgotPasswordPage, ResetPasswordPage } from './pages/EmailLinkPages'
 import { ExplorePage } from './pages/ExplorePage'
 import { HomePage, NotFoundPage } from './pages/HomePage'
+import { ModerationPage } from './pages/ModerationPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { SignInPage } from './pages/SignInPage'
 import { AuthProvider } from './auth/AuthProvider'
@@ -42,6 +43,7 @@ const routes: Record<string, () => ReactNode> = {
   '/reset-password': () => <ResetPasswordPage />,
   '/auth/complete': () => <AuthCompletePage />,
   '/account': () => <AccountPage />,
+  '/admin/moderation': () => <ModerationPage />,
 }
 
 function patternPage(path: string): () => ReactNode {

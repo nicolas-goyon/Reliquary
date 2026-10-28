@@ -6,6 +6,7 @@ using Reliquary.BuildingBlocks.Cards;
 using Reliquary.BuildingBlocks.Data;
 using Reliquary.BuildingBlocks.Events;
 using Reliquary.Decks.Data;
+using Reliquary.Decks.Moderation;
 
 namespace Reliquary.Decks;
 
@@ -103,8 +104,9 @@ internal sealed record LineGroupAction(
 
 /// <summary>
 /// A deck and its lines, as a user can see them, with the tags of the lines.
+/// <see cref="Hidden"/> tells whether an administrator hid the deck. Only the owner sees a hidden deck.
 /// </summary>
-internal sealed record DeckView(DeckRow Deck, IReadOnlyList<DeckLineRow> Lines, bool IsOwner, IReadOnlyList<TagRow> Tags);
+internal sealed record DeckView(DeckRow Deck, IReadOnlyList<DeckLineRow> Lines, bool IsOwner, IReadOnlyList<TagRow> Tags, bool Hidden = false);
 
 /// <summary>
 /// The operations on the decks.
@@ -155,20 +157,31 @@ internal sealed class DeckService(DeckStore store, ICardCatalog catalog, IDomain
 
     /// <summary>
     /// Gets a deck, when the user can see it: the owner sees each deck, and the other users see the unlisted and public decks.
+    /// The other users do not see a deck that an administrator hid.
     /// </summary>
     public async Task<DeckView> GetAsync(Guid? viewerId, Guid deckId, CancellationToken cancellationToken)
     {
         var ownerId = await store.FindOwnerAsync(deckId, cancellationToken) ?? throw DeckException.NotFound();
+        var hidden = await IsHiddenAsync(deckId, cancellationToken);
         await using var connection = await store.OpenAsync(ownerId, ContentAccess.Read, cancellationToken);
         var deck = await DeckStore.FindDeckAsync(connection, ownerId, deckId, cancellationToken) ?? throw DeckException.NotFound();
         var isOwner = viewerId == ownerId;
-        if (!isOwner && deck.Visibility == "private")
+        if (!isOwner && (deck.Visibility == "private" || hidden))
         {
             throw DeckException.NotFound();
         }
 
         var lines = await DeckStore.ListLinesAsync(connection, deckId, cancellationToken);
-        return new DeckView(deck, lines, isOwner, await TagsOfLinesAsync(connection, lines, cancellationToken));
+        return new DeckView(deck, lines, isOwner, await TagsOfLinesAsync(connection, lines, cancellationToken), hidden);
+    }
+
+    /// <summary>
+    /// Tells whether an administrator hid a deck.
+    /// </summary>
+    private async Task<bool> IsHiddenAsync(Guid deckId, CancellationToken cancellationToken)
+    {
+        await using var users = await store.OpenUsersAsync(cancellationToken);
+        return await ModerationStore.IsHiddenAsync(users, ModerationValues.Deck, deckId, cancellationToken);
     }
 
     /// <summary>
@@ -577,7 +590,7 @@ internal sealed class DeckService(DeckStore store, ICardCatalog catalog, IDomain
         await DeckStore.UpdateDeckAsync(transaction, deck, cancellationToken);
         await events.WriteAsync(DatabaseTarget.Content, transaction, new DeckUpdated(deck.Id, deck.Version, deck.Format, deck.Visibility, deck.VariantOf), ownerId, cancellationToken);
         await transaction.CommitAsync(cancellationToken);
-        return new DeckView(deck, lines, true, await TagsOfLinesAsync(connection, lines, cancellationToken));
+        return new DeckView(deck, lines, true, await TagsOfLinesAsync(connection, lines, cancellationToken), await IsHiddenAsync(deckId, cancellationToken));
     }
 
     /// <summary>

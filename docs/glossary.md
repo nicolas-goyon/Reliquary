@@ -88,6 +88,14 @@ The French column gives the term for the French interface.
 | API key | A personal secret that a script or a third-party client uses to call the public API for a user. | Clé d'API |
 | Quota | The maximum number of requests of an API key or of an account in one day (UTC). | Quota |
 
+## Moderation
+
+| Term | Meaning | French interface |
+| --- | --- | --- |
+| Report | A message from a user to the administrators about a public deck or an author profile, with a reason and a comment. A report is open, resolved or dismissed. | Signalement |
+| Hidden item | A deck or an author profile that an administrator hid. Only its owner sees it. The search of public decks does not show it. | Contenu masqué |
+| Moderation log | The list of the actions of the administrators: who, what, when and the reason. | Journal de modération |
+
 ## Extensions
 
 | Term | Meaning | French interface |

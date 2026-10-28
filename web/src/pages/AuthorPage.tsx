@@ -4,6 +4,8 @@ import type { Page } from '../api/cards'
 import type { Author, PublicDeck } from '../api/publicDecks'
 import { useAuth } from '../auth/session'
 import { ErrorAlert } from '../components/Forms'
+import { HiddenNotice } from '../components/moderation/HiddenNotice'
+import { ReportButton } from '../components/moderation/ReportDialog'
 import { PublicDeckList } from '../components/PublicDeckList'
 
 /** The profile of an author: name, counts, the follow button and the public decks. */
@@ -53,7 +55,9 @@ export function AuthorPage({ id }: { id: string }) {
             {author.following ? t('author.unfollow') : t('author.follow')}
           </button>
         )}
+        {!isSelf && <ReportButton itemType="author" itemId={author.id} />}
       </div>
+      <HiddenNotice itemType="author" hidden={author.hidden} />
       <p>
         {t('author.decks', { count: author.deckCount })} · {t('author.followers', { count: author.followerCount })}
       </p>

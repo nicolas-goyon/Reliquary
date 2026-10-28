@@ -40,7 +40,8 @@ public sealed record PublicDeckResponse(
 /// <param name="DeckCount">The number of public decks.</param>
 /// <param name="FollowerCount">The number of followers.</param>
 /// <param name="Following">Whether the user follows the author. It is <see langword="false"/> for a visitor.</param>
-public sealed record AuthorResponse(Guid Id, string DisplayName, int DeckCount, int FollowerCount, bool Following);
+/// <param name="Hidden">Whether an administrator hid the profile. Only the author sees a hidden profile.</param>
+public sealed record AuthorResponse(Guid Id, string DisplayName, int DeckCount, int FollowerCount, bool Following, bool Hidden = false);
 
 /// <summary>The social data of a public deck for the user.</summary>
 /// <param name="Public">Whether the deck is in the read model of the public decks.</param>

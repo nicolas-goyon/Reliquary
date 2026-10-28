@@ -12,6 +12,7 @@ import { FormatSelect, VisibilitySelect } from '../components/DeckFields'
 import { DeckExportDialog } from '../components/DeckExportDialog'
 import { DeckSocialBar } from '../components/DeckSocialBar'
 import { DeckTable } from '../components/deck-table/DeckTable'
+import { HiddenNotice } from '../components/moderation/HiddenNotice'
 import { ErrorAlert, TextField } from '../components/Forms'
 import { LineErrorList } from '../components/LineErrors'
 import { ManaCost } from '../components/ManaCost'
@@ -97,6 +98,7 @@ function DeckEditor({ deck, onChange }: EditorProps) {
     <article className="page page-wide deck-page">
       <DeckHeader deck={deck} onSave={(fields) => void change('', 'PATCH', fields)} />
       <DeckSocialBar deck={deck} />
+      <HiddenNotice itemType="deck" hidden={deck.isOwner && deck.hidden} />
       <div className="deck-actions" role="toolbar" aria-label={t('editor.actions')}>
         {owner &&
           (['visual', 'text', 'table'] as const).map((value) => (

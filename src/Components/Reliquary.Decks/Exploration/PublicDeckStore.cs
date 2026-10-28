@@ -77,12 +77,15 @@ internal static class PublicDeckStore
 
     /// <summary>
     /// Writes a public deck. A row with a more recent deck version does not change.
+    /// A hidden deck, or a deck of a hidden author, gets no row.
     /// </summary>
     public static Task UpsertAsync(NpgsqlConnection connection, PublicDeckRow row, CancellationToken cancellationToken) =>
         connection.ExecuteAsync(new CommandDefinition(
             """
             insert into users.public_decks (deck_id, owner_id, name, format, description, color_identity, commander_ids, card_ids, card_count, deck_version, created_at, updated_at)
-            values (@DeckId, @OwnerId, @Name, @Format, @Description, @ColorIdentity, @CommanderIds, @CardIds, @CardCount, @DeckVersion, @CreatedAt, @UpdatedAt)
+            select @DeckId, @OwnerId, @Name, @Format, @Description, @ColorIdentity, @CommanderIds, @CardIds, @CardCount, @DeckVersion, @CreatedAt, @UpdatedAt
+            where not exists (select 1 from users.moderation_hidden h
+                where (h.item_type = 'deck' and h.item_id = @DeckId) or (h.item_type = 'author' and h.item_id = @OwnerId))
             on conflict (deck_id) do update set
                 name = excluded.name, format = excluded.format, description = excluded.description, color_identity = excluded.color_identity,
                 commander_ids = excluded.commander_ids, card_ids = excluded.card_ids, card_count = excluded.card_count,
@@ -180,7 +183,12 @@ internal static class PublicDeckStore
 
     public static async Task<IReadOnlyList<Guid>> ListFollowedAsync(NpgsqlConnection connection, Guid followerId, CancellationToken cancellationToken) =>
         (await connection.QueryAsync<Guid>(new CommandDefinition(
-            "select author_id from users.author_follows where follower_id = @followerId order by created_at",
+            """
+            select f.author_id from users.author_follows f
+            where f.follower_id = @followerId
+                and not exists (select 1 from users.moderation_hidden h where h.item_type = 'author' and h.item_id = f.author_id)
+            order by f.created_at
+            """,
             new { followerId },
             cancellationToken: cancellationToken))).ToList();
 

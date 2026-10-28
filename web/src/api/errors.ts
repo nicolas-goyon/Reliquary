@@ -24,6 +24,8 @@ export const translatedErrorCodes = [
   'search_syntax_error',
   'search_query_empty',
   'search_timeout',
+  'report_exists',
+  'report_closed',
 ] as const
 
 export type TranslatedErrorCode = (typeof translatedErrorCodes)[number]

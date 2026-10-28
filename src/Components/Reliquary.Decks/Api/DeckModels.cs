@@ -126,6 +126,7 @@ public sealed record LineGroupRequest(
 /// <param name="BaseVersionId">The version of the main deck where a variant starts, or <see langword="null"/>.</param>
 /// <param name="HeadVersionId">The most recent version of the deck, or <see langword="null"/>.</param>
 /// <param name="AssembledVersionId">The assembled version, or <see langword="null"/> when the deck is not assembled.</param>
+/// <param name="Hidden">Whether an administrator hid the deck. Only the owner sees a hidden deck.</param>
 public sealed record DeckResponse(
     Guid Id,
     Guid OwnerId,
@@ -151,7 +152,8 @@ public sealed record DeckResponse(
     Guid? VariantOf = null,
     Guid? BaseVersionId = null,
     Guid? HeadVersionId = null,
-    Guid? AssembledVersionId = null);
+    Guid? AssembledVersionId = null,
+    bool Hidden = false);
 
 /// <summary>A tag of a deck line.</summary>
 /// <param name="Name">The name of the tag.</param>

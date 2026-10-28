@@ -28,6 +28,11 @@ export function MainNavigation({ account }: { account: Account | null }) {
           <Link to="/account">{t('navigation.account')}</Link>
         </li>
       )}
+      {account?.isAdministrator && (
+        <li>
+          <Link to="/admin/moderation">{t('navigation.moderation')}</Link>
+        </li>
+      )}
     </ul>
   )
 }

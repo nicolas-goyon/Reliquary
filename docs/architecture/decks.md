@@ -187,6 +187,54 @@ The query of `GET /public-decks` accepts these parameters:
 
 A visitor with no account opens an unlisted or public deck with its link: `GET /decks/{id}`.
 
+## Moderation
+
+[ADR 0035](../decisions/0035-moderation-of-public-content.md) describes the moderation of the public decks and of the author profiles.
+
+| Endpoint | Access | Effect |
+| --- | --- | --- |
+| `POST /reports` | User | Reports a public deck or an author profile. See the body below. |
+| `GET /moderation/reports` | Administrator | Lists the reports. The query parameter `status` is `open` (default), `resolved` or `dismissed`. |
+| `POST /moderation/reports/{id}/resolve` | Administrator | Closes an open report as resolved. |
+| `POST /moderation/reports/{id}/dismiss` | Administrator | Closes an open report as dismissed. |
+| `GET /moderation/hidden` | Administrator | Lists the hidden decks and author profiles. |
+| `PUT /moderation/hidden/{type}/{id}` | Administrator | Hides a deck (`deck`) or an author profile (`author`). The open reports of the item become resolved. |
+| `DELETE /moderation/hidden/{type}/{id}` | Administrator | Shows a hidden item again. The query parameter `reason` gives the reason. |
+| `GET /moderation/log` | Administrator | Lists the actions of the administrators, the most recent first. |
+
+The body of `POST /reports` has these fields:
+
+| Field | Values |
+| --- | --- |
+| `itemType` | `deck` or `author` |
+| `itemId` | The ID of a public deck, or the account ID of an author |
+| `reason` | `spam`, `offensive`, `copyright` or `other` |
+| `comment` | An optional text of 500 characters or fewer |
+
+The API refuses a report in these cases:
+
+| Case | Status and code |
+| --- | --- |
+| The item is not a public deck or a visible author profile. | 404 `not_found` |
+| The user owns the item. | 400 `validation_failed` |
+| The user has an open report about the item. | 409 `report_exists` |
+| The user sent 20 reports in the last 24 hours. The setting `Moderation:ReportsPerDay` gives the limit. | 429 `rate_limited` |
+
+The body of the actions of the administrators has an optional field `reason`, with 500 characters or fewer.
+The moderation log keeps the reason.
+
+A hidden deck has these effects:
+
+- The search of public decks does not show it after the response of `PUT /moderation/hidden/deck/{id}`.
+- `GET /decks/{id}` gives the status 404 to all the users except the owner. The owner gets the field `hidden: true`.
+- The other users cannot copy it or add it to their favorites.
+
+A hidden author profile has these effects:
+
+- `GET /authors/{id}` gives the status 404 to all the users except the author. The author gets the field `hidden: true`.
+- The decks of the author leave the search, and the other users cannot follow the author.
+- The links of the unlisted and public decks of the author continue to work.
+
 ## Group actions on lines
 
 The table mode of the deck page uses `POST /decks/{id}/lines/group` to change many lines in one request.

@@ -32,7 +32,8 @@
     "signOut": "Se déconnecter",
     "cards": "Cartes",
     "decks": "Decks",
-    "explore": "Explorer"
+    "explore": "Explorer",
+    "moderation": "Modération"
   },
   "notFound": {
     "title": "Page introuvable",
@@ -64,6 +65,8 @@
     "search_syntax_error": "La recherche contient une erreur de syntaxe. Corrigez la recherche, puis réessayez.",
     "search_query_empty": "La recherche ne contient aucun critère reconnu. Modifiez la recherche.",
     "search_timeout": "La recherche a pris trop de temps. Précisez la recherche.",
+    "report_exists": "Vous avez déjà signalé cet élément. Un administrateur lira bientôt votre signalement.",
+    "report_closed": "Un administrateur a déjà fermé ce signalement. Rechargez la liste.",
     "unknown": "Une erreur s’est produite. Réessayez."
   },
   "fieldErrors": {

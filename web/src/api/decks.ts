@@ -144,6 +144,8 @@ export interface Deck {
   cards: Record<string, DeckCard>
   printings: Record<string, DeckPrinting>
   tags: Record<string, { name: string; global: boolean }>
+  /** Whether an administrator hid the deck. Only the owner gets a hidden deck. */
+  hidden?: boolean
 }
 
 export interface LegalityProblem {
