@@ -136,7 +136,12 @@ internal static class AuthenticationSetup
         services.AddSingleton(new EnabledProviders(enabled));
 
         services.AddAuthorizationBuilder()
-            .AddPolicy(AuthPolicies.User, policy => policy.RequireAuthenticatedUser())
+            // A service account has no account ID, so it is not a user.
+            .AddPolicy(AuthPolicies.User, policy => policy.RequireAuthenticatedUser().RequireClaim(ReliquaryClaims.AccountId))
+            .AddPolicy(AuthPolicies.ServiceAccount, policy => policy
+                .RequireAuthenticatedUser()
+                .RequireClaim(ReliquaryClaims.AuthMethod, AuthMethods.ServiceAccount)
+                .RequireClaim(ReliquaryClaims.ServiceAccountId))
             .AddPolicy(AuthPolicies.Session, policy => policy.RequireAuthenticatedUser().RequireClaim(ReliquaryClaims.AuthMethod, AuthMethods.Session))
             .AddPolicy(AuthPolicies.Administrator, policy => policy
                 .RequireAuthenticatedUser()

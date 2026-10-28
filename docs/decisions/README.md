@@ -44,6 +44,8 @@ Each record gives the context, the decision and its consequences.
 | [0034](0034-collection-model.md) | Collection model in the shard, availability rules and the interfaces with the decks | Accepted |
 | [0035](0035-moderation-of-public-content.md) | Moderation of the public content in the Decks component, with the data in the users database | Accepted |
 
+| [0036](0036-internal-api.md) | Internal API for the modules under `/internal/v1`, with its own OpenAPI document | Accepted |
+
 ## Open decisions
 
 Each open question is a GitHub issue with the label [`type: decision`](https://github.com/nicolas-goyon/reliquary/labels/type%3A%20decision).

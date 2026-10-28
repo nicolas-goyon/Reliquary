@@ -186,6 +186,7 @@ The core prepares these seven items:
 4. **Interface slots**: the core uses slots for its own panels.
    This use tests the slot system before the slots open to plugins and modules.
 5. **Internal API**: a versioned internal API, separate from the public API, with an OpenAPI description.
+   The [internal API](./internal-api.md) page describes it.
 6. **Service accounts and delegation**: a model of delegation tokens.
    A delegation token means "act for user X, with this scope", and the user can revoke it.
    The `users` schema includes this model.
@@ -216,3 +217,4 @@ The extension registry is ready from milestone M0, before any extension can run.
 - [ADR 0010](../decisions/0010-plugins-and-modules.md): two extension levels, plugins and modules
 - [ADR 0011](../decisions/0011-plugin-network-allowlist.md): plugin network access through a declared list of domains
 - [ADR 0023](../decisions/0023-extension-registry.md): the extension registry and the version of the core API
+- [ADR 0036](../decisions/0036-internal-api.md): the internal API for the modules

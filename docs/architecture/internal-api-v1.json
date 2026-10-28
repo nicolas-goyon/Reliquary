@@ -1,0 +1,190 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "Reliquary internal API",
+    "description": "The internal API of Reliquary for the modules. Only service accounts can use it. The version is the version of the core API. See docs/architecture/internal-api.md.",
+    "version": "1.1.0"
+  },
+  "paths": {
+    "/internal/v1": {
+      "get": {
+        "tags": [
+          "Internal API"
+        ],
+        "summary": "Gets the version of the core API. A module checks it before it uses the internal API.",
+        "operationId": "GetInternalApiVersion",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalApiVersionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/v1/events/types": {
+      "get": {
+        "tags": [
+          "Domain events"
+        ],
+        "summary": "Lists the domain event types and versions that modules can consume, with the fields of each payload.",
+        "operationId": "ListDomainEventTypes",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainEventTypeListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/v1/users/{accountId}/profile": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Gets the public profile of a user. The response never contains the email address.",
+        "operationId": "GetPublicProfile",
+        "parameters": [
+          {
+            "name": "accountId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicProfileResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "DomainEventField": {
+        "required": [
+          "name",
+          "type",
+          "nullable"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "nullable": {
+            "type": "boolean"
+          }
+        }
+      },
+      "DomainEventType": {
+        "required": [
+          "type",
+          "version",
+          "fields"
+        ],
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "version": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DomainEventField"
+            }
+          }
+        }
+      },
+      "DomainEventTypeListResponse": {
+        "required": [
+          "items"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DomainEventType"
+            }
+          }
+        }
+      },
+      "InternalApiVersionResponse": {
+        "required": [
+          "coreApi",
+          "path"
+        ],
+        "type": "object",
+        "properties": {
+          "coreApi": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          }
+        }
+      },
+      "PublicProfileResponse": {
+        "required": [
+          "id",
+          "displayName"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "displayName": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Internal API"
+    },
+    {
+      "name": "Domain events"
+    },
+    {
+      "name": "Users"
+    }
+  ]
+}

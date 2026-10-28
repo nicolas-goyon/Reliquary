@@ -47,7 +47,7 @@ public sealed class ExtensionRegistryTests
         Assert.Empty(beforeEnable.Items);
         Assert.Equal(HttpStatusCode.OK, enable.StatusCode);
         var listed = Assert.Single(afterEnable.Items);
-        Assert.Equal("1.0.0", afterEnable.CoreApi);
+        Assert.Equal("1.1.0", afterEnable.CoreApi);
         Assert.Equal(["decks:read", "decks:write"], listed.Permissions);
         Assert.False(listed.Active);
         Assert.Equal(HttpStatusCode.NoContent, activate.StatusCode);

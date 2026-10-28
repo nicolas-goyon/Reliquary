@@ -66,4 +66,13 @@ public interface ICoreComponent
     /// </summary>
     /// <param name="api">The route group of the public API, for example <c>/api/v1</c>.</param>
     void MapEndpoints(IEndpointRouteBuilder api);
+
+    /// <summary>
+    /// Adds the endpoints of the core component to the internal API for the modules.
+    /// Only service accounts can use these endpoints. See docs/architecture/internal-api.md.
+    /// </summary>
+    /// <param name="internalApi">The route group of the internal API, for example <c>/internal/v1</c>.</param>
+    void MapInternalEndpoints(IEndpointRouteBuilder internalApi)
+    {
+    }
 }

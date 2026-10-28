@@ -96,4 +96,7 @@ public sealed class AccountsComponent : ICoreComponent
         ProfileEndpoints.Map(api);
         PersonalDataEndpoints.Map(api);
     }
+
+    /// <inheritdoc />
+    public void MapInternalEndpoints(IEndpointRouteBuilder internalApi) => InternalProfileEndpoints.Map(internalApi);
 }

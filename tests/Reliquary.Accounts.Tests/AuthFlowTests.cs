@@ -9,7 +9,7 @@ namespace Reliquary.Accounts.Tests;
 
 public sealed class AuthFlowTests
 {
-    private const string Password = "correct horse battery";
+    internal const string Password = "correct horse battery";
 
     [Fact]
     public async Task UserRegistersChecksTheEmailAndSignsIn()

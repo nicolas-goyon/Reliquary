@@ -24,6 +24,9 @@ public static class ReliquaryClaims
 
     /// <summary>The ID of the API key, when the method is <see cref="AuthMethods.ApiKey"/>.</summary>
     public const string ApiKeyId = "rlq_key";
+
+    /// <summary>The ID of the service account, when the method is <see cref="AuthMethods.ServiceAccount"/>.</summary>
+    public const string ServiceAccountId = "rlq_sa";
 }
 
 /// <summary>
@@ -36,6 +39,9 @@ public static class AuthMethods
 
     /// <summary>A personal API key.</summary>
     public const string ApiKey = "api_key";
+
+    /// <summary>The secret of a service account. The principal is the service account, not a user.</summary>
+    public const string ServiceAccount = "service_account";
 }
 
 /// <summary>
@@ -52,7 +58,7 @@ public static class Roles
 /// </summary>
 public static class AuthPolicies
 {
-    /// <summary>An authenticated user, with an access token or an API key.</summary>
+    /// <summary>An authenticated user, with an access token or an API key. A service account is not a user.</summary>
     public const string User = "user";
 
     /// <summary>An authenticated user with the access token of a web session. An API key is not sufficient.</summary>
@@ -60,6 +66,9 @@ public static class AuthPolicies
 
     /// <summary>An administrator of the instance, with the access token of a web session.</summary>
     public const string Administrator = "administrator";
+
+    /// <summary>A service account, with its secret. The internal API uses this policy.</summary>
+    public const string ServiceAccount = "service_account";
 }
 
 /// <summary>
