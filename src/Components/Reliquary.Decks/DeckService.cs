@@ -30,7 +30,7 @@ internal sealed class DeckException(int status, string code, string message, IRe
 /// <summary>
 /// The fields of a new deck.
 /// </summary>
-internal sealed record NewDeck(string Name, string Format, string Visibility, Guid? FolderId, string Description, Guid? SourceDeckId, IReadOnlyList<string>? Tags = null);
+internal sealed record NewDeck(string Name, string Format, string Visibility, Guid? FolderId, string Description, Guid? SourceDeckId, IReadOnlyList<string>? Tags = null, Guid? VariantOf = null, Guid? BaseVersionId = null);
 
 /// <summary>
 /// The changes of a deck. A <see langword="null"/> field does not change.
@@ -128,6 +128,8 @@ internal sealed class DeckService(DeckStore store, ICardCatalog catalog, IDomain
             CreatedAt = now,
             UpdatedAt = now,
             Tags = [.. input.Tags ?? []],
+            VariantOf = input.VariantOf,
+            BaseVersionId = input.BaseVersionId,
         };
         await ValidateLinesAsync(lines, cancellationToken);
         deck.ColorIdentity = await ColorIdentityAsync(lines.Select(line => (line.Zone, line.OracleId)), cancellationToken);
@@ -146,7 +148,7 @@ internal sealed class DeckService(DeckStore store, ICardCatalog catalog, IDomain
         var rows = new List<DeckLineRow>();
         Merge(rows, deck.Id, lines, tags, now);
         await WriteLinesAsync(transaction, ownerId, deck.Id, [], rows, cancellationToken);
-        await events.WriteAsync(DatabaseTarget.Content, transaction, new DeckCreated(deck.Id, deck.Format, deck.Visibility, deck.SourceDeckId), ownerId, cancellationToken);
+        await events.WriteAsync(DatabaseTarget.Content, transaction, new DeckCreated(deck.Id, deck.Format, deck.Visibility, deck.SourceDeckId, deck.VariantOf), ownerId, cancellationToken);
         await transaction.CommitAsync(cancellationToken);
         return deck;
     }
@@ -268,7 +270,7 @@ internal sealed class DeckService(DeckStore store, ICardCatalog catalog, IDomain
             deck.Version++;
             deck.UpdatedAt = now;
             await DeckStore.UpdateDeckAsync(transaction, deck, cancellationToken);
-            await events.WriteAsync(DatabaseTarget.Content, transaction, new DeckUpdated(deck.Id, deck.Version, deck.Format, deck.Visibility), ownerId, cancellationToken);
+            await events.WriteAsync(DatabaseTarget.Content, transaction, new DeckUpdated(deck.Id, deck.Version, deck.Format, deck.Visibility, deck.VariantOf), ownerId, cancellationToken);
         }
 
         await transaction.CommitAsync(cancellationToken);
@@ -281,6 +283,16 @@ internal sealed class DeckService(DeckStore store, ICardCatalog catalog, IDomain
             if (changes.FolderId is { } folderId && !await DeckStore.FolderExistsAsync(connection, ownerId, folderId, cancellationToken, transaction))
             {
                 throw DeckException.Validation(new FieldError("folderId", FieldErrorCodes.NotAllowed, "The folder does not exist."));
+            }
+
+            if (deck.VariantOf is not null && (changes.Format is not null || changes.Visibility is not null || changes.FolderId is not null || changes.ClearFolder || changes.Pinned is not null || changes.Archived is not null))
+            {
+                throw DeckException.Validation(new FieldError("variantOf", FieldErrorCodes.NotAllowed, "A variant has the format, the visibility and the folder of its main deck. Change the main deck."));
+            }
+
+            if (deck.VariantOf is null && (changes.Format is not null || changes.Visibility is not null))
+            {
+                await DeckStore.UpdateVariantsAsync(transaction, ownerId, deck.Id, changes.Format ?? deck.Format, changes.Visibility ?? deck.Visibility, cancellationToken);
             }
 
             deck.Name = changes.Name?.Trim() ?? deck.Name;
@@ -302,16 +314,25 @@ internal sealed class DeckService(DeckStore store, ICardCatalog catalog, IDomain
 
     public async Task DeleteAsync(Guid ownerId, Guid deckId, CancellationToken cancellationToken)
     {
+        IReadOnlyList<Guid> variantIds;
         await using (var connection = await store.OpenAsync(ownerId, ContentAccess.Write, cancellationToken))
         await using (var transaction = await connection.BeginTransactionAsync(cancellationToken))
         {
             _ = await DeckStore.FindDeckAsync(connection, ownerId, deckId, cancellationToken, transaction, forUpdate: true) ?? throw DeckException.NotFound();
+            variantIds = await DeckStore.ListVariantIdsAsync(connection, ownerId, deckId, cancellationToken, transaction);
             await DeckStore.DeleteDeckAsync(transaction, ownerId, deckId, cancellationToken);
-            await events.WriteAsync(DatabaseTarget.Content, transaction, new DeckDeleted(deckId), ownerId, cancellationToken);
+            foreach (var id in variantIds.Append(deckId))
+            {
+                await events.WriteAsync(DatabaseTarget.Content, transaction, new DeckDeleted(id), ownerId, cancellationToken);
+            }
+
             await transaction.CommitAsync(cancellationToken);
         }
 
-        await store.RemoveFromDirectoryAsync(deckId, cancellationToken);
+        foreach (var id in variantIds.Append(deckId))
+        {
+            await store.RemoveFromDirectoryAsync(id, cancellationToken);
+        }
     }
 
     /// <summary>
@@ -330,7 +351,13 @@ internal sealed class DeckService(DeckStore store, ICardCatalog catalog, IDomain
     /// <summary>
     /// Replaces all the lines of a deck. The lines that do not change keep their IDs.
     /// </summary>
-    public async Task<DeckView> ReplaceLinesAsync(Guid ownerId, Guid deckId, IReadOnlyList<LineInput> lines, int? expectedVersion, CancellationToken cancellationToken)
+    public async Task<DeckView> ReplaceLinesAsync(
+        Guid ownerId,
+        Guid deckId,
+        IReadOnlyList<LineInput> lines,
+        int? expectedVersion,
+        CancellationToken cancellationToken,
+        Func<NpgsqlTransaction, DeckRow, IReadOnlyList<DeckLineRow>, Task>? afterWrite = null)
     {
         await ValidateLinesAsync(lines, cancellationToken);
         return await MutateAsync(ownerId, deckId, expectedVersion, lines, (_, _, deck, current, tags) =>
@@ -357,7 +384,7 @@ internal sealed class DeckService(DeckStore store, ICardCatalog catalog, IDomain
             }
 
             return Task.CompletedTask;
-        }, cancellationToken);
+        }, cancellationToken, afterWrite);
     }
 
     public async Task<DeckView> UpdateLineAsync(Guid ownerId, Guid deckId, Guid lineId, LineChanges changes, CancellationToken cancellationToken)
@@ -514,7 +541,8 @@ internal sealed class DeckService(DeckStore store, ICardCatalog catalog, IDomain
         int? expectedVersion,
         IReadOnlyList<LineInput> inputs,
         Func<NpgsqlConnection, NpgsqlTransaction, DeckRow, List<DeckLineRow>, TagMap, Task> change,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        Func<NpgsqlTransaction, DeckRow, IReadOnlyList<DeckLineRow>, Task>? afterWrite = null)
     {
         await using var connection = await store.OpenAsync(ownerId, ContentAccess.Write, cancellationToken);
         await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
@@ -541,8 +569,13 @@ internal sealed class DeckService(DeckStore store, ICardCatalog catalog, IDomain
         deck.ColorIdentity = await ColorIdentityAsync(lines.Select(line => (line.Zone, line.OracleId)), cancellationToken);
         deck.Version++;
         deck.UpdatedAt = time.GetUtcNow().UtcDateTime;
+        if (afterWrite is not null)
+        {
+            await afterWrite(transaction, deck, lines);
+        }
+
         await DeckStore.UpdateDeckAsync(transaction, deck, cancellationToken);
-        await events.WriteAsync(DatabaseTarget.Content, transaction, new DeckUpdated(deck.Id, deck.Version, deck.Format, deck.Visibility), ownerId, cancellationToken);
+        await events.WriteAsync(DatabaseTarget.Content, transaction, new DeckUpdated(deck.Id, deck.Version, deck.Format, deck.Visibility, deck.VariantOf), ownerId, cancellationToken);
         await transaction.CommitAsync(cancellationToken);
         return new DeckView(deck, lines, true, await TagsOfLinesAsync(connection, lines, cancellationToken));
     }
@@ -751,4 +784,7 @@ public static class DeckErrorCodes
 
     /// <summary>The deck text has lines that the API cannot use. The member <c>lineErrors</c> gives each line.</summary>
     public const string TextInvalid = "deck_text_invalid";
+
+    /// <summary>The working list did not change since the last version.</summary>
+    public const string NoChanges = "deck_no_changes";
 }

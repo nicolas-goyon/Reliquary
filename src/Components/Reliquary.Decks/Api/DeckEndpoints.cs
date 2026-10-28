@@ -833,11 +833,7 @@ internal static class DeckEndpoints
     /// </summary>
     internal static async Task<DeckResponse> ToResponseAsync(DeckView view, ICardCatalog catalog, CancellationToken cancellationToken)
     {
-        var cards = await catalog.GetCardsAsync([.. view.Lines.Select(line => line.OracleId).Distinct()], cancellationToken);
-        var printingIds = view.Lines.Where(line => line.PrintingId is not null).Select(line => line.PrintingId!.Value)
-            .Concat(cards.Values.Where(card => card.DefaultPrintingId is not null).Select(card => card.DefaultPrintingId!.Value))
-            .Distinct().ToList();
-        var printings = await catalog.GetPrintingsAsync(printingIds, cancellationToken);
+        var (cards, printings) = await CardDataAsync(catalog, view.Lines.Select(line => line.OracleId), view.Lines.Select(line => line.PrintingId), cancellationToken);
         var deck = view.Deck;
         var counts = DeckRules.Zones.ToDictionary(zone => zone, zone => view.Lines.Where(line => line.Zone == zone).Sum(line => line.Quantity));
         return new DeckResponse(
@@ -857,6 +853,29 @@ internal static class DeckEndpoints
             view.IsOwner,
             counts,
             [.. view.Lines.Select(line => new DeckLineResponse(line.Id, line.OracleId, line.PrintingId, line.Finish, line.Quantity, line.Zone, line.Note, line.TagIds, line.Categories))],
+            cards,
+            printings,
+            view.Tags.ToDictionary(tag => tag.Id, tag => new DeckTagResponse(tag.Name, tag.IsGlobal)),
+            view.IsOwner ? deck.Tags : [],
+            deck.ColorIdentity,
+            deck.VariantOf,
+            deck.BaseVersionId,
+            deck.HeadVersionId,
+            deck.AssembledVersionId);
+    }
+
+    /// <summary>
+    /// Gets the data of the cards and of the printings of some lines: the printings of the lines and the default printings of the cards.
+    /// </summary>
+    internal static async Task<(Dictionary<Guid, DeckCardResponse> Cards, Dictionary<Guid, DeckPrintingResponse> Printings)> CardDataAsync(
+        ICardCatalog catalog, IEnumerable<Guid> oracleIds, IEnumerable<Guid?> printingIds, CancellationToken cancellationToken)
+    {
+        var cards = await catalog.GetCardsAsync([.. oracleIds.Distinct()], cancellationToken);
+        var allPrintings = printingIds.OfType<Guid>()
+            .Concat(cards.Values.Where(card => card.DefaultPrintingId is not null).Select(card => card.DefaultPrintingId!.Value))
+            .Distinct().ToList();
+        var printings = await catalog.GetPrintingsAsync(allPrintings, cancellationToken);
+        return (
             cards.ToDictionary(pair => pair.Key, pair => new DeckCardResponse(
                 pair.Value.Name,
                 pair.Value.Layout,
@@ -869,13 +888,10 @@ internal static class DeckEndpoints
                 pair.Value.Analysis.IsLand,
                 pair.Value.DefaultPrintingId,
                 [.. pair.Value.Faces.Select(face => new DeckCardFaceResponse(face.Name, face.ManaCost, face.TypeLine))])),
-            printings.ToDictionary(pair => pair.Key, pair => new DeckPrintingResponse(pair.Value.SetCode, pair.Value.CollectorNumber, pair.Value.Lang, pair.Value.ImageUri)),
-            view.Tags.ToDictionary(tag => tag.Id, tag => new DeckTagResponse(tag.Name, tag.IsGlobal)),
-            view.IsOwner ? deck.Tags : [],
-            deck.ColorIdentity);
+            printings.ToDictionary(pair => pair.Key, pair => new DeckPrintingResponse(pair.Value.SetCode, pair.Value.CollectorNumber, pair.Value.Lang, pair.Value.ImageUri)));
     }
 
-    private static DateTimeOffset Utc(DateTime value) => new(DateTime.SpecifyKind(value, DateTimeKind.Utc));
+    internal static DateTimeOffset Utc(DateTime value) => new(DateTime.SpecifyKind(value, DateTimeKind.Utc));
 
     private sealed record DeckListCursor(int Offset);
 }

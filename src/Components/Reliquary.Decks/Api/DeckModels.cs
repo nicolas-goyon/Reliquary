@@ -122,6 +122,10 @@ public sealed record LineGroupRequest(
 /// <param name="Tags">The tags of the lines, by ID.</param>
 /// <param name="DeckTags">The deck tags. Only the owner gets them.</param>
 /// <param name="ColorIdentity">The color identity of the deck, with the letters W, U, B, R and G. An empty text is colorless.</param>
+/// <param name="VariantOf">The main deck when the deck is a variant, or <see langword="null"/>.</param>
+/// <param name="BaseVersionId">The version of the main deck where a variant starts, or <see langword="null"/>.</param>
+/// <param name="HeadVersionId">The most recent version of the deck, or <see langword="null"/>.</param>
+/// <param name="AssembledVersionId">The assembled version, or <see langword="null"/> when the deck is not assembled.</param>
 public sealed record DeckResponse(
     Guid Id,
     Guid OwnerId,
@@ -143,7 +147,11 @@ public sealed record DeckResponse(
     IReadOnlyDictionary<Guid, DeckPrintingResponse> Printings,
     IReadOnlyDictionary<Guid, DeckTagResponse> Tags,
     IReadOnlyList<string> DeckTags,
-    string ColorIdentity);
+    string ColorIdentity,
+    Guid? VariantOf = null,
+    Guid? BaseVersionId = null,
+    Guid? HeadVersionId = null,
+    Guid? AssembledVersionId = null);
 
 /// <summary>A tag of a deck line.</summary>
 /// <param name="Name">The name of the tag.</param>

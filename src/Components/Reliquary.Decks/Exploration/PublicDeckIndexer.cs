@@ -27,14 +27,14 @@ internal sealed class PublicDeckIndexer(DeckStore store)
         await using (var content = await store.OpenAsync(ownerId, ContentAccess.Read, cancellationToken))
         {
             deck = await DeckStore.FindDeckAsync(content, ownerId, deckId, cancellationToken);
-            if (deck is { Visibility: "public" })
+            if (deck is { Visibility: "public", VariantOf: null })
             {
                 lines = await DeckStore.ListLinesAsync(content, deckId, cancellationToken);
             }
         }
 
         await using var users = await store.OpenUsersAsync(cancellationToken);
-        if (deck is not { Visibility: "public" })
+        if (deck is not { Visibility: "public", VariantOf: null })
         {
             await PublicDeckStore.DeleteAsync(users, deckId, cancellationToken);
             return;

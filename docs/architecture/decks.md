@@ -211,3 +211,26 @@ The line that the action did not change keeps its ID, and it gets the sum of the
 
 When a line ID is not a line of the deck, the API changes nothing and gives the status 404.
 An incorrect field gives the status 400 with the list of field errors.
+
+## Versions and variants
+
+[ADR 0033](../decisions/0033-deck-versions-and-variants.md) describes the model.
+
+| Endpoint | Access | Effect |
+| --- | --- | --- |
+| `GET /decks/{id}/versions` | Like the deck | Lists the versions, the most recent first. `workingListChanged` tells whether the working list differs from the last version. |
+| `POST /decks/{id}/versions` | Owner | Commits the working list as a new version, with a message. The error `deck_no_changes` tells that nothing changed. |
+| `GET /decks/{id}/versions/{versionId}` | Like the deck | Gets a version with its frozen lines and the data of its cards. |
+| `GET /decks/{id}/versions/{versionId}/changes` | Like the deck | Compares a version with its first parent. |
+| `POST /decks/{id}/versions/{versionId}/restore` | Owner | Copies a version into the working list, and commits a version of the kind `restore`. |
+| `POST /decks/{id}/versions/{versionId}/revert` | Owner | Reverts a merge, with a version of the kind `revert`. |
+| `GET /decks/{id}/variants` | Like the deck | Lists the variants of the main deck. |
+| `POST /decks/{id}/variants` | Owner | Creates a variant from a version of the main deck. The default is the most recent version. |
+| `POST /decks/{id}/merge` | Owner | Merges the variant `{id}` into its main deck, with a version of the kind `merge` and two parents. |
+
+A variant is a deck: the endpoints of the decks and of the lines work with its ID.
+A variant has the format, the visibility and the folder of its main deck. A change of these fields on a variant gives a validation error.
+The deck list, the folders and the public decks do not show the variants.
+
+A comparison groups the lines by Oracle card and zone.
+A change of printing or finish only, with the same quantity, is in the list `printings`, not in the list `quantities`.
