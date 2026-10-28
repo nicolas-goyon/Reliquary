@@ -7,6 +7,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Added
 
+- The comparison of any two lists, with the effect on the curve, the types and the categories, and the changes of the notes.
 - Deck versions as frozen commits, and the restore of a version (ADR 0033).
 - Variants of a deck, with the merge of a variant and the revert of a merge.
 - The CLI commands `reliquary backup` and `reliquary restore` for all the databases of an instance, and the recipes `just backup` and `just restore-backup`.

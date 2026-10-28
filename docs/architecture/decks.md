@@ -234,3 +234,12 @@ The deck list, the folders and the public decks do not show the variants.
 
 A comparison groups the lines by Oracle card and zone.
 A change of printing or finish only, with the same quantity, is in the list `printings`, not in the list `quantities`.
+
+### Comparison of two lists
+
+`POST /lists/compare` compares two lists that the user can see.
+Each list is the working list of a deck or of a variant, or one of its versions: `{ "deckId": "...", "versionId": null }`.
+The two lists can come from different decks.
+The response gives the changes from the first list to the second list, and the numbers of each list.
+The numbers are the card count, the lands, the average mana value, the mana curve, the types and the categories.
+The analysis of the two lists uses the format of the first deck.

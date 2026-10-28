@@ -82,6 +82,7 @@ public sealed class DecksComponent : ICoreComponent
         TagEndpoints.Map(api);
         FolderEndpoints.Map(api);
         VersionEndpoints.Map(api);
+        CompareEndpoints.Map(api);
         PublicDeckEndpoints.Map(api);
         RecommendationEndpoints.Map(api);
         AutoTagEndpoints.Map(api);
