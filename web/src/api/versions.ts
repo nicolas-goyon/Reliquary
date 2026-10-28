@@ -1,5 +1,6 @@
 import type { CountEntry, CurvePoint } from './analysis'
 import { zones, type DeckCard, type DeckPrinting, type Zone } from './decks'
+import type { PurchasePreferences } from './purchases'
 
 /**
  * The deck versions, the variants and the comparison of two lists.
@@ -51,6 +52,8 @@ export interface DeckVersionLine {
   categories: string[]
   tags: string[]
   globalTags: string[]
+  /** The purchase preferences, or null when the line accepts each copy. */
+  purchasePreferences?: PurchasePreferences | null
 }
 
 /** A version with its lines: the response of `GET /decks/{id}/versions/{versionId}`. */

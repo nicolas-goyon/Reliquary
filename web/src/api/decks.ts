@@ -1,3 +1,5 @@
+import type { PurchasePreferences } from './purchases'
+
 /** The zones of a deck, in the order of the deck page. */
 export const zones = ['commander', 'companion', 'main', 'sideboard', 'considering', 'tokens'] as const
 export type Zone = (typeof zones)[number]
@@ -101,6 +103,8 @@ export interface DeckLine {
   note: string
   tagIds: string[]
   categories: string[]
+  /** The purchase preferences, or null when the line accepts each copy. The field is optional for older test data. */
+  purchasePreferences?: PurchasePreferences | null
 }
 
 export interface DeckCard {
