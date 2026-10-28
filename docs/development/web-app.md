@@ -1,7 +1,7 @@
 # Web app
 
 This guide tells how the web app works on phones and as an installed application.
-It also gives the keyboard shortcuts and the themes.
+It also gives the keyboard shortcuts, the themes and the accessibility checks.
 The code is in the `web` folder.
 Terms follow the [glossary](../glossary.md).
 
@@ -138,3 +138,31 @@ The CSS tokens in `web/src/styles.css` read this attribute.
 The browser keeps the choice in its local storage, under the key `reliquary.theme`.
 The account API has no field for the theme, so the choice applies only to one browser.
 When the local storage is not available, the choice applies until the page closes.
+
+## Accessibility
+
+The web app follows the level AA of the Web Content Accessibility Guidelines (WCAG) 2.2.
+Three automatic tests check the main rules:
+
+| Test | What it checks |
+| --- | --- |
+| `web/src/a11y/accessibility.test.tsx` | The [axe](https://github.com/dequelabs/axe-core) rules on the main pages. The test fails for each problem with the impact "serious" or "critical". |
+| `web/src/theme/contrast.test.ts` | The contrast of the color tokens in the two themes. Text needs 4.5:1 or more. The borders of controls, the focus indicator and the chart bars need 3:1 or more. |
+| `web/src/theme/theme.test.tsx` | The dark tokens of the "Dark" value and of the "System" value are the same. |
+
+The axe test covers these pages: home, sign-in, registration, card search, card, public decks, deck list, deck and account.
+jsdom has no layout, so axe cannot check the contrast in the tests.
+The contrast test reads the tokens from `web/src/styles.css` instead.
+
+The web app also applies these rules:
+
+- Each page has a level 1 heading. The title of the document is the heading, followed by "Reliquary".
+- After a page change, the focus goes to the main content, so a screen reader reads the new page.
+- The "Go to the content" link is the first element of each page.
+- Each element that the keyboard can reach shows a visible focus indicator.
+- Each field has a label. A field without a visible label has a label for screen readers.
+- A modal dialog keeps the focus inside. Escape closes it, and the focus goes back to the element that opened it.
+
+To add a page, add a test for the page to `web/src/a11y/accessibility.test.tsx`.
+To add a color token, give it a value in the light block and in the two dark blocks of `web/src/styles.css`.
+If the token colors text or a control, add it to `web/src/theme/contrast.test.ts`.

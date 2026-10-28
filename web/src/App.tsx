@@ -20,6 +20,7 @@ import { ShortcutHelp } from './components/ShortcutHelp'
 import { ThemeSwitcher } from './components/ThemeSwitcher'
 import { UpdatePrompt } from './components/UpdatePrompt'
 import { useLocation } from './router/navigation'
+import { usePageTitle } from './router/pageTitle'
 import { shortcutElement, takePendingFocus, useShortcuts } from './shortcuts/shortcuts'
 import { SlotRegistry, SlotRegistryContext } from './slots/registry'
 import { Slot } from './slots/Slot'
@@ -86,6 +87,7 @@ function Shell() {
   const account = state.status === 'authenticated' ? state.account : null
   const page = routes[location.pathname] ?? patternPage(location.pathname)
   const main = useRef<HTMLElement>(null)
+  usePageTitle(main, t('app.name'))
   const [helpOpen, setHelpOpen] = useState(false)
   const openHelp = useCallback(() => setHelpOpen(true), [setHelpOpen])
   useShortcuts(!helpOpen, openHelp)

@@ -1,3 +1,4 @@
+import type { DeckAnalysis } from '../api/analysis'
 import type { Deck, DeckSummary } from '../api/decks'
 
 /** Test data for the pages: one deck with a commander and one card in the main deck. */
@@ -53,3 +54,34 @@ export const testDeckSummary: DeckSummary = {
 }
 
 export const notLegal = { format: 'commander', legal: false, problems: [{ code: 'deck_size', oracleId: null, count: 2, limit: 100 }] }
+
+const atLeast = (values: number[]) => values.map((probability, index) => ({ lands: index + 1, probability }))
+
+/** An analysis with values in each panel. */
+export function testAnalysis(overrides: Partial<DeckAnalysis> = {}): DeckAnalysis {
+  return {
+    format: 'commander',
+    cardCount: 100,
+    landCount: 37,
+    modalLandCount: 1,
+    spellCount: 64,
+    averageManaValue: 3.25,
+    manaCurve: [0, 6, 12, 15, 14, 9, 5, 3].map((count, manaValue) => ({ manaValue, count })),
+    types: [{ key: 'artifact', count: 10 }, { key: 'creature', count: 30 }, { key: 'land', count: 37 }],
+    colors: [{ key: 'W', count: 20 }, { key: 'U', count: 18 }, { key: 'B', count: 15 }, { key: 'R', count: 0 }, { key: 'G', count: 22 }, { key: 'C', count: 8 }],
+    categories: [{ key: 'ramp', count: 6 }, { key: 'land', count: 37 }, { key: 'uncategorized', count: 20 }],
+    mana: {
+      tableDeckSize: 99,
+      colors: [{ color: 'W', symbols: 25, landSources: 16, otherSources: 3, sources: 17.5, required: 23, oracleId: atraxa, pips: 1, manaValue: 4, status: 'low' }],
+    },
+    draws: {
+      librarySize: 99,
+      lands: 37,
+      checkpoints: [{ code: 'opening_hand', turn: 1, onThePlay: true, cards: 7, atLeast: atLeast([0.9632, 0.8312, 0.5938, 0.3166, 0.1213, 0.0316, 0.0045]) }],
+    },
+    needs: [{ category: 'ramp', count: 6, target: 10, min: 8, max: 15, status: 'low', difference: -4 }],
+    bracket: { bracket: 3, reasons: [{ code: 'game_changers', bracket: 3, oracleIds: [solRing], comboIds: [] }], unchecked: [] },
+    combos: { available: true, complete: [], near: [], nearCount: 0 },
+    ...overrides,
+  }
+}

@@ -20,7 +20,7 @@ Run these commands in this folder, or use the `just` recipes from the repository
 The development server sends the `/api` requests to the API on <http://localhost:5080>.
 Set `RELIQUARY_API_URL` to use a different API address.
 
-The [web app guide](../docs/development/web-app.md) tells how the installable web app, its service worker, the keyboard shortcuts and the themes work.
+The [web app guide](../docs/development/web-app.md) tells how the installable web app, its service worker, the keyboard shortcuts, the themes and the accessibility checks work.
 
 ## Translations
 

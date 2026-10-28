@@ -111,7 +111,7 @@ export function ExplorePage() {
         </form>
       )}
       <ErrorAlert error={error} />
-      {decks === null ? <p role="status">{t('explore.loading')}</p> : <PublicDeckList decks={decks} />}
+      {decks === null ? <p role="status">{t('explore.loading')}</p> : <PublicDeckList decks={decks} headingLevel={2} />}
     </section>
   )
 }
