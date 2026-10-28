@@ -47,7 +47,8 @@ internal static class CompareEndpoints
             .WithTags("Deck versions")
             .AddEndpointFilter<DeckExceptionFilter>()
             .WithName("CompareLists")
-            .WithSummary("Compares two lists that the user can see: working lists or versions of decks and variants. It gives the added and removed cards, the printing changes, the note changes and the effect on the curve, the types and the categories.");
+            .WithSummary("Compares two lists that the user can see: working lists or versions of decks and variants. It gives the added and removed cards, the printing changes, the note changes and the effect on the curve, the types and the categories.")
+            .RequireScope(Scopes.DecksRead);
     }
 
     private static async Task<Results<Ok<CompareListsResponse>, ProblemHttpResult>> CompareAsync(

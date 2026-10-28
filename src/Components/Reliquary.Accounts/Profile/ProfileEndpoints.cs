@@ -62,7 +62,8 @@ internal static class ProfileEndpoints
 
         me.MapGet(string.Empty, GetAsync)
             .WithName("GetMe")
-            .WithSummary("Gets the account of the user.");
+            .WithSummary("Gets the account of the user.")
+            .RequireScope(Scopes.ProfileRead);
 
         session.MapPatch(string.Empty, UpdateAsync)
             .WithName("UpdateMe")

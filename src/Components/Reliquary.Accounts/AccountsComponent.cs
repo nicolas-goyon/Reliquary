@@ -6,12 +6,14 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
 using Reliquary.Accounts.Auth;
 using Reliquary.Accounts.Data;
 using Reliquary.Accounts.Emails;
 using Reliquary.Accounts.PersonalData;
 using Reliquary.Accounts.Profile;
 using Reliquary.Accounts.Quotas;
+using Reliquary.Accounts.ServiceAccounts;
 using Reliquary.BuildingBlocks;
 using Reliquary.BuildingBlocks.Accounts;
 using Reliquary.BuildingBlocks.Api;
@@ -22,7 +24,8 @@ using Reliquary.BuildingBlocks.Jobs;
 namespace Reliquary.Accounts;
 
 /// <summary>
-/// Registers the Accounts core component: accounts, sign-in, web sessions, OAuth providers, API keys and quotas.
+/// Registers the Accounts core component: accounts, sign-in, web sessions, OAuth providers, API keys, quotas,
+/// service accounts and delegation tokens.
 /// </summary>
 public sealed class AccountsComponent : ICoreComponent
 {
@@ -49,6 +52,12 @@ public sealed class AccountsComponent : ICoreComponent
         services.AddSingleton<AccountEmails>();
         services.AddSingleton<AccountService>();
         services.AddSingleton<IDemoDataSeeder, DemoAccounts>();
+        services.AddSingleton<ServiceAccountStore>();
+        services.AddSingleton<DelegationService>();
+        services.AddSingleton(provider => new ServiceAccountService(
+            provider.GetRequiredService<ServiceAccountStore>(),
+            provider.GetRequiredService<TimeProvider>(),
+            provider.GetRequiredService<ILogger<ServiceAccountService>>()));
     }
 
     /// <inheritdoc />
@@ -86,7 +95,7 @@ public sealed class AccountsComponent : ICoreComponent
     }
 
     /// <inheritdoc />
-    public void ConfigureApi(RouteGroupBuilder api) => api.AddEndpointFilter<QuotaFilter>();
+    public void ConfigureApi(RouteGroupBuilder api) => api.AddEndpointFilter<QuotaFilter>().AddEndpointFilter<ScopeFilter>();
 
     /// <inheritdoc />
     public void MapEndpoints(IEndpointRouteBuilder api)
@@ -95,5 +104,13 @@ public sealed class AccountsComponent : ICoreComponent
         ExternalEndpoints.Map(api);
         ProfileEndpoints.Map(api);
         PersonalDataEndpoints.Map(api);
+        ServiceAccountEndpoints.Map(api);
+    }
+
+    /// <inheritdoc />
+    public void MapInternalEndpoints(IEndpointRouteBuilder internalApi)
+    {
+        InternalProfileEndpoints.Map(internalApi);
+        ServiceAccountEndpoints.MapInternal(internalApi);
     }
 }

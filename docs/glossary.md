@@ -87,6 +87,10 @@ The French column gives the term for the French interface.
 | OAuth login | A connection between an account and an account at an OAuth provider: Google, GitHub or Discord. The user can then sign in with that provider. | Connexion externe |
 | API key | A personal secret that a script or a third-party client uses to call the public API for a user. | Clé d'API |
 | Quota | The maximum number of requests of an API key or of an account in one day (UTC). | Quota |
+| Service account | An account of a module, not of a person. The administrator creates it. Its secret works only on the internal API. | Module |
+| Delegation | The consent of a user: a service account can act for the user, with some scopes, until a date. The user can revoke it. | Délégation |
+| Delegation token | A short secret that a service account gets for a delegation. It acts for the user on the public API, with its scopes only. | — |
+| Scope | A permission of a delegation, for example `decks:read`. Each endpoint that accepts a delegation token needs one scope. | Permission |
 
 ## Moderation
 

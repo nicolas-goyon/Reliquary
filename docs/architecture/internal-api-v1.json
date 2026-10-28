@@ -1,0 +1,348 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "Reliquary internal API",
+    "description": "The internal API of Reliquary for the modules. Only service accounts can use it. The version is the version of the core API. See docs/architecture/internal-api.md.",
+    "version": "1.1.0"
+  },
+  "paths": {
+    "/internal/v1": {
+      "get": {
+        "tags": [
+          "Internal API"
+        ],
+        "summary": "Gets the version of the core API. A module checks it before it uses the internal API.",
+        "operationId": "GetInternalApiVersion",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalApiVersionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/v1/events/types": {
+      "get": {
+        "tags": [
+          "Domain events"
+        ],
+        "summary": "Lists the domain event types and versions that modules can consume, with the fields of each payload.",
+        "operationId": "ListDomainEventTypes",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainEventTypeListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/v1/users/{accountId}/profile": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Gets the public profile of a user. The response never contains the email address.",
+        "operationId": "GetPublicProfile",
+        "parameters": [
+          {
+            "name": "accountId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicProfileResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/v1/delegations": {
+      "get": {
+        "tags": [
+          "Delegations"
+        ],
+        "summary": "Lists the active delegations that the users gave to the service account.",
+        "operationId": "ListServiceAccountDelegations",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InternalDelegationResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/v1/delegations/{id}/tokens": {
+      "post": {
+        "tags": [
+          "Delegations"
+        ],
+        "summary": "Gives a short delegation token. The service account sends it to the public API to act for the user, with the scopes of the token.",
+        "operationId": "CreateDelegationToken",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/CreateDelegationTokenRequest"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DelegationTokenResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CreateDelegationTokenRequest": {
+        "required": [
+          "scopes"
+        ],
+        "type": "object",
+        "properties": {
+          "scopes": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "DelegationTokenResponse": {
+        "required": [
+          "token",
+          "tokenType",
+          "accountId",
+          "scopes",
+          "expiresAt"
+        ],
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string"
+          },
+          "tokenType": {
+            "type": "string"
+          },
+          "accountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "DomainEventField": {
+        "required": [
+          "name",
+          "type",
+          "nullable"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "nullable": {
+            "type": "boolean"
+          }
+        }
+      },
+      "DomainEventType": {
+        "required": [
+          "type",
+          "version",
+          "fields"
+        ],
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "version": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DomainEventField"
+            }
+          }
+        }
+      },
+      "DomainEventTypeListResponse": {
+        "required": [
+          "items"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DomainEventType"
+            }
+          }
+        }
+      },
+      "InternalApiVersionResponse": {
+        "required": [
+          "coreApi",
+          "path"
+        ],
+        "type": "object",
+        "properties": {
+          "coreApi": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          }
+        }
+      },
+      "InternalDelegationResponse": {
+        "required": [
+          "id",
+          "accountId",
+          "scopes",
+          "createdAt",
+          "expiresAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "accountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PublicProfileResponse": {
+        "required": [
+          "id",
+          "displayName"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "displayName": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Internal API"
+    },
+    {
+      "name": "Domain events"
+    },
+    {
+      "name": "Users"
+    },
+    {
+      "name": "Delegations"
+    }
+  ]
+}

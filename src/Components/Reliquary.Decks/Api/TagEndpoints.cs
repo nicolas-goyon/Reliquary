@@ -19,15 +19,18 @@ internal static class TagEndpoints
 
         tags.MapGet(string.Empty, ListAsync)
             .WithName("ListTags")
-            .WithSummary("Lists the global tags of the user, with the number of deck lines that use each tag.");
+            .WithSummary("Lists the global tags of the user, with the number of deck lines that use each tag.")
+            .RequireScope(Scopes.DecksRead);
 
         tags.MapPatch("/{tagId:guid}", RenameAsync)
             .WithName("RenameTag")
-            .WithSummary("Renames a global or local tag. When another tag of the same kind has the new name, the two tags become one tag.");
+            .WithSummary("Renames a global or local tag. When another tag of the same kind has the new name, the two tags become one tag.")
+            .RequireScope(Scopes.DecksWrite);
 
         tags.MapDelete("/{tagId:guid}", DeleteAsync)
             .WithName("DeleteTag")
-            .WithSummary("Deletes a tag. The deck lines keep their cards.");
+            .WithSummary("Deletes a tag. The deck lines keep their cards.")
+            .RequireScope(Scopes.DecksWrite);
     }
 
     private static async Task<Ok<IReadOnlyList<TagResponse>>> ListAsync(ClaimsPrincipal user, TagService tags, CancellationToken cancellationToken)

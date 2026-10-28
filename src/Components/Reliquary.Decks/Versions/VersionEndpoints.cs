@@ -23,39 +23,48 @@ internal static class VersionEndpoints
 
         decks.MapGet("/versions", ListAsync)
             .WithName("ListDeckVersions")
-            .WithSummary("Lists the versions of a deck, the most recent first, and tells whether the working list changed since the last version.");
+            .WithSummary("Lists the versions of a deck, the most recent first, and tells whether the working list changed since the last version.")
+            .RequireScope(Scopes.DecksRead);
 
         owner.MapPost("/versions", CommitAsync)
             .WithName("CommitDeckVersion")
-            .WithSummary("Commits the working list of a deck as a new version. A version never changes.");
+            .WithSummary("Commits the working list of a deck as a new version. A version never changes.")
+            .RequireScope(Scopes.DecksWrite);
 
         decks.MapGet("/versions/{versionId:guid}", GetAsync)
             .WithName("GetDeckVersion")
-            .WithSummary("Gets a version with its frozen lines and the data of its cards.");
+            .WithSummary("Gets a version with its frozen lines and the data of its cards.")
+            .RequireScope(Scopes.DecksRead);
 
         decks.MapGet("/versions/{versionId:guid}/changes", ChangesAsync)
             .WithName("GetDeckVersionChanges")
-            .WithSummary("Compares a version with its first parent version. The changes of printing are in a separate list.");
+            .WithSummary("Compares a version with its first parent version. The changes of printing are in a separate list.")
+            .RequireScope(Scopes.DecksRead);
 
         owner.MapPost("/versions/{versionId:guid}/restore", RestoreAsync)
             .WithName("RestoreDeckVersion")
-            .WithSummary("Copies a version into the working list and commits the result as a new version.");
+            .WithSummary("Copies a version into the working list and commits the result as a new version.")
+            .RequireScope(Scopes.DecksWrite);
 
         owner.MapPost("/versions/{versionId:guid}/revert", RevertAsync)
             .WithName("RevertDeckMerge")
-            .WithSummary("Reverts a merge: the working list gets the content before the merge, in a new version.");
+            .WithSummary("Reverts a merge: the working list gets the content before the merge, in a new version.")
+            .RequireScope(Scopes.DecksWrite);
 
         decks.MapGet("/variants", ListVariantsAsync)
             .WithName("ListDeckVariants")
-            .WithSummary("Lists the variants of a deck. For a variant, it lists the variants of its main deck.");
+            .WithSummary("Lists the variants of a deck. For a variant, it lists the variants of its main deck.")
+            .RequireScope(Scopes.DecksRead);
 
         owner.MapPost("/variants", CreateVariantAsync)
             .WithName("CreateDeckVariant")
-            .WithSummary("Creates a variant of a deck from one of its versions. A variant is a deck: the deck endpoints change it.");
+            .WithSummary("Creates a variant of a deck from one of its versions. A variant is a deck: the deck endpoints change it.")
+            .RequireScope(Scopes.DecksWrite);
 
         owner.MapPost("/merge", MergeAsync)
             .WithName("MergeDeckVariant")
-            .WithSummary("Merges a variant into its main deck, as a new version of the main deck with two parents.");
+            .WithSummary("Merges a variant into its main deck, as a new version of the main deck with two parents.")
+            .RequireScope(Scopes.DecksWrite);
     }
 
     private static async Task<Ok<DeckHistoryResponse>> ListAsync(Guid deckId, ClaimsPrincipal user, DeckVersionService versions, CancellationToken cancellationToken)

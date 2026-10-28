@@ -43,6 +43,8 @@ Each record gives the context, the decision and its consequences.
 | [0033](0033-deck-versions-and-variants.md) | Deck versions as frozen commits, variants as deck rows, and the assembled version | Accepted |
 | [0034](0034-collection-model.md) | Collection model in the shard, availability rules and the interfaces with the decks | Accepted |
 | [0035](0035-moderation-of-public-content.md) | Moderation of the public content in the Decks component, with the data in the users database | Accepted |
+| [0036](0036-internal-api.md) | Internal API for the modules under `/internal/v1`, with its own OpenAPI document | Accepted |
+| [0037](0037-service-accounts-and-delegation-tokens.md) | Service accounts, delegations from the account page and delegation tokens with scopes | Accepted |
 
 ## Open decisions
 

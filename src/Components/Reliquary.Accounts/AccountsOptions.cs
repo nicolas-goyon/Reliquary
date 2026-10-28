@@ -44,6 +44,9 @@ public sealed class AuthOptions
     /// <summary>Gets or sets the maximum number of requests to the sign-in, sign-up and email endpoints, for each client address and minute.</summary>
     public int RequestsPerMinute { get; set; } = 10;
 
+    /// <summary>Gets or sets the lifetime of a delegation token. A token never stays valid after the end of its delegation.</summary>
+    public TimeSpan DelegationTokenLifetime { get; set; } = TimeSpan.FromHours(1);
+
     /// <summary>
     /// Gets or sets the OAuth providers, by name: <c>Google</c>, <c>GitHub</c> or <c>Discord</c>.
     /// A provider is enabled when it has a client ID and a client secret.

@@ -4,6 +4,8 @@ using OpenTelemetry.Trace;
 using Reliquary.Api;
 using Reliquary.Api.Conventions;
 using Reliquary.BuildingBlocks.Api;
+using Reliquary.BuildingBlocks.Security;
+using Reliquary.BuildingBlocks.Versioning;
 using Reliquary.Hosting;
 using Reliquary.Platform.Observability;
 
@@ -17,6 +19,17 @@ builder.Services.AddOpenApi("v1", options => options.AddDocumentTransformer((doc
     document.Info.Description = "The public API of Reliquary. The web interface, the plugins and the third-party clients use it. See docs/architecture/api-conventions.md.";
     return Task.CompletedTask;
 }));
+builder.Services.AddOpenApi(ApiRoutes.InternalDocument, options =>
+{
+    options.ShouldInclude = description => description.GroupName == ApiRoutes.InternalDocument;
+    options.AddDocumentTransformer((document, _, _) =>
+    {
+        document.Info.Title = "Reliquary internal API";
+        document.Info.Version = CoreApi.Version.ToString();
+        document.Info.Description = "The internal API of Reliquary for the modules. Only service accounts can use it. The version is the version of the core API. See docs/architecture/internal-api.md.";
+        return Task.CompletedTask;
+    });
+});
 builder.Services.AddReliquaryCore(builder.Configuration);
 builder.Services.AddReliquaryApi(builder.Configuration);
 
@@ -46,6 +59,12 @@ api.MapGet("/status", ApiStatus.Create)
     .WithSummary("Gets the name, the version and the core components of the API.");
 
 api.MapReliquaryEndpoints();
+
+// The internal API for the modules. It has its own OpenAPI document, and only service accounts can use it.
+app.MapGroup(ApiRoutes.InternalBase)
+    .WithGroupName(ApiRoutes.InternalDocument)
+    .RequireAuthorization(AuthPolicies.ServiceAccount)
+    .MapReliquaryInternalEndpoints();
 
 await app.RunAsync();
 

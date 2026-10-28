@@ -20,19 +20,23 @@ internal static class FolderEndpoints
 
         folders.MapGet(string.Empty, ListAsync)
             .WithName("ListDeckFolders")
-            .WithSummary("Lists all the folders of the user. A folder has a parent folder, or no parent folder at the top.");
+            .WithSummary("Lists all the folders of the user. A folder has a parent folder, or no parent folder at the top.")
+            .RequireScope(Scopes.DecksRead);
 
         folders.MapPost(string.Empty, CreateAsync)
             .WithName("CreateDeckFolder")
-            .WithSummary("Creates a folder, at the top or in another folder.");
+            .WithSummary("Creates a folder, at the top or in another folder.")
+            .RequireScope(Scopes.DecksWrite);
 
         folders.MapPatch("/{folderId:guid}", UpdateAsync)
             .WithName("UpdateDeckFolder")
-            .WithSummary("Renames a folder or moves it into another folder.");
+            .WithSummary("Renames a folder or moves it into another folder.")
+            .RequireScope(Scopes.DecksWrite);
 
         folders.MapDelete("/{folderId:guid}", DeleteAsync)
             .WithName("DeleteDeckFolder")
-            .WithSummary("Deletes a folder and its subfolders. Their decks stay, with no folder.");
+            .WithSummary("Deletes a folder and its subfolders. Their decks stay, with no folder.")
+            .RequireScope(Scopes.DecksWrite);
     }
 
     private static async Task<Ok<IReadOnlyList<FolderResponse>>> ListAsync(ClaimsPrincipal user, FolderService folders, CancellationToken cancellationToken)

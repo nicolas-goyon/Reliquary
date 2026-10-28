@@ -12,6 +12,10 @@ The public API accepts two credentials in the header `Authorization: Bearer`:
 | --- | --- | --- |
 | Access token | A JSON Web Token | The web interface, during a web session |
 | API key | `rlq_<prefix>_<secret>` | Scripts and third-party clients |
+| Delegation token | `rld_<prefix>_<secret>` | A module that acts for the user, with some scopes |
+
+The secret of a service account (`rls_<prefix>_<secret>`) works only on the internal API.
+The [service accounts](service-accounts.md) page describes the service accounts, the delegations and the scopes.
 
 A request with no credential can use the public endpoints, for example the card endpoints.
 A request with a credential that is not valid gets the error `invalid_authentication`, also on a public endpoint.
@@ -34,7 +38,7 @@ The access token contains these claims:
 | `sub` | The ID of the account. It is also the ID of the owner of the user data. |
 | `name` | The display name. |
 | `lang` | The interface language: `en` or `fr`. |
-| `amr` | The authentication method: `session` or `api_key`. |
+| `amr` | The authentication method: `session`, `api_key`, `delegation` or `service_account`. |
 | `role` | `administrator` for an administrator of the instance. |
 
 ## Endpoints
@@ -51,12 +55,16 @@ The access token contains these claims:
 | `POST /auth/password/reset` | — | Sets a new password with the token of the email. |
 | `GET /auth/providers` | — | Lists the enabled OAuth providers. |
 | `GET /auth/external/{provider}` | — | Sends the browser to an OAuth provider. |
-| `GET /me` | Access token or API key | Gets the account. |
+| `GET /me` | Access token, API key or delegation token with `profile:read` | Gets the account. |
 | `PATCH /me` | Access token | Changes the display name or the language. |
 | `POST /me/password` | Access token | Changes the password and starts a new session. |
 | `GET /me/api-keys` | Access token | Lists the API keys. |
 | `POST /me/api-keys` | Access token | Creates an API key. |
 | `DELETE /me/api-keys/{id}` | Access token | Revokes an API key. |
+| `GET /service-accounts` | Access token | Lists the service accounts that can receive a delegation. |
+| `GET /me/delegations` | Access token | Lists the active delegations. |
+| `POST /me/delegations` | Access token | Gives a delegation to a service account. |
+| `DELETE /me/delegations/{id}` | Access token | Revokes a delegation. |
 
 All the paths start with `/api/v1`.
 The OpenAPI document at `/openapi/v1.json` gives the bodies and the responses.
@@ -80,9 +88,11 @@ Register the callback address of each provider in its developer console, for exa
 The other core components do not reference the Accounts component.
 They use the contracts of `Reliquary.BuildingBlocks.Security`:
 
-- `RequireAuthorization(AuthPolicies.User)` accepts an access token or an API key.
+- `RequireAuthorization(AuthPolicies.User)` accepts an access token, an API key or a delegation token. It refuses a service account.
 - `RequireAuthorization(AuthPolicies.Session)` accepts only an access token.
 - `RequireAuthorization(AuthPolicies.Administrator)` accepts only the access token of an administrator.
+- `RequireAuthorization(AuthPolicies.ServiceAccount)` accepts only the secret of a service account. The internal API uses it.
+- `RequireScope(Scopes.DecksRead)` lets a delegation token with this scope use the endpoint. An endpoint without a scope refuses the delegation tokens.
 - `user.GetAccountId()` gives the ID of the account, which is also the owner ID.
 
 The domain event `accounts.account.created` tells the other core components about a new owner.
@@ -139,6 +149,7 @@ The local infrastructure has Mailpit: open `http://localhost:18025` to read the 
 | `Auth:PasswordResetLifetime` | `01:00:00` | The lifetime of the link of the password reset. |
 | `Auth:AdministratorEmails` | — | The email addresses of the administrators. |
 | `Auth:RequestsPerMinute` | `10` | The rate limit of the authentication endpoints, for each client address and replica. |
+| `Auth:DelegationTokenLifetime` | `01:00:00` | The lifetime of a delegation token. A token never stays valid after the end of its delegation. |
 | `Auth:Providers:Google:ClientId` and `ClientSecret` | — | Enables the sign-in with Google. The same settings exist for `GitHub` and `Discord`. |
 | `Quotas:RequestsPerKeyPerDay` | `10000` | The daily quota of each API key. |
 | `Quotas:RequestsPerAccountPerDay` | `10000` | The daily quota of all the API keys of one account. |

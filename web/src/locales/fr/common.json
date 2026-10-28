@@ -85,6 +85,7 @@
     "invalid_token": "Ce lien n’est pas valable. Il a peut-être déjà servi ou expiré. Demandez un nouvel e-mail.",
     "session_expired": "Votre session a expiré. Reconnectez-vous.",
     "api_key_limit": "Vous avez atteint le nombre maximal de clés d’API. Révoquez une clé, puis réessayez.",
+    "delegation_limit": "Vous avez le nombre maximal de délégations. Révoquez une délégation, puis réessayez.",
     "provider_not_enabled": "Ce service de connexion n’est pas disponible sur cette instance.",
     "external_sign_in_failed": "La connexion avec le service externe a échoué. Réessayez.",
     "external_email_missing": "Le service externe n’a pas fourni d’adresse e-mail. Utilisez une autre méthode de connexion.",

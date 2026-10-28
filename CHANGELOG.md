@@ -22,6 +22,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Accessibility checks with axe on the main pages and a contrast test of the color tokens.
   Each page now has its own title, and the selected suggestion of a field has a visible focus.
   The borders of the form controls have a contrast of 3:1 or more.
+
+- The internal API for the modules under `/internal/v1`, with its own OpenAPI document (ADR 0036).
+  It gives the catalog of the domain events and the public profiles of the users. The core API version is now 1.1.0.
+- Service accounts for the modules, with the CLI command `reliquary service-accounts` and the admin API (ADR 0037).
+  A user gives a delegation to a module on the account page, with scopes and a duration, and revokes it there.
+  The module gets short delegation tokens and acts for the user on the deck endpoints and on the profile.
 - The CLI commands `reliquary backup` and `reliquary restore` for all the databases of an instance, and the recipes `just backup` and `just restore-backup`.
 - The export of all the data of an account as a ZIP archive, and the deletion of an account after 7 days (ADR 0032).
 - Repository rules, the English documentation with checks for ASD-STE100, and the backlog of the roadmap.

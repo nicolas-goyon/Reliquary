@@ -53,6 +53,32 @@ public sealed record AccountCreated(Guid AccountId, string Language) : IDomainEv
 - Write the event with `IDomainEventWriter.WriteAsync`, in the transaction of the change.
 - Give the owner of the data, when the data has an owner.
 
+## Catalog of the event types
+
+This table lists the event types and the versions that modules can consume.
+The internal API gives the same list at `GET /internal/v1/events/types` ([internal API](internal-api.md)).
+The API makes the list from the `DomainEvent` attributes of the core components.
+A test compares the list with this table, so a new event type must come with a new row.
+When the test fails, it gives the correct table.
+
+<!-- event-catalog:start -->
+
+| Type | Version | Payload |
+| --- | --- | --- |
+| `accounts.account.created` | 1 | `accountId` (uuid), `language` (string), `shard` (string), `createdAt` (date-time) |
+| `accounts.account.deleted` | 1 | `accountId` (uuid) |
+| `cards.card_data.imported` | 1 | `source` (string), `changedCards` (integer), `changedPrintings` (integer), `deletedPrintings` (integer) |
+| `decks.content.hidden` | 1 | `itemType` (string), `itemId` (uuid) |
+| `decks.content.shown` | 1 | `itemType` (string), `itemId` (uuid) |
+| `decks.deck.created` | 1 | `deckId` (uuid), `format` (string), `visibility` (string), `sourceDeckId` (uuid or null), `variantOf` (uuid or null) |
+| `decks.deck.deleted` | 1 | `deckId` (uuid) |
+| `decks.deck.updated` | 1 | `deckId` (uuid), `version` (integer), `format` (string), `visibility` (string), `variantOf` (uuid or null) |
+| `decks.deck_version.created` | 1 | `deckId` (uuid), `versionId` (uuid), `number` (integer), `kind` (string) |
+
+<!-- event-catalog:end -->
+
+Each event also has an envelope with the event ID, the type, the version, the owner ID and the time of the change.
+
 ## Consume an event
 
 A consumer implements `IDomainEventConsumer`:

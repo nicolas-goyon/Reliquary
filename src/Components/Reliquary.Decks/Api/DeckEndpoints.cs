@@ -24,83 +24,103 @@ internal static class DeckEndpoints
 
         owner.MapGet(string.Empty, ListAsync)
             .WithName("ListDecks")
-            .WithSummary("Lists the decks of the user with filters by folder, format, color identity, deck tag and archive. The pinned decks come first, then the sort applies.");
+            .WithSummary("Lists the decks of the user with filters by folder, format, color identity, deck tag and archive. The pinned decks come first, then the sort applies.")
+            .RequireScope(Scopes.DecksRead);
 
         owner.MapPost(string.Empty, CreateAsync)
             .WithName("CreateDeck")
-            .WithSummary("Creates a deck, with its first lines.");
+            .WithSummary("Creates a deck, with its first lines.")
+            .RequireScope(Scopes.DecksWrite);
 
         owner.MapGet("/tags", ListDeckTagsAsync)
             .WithName("ListDeckTags")
-            .WithSummary("Lists the deck tags of the user, with the number of decks of each tag.");
+            .WithSummary("Lists the deck tags of the user, with the number of decks of each tag.")
+            .RequireScope(Scopes.DecksRead);
 
         owner.MapPost("/group", ApplyGroupActionAsync)
             .WithName("ApplyDeckGroupAction")
-            .WithSummary("Applies one action to several decks of the user: move, tag, untag, pin, unpin, archive, unarchive or delete.");
+            .WithSummary("Applies one action to several decks of the user: move, tag, untag, pin, unpin, archive, unarchive or delete.")
+            .RequireScope(Scopes.DecksWrite);
 
         owner.MapPost("/export", ExportDecksAsync)
             .WithName("ExportDecks")
-            .WithSummary("Gets several decks of the user as one ZIP file, with one file for each deck.");
+            .WithSummary("Gets several decks of the user as one ZIP file, with one file for each deck.")
+            .RequireScope(Scopes.DecksRead);
 
         owner.MapPost("/import", ImportAsync)
             .WithName("ImportDeck")
-            .WithSummary("Creates a deck from a file of another tool. The API makes no deck when a line has an error. See docs/development/deck-import-export.md.");
+            .WithSummary("Creates a deck from a file of another tool. The API makes no deck when a line has an error. See docs/development/deck-import-export.md.")
+            .RequireScope(Scopes.DecksWrite);
 
         decks.MapGet("/{deckId:guid}", GetAsync)
             .WithName("GetDeck")
-            .WithSummary("Gets a deck with its lines and the data of its cards. The owner gets each deck. The other users and the visitors get the unlisted and public decks.");
+            .WithSummary("Gets a deck with its lines and the data of its cards. The owner gets each deck. The other users and the visitors get the unlisted and public decks.")
+            .RequireScope(Scopes.DecksRead);
 
         owner.MapPatch("/{deckId:guid}", UpdateAsync)
             .WithName("UpdateDeck")
-            .WithSummary("Changes the name, the format, the visibility, the folder or the description of a deck.");
+            .WithSummary("Changes the name, the format, the visibility, the folder or the description of a deck.")
+            .RequireScope(Scopes.DecksWrite);
 
         owner.MapDelete("/{deckId:guid}", DeleteAsync)
             .WithName("DeleteDeck")
-            .WithSummary("Deletes a deck and its lines.");
+            .WithSummary("Deletes a deck and its lines.")
+            .RequireScope(Scopes.DecksWrite);
 
         owner.MapPost("/{deckId:guid}/lines", AddLinesAsync)
             .WithName("AddDeckLines")
-            .WithSummary("Adds cards to a deck. A line with the same card, printing and finish in the same zone gets the quantity added.");
+            .WithSummary("Adds cards to a deck. A line with the same card, printing and finish in the same zone gets the quantity added.")
+            .RequireScope(Scopes.DecksWrite);
 
         owner.MapPut("/{deckId:guid}/lines", ReplaceLinesAsync)
             .WithName("ReplaceDeckLines")
-            .WithSummary("Replaces all the lines of a deck.");
+            .WithSummary("Replaces all the lines of a deck.")
+            .RequireScope(Scopes.DecksWrite);
 
         owner.MapPatch("/{deckId:guid}/lines/{lineId:guid}", UpdateLineAsync)
             .WithName("UpdateDeckLine")
-            .WithSummary("Changes the quantity, the zone, the printing, the finish or the note of a line. A quantity of 0 removes the line.");
+            .WithSummary("Changes the quantity, the zone, the printing, the finish or the note of a line. A quantity of 0 removes the line.")
+            .RequireScope(Scopes.DecksWrite);
 
         owner.MapPost("/{deckId:guid}/lines/group", ApplyLineGroupActionAsync)
             .WithName("ApplyDeckLineGroupAction")
-            .WithSummary("Applies one action to several lines of a deck in one change: move, tag, untag, printing, quantity or remove. Lines that get the same zone, card, printing and finish become one line.");
+            .WithSummary("Applies one action to several lines of a deck in one change: move, tag, untag, printing, quantity or remove. Lines that get the same zone, card, printing and finish become one line.")
+            .RequireScope(Scopes.DecksWrite);
 
         owner.MapPost("/{deckId:guid}/copy", CopyAsync)
             .WithName("CopyDeck")
-            .WithSummary("Copies a deck into a new deck of the user: one of their decks, or an unlisted or public deck of another user.");
+            .WithSummary("Copies a deck into a new deck of the user: one of their decks, or an unlisted or public deck of another user.")
+            .RequireScope(Scopes.DecksWrite);
 
         decks.MapGet("/{deckId:guid}/legality", GetLegalityAsync)
             .WithName("GetDeckLegality")
-            .WithSummary("Checks the legality of a deck in its format: deck size, copies, banned cards, commanders and color identity.");
+            .WithSummary("Checks the legality of a deck in its format: deck size, copies, banned cards, commanders and color identity.")
+            .RequireScope(Scopes.DecksRead);
 
         decks.MapGet("/{deckId:guid}/export", ExportAsync)
             .WithName("ExportDeck")
-            .WithSummary("Gets a deck as a file of another tool: text, moxfield, mtga, mtgo, dek or archidekt.");
+            .WithSummary("Gets a deck as a file of another tool: text, moxfield, mtga, mtgo, dek or archidekt.")
+            .RequireScope(Scopes.DecksRead);
 
         decks.MapGet("/{deckId:guid}/analysis", GetAnalysisAsync)
             .WithName("GetDeckAnalysis")
-            .WithSummary("Analyzes a deck: mana curve, distributions, mana sources, draw probabilities, combos of Commander Spellbook, and for Commander the category needs and the indicative bracket.");
+            .WithSummary("Analyzes a deck: mana curve, distributions, mana sources, draw probabilities, combos of Commander Spellbook, and for Commander the category needs and the indicative bracket.")
+            .RequireScope(Scopes.DecksRead);
 
         decks.MapGet("/{deckId:guid}/text", GetTextAsync)
             .WithName("GetDeckText")
-            .WithSummary("Gets the lines of a deck in the deck text format. See docs/development/deck-text-format.md.");
+            .WithSummary("Gets the lines of a deck in the deck text format. See docs/development/deck-text-format.md.")
+            .RequireScope(Scopes.DecksRead);
 
         owner.MapPut("/{deckId:guid}/text", SetTextAsync)
             .WithName("SetDeckText")
-            .WithSummary("Replaces the lines of a deck from a text in the deck text format. The API changes nothing when a line has an error.");
+            .WithSummary("Replaces the lines of a deck from a text in the deck text format. The API changes nothing when a line has an error.")
+            .RequireScope(Scopes.DecksWrite);
 
         owner.MapDelete("/{deckId:guid}/lines/{lineId:guid}", DeleteLineAsync)
             .WithName("DeleteDeckLine")
-            .WithSummary("Removes a line from a deck.");
+            .WithSummary("Removes a line from a deck.")
+            .RequireScope(Scopes.DecksWrite);
     }
 
     private static async Task<Results<Ok<Page<DeckSummaryResponse>>, ProblemHttpResult>> ListAsync(

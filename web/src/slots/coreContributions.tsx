@@ -1,5 +1,6 @@
 import { AccountMenu, MainNavigation } from '../components/Navigation'
 import { ApiKeysPanel, LoginsPanel, PasswordPanel, ProfilePanel } from '../account/AccountPanels'
+import { DelegationsPanel } from '../account/DelegationsPanel'
 import { AccountDeletionPanel, DataExportPanel } from '../account/PersonalDataPanels'
 import { CommanderPanel, CurvePanel, DistributionPanel, DrawsPanel, ManaPanel } from '../components/analysis/AnalysisPanels'
 import { CombosPanel } from '../components/analysis/CombosPanel'
@@ -17,6 +18,7 @@ export function registerCoreContributions(registry: SlotRegistry): void {
   registry.register('account.page', { id: 'core.password', order: 20, render: ({ account }) => <PasswordPanel key={account.id} account={account} /> })
   registry.register('account.page', { id: 'core.logins', order: 30, render: () => <LoginsPanel /> })
   registry.register('account.page', { id: 'core.apiKeys', order: 40, render: () => <ApiKeysPanel /> })
+  registry.register('account.page', { id: 'core.delegations', order: 45, render: () => <DelegationsPanel /> })
   registry.register('account.page', { id: 'core.dataExport', order: 50, render: () => <DataExportPanel /> })
   registry.register('account.page', { id: 'core.deletion', order: 60, render: () => <AccountDeletionPanel /> })
 

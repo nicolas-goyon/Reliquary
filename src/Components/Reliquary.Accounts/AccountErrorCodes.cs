@@ -34,4 +34,13 @@ public static class AccountErrorCodes
 
     /// <summary>The request has an API key or an access token, but it is not valid.</summary>
     public const string InvalidCredentialsSent = "invalid_authentication";
+
+    /// <summary>The delegation token does not have the scope of the endpoint, or the endpoint does not accept delegation tokens.</summary>
+    public const string ScopeMissing = "scope_missing";
+
+    /// <summary>The account has the maximum number of active delegations.</summary>
+    public const string DelegationLimit = "delegation_limit";
+
+    /// <summary>A service account with the same name exists.</summary>
+    public const string ServiceAccountNameTaken = "service_account_name_taken";
 }

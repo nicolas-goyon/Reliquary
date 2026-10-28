@@ -58,5 +58,31 @@
     "confirm": "Supprimer votre compte et toutes vos données dans 7 jours ?",
     "scheduled": "Reliquary supprimera votre compte et toutes vos données le {{date}}.",
     "cancel": "Annuler la suppression"
+  },
+  "delegations": {
+    "title": "Délégations",
+    "description": "Une délégation permet à un module de cette instance d’agir à votre place, avec les permissions que vous choisissez, jusqu’à une date. Révoquez une délégation quand vous ne voulez plus que le module agisse pour vous.",
+    "none": "Vous n’avez aucune délégation.",
+    "noServiceAccount": "Aucun module de cette instance ne peut recevoir de délégation.",
+    "module": "Module",
+    "scopes": "Permissions",
+    "expiresAt": "Valide jusqu’au",
+    "lastUsedAt": "Dernière utilisation",
+    "neverUsed": "Jamais",
+    "actions": "Actions",
+    "revoke": "Révoquer",
+    "revokeConfirm": "Révoquer la délégation à « {{name}} » ? Le module cesse immédiatement d’agir pour vous.",
+    "newTitle": "Donner une délégation",
+    "duration": "Durée",
+    "days": "{{count}} jours",
+    "submit": "Donner la délégation",
+    "created": "Le module « {{name}} » peut maintenant agir pour vous jusqu’au {{date}}.",
+    "scope": {
+      "decks_read": "Lire vos decks, dossiers et tags",
+      "decks_write": "Créer, modifier et supprimer vos decks, dossiers et tags",
+      "collection_read": "Lire votre collection",
+      "collection_write": "Modifier votre collection",
+      "profile_read": "Lire votre compte : adresse e-mail, nom et langue"
+    }
   }
 }
