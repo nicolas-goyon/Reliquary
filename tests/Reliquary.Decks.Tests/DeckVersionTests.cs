@@ -170,3 +170,44 @@ public sealed class DeckVersionTests(DecksInstance instance)
         return (await response.Content.ReadFromJsonAsync<DeckResponse>(Cancel))!;
     }
 }
+
+[Collection(DecksGroup.Name)]
+public sealed class CompareListsTests(DecksInstance instance)
+{
+    private static CancellationToken Cancel => TestContext.Current.CancellationToken;
+
+    [Fact]
+    public async Task ComparisonOfTwoVersionsGivesTheQuantitiesAndTheEffect()
+    {
+        using var client = await instance.NewUserAsync();
+        var created = await client.PostAsJsonAsync("/api/v1/decks", new { name = "Compare", lines = new object[] { new { name = "Sol Ring", note = "Fast" }, new { name = "Forest", quantity = 10 }, new { name = "Counterspell", quantity = 2 } } }, Cancel);
+        var deck = (await created.Content.ReadFromJsonAsync<DeckResponse>(Cancel))!;
+        var first = await CommitAsync(client, deck.Id, "First");
+        await client.PutAsJsonAsync($"/api/v1/decks/{deck.Id}/text", new { text = "Main\n1 Sol Ring -- Turn one\n12 Forest\n1 Lightning Bolt\n" }, Cancel);
+        var second = await CommitAsync(client, deck.Id, "Second");
+        using var other = await instance.NewUserAsync();
+
+        var response = await client.PostAsJsonAsync("/api/v1/lists/compare", new { left = new { deckId = deck.Id, versionId = first.Id }, right = new { deckId = deck.Id, versionId = second.Id } }, Cancel);
+        var comparison = (await response.Content.ReadFromJsonAsync<CompareListsResponse>(Cancel))!;
+        var working = await client.PostAsJsonAsync("/api/v1/lists/compare", new { left = new { deckId = deck.Id, versionId = second.Id }, right = new { deckId = deck.Id } }, Cancel);
+        var refused = await other.PostAsJsonAsync("/api/v1/lists/compare", new { left = new { deckId = deck.Id }, right = new { deckId = deck.Id } }, Cancel);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var changes = comparison.Changes;
+        Assert.Equal(
+            [("Counterspell", 2, 0), ("Forest", 10, 12), ("Lightning Bolt", 0, 1)],
+            changes.Quantities.Select(change => (changes.Cards[change.OracleId].Name, change.Before, change.After)).Order());
+        Assert.Equal(("Fast", "Turn one"), (Assert.Single(changes.Notes).Before, changes.Notes[0].After));
+        Assert.Equal((13, 14), (comparison.Left.CardCount, comparison.Right.CardCount));
+        Assert.Equal((10, 12), (comparison.Left.LandCount, comparison.Right.LandCount));
+        Assert.Empty((await working.Content.ReadFromJsonAsync<CompareListsResponse>(Cancel))!.Changes.Quantities);
+        Assert.Equal(HttpStatusCode.NotFound, refused.StatusCode);
+    }
+
+    private static async Task<DeckVersionResponse> CommitAsync(HttpClient client, Guid deckId, string message)
+    {
+        var response = await client.PostAsJsonAsync($"/api/v1/decks/{deckId}/versions", new { message }, Cancel);
+        Assert.True(response.StatusCode == HttpStatusCode.Created, await response.Content.ReadAsStringAsync(Cancel));
+        return (await response.Content.ReadFromJsonAsync<DeckVersionResponse>(Cancel))!;
+    }
+}
