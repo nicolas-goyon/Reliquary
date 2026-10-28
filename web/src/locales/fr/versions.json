@@ -126,5 +126,51 @@
     "cards": "Changements de cartes",
     "effect": "Effet sur le deck",
     "noCards": "Les deux listes n’ont aucune carte."
+  },
+  "assembled": {
+    "mark": "Marquer comme assemblée",
+    "markLabel": "Marquer la version {{number}} comme version assemblée",
+    "markTitle": "Marquer la version {{number}} comme version assemblée ?",
+    "markHelp": "La version assemblée correspond aux cartes physiques. L’emplacement du deck dans la collection reçoit les cartes de la version {{number}}.",
+    "done": "La version {{number}} est maintenant la version assemblée.",
+    "release": "Désassembler le deck",
+    "releaseTitle": "Désassembler le deck",
+    "releaseHelp": "Le deck n’est plus un deck assemblé. Choisissez l’emplacement qui reçoit ses cartes.",
+    "target": "Destination des cartes",
+    "noTarget": "Retirer les cartes de la collection",
+    "released": "Le deck n’est plus un deck assemblé.",
+    "transitionPlan": "Plan de transition"
+  },
+  "transition": {
+    "titleShort": "Plan de transition",
+    "title": "Plan de transition : {{name}}",
+    "pageTitle": "Plan de transition : {{name}}",
+    "help": "Le plan donne les étapes physiques de la version assemblée vers cette liste. Cochez chaque étape quand vous la terminez.",
+    "loading": "L’application calcule le plan.",
+    "backToDeck": "Retour au deck",
+    "notAssembled": "Le deck principal n’est pas un deck assemblé. Marquez d’abord une version du deck principal comme version assemblée.",
+    "nothing": "Le deck assemblé a déjà les cartes de cette liste.",
+    "progress": "Étapes terminées : {{done}} sur {{count}}",
+    "unlockFirst": "Des cartes sont dans des emplacements verrouillés. Déverrouillez ces emplacements avant de déplacer les cartes :",
+    "remove": "Cartes à retirer du deck",
+    "take": "Cartes à prendre dans la collection",
+    "buy": "Cartes à acheter",
+    "none": "Aucune carte.",
+    "removeStep_one": "Retirer {{count}} {{name}}",
+    "removeStep_other": "Retirer {{count}} {{name}}",
+    "takeStep_one": "Prendre {{count}} {{name}} dans {{location}}",
+    "takeStep_other": "Prendre {{count}} {{name}} dans {{location}}",
+    "buyStep_one": "Acheter {{count}} {{name}}",
+    "buyStep_other": "Acheter {{count}} {{name}}",
+    "locked": "Verrouillé",
+    "closest_one": "Exemplaire le plus proche : {{count}} exemplaire en {{language}} dans {{location}} ({{reasons}})",
+    "closest_other": "Exemplaires les plus proches : {{count}} exemplaires en {{language}} dans {{location}} ({{reasons}})",
+    "reasons": {
+      "printing": "autre impression",
+      "language": "autre langue",
+      "finish": "autre finition",
+      "condition": "état inférieur",
+      "unavailable": "non disponible"
+    }
   }
 }

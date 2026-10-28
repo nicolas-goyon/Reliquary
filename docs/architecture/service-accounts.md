@@ -95,7 +95,7 @@ Else the API returns the status 403 with the code `scope_missing`.
 | `decks:write` | `POST`, `PATCH` and `DELETE` on `/deck-folders`, `PATCH` and `DELETE` on `/tags` |
 | `decks:write` | The `POST` endpoints of the versions and the variants, `POST /decks/{id}/merge`, and `PUT` and `DELETE` on `/decks/{id}/assembled` |
 | `collection:read` | The `GET` endpoints of `/collection`: locations, entries, settings, the global view, storage rules, movements and inventories |
-| `collection:read` | `GET /decks/{id}/purchase-list` |
+| `collection:read` | `GET /decks/{id}/purchase-list`, `GET /decks/{id}/transition-plan` |
 | `collection:write` | The `POST`, `PUT`, `PATCH` and `DELETE` endpoints of `/collection` |
 | `profile:read` | `GET /me` |
 

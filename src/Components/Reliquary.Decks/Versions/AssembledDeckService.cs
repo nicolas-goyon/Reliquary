@@ -122,6 +122,13 @@ public static class AssembledDeckErrorCodes
     /// <summary>The deck is an assembled deck, so the operation must release it first.</summary>
     public const string DeckAssembled = "deck_assembled";
 
+    /// <summary>The operation needs an assembled deck, and the deck has no assembled version.</summary>
+    public const string DeckNotAssembled = "deck_not_assembled";
+
+    /// <summary>Creates the error of a transition plan for a deck that is not an assembled deck.</summary>
+    internal static DeckException NotAssembled() =>
+        new(StatusCodes.Status409Conflict, DeckNotAssembled, "The deck is not an assembled deck. Mark a version of the main deck as the assembled version first.");
+
     /// <summary>Creates the error of the deletion of an assembled deck.</summary>
     internal static DeckException DeletionRefused() =>
         new(StatusCodes.Status409Conflict, DeckAssembled, "The deck is an assembled deck. Release it first: tell where its cards go, then delete the deck.");

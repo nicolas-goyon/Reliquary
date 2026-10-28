@@ -320,3 +320,28 @@
 .compare-bar-after {
   background-color: var(--color-chart-bar);
 }
+
+.transition-steps,
+.transition-closest {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.transition-steps > li {
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.transition-steps label {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.transition-closest {
+  margin-inline-start: 1.75rem;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}

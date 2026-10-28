@@ -101,7 +101,9 @@
     "location_not_empty": "The location or one of its sections has cards. Move or remove the cards, then try again.",
     "deck_location": "This location is an assembled deck. Change the deck to change the location.",
     "not_enough_cards": "The origin does not have enough copies of the card. Give a lower quantity.",
-    "inventory_applied": "Reliquary applied this inventory before. Start a new inventory."
+    "inventory_applied": "Reliquary applied this inventory before. Start a new inventory.",
+    "deck_assembled": "The deck is an assembled deck. Release it first, then try again.",
+    "deck_not_assembled": "The deck is not an assembled deck. Mark a version as the assembled version first."
   },
   "fieldErrors": {
     "required": "This field is necessary.",

@@ -126,5 +126,51 @@
     "cards": "Card changes",
     "effect": "Effect on the deck",
     "noCards": "The two lists have no cards."
+  },
+  "assembled": {
+    "mark": "Mark as assembled",
+    "markLabel": "Mark version {{number}} as the assembled version",
+    "markTitle": "Mark version {{number}} as the assembled version?",
+    "markHelp": "The assembled version agrees with the physical cards. The location of the deck in the collection gets the cards of version {{number}}.",
+    "done": "Version {{number}} is now the assembled version.",
+    "release": "Release the assembled deck",
+    "releaseTitle": "Release the assembled deck",
+    "releaseHelp": "The deck stops being an assembled deck. Select the location that gets its cards.",
+    "target": "Destination of the cards",
+    "noTarget": "Remove the cards from the collection",
+    "released": "The deck is not an assembled deck now.",
+    "transitionPlan": "Transition plan"
+  },
+  "transition": {
+    "titleShort": "Transition plan",
+    "title": "Transition plan: {{name}}",
+    "pageTitle": "Transition plan: {{name}}",
+    "help": "The plan gives the physical steps from the assembled version to this list. Check each step when you complete it.",
+    "loading": "The application calculates the plan.",
+    "backToDeck": "Back to the deck",
+    "notAssembled": "The main deck is not an assembled deck. Mark a version of the main deck as the assembled version first.",
+    "nothing": "The assembled deck already has the cards of this list.",
+    "progress": "Completed steps: {{done}} of {{count}}",
+    "unlockFirst": "Some cards are in locked locations. Unlock these locations before you move the cards:",
+    "remove": "Cards to remove from the deck",
+    "take": "Cards to take from the collection",
+    "buy": "Cards to buy",
+    "none": "No card.",
+    "removeStep_one": "Remove {{count}} {{name}}",
+    "removeStep_other": "Remove {{count}} {{name}}",
+    "takeStep_one": "Take {{count}} {{name}} from {{location}}",
+    "takeStep_other": "Take {{count}} {{name}} from {{location}}",
+    "buyStep_one": "Buy {{count}} {{name}}",
+    "buyStep_other": "Buy {{count}} {{name}}",
+    "locked": "Locked",
+    "closest_one": "Closest copy: {{count}} copy in {{language}} in {{location}} ({{reasons}})",
+    "closest_other": "Closest copies: {{count}} copies in {{language}} in {{location}} ({{reasons}})",
+    "reasons": {
+      "printing": "other printing",
+      "language": "other language",
+      "finish": "other finish",
+      "condition": "worse condition",
+      "unavailable": "not available"
+    }
   }
 }

@@ -226,3 +226,74 @@ export function sortByZoneAndName<T extends { oracleId: string; zone: string }>(
       (cards[left.oracleId]?.name ?? '').localeCompare(cards[right.oracleId]?.name ?? ''),
   )
 }
+
+/** The error code of a transition plan for a deck that has no assembled version. */
+export const notAssembledCode = 'deck_not_assembled'
+
+/** Copies of a card in one location entry of the collection. */
+export interface TransitionCopy {
+  locationId: string
+  locationName: string
+  sectionName: string | null
+  locationKind: string
+  locked: boolean
+  printingId: string | null
+  language: string
+  finish: string | null
+  condition: string | null
+  quantity: number
+  /** For a closest copy: printing, language, finish, condition or unavailable. */
+  reasons: string[]
+}
+
+/** A card to add to the assembled deck. */
+export interface TransitionAddition {
+  oracleId: string
+  quantity: number
+  take: TransitionCopy[]
+  toBuy: number
+  closest: TransitionCopy[]
+}
+
+/** The transition plan from the assembled version to the working list of a deck or a variant. */
+export interface TransitionPlan {
+  deckId: string
+  assembledDeckId: string
+  assembledVersionId: string
+  remove: { oracleId: string; quantity: number }[]
+  add: TransitionAddition[]
+  unlockFirst: { locationId: string; locationName: string; sectionName: string | null }[]
+  totalToBuy: number
+  cards: Record<string, DeckCard>
+  printings: Record<string, DeckPrinting>
+}
+
+/** One step of a transition plan, with a key that stays the same while the plan does not change. */
+export type TransitionStep =
+  | { key: string; kind: 'remove'; oracleId: string; quantity: number }
+  | { key: string; kind: 'take'; oracleId: string; quantity: number; copy: TransitionCopy }
+  | { key: string; kind: 'buy'; oracleId: string; quantity: number; closest: TransitionCopy[] }
+
+/** Gives the steps of a transition plan: the cards to remove, then the cards to take by location, then the cards to buy. */
+export function transitionSteps(plan: TransitionPlan): TransitionStep[] {
+  const name = (oracleId: string) => plan.cards[oracleId]?.name ?? oracleId
+  const byName = <T extends { oracleId: string }>(left: T, right: T) => name(left.oracleId).localeCompare(name(right.oracleId))
+  const removals = plan.remove.map((line): TransitionStep => ({ key: `remove:${line.oracleId}`, kind: 'remove', oracleId: line.oracleId, quantity: line.quantity })).sort(byName)
+  const takes = plan.add
+    .flatMap((line) =>
+      line.take.map(
+        (copy, index): TransitionStep => ({ key: `take:${line.oracleId}:${copy.locationId}:${index}`, kind: 'take', oracleId: line.oracleId, quantity: copy.quantity, copy }),
+      ),
+    )
+    .sort((left, right) => {
+      const leftCopy = left.kind === 'take' ? left.copy : null
+      const rightCopy = right.kind === 'take' ? right.copy : null
+      const location = (leftCopy?.locationName ?? '').localeCompare(rightCopy?.locationName ?? '') || (leftCopy?.sectionName ?? '').localeCompare(rightCopy?.sectionName ?? '')
+      return location || byName(left, right)
+    })
+  const purchases = plan.add
+    .filter((line) => line.toBuy > 0)
+    .map((line): TransitionStep => ({ key: `buy:${line.oracleId}`, kind: 'buy', oracleId: line.oracleId, quantity: line.toBuy, closest: line.closest }))
+    .sort(byName)
+  return [...removals, ...takes, ...purchases]
+}
