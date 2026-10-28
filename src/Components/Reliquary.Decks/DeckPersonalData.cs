@@ -4,6 +4,7 @@ using Reliquary.BuildingBlocks.Data;
 using Reliquary.Decks.Data;
 using Reliquary.Decks.Exchange;
 using Reliquary.Decks.Text;
+using Reliquary.Decks.Versions;
 
 namespace Reliquary.Decks;
 
@@ -38,9 +39,24 @@ internal sealed class DeckPersonalData(DeckStore store, DeckService decks, DeckT
 
             await archive.WriteTextAsync($"text/{fileName}", DeckText.Write(lines), cancellationToken);
             var deck = view.Deck;
+            var versions = new List<object>();
+            await using (var versionConnection = await store.OpenAsync(ownerId, ContentAccess.Read, cancellationToken))
+            {
+                foreach (var version in (await VersionStore.ListAsync(versionConnection, deckId, cancellationToken)).Reverse())
+                {
+                    var versionLines = await VersionStore.ListLinesAsync(versionConnection, version.Id, cancellationToken);
+                    versions.Add(new { version.Id, version.Number, version.Kind, version.Message, version.ParentIds, version.CreatedAt, Lines = versionLines });
+                }
+            }
+
             exported.Add(new
             {
                 deck.Id,
+                deck.VariantOf,
+                deck.BaseVersionId,
+                deck.HeadVersionId,
+                deck.AssembledVersionId,
+                Versions = versions,
                 deck.Name,
                 deck.Format,
                 deck.Visibility,

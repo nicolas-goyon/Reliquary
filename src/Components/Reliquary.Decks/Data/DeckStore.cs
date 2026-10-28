@@ -40,6 +40,18 @@ internal sealed class DeckRow
 
     /// <summary>Gets or sets the color identity, with the letters W, U, B, R and G in this order.</summary>
     public string ColorIdentity { get; set; } = string.Empty;
+
+    /// <summary>Gets or sets the main deck of a variant, or <see langword="null"/> for a main deck.</summary>
+    public Guid? VariantOf { get; set; }
+
+    /// <summary>Gets or sets the version of the main deck where a variant starts.</summary>
+    public Guid? BaseVersionId { get; set; }
+
+    /// <summary>Gets or sets the most recent version of the deck.</summary>
+    public Guid? HeadVersionId { get; set; }
+
+    /// <summary>Gets or sets the assembled version, or <see langword="null"/> when the deck is not assembled.</summary>
+    public Guid? AssembledVersionId { get; set; }
 }
 
 /// <summary>
@@ -173,7 +185,8 @@ internal sealed class DeckStore(IDatabase database)
 {
     private const string DeckColumns = """
         id, owner_id as OwnerId, name, format, visibility, folder_id as FolderId, description, source_deck_id as SourceDeckId,
-        pinned, archived_at as ArchivedAt, version, created_at as CreatedAt, updated_at as UpdatedAt, tags, color_identity as ColorIdentity
+        pinned, archived_at as ArchivedAt, version, created_at as CreatedAt, updated_at as UpdatedAt, tags, color_identity as ColorIdentity,
+        variant_of as VariantOf, base_version_id as BaseVersionId, head_version_id as HeadVersionId, assembled_version_id as AssembledVersionId
         """;
 
     private const string LineColumns = """
@@ -254,6 +267,7 @@ internal sealed class DeckStore(IDatabase database)
                 coalesce((select array_agg(l.oracle_id order by l.created_at) from content.deck_lines l where l.deck_id = d.id and l.zone = 'commander'), array[]::uuid[]) as CommanderIds
             from content.decks d
             where d.owner_id = @ownerId
+                and d.variant_of is null
                 and (@folderId::uuid is null or d.folder_id = @folderId)
                 and (@noFolder = false or d.folder_id is null)
                 and (@format::text is null or d.format = @format)
@@ -276,7 +290,7 @@ internal sealed class DeckStore(IDatabase database)
             """
             select min(t) as name, count(*)::int as deck_count
             from content.decks d, unnest(d.tags) t
-            where d.owner_id = @ownerId
+            where d.owner_id = @ownerId and d.variant_of is null
             group by lower(t)
             order by lower(min(t))
             """,
@@ -287,7 +301,7 @@ internal sealed class DeckStore(IDatabase database)
         (await connection.QueryAsync<FolderRow>(new CommandDefinition(
             """
             select f.id, f.parent_id as ParentId, f.name, f.created_at as CreatedAt, f.updated_at as UpdatedAt,
-                (select count(*) from content.decks d where d.folder_id = f.id)::int as DeckCount
+                (select count(*) from content.decks d where d.folder_id = f.id and d.variant_of is null)::int as DeckCount
             from content.deck_folders f
             where f.owner_id = @ownerId
             order by lower(f.name), f.id
@@ -334,8 +348,10 @@ internal sealed class DeckStore(IDatabase database)
     public static Task InsertDeckAsync(NpgsqlTransaction transaction, DeckRow deck, CancellationToken cancellationToken) =>
         transaction.Connection!.ExecuteAsync(new CommandDefinition(
             """
-            insert into content.decks (id, owner_id, name, format, visibility, folder_id, description, source_deck_id, pinned, archived_at, version, created_at, updated_at, tags, color_identity)
-            values (@Id, @OwnerId, @Name, @Format, @Visibility, @FolderId, @Description, @SourceDeckId, @Pinned, @ArchivedAt, @Version, @CreatedAt, @UpdatedAt, @Tags, @ColorIdentity)
+            insert into content.decks (id, owner_id, name, format, visibility, folder_id, description, source_deck_id, pinned, archived_at, version, created_at, updated_at, tags, color_identity,
+                variant_of, base_version_id, head_version_id, assembled_version_id)
+            values (@Id, @OwnerId, @Name, @Format, @Visibility, @FolderId, @Description, @SourceDeckId, @Pinned, @ArchivedAt, @Version, @CreatedAt, @UpdatedAt, @Tags, @ColorIdentity,
+                @VariantOf, @BaseVersionId, @HeadVersionId, @AssembledVersionId)
             """,
             deck,
             transaction,
@@ -350,12 +366,35 @@ internal sealed class DeckStore(IDatabase database)
             update content.decks
             set name = @Name, format = @Format, visibility = @Visibility, folder_id = @FolderId, description = @Description,
                 pinned = @Pinned, archived_at = @ArchivedAt, version = @Version, updated_at = @UpdatedAt,
-                tags = @Tags, color_identity = @ColorIdentity
+                tags = @Tags, color_identity = @ColorIdentity, head_version_id = @HeadVersionId, assembled_version_id = @AssembledVersionId
             where id = @Id and owner_id = @OwnerId
             """,
             deck,
             transaction,
             cancellationToken: cancellationToken));
+
+    /// <summary>
+    /// Gives the format and the visibility of a main deck to its variants.
+    /// </summary>
+    public static Task UpdateVariantsAsync(NpgsqlTransaction transaction, Guid ownerId, Guid deckId, string format, string visibility, CancellationToken cancellationToken) =>
+        transaction.Connection!.ExecuteAsync(new CommandDefinition(
+            "update content.decks set format = @format, visibility = @visibility where owner_id = @ownerId and variant_of = @deckId",
+            new { ownerId, deckId, format, visibility },
+            transaction,
+            cancellationToken: cancellationToken));
+
+    public static async Task<IReadOnlyList<Guid>> ListVariantIdsAsync(NpgsqlConnection connection, Guid ownerId, Guid deckId, CancellationToken cancellationToken, NpgsqlTransaction? transaction = null) =>
+        [.. await connection.QueryAsync<Guid>(new CommandDefinition(
+            "select id from content.decks where owner_id = @ownerId and variant_of = @deckId order by created_at, id",
+            new { ownerId, deckId },
+            transaction,
+            cancellationToken: cancellationToken))];
+
+    public static async Task<IReadOnlyList<DeckRow>> ListVariantsAsync(NpgsqlConnection connection, Guid ownerId, Guid deckId, CancellationToken cancellationToken) =>
+        [.. await connection.QueryAsync<DeckRow>(new CommandDefinition(
+            $"select {DeckColumns} from content.decks where owner_id = @ownerId and variant_of = @deckId order by created_at, id",
+            new { ownerId, deckId },
+            cancellationToken: cancellationToken))];
 
     public static Task DeleteDeckAsync(NpgsqlTransaction transaction, Guid ownerId, Guid deckId, CancellationToken cancellationToken) =>
         transaction.Connection!.ExecuteAsync(new CommandDefinition(

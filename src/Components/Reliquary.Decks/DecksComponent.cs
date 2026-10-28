@@ -16,6 +16,7 @@ using Reliquary.Decks.Exchange;
 using Reliquary.Decks.Exploration;
 using Reliquary.Decks.Recommendations;
 using Reliquary.Decks.Text;
+using Reliquary.Decks.Versions;
 
 namespace Reliquary.Decks;
 
@@ -42,6 +43,7 @@ public sealed class DecksComponent : ICoreComponent
         services.AddSingleton<DeckService>();
         services.AddSingleton<TagService>();
         services.AddSingleton<FolderService>();
+        services.AddSingleton<DeckVersionService>();
         services.AddSingleton<PublicDeckIndexer>();
         services.AddSingleton<PublicDeckService>();
         services.AddSingleton<DeckTextService>();
@@ -79,6 +81,7 @@ public sealed class DecksComponent : ICoreComponent
         DeckEndpoints.Map(api);
         TagEndpoints.Map(api);
         FolderEndpoints.Map(api);
+        VersionEndpoints.Map(api);
         PublicDeckEndpoints.Map(api);
         RecommendationEndpoints.Map(api);
         AutoTagEndpoints.Map(api);
