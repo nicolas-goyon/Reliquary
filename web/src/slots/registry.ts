@@ -20,8 +20,8 @@ export interface SlotContexts {
   navigation: { account: Account | null }
   /** The menu of the user in the header. */
   'app.menu': { account: Account | null }
-  /** The action bar of a deck. */
-  'deck.actions': { deckId: string }
+  /** The action bar of a deck. The context gives the deck as the user sees it. */
+  'deck.actions': { deckId: string; deck: Deck }
   /** The tabs of the deck analysis. Each contribution is one tab, and its title is the name of the tab. */
   'analysis.tabs': { deckId: string; deck: Deck; analysis: DeckAnalysis }
   /** The columns of the table mode: one column for each contribution. */

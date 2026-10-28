@@ -522,5 +522,38 @@
     "unfavorite": "Retirer de mes favoris",
     "share": "Copier le lien",
     "copied": "Lien copié."
+  },
+  "proxies": {
+    "open": "Imprimer des proxies",
+    "title": "Imprimer des proxies",
+    "description": "Le PDF contient 9 cartes par page. Chaque carte a la taille réelle d’une carte : 63 × 88 mm.",
+    "source": "Cartes à imprimer",
+    "sourceDeck": "Toutes les cartes du deck",
+    "addZone": "Ajouter la zone {{zone}}",
+    "sourceSelection": "Cartes sélectionnées",
+    "lines": "Lignes du deck",
+    "selectAll": "Tout sélectionner",
+    "selectNone": "Effacer la sélection",
+    "line": "{{quantity}} × {{name}}",
+    "paper": "Format du papier",
+    "papers": {
+      "a4": "A4",
+      "letter": "Lettre US"
+    },
+    "scaleHint": "Imprimez le PDF à l’échelle 100 %. N’utilisez pas l’option « Ajuster à la page ».",
+    "backFaces": "Ajouter le verso de chaque carte recto verso",
+    "noCards": "Sélectionnez au moins une carte.",
+    "cardCount_one": "{{count}} carte",
+    "cardCount_other": "{{count}} cartes",
+    "pageCount_one": "{{count}} page",
+    "pageCount_other": "{{count}} pages",
+    "progressLabel": "Images des cartes",
+    "progress": "Chargement des images des cartes : {{loaded}} sur {{total}}.",
+    "done": "Le PDF est prêt. Le navigateur télécharge le fichier.",
+    "failed_one": "{{count}} image de carte n’a pas pu être chargée. Le PDF affiche un cadre avec le nom de la carte à sa place. Générez le PDF à nouveau pour réessayer.",
+    "failed_other": "{{count}} images de cartes n’ont pas pu être chargées. Le PDF affiche un cadre avec le nom de la carte à leur place. Générez le PDF à nouveau pour réessayer.",
+    "error": "L’application ne peut pas générer le PDF. Vérifiez la connexion réseau, puis réessayez.",
+    "submit": "Générer le PDF",
+    "close": "Fermer"
   }
 }

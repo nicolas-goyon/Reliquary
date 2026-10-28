@@ -522,5 +522,38 @@
     "unfavorite": "Remove from my favorites",
     "share": "Copy the link",
     "copied": "The application copied the link."
+  },
+  "proxies": {
+    "open": "Print proxies",
+    "title": "Print proxies",
+    "description": "The PDF shows 9 cards on each page. Each card has the real card size: 63 × 88 mm.",
+    "source": "Cards to print",
+    "sourceDeck": "All the cards of the deck",
+    "addZone": "Add the zone {{zone}}",
+    "sourceSelection": "Selected cards",
+    "lines": "Deck lines",
+    "selectAll": "Select all",
+    "selectNone": "Clear the selection",
+    "line": "{{quantity}} × {{name}}",
+    "paper": "Paper size",
+    "papers": {
+      "a4": "A4",
+      "letter": "Letter"
+    },
+    "scaleHint": "Print the PDF at 100% scale. Do not use the option that fits the page.",
+    "backFaces": "Add the back face of each double-faced card",
+    "noCards": "Select one card or more.",
+    "cardCount_one": "{{count}} card",
+    "cardCount_other": "{{count}} cards",
+    "pageCount_one": "{{count}} page",
+    "pageCount_other": "{{count}} pages",
+    "progressLabel": "Card images",
+    "progress": "The application loads the card images: {{loaded}} of {{total}}.",
+    "done": "The PDF is ready. The browser downloads the file.",
+    "failed_one": "{{count}} card image did not load. The PDF shows a frame with the card name in its place. Make the PDF again to try again.",
+    "failed_other": "{{count}} card images did not load. The PDF shows a frame with the card name in their place. Make the PDF again to try again.",
+    "error": "The application cannot make the PDF. Examine the network connection, then try again.",
+    "submit": "Make the PDF",
+    "close": "Close"
   }
 }

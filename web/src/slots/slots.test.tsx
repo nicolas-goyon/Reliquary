@@ -1,10 +1,11 @@
 import { act, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import i18n from '../i18n'
+import { testDeck } from '../test/fixtures'
 import { SlotRegistry, SlotRegistryContext, slotNames } from './registry'
 import { Slot } from './Slot'
 
-const context = { deckId: 'deck-1' }
+const context = { deckId: 'deck-1', deck: testDeck({ id: 'deck-1' }) }
 
 function renderSlot(registry: SlotRegistry) {
   return render(

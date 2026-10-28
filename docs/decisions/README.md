@@ -45,6 +45,7 @@ Each record gives the context, the decision and its consequences.
 | [0035](0035-moderation-of-public-content.md) | Moderation of the public content in the Decks component, with the data in the users database | Accepted |
 | [0036](0036-internal-api.md) | Internal API for the modules under `/internal/v1`, with its own OpenAPI document | Accepted |
 | [0037](0037-service-accounts-and-delegation-tokens.md) | Service accounts, delegations from the account page and delegation tokens with scopes | Accepted |
+| [0038](0038-proxy-pdf-in-the-browser.md) | The web app makes the PDF of the proxies, with jsPDF | Accepted |
 
 ## Open decisions
 
