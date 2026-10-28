@@ -146,6 +146,14 @@ export interface Deck {
   tags: Record<string, { name: string; global: boolean }>
   /** Whether an administrator hid the deck. Only the owner gets a hidden deck. */
   hidden?: boolean
+  /** The main deck when the deck is a variant. The API always sends these four fields. They are optional for older test data. */
+  variantOf?: string | null
+  /** The version of the main deck where a variant starts. */
+  baseVersionId?: string | null
+  /** The most recent version of the deck. */
+  headVersionId?: string | null
+  /** The assembled version, or null when the deck is not an assembled deck. */
+  assembledVersionId?: string | null
 }
 
 export interface LegalityProblem {

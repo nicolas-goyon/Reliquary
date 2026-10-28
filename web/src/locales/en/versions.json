@@ -1,0 +1,130 @@
+{
+  "actions": {
+    "cancel": "Cancel"
+  },
+  "kinds": {
+    "commit": "Commit",
+    "merge": "Merge",
+    "revert": "Revert",
+    "restore": "Restore"
+  },
+  "history": {
+    "title": "History",
+    "commit": "Commit",
+    "loading": "The application loads the history.",
+    "created": "The application created version {{number}}.",
+    "noVersions": "This deck has no version. Commit the working list to create the first version.",
+    "workingListChanged": "The working list changed after the last version.",
+    "workingListSame": "The working list did not change after the last version.",
+    "compareWorkingList": "Compare with the last version",
+    "listLabel": "Versions, the most recent first",
+    "versionName": "Version {{number}}",
+    "assembled": "Assembled version",
+    "cardCount_one": "{{count}} card",
+    "cardCount_other": "{{count}} cards",
+    "view": "Cards",
+    "viewLabel": "Cards of version {{number}}",
+    "changes": "Changes",
+    "changesLabel": "Changes of version {{number}}",
+    "compareParent": "Compare with the parent",
+    "compareParentLabel": "Compare with the parent of version {{number}}",
+    "compareWorking": "Compare with the working list",
+    "compareWorkingLabel": "Compare version {{number}} with the working list",
+    "restore": "Restore",
+    "restoreLabel": "Restore version {{number}}",
+    "revert": "Revert the merge",
+    "revertLabel": "Revert the merge of version {{number}}"
+  },
+  "view": {
+    "linesTitle": "Cards of version {{number}}",
+    "changesTitle": "Changes of version {{number}}",
+    "close": "Close",
+    "loading": "The application loads the version.",
+    "parent": "Parent version",
+    "thisVersion": "This version",
+    "empty": "This version has no card."
+  },
+  "changes": {
+    "noQuantityChanges": "The two lists have the same cards and the same quantities.",
+    "added": "Added cards: {{count}}",
+    "removed": "Removed cards: {{count}}",
+    "notes": "Changes of the notes: {{count}}",
+    "printings": "Changes of printing: {{count}}",
+    "printingsCaption": "Changes of printing",
+    "noPrintingChanges": "The two lists use the same printings.",
+    "card": "Card",
+    "zone": "Zone",
+    "difference": "Difference",
+    "noNote": "No note",
+    "printing": "{{set}} #{{number}}",
+    "defaultPrinting": "Default printing",
+    "copies": "{{count}} × {{printing}}"
+  },
+  "commit": {
+    "title": "Commit the working list",
+    "help": "A version is a frozen copy of the working list. Write a message that tells what changed.",
+    "message": "Message",
+    "messageRequired": "Write a message for the version.",
+    "noChanges": "The working list did not change after the last version. Change the deck, then commit.",
+    "submit": "Commit"
+  },
+  "restore": {
+    "title": "Restore version {{number}}?",
+    "help": "The working list gets the cards of version {{number}}. Then the application creates a new version. The history keeps all the versions.",
+    "submit": "Restore"
+  },
+  "revert": {
+    "title": "Revert the merge of version {{number}}?",
+    "help": "The working list gets the cards that it had before the merge of version {{number}}. Then the application creates a new version. The merge stays in the history.",
+    "submit": "Revert the merge"
+  },
+  "variants": {
+    "title": "Variants",
+    "listLabel": "Main deck and variants",
+    "mainDeck": "Main deck",
+    "mainDeckName": "{{name}} (main deck)",
+    "variantOf": "This deck is a variant. Main deck:",
+    "none": "This deck has no variant.",
+    "compareMain": "Compare with the main deck",
+    "create": "Create a variant",
+    "merge": "Merge into the main deck"
+  },
+  "createVariant": {
+    "title": "Create a variant",
+    "name": "Name",
+    "nameHint": "For example: Budget, cEDH or Anti-aggro.",
+    "base": "Base version",
+    "latest": "Most recent version (version {{number}})",
+    "latestNone": "Working list. The application commits it as the first version.",
+    "version": "Version {{number}}: {{message}}",
+    "submit": "Create the variant"
+  },
+  "merge": {
+    "title": "Merge into the main deck",
+    "help": "The working list of the main deck {{main}} gets the cards of the variant {{variant}}. The application creates a merge version in the main deck. You can revert the merge later.",
+    "message": "Message",
+    "messageHint": "You can keep this field empty. The application then writes a message.",
+    "submit": "Merge",
+    "done": "The application merged the variant into the main deck as version {{number}}.",
+    "openMain": "Open the main deck"
+  },
+  "compare": {
+    "title": "Comparison of two lists",
+    "help": "Select two lists. A list is the working list of a deck or of a variant, or one of its versions. The comparison shows the changes from the first list to the second list.",
+    "first": "First list",
+    "second": "Second list",
+    "deck": "Deck",
+    "chooseDeck": "Select a deck",
+    "variant": "Variant",
+    "version": "Version",
+    "workingList": "Working list",
+    "submit": "Compare",
+    "swap": "Swap the lists",
+    "loading": "The application compares the lists.",
+    "summary": "Summary",
+    "measure": "Value",
+    "cards": "Card changes",
+    "effect": "Effect on the deck",
+    "noCards": "The two lists have no cards."
+  }
+}

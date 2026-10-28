@@ -1,0 +1,130 @@
+{
+  "actions": {
+    "cancel": "Annuler"
+  },
+  "kinds": {
+    "commit": "Validation",
+    "merge": "Fusion",
+    "revert": "Annulation de fusion",
+    "restore": "Restauration"
+  },
+  "history": {
+    "title": "Historique",
+    "commit": "Valider",
+    "loading": "L’application charge l’historique.",
+    "created": "L’application a créé la version {{number}}.",
+    "noVersions": "Ce deck n’a aucune version. Validez la liste de travail pour créer la première version.",
+    "workingListChanged": "La liste de travail a changé depuis la dernière version.",
+    "workingListSame": "La liste de travail n’a pas changé depuis la dernière version.",
+    "compareWorkingList": "Comparer avec la dernière version",
+    "listLabel": "Versions, de la plus récente à la plus ancienne",
+    "versionName": "Version {{number}}",
+    "assembled": "Version montée",
+    "cardCount_one": "{{count}} carte",
+    "cardCount_other": "{{count}} cartes",
+    "view": "Cartes",
+    "viewLabel": "Cartes de la version {{number}}",
+    "changes": "Modifications",
+    "changesLabel": "Modifications de la version {{number}}",
+    "compareParent": "Comparer avec la version parente",
+    "compareParentLabel": "Comparer avec la version parente de la version {{number}}",
+    "compareWorking": "Comparer avec la liste de travail",
+    "compareWorkingLabel": "Comparer la version {{number}} avec la liste de travail",
+    "restore": "Restaurer",
+    "restoreLabel": "Restaurer la version {{number}}",
+    "revert": "Annuler la fusion",
+    "revertLabel": "Annuler la fusion de la version {{number}}"
+  },
+  "view": {
+    "linesTitle": "Cartes de la version {{number}}",
+    "changesTitle": "Modifications de la version {{number}}",
+    "close": "Fermer",
+    "loading": "L’application charge la version.",
+    "parent": "Version parente",
+    "thisVersion": "Cette version",
+    "empty": "Cette version ne contient aucune carte."
+  },
+  "changes": {
+    "noQuantityChanges": "Les deux listes ont les mêmes cartes et les mêmes quantités.",
+    "added": "Cartes ajoutées : {{count}}",
+    "removed": "Cartes retirées : {{count}}",
+    "notes": "Notes modifiées : {{count}}",
+    "printings": "Changements d’impression : {{count}}",
+    "printingsCaption": "Changements d’impression",
+    "noPrintingChanges": "Les deux listes utilisent les mêmes impressions.",
+    "card": "Carte",
+    "zone": "Zone",
+    "difference": "Écart",
+    "noNote": "Aucune note",
+    "printing": "{{set}} n°{{number}}",
+    "defaultPrinting": "Impression par défaut",
+    "copies": "{{count}} × {{printing}}"
+  },
+  "commit": {
+    "title": "Valider la liste de travail",
+    "help": "Une version est une copie figée de la liste de travail. Écrivez un message qui décrit les changements.",
+    "message": "Message",
+    "messageRequired": "Écrivez un message pour la version.",
+    "noChanges": "La liste de travail n’a pas changé depuis la dernière version. Modifiez le deck, puis validez.",
+    "submit": "Valider"
+  },
+  "restore": {
+    "title": "Restaurer la version {{number}} ?",
+    "help": "La liste de travail reçoit les cartes de la version {{number}}. L’application crée ensuite une nouvelle version. L’historique garde toutes les versions.",
+    "submit": "Restaurer"
+  },
+  "revert": {
+    "title": "Annuler la fusion de la version {{number}} ?",
+    "help": "La liste de travail retrouve les cartes d’avant la fusion de la version {{number}}. L’application crée ensuite une nouvelle version. La fusion reste dans l’historique.",
+    "submit": "Annuler la fusion"
+  },
+  "variants": {
+    "title": "Variantes",
+    "listLabel": "Deck principal et variantes",
+    "mainDeck": "Deck principal",
+    "mainDeckName": "{{name}} (deck principal)",
+    "variantOf": "Ce deck est une variante. Deck principal :",
+    "none": "Ce deck n’a aucune variante.",
+    "compareMain": "Comparer avec le deck principal",
+    "create": "Créer une variante",
+    "merge": "Fusionner dans le deck principal"
+  },
+  "createVariant": {
+    "title": "Créer une variante",
+    "name": "Nom",
+    "nameHint": "Par exemple : Budget, cEDH ou Anti-aggro.",
+    "base": "Version de départ",
+    "latest": "Version la plus récente (version {{number}})",
+    "latestNone": "Liste de travail. L’application la valide comme première version.",
+    "version": "Version {{number}} : {{message}}",
+    "submit": "Créer la variante"
+  },
+  "merge": {
+    "title": "Fusionner dans le deck principal",
+    "help": "La liste de travail du deck principal « {{main}} » reçoit les cartes de la variante « {{variant}} ». L’application crée une version de fusion dans le deck principal. Vous pourrez annuler la fusion plus tard.",
+    "message": "Message",
+    "messageHint": "Vous pouvez laisser ce champ vide. L’application écrit alors un message.",
+    "submit": "Fusionner",
+    "done": "L’application a fusionné la variante dans le deck principal, en version {{number}}.",
+    "openMain": "Ouvrir le deck principal"
+  },
+  "compare": {
+    "title": "Comparaison de deux listes",
+    "help": "Choisissez deux listes. Une liste est la liste de travail d’un deck ou d’une variante, ou l’une de ses versions. La comparaison montre les changements de la première liste à la seconde.",
+    "first": "Première liste",
+    "second": "Seconde liste",
+    "deck": "Deck",
+    "chooseDeck": "Choisir un deck",
+    "variant": "Variante",
+    "version": "Version",
+    "workingList": "Liste de travail",
+    "submit": "Comparer",
+    "swap": "Inverser les listes",
+    "loading": "L’application compare les listes.",
+    "summary": "Résumé",
+    "measure": "Valeur",
+    "cards": "Changements de cartes",
+    "effect": "Effet sur le deck",
+    "noCards": "Les deux listes n’ont aucune carte."
+  }
+}

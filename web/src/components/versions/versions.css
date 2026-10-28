@@ -1,0 +1,322 @@
+/* The deck versions, the variants and the comparison page. */
+.version-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background-color: rgb(0 0 0 / 45%);
+}
+
+.version-dialog {
+  width: min(100%, 32rem);
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+}
+
+.version-dialog-wide {
+  width: min(100%, 60rem);
+}
+
+.version-dialog textarea {
+  width: 100%;
+  font: inherit;
+}
+
+.version-history {
+  margin: 1.5rem 0;
+}
+
+.version-history-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.version-history-header h2,
+.version-history-header h3 {
+  margin: 0;
+}
+
+.version-state {
+  color: var(--color-text-muted);
+}
+
+.version-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.version-item {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.version-item-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  align-items: baseline;
+}
+
+.version-item-header .badge {
+  margin-left: 0;
+}
+
+.version-item-header time,
+.version-count {
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
+.version-kind-merge,
+.version-kind-revert {
+  border-color: var(--color-warning);
+  color: var(--color-warning);
+}
+
+.version-assembled {
+  border-color: var(--color-success);
+  color: var(--color-success);
+  font-weight: 600;
+}
+
+.version-message {
+  margin: 0.25rem 0 0.5rem;
+  overflow-wrap: anywhere;
+}
+
+.version-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  align-items: center;
+}
+
+.version-actions button[aria-pressed='true'] {
+  border-color: var(--color-primary);
+  font-weight: 600;
+}
+
+.version-view {
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.375rem;
+  background-color: var(--color-background);
+}
+
+.version-zones h4 {
+  margin: 1rem 0 0.25rem;
+}
+
+.version-lines {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.version-lines li {
+  padding: 0.15rem 0;
+}
+
+.version-line-quantity {
+  display: inline-block;
+  min-width: 1.5rem;
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+}
+
+.version-line-note {
+  margin-left: 0.5rem;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  font-style: italic;
+}
+
+/* The tables of the changes and of the comparison. */
+.list-changes {
+  display: grid;
+  gap: 1rem;
+}
+
+.version-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.version-table caption {
+  margin-bottom: 0.25rem;
+  font-weight: 600;
+  text-align: start;
+}
+
+.version-table th,
+.version-table td {
+  padding: 0.375rem 0.5rem;
+  border-bottom: 1px solid var(--color-border);
+  text-align: start;
+  vertical-align: top;
+}
+
+.version-table th[scope='row'] {
+  font-weight: normal;
+}
+
+.version-table .version-number {
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+  white-space: nowrap;
+}
+
+.version-up {
+  color: var(--color-success);
+  font-weight: 600;
+}
+
+.version-down {
+  color: var(--color-danger);
+  font-weight: 600;
+}
+
+.version-printings {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.version-details {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.375rem;
+}
+
+.version-details summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.version-details[open] summary {
+  margin-bottom: 0.5rem;
+}
+
+/* The variant bar of the deck page. */
+.variant-bar {
+  display: grid;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.alert-info {
+  border-color: var(--color-primary);
+}
+
+.variant-bar-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: center;
+}
+
+.variant-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.variant-list a {
+  display: inline-block;
+  padding: 0.2rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  text-decoration: none;
+}
+
+.variant-list a[aria-current='page'] {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary);
+  color: var(--color-on-primary);
+  font-weight: 600;
+}
+
+.variant-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  align-items: center;
+}
+
+/* The comparison page. */
+.compare-form {
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.compare-pickers {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 1rem;
+}
+
+.compare-picker {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.375rem;
+}
+
+.compare-picker legend {
+  padding: 0 0.25rem;
+  font-weight: 600;
+}
+
+.compare-result {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.compare-effects {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.compare-changed th {
+  font-weight: 600;
+}
+
+.compare-bar-track {
+  display: inline-block;
+  width: 4rem;
+  height: 0.6rem;
+  margin-right: 0.5rem;
+  overflow: hidden;
+  border-radius: 0.2rem;
+  background-color: var(--color-chart-track);
+  vertical-align: middle;
+}
+
+.compare-bar {
+  display: block;
+  width: var(--bar-size);
+  height: 100%;
+}
+
+.compare-bar-before {
+  background-color: var(--color-text-muted);
+}
+
+.compare-bar-after {
+  background-color: var(--color-chart-bar);
+}

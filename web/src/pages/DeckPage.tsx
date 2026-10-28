@@ -17,6 +17,8 @@ import { ErrorAlert, TextField } from '../components/Forms'
 import { LineErrorList } from '../components/LineErrors'
 import { ManaCost } from '../components/ManaCost'
 import { RecommendationsPanel } from '../components/recommendations/RecommendationsPanel'
+import { HistoryPanel } from '../components/versions/HistoryPanel'
+import { VariantBar } from '../components/versions/VariantBar'
 import { Link } from '../router/Link'
 import { navigate } from '../router/navigation'
 import { Slot } from '../slots/Slot'
@@ -97,8 +99,9 @@ function DeckEditor({ deck, onChange }: EditorProps) {
   return (
     <article className="page page-wide deck-page">
       <DeckHeader deck={deck} onSave={(fields) => void change('', 'PATCH', fields)} />
-      <DeckSocialBar deck={deck} />
+      {!deck.variantOf && <DeckSocialBar deck={deck} />}
       <HiddenNotice itemType="deck" hidden={deck.isOwner && deck.hidden} />
+      <VariantBar deck={deck} />
       <div className="deck-actions" role="toolbar" aria-label={t('editor.actions')}>
         {owner &&
           (['visual', 'text', 'table'] as const).map((value) => (
@@ -145,6 +148,7 @@ function DeckEditor({ deck, onChange }: EditorProps) {
         </>
       )}
       <AnalysisSection deck={deck} />
+      <HistoryPanel deck={deck} onChange={onChange} />
     </article>
   )
 }
@@ -192,7 +196,7 @@ function DeckHeader({ deck, onSave }: { deck: Deck; onSave(fields: { name?: stri
           </>
         )}
       </p>
-      {deck.isOwner && (
+      {deck.isOwner && !deck.variantOf && (
         <div className="deck-settings">
           <FormatSelect value={deck.format} onChange={(format) => onSave({ format })} />
           <VisibilitySelect value={deck.visibility} onChange={(visibility) => onSave({ visibility })} />
