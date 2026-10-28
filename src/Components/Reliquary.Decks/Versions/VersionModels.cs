@@ -30,7 +30,8 @@ public sealed record DeckHistoryResponse(IReadOnlyList<DeckVersionResponse> Vers
 /// <param name="Categories">The categories.</param>
 /// <param name="Tags">The names of the local tags.</param>
 /// <param name="GlobalTags">The names of the global tags.</param>
-public sealed record DeckVersionLineResponse(Guid OracleId, Guid? PrintingId, string? Finish, int Quantity, string Zone, string Note, IReadOnlyList<string> Categories, IReadOnlyList<string> Tags, IReadOnlyList<string> GlobalTags);
+/// <param name="PurchasePreferences">The purchase preferences of the line, or <see langword="null"/> when the line accepts each copy.</param>
+public sealed record DeckVersionLineResponse(Guid OracleId, Guid? PrintingId, string? Finish, int Quantity, string Zone, string Note, IReadOnlyList<string> Categories, IReadOnlyList<string> Tags, IReadOnlyList<string> GlobalTags, Purchases.PurchasePreferences? PurchasePreferences = null);
 
 /// <summary>A version with its lines and the data of its cards.</summary>
 /// <param name="Version">The version.</param>

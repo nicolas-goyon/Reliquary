@@ -102,7 +102,7 @@ internal static class VersionEndpoints
         var (cards, printings) = await DeckEndpoints.CardDataAsync(catalog, lines.Select(line => line.OracleId), lines.Select(line => line.PrintingId), cancellationToken);
         return TypedResults.Ok(new DeckVersionDetailResponse(
             ToResponse(version, deck),
-            [.. lines.Select(line => new DeckVersionLineResponse(line.OracleId, line.PrintingId, line.Finish, line.Quantity, line.Zone, line.Note, line.Categories, line.Tags, line.GlobalTags))],
+            [.. lines.Select(line => new DeckVersionLineResponse(line.OracleId, line.PrintingId, line.Finish, line.Quantity, line.Zone, line.Note, line.Categories, line.Tags, line.GlobalTags, Purchases.PurchasePreferences.ReadOrNull(line.PurchasePreferences)))],
             cards,
             printings));
     }

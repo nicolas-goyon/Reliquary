@@ -48,9 +48,11 @@ internal sealed class VersionLineRow
 
     public string[] GlobalTags { get; set; } = [];
 
+    public string? PurchasePreferences { get; set; }
+
     /// <summary>Gets the content that a comparison of two lists uses.</summary>
     public string Content =>
-        $"{Zone}|{OracleId}|{PrintingId}|{Finish}|{Quantity}|{Note}|{string.Join(',', Categories.Order(StringComparer.Ordinal))}|{string.Join(',', Tags.Order(StringComparer.OrdinalIgnoreCase))}|{string.Join(',', GlobalTags.Order(StringComparer.OrdinalIgnoreCase))}";
+        $"{Zone}|{OracleId}|{PrintingId}|{Finish}|{Quantity}|{Note}|{string.Join(',', Categories.Order(StringComparer.Ordinal))}|{string.Join(',', Tags.Order(StringComparer.OrdinalIgnoreCase))}|{string.Join(',', GlobalTags.Order(StringComparer.OrdinalIgnoreCase))}|{PurchasePreferences}";
 }
 
 /// <summary>
@@ -64,7 +66,8 @@ internal static class VersionStore
         """;
 
     private const string LineColumns = """
-        oracle_id as OracleId, printing_id as PrintingId, finish, quantity, zone, note, categories, tags, global_tags as GlobalTags
+        oracle_id as OracleId, printing_id as PrintingId, finish, quantity, zone, note, categories, tags, global_tags as GlobalTags,
+        purchase_preferences::text as PurchasePreferences
         """;
 
     public static async Task<VersionRow> InsertAsync(
@@ -87,10 +90,10 @@ internal static class VersionStore
             cancellationToken: cancellationToken));
         await connection.ExecuteAsync(new CommandDefinition(
             """
-            insert into content.deck_version_lines (version_id, owner_id, oracle_id, printing_id, finish, quantity, zone, note, categories, tags, global_tags)
-            values (@versionId, @ownerId, @OracleId, @PrintingId, @Finish, @Quantity, @Zone, @Note, @Categories, @Tags, @GlobalTags)
+            insert into content.deck_version_lines (version_id, owner_id, oracle_id, printing_id, finish, quantity, zone, note, categories, tags, global_tags, purchase_preferences)
+            values (@versionId, @ownerId, @OracleId, @PrintingId, @Finish, @Quantity, @Zone, @Note, @Categories, @Tags, @GlobalTags, @PurchasePreferences::jsonb)
             """,
-            lines.Select(line => new { versionId = id, ownerId, line.OracleId, line.PrintingId, line.Finish, line.Quantity, line.Zone, line.Note, line.Categories, line.Tags, line.GlobalTags }),
+            lines.Select(line => new { versionId = id, ownerId, line.OracleId, line.PrintingId, line.Finish, line.Quantity, line.Zone, line.Note, line.Categories, line.Tags, line.GlobalTags, line.PurchasePreferences }),
             transaction,
             cancellationToken: cancellationToken));
         row.CardCount = lines.Where(line => line.Zone is "commander" or "companion" or "main").Sum(line => line.Quantity);

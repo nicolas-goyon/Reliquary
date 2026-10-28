@@ -58,7 +58,8 @@ internal sealed record LineInput(
     string Note,
     IReadOnlyList<string> Tags,
     IReadOnlyList<string> GlobalTags,
-    IReadOnlyList<string> Categories)
+    IReadOnlyList<string> Categories,
+    string? PurchasePreferences = null)
 {
     public LineInput(Guid oracleId, Guid? printingId, string? finish, int quantity, string zone, string note)
         : this(oracleId, printingId, finish, quantity, zone, note, [], [], [])
@@ -79,7 +80,9 @@ internal sealed record LineChanges(
     string? Note,
     IReadOnlyList<string>? Tags = null,
     IReadOnlyList<string>? GlobalTags = null,
-    IReadOnlyList<string>? Categories = null);
+    IReadOnlyList<string>? Categories = null,
+    Purchases.PurchasePreferences? PurchasePreferences = null,
+    bool ClearPurchasePreferences = false);
 
 /// <summary>
 /// A group action on several lines of one deck.
@@ -206,7 +209,8 @@ internal sealed class DeckService(DeckStore store, ICardCatalog catalog, IDomain
                 line.Note,
                 [.. local.Select(tag => tag.Name).Distinct(StringComparer.OrdinalIgnoreCase)],
                 [.. global.Select(tag => tag.Name)],
-                line.Categories);
+                line.Categories,
+                line.PurchasePreferences);
         }).ToList();
         var deck = source.Deck;
         return await CreateAsync(
@@ -393,6 +397,7 @@ internal sealed class DeckService(DeckStore store, ICardCatalog catalog, IDomain
                     kept.Note = line.Note;
                     kept.TagIds = line.TagIds;
                     kept.Categories = line.Categories;
+                    kept.PurchasePreferences = line.PurchasePreferences;
                     current.Add(kept);
                 }
                 else
@@ -440,6 +445,15 @@ internal sealed class DeckService(DeckStore store, ICardCatalog catalog, IDomain
             line.PrintingId = changes.ClearPrinting ? null : changes.PrintingId ?? line.PrintingId;
             line.Finish = changes.ClearFinish ? null : changes.Finish ?? line.Finish;
             line.Note = changes.Note ?? line.Note;
+            if (changes.ClearPurchasePreferences)
+            {
+                line.PurchasePreferences = null;
+            }
+            else if (changes.PurchasePreferences is { } preferences)
+            {
+                line.PurchasePreferences = Purchases.PurchasePreferences.ToJson(preferences);
+            }
+
             if (changes.Tags is not null || changes.GlobalTags is not null)
             {
                 var kept = line.TagIds.Where(id => changes.Tags is null ? tags.IsLocal(id) : changes.GlobalTags is null && !tags.IsLocal(id)).ToList();
@@ -677,6 +691,7 @@ internal sealed class DeckService(DeckStore store, ICardCatalog catalog, IDomain
                 existing.Note = input.Note.Length > 0 ? input.Note : existing.Note;
                 existing.TagIds = [.. existing.TagIds.Union(tagIds)];
                 existing.Categories = [.. existing.Categories.Union(input.Categories)];
+                existing.PurchasePreferences = input.PurchasePreferences ?? existing.PurchasePreferences;
                 existing.UpdatedAt = now;
                 continue;
             }
@@ -693,6 +708,7 @@ internal sealed class DeckService(DeckStore store, ICardCatalog catalog, IDomain
                 Note = input.Note,
                 TagIds = tagIds,
                 Categories = [.. input.Categories.Distinct()],
+                PurchasePreferences = input.PurchasePreferences,
                 CreatedAt = now,
                 UpdatedAt = now,
             });

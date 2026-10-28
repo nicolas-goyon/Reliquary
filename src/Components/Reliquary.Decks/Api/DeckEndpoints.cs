@@ -449,6 +449,11 @@ internal static class DeckEndpoints
 
         ValidateLineFields(errors, string.Empty, request.Zone, request.Finish, request.Note);
         ValidateTags(errors, string.Empty, request.Tags, request.GlobalTags, request.Categories);
+        if (request.PurchasePreferences is { } preferences)
+        {
+            errors.AddRange(preferences.Validate("purchasePreferences"));
+        }
+
         if (errors.Count > 0)
         {
             return ApiProblems.Validation(errors);
@@ -468,7 +473,9 @@ internal static class DeckEndpoints
                 request.Note,
                 Clean(request.Tags),
                 Clean(request.GlobalTags),
-                request.Categories),
+                request.Categories,
+                request.PurchasePreferences,
+                request.ClearPurchasePreferences == true),
             cancellationToken);
         return TypedResults.Ok(await ToResponseAsync(view, catalog, cancellationToken));
     }
@@ -877,7 +884,8 @@ internal static class DeckEndpoints
             Utc(deck.UpdatedAt),
             view.IsOwner,
             counts,
-            [.. view.Lines.Select(line => new DeckLineResponse(line.Id, line.OracleId, line.PrintingId, line.Finish, line.Quantity, line.Zone, line.Note, line.TagIds, line.Categories))],
+            [.. view.Lines.Select(line => new DeckLineResponse(
+                line.Id, line.OracleId, line.PrintingId, line.Finish, line.Quantity, line.Zone, line.Note, line.TagIds, line.Categories, Purchases.PurchasePreferences.ReadOrNull(line.PurchasePreferences)))],
             cards,
             printings,
             view.Tags.ToDictionary(tag => tag.Id, tag => new DeckTagResponse(tag.Name, tag.IsGlobal)),

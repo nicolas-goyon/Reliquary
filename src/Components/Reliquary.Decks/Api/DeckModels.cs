@@ -65,6 +65,8 @@ public sealed record ReplaceLinesRequest(IReadOnlyList<LineRequest>? Lines, int?
 /// <param name="Tags">The local tags. The list replaces the local tags of the line.</param>
 /// <param name="GlobalTags">The global tags. The list replaces the global tags of the line.</param>
 /// <param name="Categories">The categories. The list replaces the categories of the line.</param>
+/// <param name="PurchasePreferences">The purchase preferences. The object replaces the preferences of the line.</param>
+/// <param name="ClearPurchasePreferences">Set to <see langword="true"/> to remove the purchase preferences.</param>
 public sealed record UpdateLineRequest(
     int? Quantity,
     string? Zone,
@@ -75,7 +77,9 @@ public sealed record UpdateLineRequest(
     string? Note,
     IReadOnlyList<string>? Tags = null,
     IReadOnlyList<string>? GlobalTags = null,
-    IReadOnlyList<string>? Categories = null);
+    IReadOnlyList<string>? Categories = null,
+    Purchases.PurchasePreferences? PurchasePreferences = null,
+    bool? ClearPurchasePreferences = null);
 
 /// <summary>A group action on several lines of one deck.</summary>
 /// <param name="LineIds">The lines. They must all be lines of the deck.</param>
@@ -170,7 +174,8 @@ public sealed record DeckTagResponse(string Name, bool Global);
 /// <param name="Note">The note.</param>
 /// <param name="TagIds">The tags of the line. The deck response gives their names.</param>
 /// <param name="Categories">The categories of the line.</param>
-public sealed record DeckLineResponse(Guid Id, Guid OracleId, Guid? PrintingId, string? Finish, int Quantity, string Zone, string Note, IReadOnlyList<Guid> TagIds, IReadOnlyList<string> Categories);
+/// <param name="PurchasePreferences">The purchase preferences of the line, or <see langword="null"/> when the line accepts each copy.</param>
+public sealed record DeckLineResponse(Guid Id, Guid OracleId, Guid? PrintingId, string? Finish, int Quantity, string Zone, string Note, IReadOnlyList<Guid> TagIds, IReadOnlyList<string> Categories, Purchases.PurchasePreferences? PurchasePreferences = null);
 
 /// <summary>A deck as text.</summary>
 /// <param name="Text">The text, in the deck text format.</param>
