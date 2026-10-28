@@ -331,7 +331,12 @@ internal sealed class DeckService(DeckStore store, ICardCatalog catalog, IDomain
         await using (var connection = await store.OpenAsync(ownerId, ContentAccess.Write, cancellationToken))
         await using (var transaction = await connection.BeginTransactionAsync(cancellationToken))
         {
-            _ = await DeckStore.FindDeckAsync(connection, ownerId, deckId, cancellationToken, transaction, forUpdate: true) ?? throw DeckException.NotFound();
+            var deck = await DeckStore.FindDeckAsync(connection, ownerId, deckId, cancellationToken, transaction, forUpdate: true) ?? throw DeckException.NotFound();
+            if (deck.AssembledVersionId is not null)
+            {
+                throw Versions.AssembledDeckErrorCodes.DeletionRefused();
+            }
+
             variantIds = await DeckStore.ListVariantIdsAsync(connection, ownerId, deckId, cancellationToken, transaction);
             await DeckStore.DeleteDeckAsync(transaction, ownerId, deckId, cancellationToken);
             foreach (var id in variantIds.Append(deckId))

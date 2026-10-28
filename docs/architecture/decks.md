@@ -275,6 +275,8 @@ An incorrect field gives the status 400 with the list of field errors.
 | `GET /decks/{id}/variants` | Like the deck | Lists the variants of the main deck. |
 | `POST /decks/{id}/variants` | Owner | Creates a variant from a version of the main deck. The default is the most recent version. |
 | `POST /decks/{id}/merge` | Owner | Merges the variant `{id}` into its main deck, with a version of the kind `merge` and two parents. |
+| `PUT /decks/{id}/assembled` | Owner | Marks a version as the assembled version. The default is the most recent version, after a commit of the working list when it changed. |
+| `DELETE /decks/{id}/assembled` | Owner | Releases the assembled deck. Its cards go to the location `targetLocationId`, or leave the collection. |
 
 A variant is a deck: the endpoints of the decks and of the lines work with its ID.
 A variant has the format, the visibility and the folder of its main deck. A change of these fields on a variant gives a validation error.
@@ -291,3 +293,11 @@ The two lists can come from different decks.
 The response gives the changes from the first list to the second list, and the numbers of each list.
 The numbers are the card count, the lands, the average mana value, the mana curve, the types and the categories.
 The analysis of the two lists uses the format of the first deck.
+
+### Assembled decks
+
+The location of an assembled deck gets the cards of the commander, companion, main and sideboard zones of the assembled version.
+The considering zone and the tokens are not in the location. The tokens of an assembled deck are in the deck tokens of the collection.
+The language of a card is the language of its printing, or English when the line has no printing.
+The API refuses the deletion of an assembled deck with the error `deck_assembled`. Release the deck first.
+A variant cannot be an assembled deck.

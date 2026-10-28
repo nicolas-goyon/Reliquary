@@ -32,3 +32,9 @@ public sealed record DeckDeleted(Guid DeckId) : IDomainEvent;
 /// <param name="Kind">The kind: <c>commit</c>, <c>merge</c>, <c>revert</c> or <c>restore</c>.</param>
 [DomainEvent("decks.deck_version.created", 1)]
 public sealed record DeckVersionCreated(Guid DeckId, Guid VersionId, int Number, string Kind) : IDomainEvent;
+
+/// <summary>A user changed the assembled version of a deck, or released the assembled deck.</summary>
+/// <param name="DeckId">The ID of the deck.</param>
+/// <param name="AssembledVersionId">The assembled version, or <see langword="null"/> when the deck is not assembled any more.</param>
+[DomainEvent("decks.deck.assembled", 1)]
+public sealed record DeckAssembled(Guid DeckId, Guid? AssembledVersionId) : IDomainEvent;

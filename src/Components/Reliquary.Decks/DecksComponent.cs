@@ -45,6 +45,7 @@ public sealed class DecksComponent : ICoreComponent
         services.AddSingleton<TagService>();
         services.AddSingleton<FolderService>();
         services.AddSingleton<DeckVersionService>();
+        services.AddSingleton<AssembledDeckService>();
         services.AddSingleton<PublicDeckIndexer>();
         services.AddSingleton<PublicDeckService>();
         services.AddSingleton<DeckTextService>();
