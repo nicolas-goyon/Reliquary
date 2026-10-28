@@ -56,7 +56,8 @@
     "cards": "Cards",
     "decks": "Decks",
     "explore": "Explore",
-    "moderation": "Moderation"
+    "moderation": "Moderation",
+    "collection": "Collection"
   },
   "notFound": {
     "title": "Page not found",
@@ -95,7 +96,12 @@
     "search_timeout": "The search took too much time. Make the search more specific.",
     "report_exists": "You sent a report about this item before. An administrator reads it soon.",
     "report_closed": "An administrator closed this report before. Read the list again.",
-    "unknown": "An error occurred. Try again."
+    "unknown": "An error occurred. Try again.",
+    "location_locked": "The location is locked. Unlock the location, then try again.",
+    "location_not_empty": "The location or one of its sections has cards. Move or remove the cards, then try again.",
+    "deck_location": "This location is an assembled deck. Change the deck to change the location.",
+    "not_enough_cards": "The origin does not have enough copies of the card. Give a lower quantity.",
+    "inventory_applied": "Reliquary applied this inventory before. Start a new inventory."
   },
   "fieldErrors": {
     "required": "This field is necessary.",

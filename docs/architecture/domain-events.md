@@ -68,6 +68,10 @@ When the test fails, it gives the correct table.
 | `accounts.account.created` | 1 | `accountId` (uuid), `language` (string), `shard` (string), `createdAt` (date-time) |
 | `accounts.account.deleted` | 1 | `accountId` (uuid) |
 | `cards.card_data.imported` | 1 | `source` (string), `changedCards` (integer), `changedPrintings` (integer), `deletedPrintings` (integer) |
+| `collection.entries.changed` | 1 | `batchId` (uuid), `locationIds` (array), `oracleIds` (array) |
+| `collection.location.created` | 1 | `locationId` (uuid), `kind` (string), `parentId` (uuid or null), `deckId` (uuid or null) |
+| `collection.location.deleted` | 1 | `locationId` (uuid) |
+| `collection.location.updated` | 1 | `locationId` (uuid), `kind` (string), `locked` (boolean), `pickable` (boolean) |
 | `decks.content.hidden` | 1 | `itemType` (string), `itemId` (uuid) |
 | `decks.content.shown` | 1 | `itemType` (string), `itemId` (uuid) |
 | `decks.deck.created` | 1 | `deckId` (uuid), `format` (string), `visibility` (string), `sourceDeckId` (uuid or null), `variantOf` (uuid or null) |

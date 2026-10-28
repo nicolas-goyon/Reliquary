@@ -5,6 +5,7 @@ import { CardPage } from './pages/CardPage'
 import { AuthorPage } from './pages/AuthorPage'
 import { CardSearchPage } from './pages/CardSearchPage'
 import { ComparePage } from './pages/ComparePage'
+import { CollectionPage } from './pages/CollectionPage'
 import { DeckImportPage } from './pages/DeckImportPage'
 import { DeckListPage } from './pages/DeckListPage'
 import { DeckPage } from './pages/DeckPage'
@@ -12,6 +13,10 @@ import { AuthCompletePage, CheckEmailPage, ForgotPasswordPage, ResetPasswordPage
 import { ExplorePage } from './pages/ExplorePage'
 import { HomePage, NotFoundPage } from './pages/HomePage'
 import { ModerationPage } from './pages/ModerationPage'
+import { InventoryPage } from './pages/InventoryPage'
+import { LocationPage } from './pages/LocationPage'
+import { LocationsPage } from './pages/LocationsPage'
+import { MovementsPage } from './pages/MovementsPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { SignInPage } from './pages/SignInPage'
 import { AuthProvider } from './auth/AuthProvider'
@@ -34,6 +39,8 @@ const patternRoutes: { pattern: RegExp; render(match: RegExpMatchArray): ReactNo
   { pattern: /^\/cards\/([0-9a-f-]{36})$/, render: (match) => <CardPage key={match[1]} id={match[1]} /> },
   { pattern: /^\/decks\/([0-9a-f-]{36})$/, render: (match) => <DeckPage key={match[1]} id={match[1]} /> },
   { pattern: /^\/authors\/([0-9a-f-]{36})$/, render: (match) => <AuthorPage key={match[1]} id={match[1]} /> },
+  { pattern: /^\/collection\/locations\/([0-9a-f-]{36})$/, render: (match) => <LocationPage key={match[1]} id={match[1]} /> },
+  { pattern: /^\/collection\/locations\/([0-9a-f-]{36})\/inventory$/, render: (match) => <InventoryPage key={match[1]} id={match[1]} /> },
 ]
 
 const routes: Record<string, () => ReactNode> = {
@@ -42,6 +49,9 @@ const routes: Record<string, () => ReactNode> = {
   '/decks/import': () => <DeckImportPage />,
   '/compare': () => <ComparePage />,
   '/explore': () => <ExplorePage />,
+  '/collection': () => <CollectionPage />,
+  '/collection/locations': () => <LocationsPage />,
+  '/collection/movements': () => <MovementsPage />,
   '/': () => <HomePage />,
   '/sign-in': () => <SignInPage />,
   '/register': () => <RegisterPage />,

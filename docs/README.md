@@ -20,6 +20,7 @@ All documents are in English and follow the [writing rules](contributing/writing
 | [Database](architecture/database.md) | Schemas, shard directory and migrations |
 | [Domain events](architecture/domain-events.md) | Event names, versions, outbox and consumers |
 | [API conventions](architecture/api-conventions.md) | Versions, JSON, paging, sort, filters and error codes |
+| [Collection](architecture/collection.md) | Locations, entries, movements and the interfaces for the decks |
 | [Card search](architecture/card-search.md) | The search endpoint, the Scryfall syntax, the rules of the search and its indexes |
 | [Extensions](architecture/extensions.md) | Plugins and modules |
 | [Internal API](architecture/internal-api.md) | The versioned API for the modules, its OpenAPI document and the catalog of the domain events |

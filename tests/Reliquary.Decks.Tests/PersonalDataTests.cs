@@ -46,8 +46,28 @@ public sealed class PersonalDataTests(DecksInstance instance)
         Assert.Equal("ready", ready.Status);
         Assert.Equal("application/zip", download.Content.Headers.ContentType!.MediaType);
         Assert.Equal(
-            ["README.txt", "account/account.json", "decks/category-rules.json", "decks/decks.json", "decks/favorites.json", "decks/folders.json", "decks/following.json", "decks/global-tags.json", "decks/text/Atraxa (2).txt", "decks/text/Atraxa.txt",
-                "moderation/hidden-content.json", "moderation/moderation-actions.json", "moderation/reports.json"],
+            [
+                "README.txt",
+                "account/account.json",
+                "collection/deck-tokens.json",
+                "collection/inventories.json",
+                "collection/locations.json",
+                "collection/movements.json",
+                "collection/settings.json",
+                "collection/shares.json",
+                "collection/storage-rules.json",
+                "decks/category-rules.json",
+                "decks/decks.json",
+                "decks/favorites.json",
+                "decks/folders.json",
+                "decks/following.json",
+                "decks/global-tags.json",
+                "decks/text/Atraxa (2).txt",
+                "decks/text/Atraxa.txt",
+                "moderation/hidden-content.json",
+                "moderation/moderation-actions.json",
+                "moderation/reports.json",
+            ],
             entries);
         Assert.Equal("Tester", account.GetProperty("displayName").GetString());
         Assert.False(account.TryGetProperty("passwordHash", out _));

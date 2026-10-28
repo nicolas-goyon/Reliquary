@@ -119,6 +119,11 @@ Rules for the error codes:
 | `search_syntax_error` | 400 | The card search query has a syntax error. The member `position` gives the index of the character. |
 | `search_query_empty` | 400 | The card search query has no search condition. The member `warnings` gives the ignored terms. |
 | `search_timeout` | 400 | The card search took more than 5 seconds. |
+| `location_locked` | 409 | The location of the collection is locked. Unlock the location, then try again. |
+| `location_not_empty` | 409 | The location or one of its sections has cards. |
+| `deck_location` | 409 | The location belongs to an assembled deck. Change the deck to change the location. |
+| `not_enough_cards` | 409 | The origin location does not have enough copies of a card. |
+| `inventory_applied` | 409 | The inventory of the location is applied. It cannot change. |
 
 An endpoint can add a more specific code.
 The OpenAPI document of the endpoint lists its specific codes.

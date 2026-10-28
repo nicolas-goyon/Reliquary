@@ -47,6 +47,32 @@ public interface ICardCatalog
     /// <param name="cancellationToken">A token that stops the operation.</param>
     /// <returns>The tags of each card that has tags, by ID. A card with no tag is not in the result.</returns>
     Task<IReadOnlyDictionary<Guid, IReadOnlyList<CardOracleTag>>> GetOracleTagsAsync(IReadOnlyCollection<Guid> oracleIds, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Finds the Oracle cards that match a query of the card search, among some Oracle cards.
+    /// The query uses the syntax of the card search. See docs/architecture/card-search.md.
+    /// </summary>
+    /// <param name="query">The query, for example <c>c:u t:instant</c>.</param>
+    /// <param name="oracleIds">The Oracle cards to test. With no card, the method only checks the query.</param>
+    /// <param name="cancellationToken">A token that stops the operation.</param>
+    /// <returns>The cards of <paramref name="oracleIds"/> that match the query.</returns>
+    /// <exception cref="CardQueryException">The query is not valid, has no search condition, or took too much time.</exception>
+    Task<IReadOnlySet<Guid>> MatchAsync(string query, IReadOnlyCollection<Guid> oracleIds, CancellationToken cancellationToken = default);
+}
+
+/// <summary>
+/// A query of the card search that the Cards component cannot use.
+/// </summary>
+/// <param name="code">The stable error code of the card search, for example <c>search_syntax_error</c>.</param>
+/// <param name="message">The English message, in the strict mode of the writing rules.</param>
+/// <param name="position">The position of the error in the query, or <see langword="null"/>.</param>
+public sealed class CardQueryException(string code, string message, int? position = null) : Exception(message)
+{
+    /// <summary>Gets the stable error code of the card search.</summary>
+    public string Code { get; } = code;
+
+    /// <summary>Gets the position of the error in the query, or <see langword="null"/>.</summary>
+    public int? Position { get; } = position;
 }
 
 /// <summary>

@@ -23,5 +23,6 @@
   <ItemGroup>
     <InternalsVisibleTo Include="Reliquary.Accounts.Tests" />
     <InternalsVisibleTo Include="Reliquary.Decks.Tests" />
+    <InternalsVisibleTo Include="Reliquary.Collection.Tests" />
   </ItemGroup>
 </Project>

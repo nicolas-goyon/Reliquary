@@ -371,6 +371,15 @@ These differences stay:
 - `is:dfc` does not find some art series cards, and `is:commander` and `is:painland` have small differences.
 - Some printings have different `is:promo`, `is:hires`, `game:arena` and release date values.
 
+## Search for other core components
+
+`ICardCatalog.MatchAsync` gives the cards of a list that match a query, with the same parser and compiler.
+The Collection component uses it for the storage rules.
+
+- The method ignores the sort options and the printing options of the query.
+- A query with a syntax error, with no condition or with a time-out gives the exception `CardQueryException` with the error code of the search.
+- With an empty list, the method only checks the query.
+
 ## Code
 
 | Path | Content |
