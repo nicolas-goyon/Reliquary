@@ -40,6 +40,8 @@ Each record gives the context, the decision and its consequences.
 | [0030](0030-combos-from-commander-spellbook.md) | Combos from the bulk file of Commander Spellbook | Accepted |
 | [0031](0031-auto-tag.md) | Auto-tag with the imported Oracle tags, text rules and category rules | Accepted |
 | [0032](0032-personal-data.md) | Export and deletion of the personal data through providers of each core component | Accepted |
+| [0033](0033-deck-versions-and-variants.md) | Deck versions as frozen commits, variants as deck rows, and the assembled version | Accepted |
+| [0034](0034-collection-model.md) | Collection model in the shard, availability rules and the interfaces with the decks | Accepted |
 
 ## Open decisions
 
