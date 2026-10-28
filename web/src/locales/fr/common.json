@@ -101,7 +101,9 @@
     "location_not_empty": "L’emplacement ou une de ses boîtes contient des cartes. Déplacez ou retirez les cartes, puis réessayez.",
     "deck_location": "Cet emplacement est un deck monté. Modifiez le deck pour modifier l’emplacement.",
     "not_enough_cards": "L’origine n’a pas assez d’exemplaires de la carte. Indiquez une quantité plus faible.",
-    "inventory_applied": "Reliquary a déjà appliqué cet inventaire. Commencez un nouvel inventaire."
+    "inventory_applied": "Reliquary a déjà appliqué cet inventaire. Commencez un nouvel inventaire.",
+    "deck_assembled": "Le deck est un deck assemblé. Désassemblez-le d’abord, puis réessayez.",
+    "deck_not_assembled": "Le deck n’est pas un deck assemblé. Marquez d’abord une version comme version assemblée."
   },
   "fieldErrors": {
     "required": "Ce champ est obligatoire.",

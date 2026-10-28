@@ -301,3 +301,4 @@ The considering zone and the tokens are not in the location. The tokens of an as
 The language of a card is the language of its printing, or English when the line has no printing.
 The API refuses the deletion of an assembled deck with the error `deck_assembled`. Release the deck first.
 A variant cannot be an assembled deck.
+The [transition plan](purchase-list.md#transition-plan) gives the steps from the assembled version to a variant.

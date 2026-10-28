@@ -32,6 +32,8 @@ export const translatedErrorCodes = [
   'deck_location',
   'not_enough_cards',
   'inventory_applied',
+  'deck_assembled',
+  'deck_not_assembled',
 ] as const
 
 export type TranslatedErrorCode = (typeof translatedErrorCodes)[number]

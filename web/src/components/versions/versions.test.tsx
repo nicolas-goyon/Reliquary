@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { App } from '../../App'
 import type { Deck, DeckCard, DeckLine } from '../../api/decks'
-import type { DeckHistory, DeckVariant, DeckVersion, ListComparison } from '../../api/versions'
+import type { DeckHistory, DeckVariant, DeckVersion, ListComparison, TransitionCopy, TransitionPlan } from '../../api/versions'
 import i18n from '../../i18n'
 import { mockApi, problem, session, type Handler } from '../../test/mockApi'
 
@@ -397,5 +397,102 @@ describe('comparison page', () => {
     expect(await screen.findByRole('table', { name: 'Added cards: 2' })).toBeInTheDocument()
     expect(window.location.search).toBe(`?left=${deckId}:${version2}&right=${variantId}`)
     expect(calls.find((call) => call.key === 'POST /lists/compare')?.body).toEqual({ left: { deckId, versionId: version2 }, right: { deckId: variantId, versionId: null } })
+  })
+})
+
+describe('assembled version and transition plan', () => {
+  const rack = '0190a000-0000-7000-8000-0000000000f1'
+  const binder = '0190a000-0000-7000-8000-0000000000f2'
+  const copy = (overrides: Partial<TransitionCopy>): TransitionCopy => ({
+    locationId: rack,
+    locationName: 'Rack 2',
+    sectionName: null,
+    locationKind: 'rack',
+    locked: false,
+    printingId: null,
+    language: 'en',
+    finish: null,
+    condition: null,
+    quantity: 1,
+    reasons: [],
+    ...overrides,
+  })
+  const plan: TransitionPlan = {
+    deckId: variantId,
+    assembledDeckId: deckId,
+    assembledVersionId: version1,
+    remove: [{ oracleId: solRing, quantity: 1 }],
+    add: [
+      { oracleId: cultivate, quantity: 2, take: [copy({ quantity: 1 }), copy({ locationId: binder, locationName: 'Binder', locked: true, language: 'fr' })], toBuy: 0, closest: [] },
+      { oracleId: swords, quantity: 1, take: [], toBuy: 1, closest: [copy({ reasons: ['language'] })] },
+    ],
+    unlockFirst: [{ locationId: binder, locationName: 'Binder', sectionName: null }],
+    totalToBuy: 1,
+    cards,
+    printings: {},
+  }
+
+  beforeEach(async () => {
+    await i18n.changeLanguage('en')
+    window.localStorage.clear()
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('marks a version as the assembled version after the confirmation', async () => {
+    const calls = mockApi({
+      'POST /auth/refresh': () => session(),
+      ...deckPage(deck()),
+      [`PUT /decks/${deckId}/assembled`]: () => Response.json({ deckId, assembledVersionId: version2 }),
+    })
+    const user = userEvent.setup()
+    open(`/decks/${deckId}`)
+
+    const panel = await historyPanel()
+    expect(within(panel).queryByRole('button', { name: 'Mark version 1 as the assembled version' })).not.toBeInTheDocument()
+    await user.click(within(panel).getByRole('button', { name: 'Mark version 2 as the assembled version' }))
+    await user.click(within(screen.getByRole('dialog', { name: 'Mark version 2 as the assembled version?' })).getByRole('button', { name: 'Mark as assembled' }))
+
+    expect(await within(panel).findByText('Version 2 is now the assembled version.')).toBeInTheDocument()
+    expect(calls.find((call) => call.key === `PUT /decks/${deckId}/assembled`)?.body).toEqual({ versionId: version2 })
+    expect(within(panel).getByRole('link', { name: 'Transition plan' })).toHaveAttribute('href', `/decks/${deckId}/transition-plan`)
+  })
+
+  it('shows the steps of the transition plan with a check box for each step', async () => {
+    mockApi({
+      'POST /auth/refresh': () => session(),
+      [`GET /decks/${variantId}`]: () => Response.json(variantDeck),
+      [`GET /decks/${variantId}/transition-plan`]: () => Response.json(plan),
+    })
+    const user = userEvent.setup()
+    open(`/decks/${variantId}/transition-plan`)
+
+    expect(await screen.findByRole('heading', { name: 'Transition plan: Budget' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Binder' })).toHaveAttribute('href', `/collection/locations/${binder}`)
+    const remove = screen.getByRole('region', { name: 'Cards to remove from the deck (1)' })
+    expect(within(remove).getByLabelText('Remove 1 Sol Ring')).not.toBeChecked()
+    const take = screen.getByRole('region', { name: 'Cards to take from the collection (2)' })
+    expect(within(take).getAllByRole('checkbox')).toHaveLength(2)
+    expect(within(take).getByText('Locked')).toBeInTheDocument()
+    const buy = screen.getByRole('region', { name: 'Cards to buy (1)' })
+    expect(within(buy).getByText('Closest copy: 1 copy in EN in Rack 2 (other language)')).toBeInTheDocument()
+
+    expect(screen.getByText('Completed steps: 0 of 4')).toBeInTheDocument()
+    await user.click(within(remove).getByLabelText('Remove 1 Sol Ring'))
+    expect(screen.getByText('Completed steps: 1 of 4')).toBeInTheDocument()
+    expect(window.localStorage.getItem(`reliquary.transition.${variantId}.${version1}`)).toBe(JSON.stringify([`remove:${solRing}`]))
+  })
+
+  it('tells the user when the main deck is not an assembled deck', async () => {
+    mockApi({
+      'POST /auth/refresh': () => session(),
+      [`GET /decks/${variantId}`]: () => Response.json(variantDeck),
+      [`GET /decks/${variantId}/transition-plan`]: () => problem(409, 'deck_not_assembled'),
+    })
+    open(`/decks/${variantId}/transition-plan`)
+
+    expect(await screen.findByText('The main deck is not an assembled deck. Mark a version of the main deck as the assembled version first.')).toBeInTheDocument()
   })
 })

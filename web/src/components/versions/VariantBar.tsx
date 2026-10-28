@@ -76,6 +76,7 @@ export function VariantBar({ deck }: { deck: Deck }) {
           {isVariant && (
             <Link to={compareUrl({ deckId: mainId, versionId: null }, { deckId: deck.id, versionId: null })}>{t('variants.compareMain')}</Link>
           )}
+          {isVariant && deck.isOwner && <Link to={`/decks/${deck.id}/transition-plan`}>{t('assembled.transitionPlan')}</Link>}
           {deck.isOwner && !isVariant && (
             <button type="button" onClick={() => setDialog('create')}>
               {t('variants.create')}

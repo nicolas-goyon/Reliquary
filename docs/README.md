@@ -21,7 +21,7 @@ All documents are in English and follow the [writing rules](contributing/writing
 | [Domain events](architecture/domain-events.md) | Event names, versions, outbox and consumers |
 | [API conventions](architecture/api-conventions.md) | Versions, JSON, paging, sort, filters and error codes |
 | [Collection](architecture/collection.md) | Locations, entries, movements and the interfaces for the decks |
-| [Purchase list](architecture/purchase-list.md) | Purchase preferences, the purchase list and its gate test |
+| [Purchase list](architecture/purchase-list.md) | Purchase preferences, the purchase list, the transition plan and the gate test |
 | [Card search](architecture/card-search.md) | The search endpoint, the Scryfall syntax, the rules of the search and its indexes |
 | [Extensions](architecture/extensions.md) | Plugins and modules |
 | [Internal API](architecture/internal-api.md) | The versioned API for the modules, its OpenAPI document and the catalog of the domain events |

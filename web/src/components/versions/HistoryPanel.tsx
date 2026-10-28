@@ -14,6 +14,7 @@ import {
   type DeckVersionDetail,
   type ListChanges,
 } from '../../api/versions'
+import { flattenLocations, locationLabel, type CollectionLocation } from '../../api/collection'
 import { useAuth } from '../../auth/session'
 import { Link } from '../../router/Link'
 import { ErrorAlert } from '../Forms'
@@ -29,11 +30,11 @@ interface HistoryPanelProps {
 
 type Loaded = { state: 'loading' } | { state: 'error'; error: unknown } | { state: 'done'; history: DeckHistory }
 type Selection = { version: DeckVersion; view: 'lines' | 'changes' } | null
-type Pending = { action: 'commit' } | { action: 'restore' | 'revert'; version: DeckVersion } | null
+type Pending = { action: 'commit' } | { action: 'release' } | { action: 'restore' | 'revert' | 'assemble'; version: DeckVersion } | null
 
 /**
  * The history of a deck: the versions, the state of the working list, and the version operations.
- * Only the owner can commit, restore and revert.
+ * Only the owner can commit, restore, revert, mark the assembled version and release the assembled deck.
  */
 export function HistoryPanel({ deck, onChange }: HistoryPanelProps) {
   const { t, i18n } = useTranslation('versions')
@@ -67,18 +68,42 @@ export function HistoryPanel({ deck, onChange }: HistoryPanelProps) {
     [deck.id, onChange, request, t],
   )
 
+  /** Gets the deck and the history again after a change of the assembled version. */
+  const assembledChanged = useCallback(
+    async (text: string) => {
+      setPending(null)
+      setMessage(text)
+      setReload((value) => value + 1)
+      await request<Deck>(`/decks/${deck.id}`)
+        .then(onChange)
+        .catch(() => undefined)
+    },
+    [deck.id, onChange, request],
+  )
+
   const history = loaded.state === 'done' ? loaded.history : null
   const head = history?.versions[0]
+  const canAssemble = owner && !deck.variantOf
 
   return (
     <section className="panel version-history" aria-labelledby="version-history-title">
       <div className="version-history-header">
         <h2 id="version-history-title">{t('history.title')}</h2>
-        {owner && (
-          <button type="button" className="button-primary" onClick={() => setPending({ action: 'commit' })}>
-            {t('history.commit')}
-          </button>
-        )}
+        <div className="form-actions">
+          {canAssemble && history?.assembledVersionId && (
+            <>
+              <Link to={`/decks/${deck.id}/transition-plan`}>{t('assembled.transitionPlan')}</Link>
+              <button type="button" onClick={() => setPending({ action: 'release' })}>
+                {t('assembled.release')}
+              </button>
+            </>
+          )}
+          {owner && (
+            <button type="button" className="button-primary" onClick={() => setPending({ action: 'commit' })}>
+              {t('history.commit')}
+            </button>
+          )}
+        </div>
       </div>
       {message && (
         <p className="alert alert-success" role="status">
@@ -114,6 +139,7 @@ export function HistoryPanel({ deck, onChange }: HistoryPanelProps) {
                   onSelect={(view) => setSelection(selection?.version.id === version.id && selection.view === view ? null : { version, view })}
                   onRestore={() => setPending({ action: 'restore', version })}
                   onRevert={() => setPending({ action: 'revert', version })}
+                  onAssemble={canAssemble ? () => setPending({ action: 'assemble', version }) : undefined}
                 />
               ))}
             </ol>
@@ -122,6 +148,10 @@ export function HistoryPanel({ deck, onChange }: HistoryPanelProps) {
       )}
       {selection && <VersionView key={`${selection.version.id}-${selection.view}`} deck={deck} version={selection.version} view={selection.view} onClose={() => setSelection(null)} />}
       {pending?.action === 'commit' && <CommitDialog deckId={deck.id} onClose={() => setPending(null)} onCreated={created} />}
+      {pending?.action === 'assemble' && (
+        <AssembleDialog deckId={deck.id} version={pending.version} onClose={() => setPending(null)} onDone={() => assembledChanged(t('assembled.done', { number: pending.version.number }))} />
+      )}
+      {pending?.action === 'release' && <ReleaseDialog deckId={deck.id} onClose={() => setPending(null)} onDone={() => assembledChanged(t('assembled.released'))} />}
       {(pending?.action === 'restore' || pending?.action === 'revert') && (
         <ConfirmDialog deckId={deck.id} action={pending.action} version={pending.version} onClose={() => setPending(null)} onCreated={created} />
       )}
@@ -137,9 +167,11 @@ interface VersionItemProps {
   onSelect(view: 'lines' | 'changes'): void
   onRestore(): void
   onRevert(): void
+  /** Marks the version as the assembled version. Undefined when the user cannot do it. */
+  onAssemble?(): void
 }
 
-function VersionItem({ deck, version, language, selected, onSelect, onRestore, onRevert }: VersionItemProps) {
+function VersionItem({ deck, version, language, selected, onSelect, onRestore, onRevert, onAssemble }: VersionItemProps) {
   const { t } = useTranslation('versions')
   const number = version.number
   const parentId = version.parentIds[0]
@@ -171,6 +203,11 @@ function VersionItem({ deck, version, language, selected, onSelect, onRestore, o
         {deck.isOwner && (
           <button type="button" className="button-small" aria-label={t('history.restoreLabel', { number })} onClick={onRestore}>
             {t('history.restore')}
+          </button>
+        )}
+        {onAssemble && !version.assembled && (
+          <button type="button" className="button-small" aria-label={t('assembled.markLabel', { number })} onClick={onAssemble}>
+            {t('assembled.mark')}
           </button>
         )}
         {deck.isOwner && version.kind === 'merge' && (
@@ -367,6 +404,114 @@ function ConfirmDialog({ deckId, action, version, onClose, onCreated }: ConfirmD
           {t('actions.cancel')}
         </button>
       </div>
+    </Dialog>
+  )
+}
+
+interface AssembleDialogProps {
+  deckId: string
+  version: DeckVersion
+  onClose(): void
+  onDone(): Promise<void>
+}
+
+/** The dialog that asks the owner before a version becomes the assembled version. */
+function AssembleDialog({ deckId, version, onClose, onDone }: AssembleDialogProps) {
+  const { t } = useTranslation('versions')
+  const { request } = useAuth()
+  const [error, setError] = useState<unknown>(null)
+  const [busy, setBusy] = useState(false)
+  const number = version.number
+
+  async function submit() {
+    setError(null)
+    setBusy(true)
+    try {
+      await request(`/decks/${deckId}/assembled`, { method: 'PUT', body: { versionId: version.id } })
+      await onDone()
+    } catch (caught) {
+      setError(caught)
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Dialog title={t('assembled.markTitle', { number })} onClose={onClose}>
+      <p>{t('assembled.markHelp', { number })}</p>
+      <ErrorAlert error={error} />
+      <div className="form-actions">
+        <button type="button" className="button-primary" disabled={busy} onClick={() => void submit()}>
+          {t('assembled.mark')}
+        </button>
+        <button type="button" data-autofocus onClick={onClose}>
+          {t('actions.cancel')}
+        </button>
+      </div>
+    </Dialog>
+  )
+}
+
+interface ReleaseDialogProps {
+  deckId: string
+  onClose(): void
+  onDone(): Promise<void>
+}
+
+/** The dialog of the release of an assembled deck: the owner tells where the cards go. */
+function ReleaseDialog({ deckId, onClose, onDone }: ReleaseDialogProps) {
+  const { t } = useTranslation('versions')
+  const { request } = useAuth()
+  const id = useId()
+  const [locations, setLocations] = useState<CollectionLocation[]>([])
+  const [target, setTarget] = useState('')
+  const [error, setError] = useState<unknown>(null)
+  const [busy, setBusy] = useState(false)
+
+  useEffect(() => {
+    request<CollectionLocation[]>('/collection/locations')
+      .then(setLocations)
+      .catch((caught: unknown) => setError(caught))
+  }, [request])
+
+  async function submit(event: FormEvent) {
+    event.preventDefault()
+    setError(null)
+    setBusy(true)
+    try {
+      await request(`/decks/${deckId}/assembled${target ? `?targetLocationId=${target}` : ''}`, { method: 'DELETE' })
+      await onDone()
+    } catch (caught) {
+      setError(caught)
+      setBusy(false)
+    }
+  }
+
+  const targets = flattenLocations(locations).filter(({ location }) => location.kind !== 'deck')
+  return (
+    <Dialog title={t('assembled.releaseTitle')} onClose={onClose}>
+      <form className="form" onSubmit={(event) => void submit(event)}>
+        <p>{t('assembled.releaseHelp')}</p>
+        <div className="field">
+          <label htmlFor={`${id}-target`}>{t('assembled.target')}</label>
+          <select id={`${id}-target`} data-autofocus value={target} onChange={(event) => setTarget(event.target.value)}>
+            <option value="">{t('assembled.noTarget')}</option>
+            {targets.map(({ location, parent }) => (
+              <option key={location.id} value={location.id}>
+                {parent ? locationLabel(parent.name, location.name) : location.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <ErrorAlert error={error} />
+        <div className="form-actions">
+          <button type="submit" className="button-danger" disabled={busy}>
+            {t('assembled.release')}
+          </button>
+          <button type="button" onClick={onClose}>
+            {t('actions.cancel')}
+          </button>
+        </div>
+      </form>
     </Dialog>
   )
 }

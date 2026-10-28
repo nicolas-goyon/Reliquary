@@ -52,6 +52,27 @@ The reason `unavailable` is for a copy in another assembled deck or in a locatio
 The copies with fewer reasons come first, and an available copy comes before an unavailable copy.
 For example, a line that wants a French copy shows "1 English copy in Rack 2" with the reason `language`.
 
+## Transition plan
+
+`GET /api/v1/decks/{id}/transition-plan` gives the physical steps from the assembled version to the working list of a variant.
+For a main deck, the target is its own working list.
+The endpoint needs the scope `collection:read`.
+When the main deck is not an assembled deck, the API gives the error `deck_not_assembled` (409).
+
+1. The plan compares the cards of the commander, companion, main and sideboard zones of the two lists, by Oracle card.
+   A change of zone, printing or finish only is not a step.
+2. The cards that the target has fewer times are the **cards to remove** from the assembled deck.
+3. For the cards that the target has more times, `PurchasePlanner` gives the **cards to take** from the collection and the **cards to buy**.
+   The location of the assembled deck is not a source, because its cards are already in the plan.
+4. The response gives the locked locations of the cards to take in `unlockFirst`.
+   The user must unlock these locations before the cards move.
+
+The plan does not change the collection. After the physical steps, the user moves the cards and marks the new assembled version.
+
+The web app shows the plan on the page `/decks/{id}/transition-plan`, with a check box for each step.
+The browser keeps the checked steps of each assembled version in its local storage.
+The history panel of a main deck marks a version as the assembled version, and releases the assembled deck.
+
 ## Gate of milestone M2
 
 The test `PurchaseListGateTests` checks the purchase list of a reference dataset, card by card.
