@@ -157,7 +157,10 @@ internal sealed class DeckLineRow
     public DateTime UpdatedAt { get; set; }
 
     /// <summary>Gets the content of the line, to find the lines that a change modified.</summary>
-    public string Content => $"{PrintingId}|{Finish}|{Quantity}|{Zone}|{Note}|{string.Join(',', Categories.Order(StringComparer.Ordinal))}|{string.Join(',', TagIds.Order())}";
+    /// <summary>Gets or sets the purchase preferences as JSON, or <see langword="null"/> for no preference.</summary>
+    public string? PurchasePreferences { get; set; }
+
+    public string Content => $"{PrintingId}|{Finish}|{Quantity}|{Zone}|{Note}|{string.Join(',', Categories.Order(StringComparer.Ordinal))}|{string.Join(',', TagIds.Order())}|{PurchasePreferences}";
 
     /// <summary>Gets the key of the line: one line for each card, printing and finish in a zone.</summary>
     public (string Zone, Guid OracleId, Guid? PrintingId, string? Finish) Key => (Zone, OracleId, PrintingId, Finish);
@@ -191,6 +194,7 @@ internal sealed class DeckStore(IDatabase database)
 
     private const string LineColumns = """
         l.id, l.deck_id as DeckId, l.oracle_id as OracleId, l.printing_id as PrintingId, l.finish, l.quantity, l.zone, l.note, l.categories,
+        l.purchase_preferences::text as PurchasePreferences,
         coalesce((select array_agg(t.tag_id order by t.tag_id) from content.deck_line_tags t where t.deck_line_id = l.id), '{}') as TagIds,
         l.created_at as CreatedAt, l.updated_at as UpdatedAt
         """;
@@ -406,8 +410,8 @@ internal sealed class DeckStore(IDatabase database)
     public static Task InsertLinesAsync(NpgsqlTransaction transaction, Guid ownerId, IEnumerable<DeckLineRow> lines, CancellationToken cancellationToken) =>
         transaction.Connection!.ExecuteAsync(new CommandDefinition(
             """
-            insert into content.deck_lines (id, deck_id, owner_id, oracle_id, printing_id, finish, quantity, zone, note, categories, created_at, updated_at)
-            values (@Id, @DeckId, @OwnerId, @OracleId, @PrintingId, @Finish, @Quantity, @Zone, @Note, @Categories, @CreatedAt, @UpdatedAt)
+            insert into content.deck_lines (id, deck_id, owner_id, oracle_id, printing_id, finish, quantity, zone, note, categories, created_at, updated_at, purchase_preferences)
+            values (@Id, @DeckId, @OwnerId, @OracleId, @PrintingId, @Finish, @Quantity, @Zone, @Note, @Categories, @CreatedAt, @UpdatedAt, @PurchasePreferences::jsonb)
             """,
             lines.Select(line => new
             {
@@ -423,6 +427,7 @@ internal sealed class DeckStore(IDatabase database)
                 line.Categories,
                 line.CreatedAt,
                 line.UpdatedAt,
+                line.PurchasePreferences,
             }),
             transaction,
             cancellationToken: cancellationToken));

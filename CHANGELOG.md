@@ -7,6 +7,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Added
 
+- Purchase preferences on the deck lines: wanted or avoided printings, languages, minimum condition, foil and maximum price.
+- The purchase list of a deck or a variant: the cards of the deck minus the available cards of the collection.
+  When a card is missing, the list shows the closest copies of the collection with the reasons.
 - The assembled version of a deck: the location of the assembled deck in the collection gets its cards.
   A release gives the cards to another location.
 - Printable proxies: the deck page makes a PDF of the card images (ADR 0038).

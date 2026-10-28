@@ -177,7 +177,7 @@ internal sealed class DeckVersionService(DeckStore store, DeckService decks, IDo
 
     /// <summary>Converts a frozen line into the input of a deck line.</summary>
     internal static LineInput ToInput(VersionLineRow line) =>
-        new(line.OracleId, line.PrintingId, line.Finish, line.Quantity, line.Zone, line.Note, line.Tags, line.GlobalTags, line.Categories);
+        new(line.OracleId, line.PrintingId, line.Finish, line.Quantity, line.Zone, line.Note, line.Tags, line.GlobalTags, line.Categories, line.PurchasePreferences);
 
     internal static ComparedLine ToCompared(VersionLineRow line) =>
         new(line.OracleId, line.Zone, line.PrintingId, line.Finish, line.Quantity, line.Note);
@@ -224,6 +224,7 @@ internal sealed class DeckVersionService(DeckStore store, DeckService decks, IDo
             Zone = line.Zone,
             Note = line.Note,
             Categories = [.. line.Categories.Order(StringComparer.Ordinal)],
+            PurchasePreferences = line.PurchasePreferences,
             Tags = [.. line.TagIds.Where(byId.ContainsKey).Select(id => byId[id]).Where(tag => !tag.IsGlobal).Select(tag => tag.Name).Order(StringComparer.OrdinalIgnoreCase)],
             GlobalTags = [.. line.TagIds.Where(byId.ContainsKey).Select(id => byId[id]).Where(tag => tag.IsGlobal).Select(tag => tag.Name).Order(StringComparer.OrdinalIgnoreCase)],
         })];
