@@ -5,6 +5,7 @@ import type { PublicDeckSocial } from '../api/publicDecks'
 import { useAuth } from '../auth/session'
 import { Link } from '../router/Link'
 import { ErrorAlert } from './Forms'
+import { ReportButton } from './moderation/ReportDialog'
 
 /**
  * The social bar of a deck: the author, the favorite button, the counts, and the share link of an unlisted or public deck.
@@ -67,6 +68,7 @@ export function DeckSocialBar({ deck }: { deck: Deck }) {
               {social.favorite ? t('social.unfavorite') : t('social.favorite')}
             </button>
           )}
+          {!deck.isOwner && <ReportButton itemType="deck" itemId={deck.id} />}
         </>
       )}
       <button type="button" onClick={() => void share()}>

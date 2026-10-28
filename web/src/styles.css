@@ -1407,3 +1407,27 @@ tr[aria-selected='true'] {
   border: 1px solid var(--color-border);
   border-radius: 0.375rem;
 }
+
+/* Moderation */
+.report-reasons {
+  border: 0;
+  padding: 0;
+}
+
+.report-reason {
+  display: flex;
+  gap: 0.35rem;
+  align-items: center;
+  font-weight: normal;
+}
+
+.moderation-comment {
+  margin: 0.25rem 0;
+  white-space: pre-wrap;
+}
+
+.moderation-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}

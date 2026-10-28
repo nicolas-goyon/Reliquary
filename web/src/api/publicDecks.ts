@@ -24,6 +24,8 @@ export interface Author {
   deckCount: number
   followerCount: number
   following: boolean
+  /** Whether an administrator hid the profile. Only the author gets a hidden profile. */
+  hidden?: boolean
 }
 
 export interface PublicDeckSocial {
