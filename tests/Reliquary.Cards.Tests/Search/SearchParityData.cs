@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace Reliquary.Cards.Tests.Search;
 
@@ -19,9 +20,10 @@ public sealed record SearchParityEntry(string Query, string Section, string Orig
 /// <summary>
 /// Reads the file <c>SearchParity/expectations.json</c>. The script <c>tools/search-parity/record_expectations.py</c> writes it.
 /// </summary>
-public static class SearchParityData
+public static partial class SearchParityData
 {
     private static readonly Lazy<IReadOnlyList<SearchParityEntry>> Entries = new(Read);
+    private static readonly Lazy<string> RecordedAt = new(ReadRecordedAt);
 
     /// <summary>Gets the folder of the demo dataset in the repository.</summary>
     public static string DemoDirectory { get; } = Path.Combine(RepositoryRoot.Path, "data", "demo");
@@ -38,10 +40,28 @@ public static class SearchParityData
     /// <returns>The queries.</returns>
     public static TheoryData<string> Queries() => [.. Load().Select(entry => entry.Query)];
 
+    /// <summary>
+    /// Replaces the value <c>now</c> of the date terms with the date of the recording.
+    /// The expected cards are correct at that date only, because the date of today moves.
+    /// </summary>
+    /// <param name="query">The query.</param>
+    /// <returns>The query with a fixed date.</returns>
+    public static string AtRecordedDate(string query) => NowDateTerm().Replace(query, match => match.Groups["term"].Value + RecordedAt.Value);
+
+    [GeneratedRegex(@"\b(?<term>date[:=<>!]+)(?:now|today)\b", RegexOptions.IgnoreCase)]
+    private static partial Regex NowDateTerm();
+
+    private static string ExpectationsPath => Path.Combine(AppContext.BaseDirectory, "SearchParity", "expectations.json");
+
+    private static string ReadRecordedAt()
+    {
+        using var document = JsonDocument.Parse(File.ReadAllText(ExpectationsPath));
+        return document.RootElement.GetProperty("recordedAt").GetString()!;
+    }
+
     private static List<SearchParityEntry> Read()
     {
-        var path = Path.Combine(AppContext.BaseDirectory, "SearchParity", "expectations.json");
-        using var document = JsonDocument.Parse(File.ReadAllText(path));
+        using var document = JsonDocument.Parse(File.ReadAllText(ExpectationsPath));
         return
         [
             .. document.RootElement.GetProperty("queries").EnumerateArray().Select(entry => new SearchParityEntry(
