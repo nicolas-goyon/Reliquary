@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.Extensions.DependencyInjection;
 using Reliquary.BuildingBlocks.Api;
 using Reliquary.Cards.Search;
@@ -93,7 +94,7 @@ public sealed class SearchParityTests(DemoCardsFixture fixture)
     {
         var entry = SearchParityData.Load().First(item => item.Query == query);
 
-        var items = await fixture.SearchAllAsync(query);
+        var items = await fixture.SearchAllAsync(SearchParityData.AtRecordedDate(query));
         var found = items.Select(item => item.Card.Id).ToHashSet();
         var expected = entry.Expected.ToHashSet();
 
@@ -108,6 +109,17 @@ public sealed class SearchParityTests(DemoCardsFixture fixture)
         Assert.True(
             missing.Count == 0 && extra.Count == 0,
             $"The query \"{query}\" does not find the same cards as Scryfall. Missing: {string.Join(", ", missing)}. Not expected: {string.Join(", ", extra)}.");
+    }
+
+    [Fact]
+    public async Task NowIsTheDateOfToday()
+    {
+        var today = DateTime.UtcNow.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+
+        var withNow = await fixture.SearchAllAsync("date>now");
+        var withDate = await fixture.SearchAllAsync($"date>{today}");
+
+        Assert.Equal(withDate.Select(item => item.Card.Id), withNow.Select(item => item.Card.Id));
     }
 
     [Fact]

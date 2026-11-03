@@ -28,6 +28,7 @@ jobs:
             chore
             revert
           requireScope: false
-          subjectPattern: ^[a-z].+[^.]$
+          # Dependabot starts the subject with "Bump".
+          subjectPattern: ${{ github.event.pull_request.user.login == 'dependabot[bot]' && '^[Bb]ump .+[^.]$' || '^[a-z].+[^.]$' }}
           subjectPatternError: |
             The subject "{subject}" must start with a lowercase letter and must not end with a full stop.
