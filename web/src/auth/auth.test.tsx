@@ -85,6 +85,26 @@ describe('authentication', () => {
     expect(window.location.search).toBe('?returnUrl=%2Faccount')
   })
 
+  it('makes an account with no email address and signs in', async () => {
+    window.history.replaceState(null, '', '/register')
+    const calls = mockApi({
+      'POST /auth/refresh': () => problem(401, 'session_expired'),
+      'GET /auth/providers': () => Response.json({ providers: [], accountsWithoutEmail: true }),
+      'POST /auth/register': () => new Response(null, { status: 202 }),
+      'POST /auth/sign-in': () => session(),
+    })
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.type(await screen.findByLabelText('Public name'), 'Ana')
+    await waitFor(() => expect(screen.queryByLabelText('Email address')).not.toBeInTheDocument())
+    await user.type(screen.getByLabelText('Password'), 'correct horse battery')
+    await user.click(screen.getByRole('button', { name: 'Make the account' }))
+
+    await waitFor(() => expect(window.location.pathname).toBe('/'))
+    expect(calls.find((call) => call.key === 'POST /auth/sign-in')?.body).toEqual({ email: 'Ana', password: 'correct horse battery' })
+  })
+
   it('shows the field errors of the registration', async () => {
     window.history.replaceState(null, '', '/register')
     mockApi({

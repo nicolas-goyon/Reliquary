@@ -99,6 +99,31 @@ internal sealed class AccountService(
     }
 
     /// <summary>
+    /// Creates an account with a public name and a password, and no email address. The setting <see cref="AuthOptions.AllowAccountsWithoutEmail"/> enables it.
+    /// </summary>
+    /// <returns><see langword="false"/> when an account with the name exists.</returns>
+    public async Task<bool> RegisterWithoutEmailAsync(string displayName, string password, string language, CancellationToken cancellationToken)
+    {
+        var email = AccountValidation.PlaceholderEmail(displayName);
+        if (await store.FindByEmailAsync(email, cancellationToken) is not null)
+        {
+            return false;
+        }
+
+        var now = time.GetUtcNow();
+        var account = NewAccount(email, email, displayName.Trim(), language, now);
+        account.PasswordHash = Hasher.HashPassword(account, password);
+        account.EmailCheckedAt = now.UtcDateTime;
+        if (!await CreateAsync(account, null, cancellationToken))
+        {
+            return false;
+        }
+
+        logger.AccountCreated(account.Id, "no_email");
+        return true;
+    }
+
+    /// <summary>
     /// Creates an account with a checked email address and sends no email. The demo data uses it.
     /// </summary>
     /// <returns><see langword="false"/> when an account with the address exists.</returns>
@@ -164,9 +189,19 @@ internal sealed class AccountService(
         return true;
     }
 
-    public async Task<(SignInStatus Status, Session? Session)> SignInAsync(string email, string password, CancellationToken cancellationToken)
+    /// <summary>
+    /// Starts a web session with a password.
+    /// </summary>
+    /// <param name="identifier">The email address, or the public name of an account with no email address.</param>
+    /// <param name="password">The password.</param>
+    /// <param name="cancellationToken">A token that stops the operation.</param>
+    /// <returns>The status, and the session when the sign-in is correct.</returns>
+    public async Task<(SignInStatus Status, Session? Session)> SignInAsync(string identifier, string password, CancellationToken cancellationToken)
     {
-        var account = await store.FindByEmailAsync(AccountValidation.NormalizeEmail(email), cancellationToken);
+        var email = Settings.AllowAccountsWithoutEmail && !identifier.Contains('@', StringComparison.Ordinal)
+            ? AccountValidation.PlaceholderEmail(identifier)
+            : AccountValidation.NormalizeEmail(identifier);
+        var account = await store.FindByEmailAsync(email, cancellationToken);
         if (account?.PasswordHash is null)
         {
             Hasher.VerifyHashedPassword(new AccountRow(), UnknownAccountHash, password);

@@ -1,4 +1,6 @@
 using System.Net.Mail;
+using System.Security.Cryptography;
+using System.Text;
 using Reliquary.BuildingBlocks.Api;
 
 namespace Reliquary.Accounts.Security;
@@ -16,6 +18,9 @@ internal static class AccountValidation
 
     /// <summary>The maximum length of a display name.</summary>
     public const int MaxDisplayNameLength = 50;
+
+    /// <summary>The domain of the internal address of an account with no email address. The domain "invalid" cannot receive emails.</summary>
+    public const string PlaceholderEmailDomain = "no-email.reliquary.invalid";
 
     /// <summary>The interface languages.</summary>
     public static readonly IReadOnlySet<string> Languages = new HashSet<string>(StringComparer.Ordinal) { "en", "fr" };
@@ -37,6 +42,17 @@ internal static class AccountValidation
         {
             yield return new FieldError(field, FieldErrorCodes.InvalidFormat, "The email address does not have a correct format.");
         }
+    }
+
+    /// <summary>
+    /// Makes the internal address of an account with no email address. The address is not a real address, and the same name always gives the same address.
+    /// </summary>
+    /// <param name="name">The public name.</param>
+    /// <returns>The internal address.</returns>
+    public static string PlaceholderEmail(string name)
+    {
+        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(NormalizeEmail(name)));
+        return $"{Convert.ToHexStringLower(hash.AsSpan(0, 16))}@{PlaceholderEmailDomain}";
     }
 
     public static IEnumerable<FieldError> Password(string? password, string field = "password")

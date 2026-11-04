@@ -11,6 +11,9 @@ public static class AccountErrorCodes
     /// <summary>The user must open the link of the email before the first sign-in.</summary>
     public const string EmailNotChecked = "email_not_checked";
 
+    /// <summary>An account with no email address has the same public name.</summary>
+    public const string AccountNameTaken = "account_name_taken";
+
     /// <summary>The link of the email is not valid: the user opened it before, it expired, or it is not complete.</summary>
     public const string InvalidToken = "invalid_token";
 

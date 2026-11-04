@@ -144,6 +144,7 @@ The local infrastructure has Mailpit: open `http://localhost:18025` to read the 
 | `Auth:PublicUrl` | `http://localhost:5173` | The address of the web interface, for the links in the emails and the end of an OAuth sign-in. |
 | `Auth:AccessTokenLifetime` | `00:15:00` | The lifetime of an access token. |
 | `Auth:RefreshTokenLifetime` | `30.00:00:00` | The maximum time without a visit before the user must sign in again. |
+| `Auth:AllowAccountsWithoutEmail` | `false` | A user can make an account with a public name and a password, with no email address. Use it on a development instance only. |
 | `Auth:RequireCheckedEmail` | `true` | A new account with a password must check its address before the first sign-in. |
 | `Auth:EmailCheckLifetime` | `2.00:00:00` | The lifetime of the link of the address check. |
 | `Auth:PasswordResetLifetime` | `01:00:00` | The lifetime of the link of the password reset. |

@@ -21,11 +21,15 @@ export function SignInPage() {
   const [busy, setBusy] = useState(false)
   const [resent, setResent] = useState(false)
   const [providers, setProviders] = useState<string[]>([])
+  const [accountsWithoutEmail, setAccountsWithoutEmail] = useState(false)
 
   useEffect(() => {
     const controller = new AbortController()
     apiRequest<ProvidersResponse>('/auth/providers', { signal: controller.signal })
-      .then((response) => setProviders(response.providers))
+      .then((response) => {
+        setProviders(response.providers)
+        setAccountsWithoutEmail(response.accountsWithoutEmail)
+      })
       .catch(() => setProviders([]))
     return () => controller.abort()
   }, [])
@@ -57,7 +61,14 @@ export function SignInPage() {
     <section className="page page-narrow">
       <h1>{t('signIn.title')}</h1>
       <form className="form" onSubmit={(event) => void handleSubmit(event)} noValidate>
-        <TextField label={t('fields.email')} type="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} />
+        <TextField
+          label={t(accountsWithoutEmail ? 'fields.identifier' : 'fields.email')}
+          type={accountsWithoutEmail ? 'text' : 'email'}
+          autoComplete="username"
+          required
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+        />
         <TextField
           label={t('fields.password')}
           type="password"

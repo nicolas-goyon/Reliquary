@@ -104,6 +104,7 @@ Rules for the error codes:
 | `invalid_authentication` | 401 | The request has an access token or an API key, but it is not valid. This also applies to a public endpoint. |
 | `invalid_credentials` | 400 or 401 | The email address or the password is not correct. |
 | `email_not_checked` | 403 | The user must open the link of the email before the first sign-in. |
+| `account_name_taken` | 409 | An account with no email address has the same public name. |
 | `invalid_token` | 400 | The link of the email is not valid: the user opened it before, it expired, or it is not complete. |
 | `session_expired` | 401 | The refresh cookie is missing, expired or revoked. The user must sign in again. |
 | `api_key_limit` | 409 | The account has the maximum number of API keys. |

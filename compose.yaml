@@ -11,6 +11,10 @@ x-backend-environment: &backend-environment
   Auth__SigningKey: ${RELIQUARY_SIGNING_KEY:-bG9jYWwtaW5zdGFuY2Utb25seS1kby1ub3QtdXNlLWluLXByb2R1Y3Rpb24=}
   Auth__PublicUrl: http://localhost:${RELIQUARY_APP_PORT:-8080}
   Auth__AdministratorEmails__0: admin@reliquary.localhost
+  Auth__AllowAccountsWithoutEmail: ${RELIQUARY_ACCOUNTS_WITHOUT_EMAIL:-true}
+  Auth__RequireCheckedEmail: ${RELIQUARY_REQUIRE_CHECKED_EMAIL:-false}
+  Auth__Providers__Google__ClientId: ${RELIQUARY_GOOGLE_CLIENT_ID:-}
+  Auth__Providers__Google__ClientSecret: ${RELIQUARY_GOOGLE_CLIENT_SECRET:-}
   Email__From: Reliquary <noreply@reliquary.localhost>
   Email__Smtp__Host: mailpit
   Email__Smtp__Port: "1025"

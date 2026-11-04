@@ -39,6 +39,37 @@ public sealed class AuthFlowTests
     }
 
     [Fact]
+    public async Task UserMakesAnAccountWithNoEmailAndSignsInWithTheName()
+    {
+        await using var instance = await AccountsInstance.CreateAsync();
+        instance.Settings["Auth:AllowAccountsWithoutEmail"] = "true";
+        using var browser = instance.StartReplica().CreateBrowser();
+
+        var register = await browser.PostAsync("/api/v1/auth/register", new { displayName = "Ana Dev", password = Password, language = "fr" });
+        var duplicate = await browser.PostAsync("/api/v1/auth/register", new { displayName = " ana dev ", password = Password, language = "fr" });
+        var session = await browser.SignInAsync("ANA DEV", Password);
+        var wrong = await browser.PostAsync("/api/v1/auth/sign-in", new { email = "Ana Dev", password = "not the password" });
+
+        Assert.Equal(HttpStatusCode.Accepted, register.StatusCode);
+        Assert.Equal(HttpStatusCode.Conflict, duplicate.StatusCode);
+        Assert.Equal(AccountErrorCodes.AccountNameTaken, await duplicate.CodeAsync());
+        Assert.Equal("Ana Dev", session.Account.DisplayName);
+        Assert.Equal(HttpStatusCode.Unauthorized, wrong.StatusCode);
+        Assert.Empty(instance.Emails.Messages);
+    }
+
+    [Fact]
+    public async Task AccountWithNoEmailIsNotPossibleWhenTheSettingIsOff()
+    {
+        await using var instance = await AccountsInstance.CreateAsync();
+        using var browser = instance.StartReplica().CreateBrowser();
+
+        var register = await browser.PostAsync("/api/v1/auth/register", new { displayName = "Ana", password = Password, language = "fr" });
+
+        Assert.Equal(HttpStatusCode.BadRequest, register.StatusCode);
+    }
+
+    [Fact]
     public async Task RegistrationCreatesTheShardAssignmentAndTheEvent()
     {
         await using var instance = await AccountsInstance.CreateAsync();
