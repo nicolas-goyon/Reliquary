@@ -7,6 +7,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Added
 
+- The table engine and the goldfish mode: opening hand, London mulligan, draw, zones, tokens, counters, flip, life points and hand statistics.
 - The Forge visual style: new colors, the Manrope font, cards with art for the public decks, and a deck header with the commander art.
 - Purchase preferences on the deck lines: wanted or avoided printings, languages, minimum condition, foil and maximum price.
 - The purchase list of a deck or a variant: the cards of the deck minus the available cards of the collection.

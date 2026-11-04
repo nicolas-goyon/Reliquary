@@ -5,6 +5,7 @@ import { AccountDeletionPanel, DataExportPanel } from '../account/PersonalDataPa
 import { CommanderPanel, CurvePanel, DistributionPanel, DrawsPanel, ManaPanel } from '../components/analysis/AnalysisPanels'
 import { CombosPanel } from '../components/analysis/CombosPanel'
 import { ProxyAction } from '../components/proxies/ProxyAction'
+import { TestDeckAction } from '../components/table/TestDeckAction'
 import i18n from '../i18n'
 import type { SlotRegistry } from './registry'
 
@@ -22,6 +23,7 @@ export function registerCoreContributions(registry: SlotRegistry): void {
   registry.register('account.page', { id: 'core.delegations', order: 45, render: () => <DelegationsPanel /> })
   registry.register('account.page', { id: 'core.dataExport', order: 50, render: () => <DataExportPanel /> })
   registry.register('account.page', { id: 'core.deletion', order: 60, render: () => <AccountDeletionPanel /> })
+  registry.register('deck.actions', { id: 'core.test', order: 5, render: ({ deck }) => <TestDeckAction deck={deck} /> })
   registry.register('deck.actions', { id: 'core.proxies', order: 10, render: ({ deck }) => <ProxyAction deck={deck} /> })
 
   // The tabs of the deck analysis. The tab list calls the titles in each render, so the titles follow the language.

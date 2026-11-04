@@ -1,0 +1,57 @@
+{
+  "action": "Tester le deck",
+  "title": "Test : {{name}}",
+  "turn": "Tour {{turn}}",
+  "loading": "Chargement du deck.",
+  "zones": {
+    "library": "Bibliothèque",
+    "hand": "Main",
+    "battlefield": "Champ de bataille",
+    "graveyard": "Cimetière",
+    "exile": "Exil",
+    "command": "Zone de commandement"
+  },
+  "controls": {
+    "label": "Actions de table",
+    "draw": "Piocher",
+    "shuffle": "Mélanger",
+    "mulligan": "Mulligan",
+    "untapAll": "Tout dégager",
+    "nextTurn": "Tour suivant",
+    "restart": "Nouvelle partie"
+  },
+  "life": {
+    "label": "Points de vie",
+    "increase": "Ajouter un point de vie",
+    "decrease": "Retirer un point de vie"
+  },
+  "card": {
+    "play": "Jouer {{name}}",
+    "tap": "Engager ou dégager {{name}}",
+    "bottom": "Mettre {{name}} sous la bibliothèque",
+    "moveTo": "Déplacer {{name}} vers",
+    "move": "Déplacer",
+    "flip": "Retourner {{name}}",
+    "addCounter": "Ajouter un marqueur sur {{name}}",
+    "removeCounter": "Retirer un marqueur de {{name}}",
+    "counters_one": "{{count}} marqueur",
+    "counters_other": "{{count}} marqueurs",
+    "back": "Dos de carte"
+  },
+  "mulligan": {
+    "bottom_one": "Choisissez {{count}} carte de votre main. Elle va sous la bibliothèque.",
+    "bottom_other": "Choisissez {{count}} cartes de votre main. Elles vont sous la bibliothèque."
+  },
+  "token": {
+    "name": "Nom du jeton",
+    "create": "Créer un jeton"
+  },
+  "statistics": {
+    "title": "Statistiques de main",
+    "samples": "Résultat de {{count}} mains de départ aléatoires.",
+    "averageLands": "Terrains en moyenne par main",
+    "keepable": "Mains avec 2 à 4 terrains",
+    "landsInHand_one": "{{count}} terrain en main",
+    "landsInHand_other": "{{count}} terrains en main"
+  }
+}

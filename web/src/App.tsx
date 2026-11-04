@@ -21,6 +21,7 @@ import { LocationsPage } from './pages/LocationsPage'
 import { MovementsPage } from './pages/MovementsPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { SignInPage } from './pages/SignInPage'
+import { TablePage } from './pages/TablePage'
 import { TransitionPlanPage } from './pages/TransitionPlanPage'
 import { AuthProvider } from './auth/AuthProvider'
 import { useAuth } from './auth/session'
@@ -42,6 +43,7 @@ const repositoryUrl = 'https://github.com/nicolas-goyon/reliquary'
 const patternRoutes: { pattern: RegExp; render(match: RegExpMatchArray): ReactNode }[] = [
   { pattern: /^\/cards\/([0-9a-f-]{36})$/, render: (match) => <CardPage key={match[1]} id={match[1]} /> },
   { pattern: /^\/decks\/([0-9a-f-]{36})$/, render: (match) => <DeckPage key={match[1]} id={match[1]} /> },
+  { pattern: /^\/decks\/([0-9a-f-]{36})\/test$/, render: (match) => <TablePage key={match[1]} id={match[1]} /> },
   { pattern: /^\/decks\/([0-9a-f-]{36})\/transition-plan$/, render: (match) => <TransitionPlanPage key={match[1]} id={match[1]} /> },
 
   { pattern: /^\/decks\/([0-9a-f-]{36})\/purchase-list$/, render: (match) => <PurchaseListPage key={match[1]} id={match[1]} /> },
