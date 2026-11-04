@@ -46,6 +46,7 @@ Each record gives the context, the decision and its consequences.
 | [0036](0036-internal-api.md) | Internal API for the modules under `/internal/v1`, with its own OpenAPI document | Accepted |
 | [0037](0037-service-accounts-and-delegation-tokens.md) | Service accounts, delegations from the account page and delegation tokens with scopes | Accepted |
 | [0038](0038-proxy-pdf-in-the-browser.md) | The web app makes the PDF of the proxies, with jsPDF | Accepted |
+| [0040](0040-table-engine-in-the-browser.md) | The table engine runs in the browser | Accepted |
 
 ## Open decisions
 
