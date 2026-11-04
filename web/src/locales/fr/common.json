@@ -89,6 +89,7 @@
     "delegation_limit": "Vous avez le nombre maximal de délégations. Révoquez une délégation, puis réessayez.",
     "provider_not_enabled": "Ce service de connexion n’est pas disponible sur cette instance.",
     "external_sign_in_failed": "La connexion avec le service externe a échoué. Réessayez.",
+    "account_name_taken": "Un compte porte déjà ce nom public. Choisissez un autre nom.",
     "external_email_missing": "Le service externe n’a pas fourni d’adresse e-mail. Utilisez une autre méthode de connexion.",
     "external_email_not_verified": "Le service externe n’a pas vérifié votre adresse e-mail. Vérifiez l’adresse sur ce service, ou connectez-vous avec votre mot de passe.",
     "search_syntax_error": "La recherche contient une erreur de syntaxe. Corrigez la recherche, puis réessayez.",
