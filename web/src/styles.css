@@ -1719,32 +1719,6 @@ kbd {
   color: var(--color-text-muted);
 }
 
-/* The table of the deck testing modes. */
-.table-status {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem 1.25rem;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-
-.table-life {
-  display: inline-flex;
-  gap: 0.5rem;
-  align-items: center;
-  font-size: 1.5rem;
-  font-weight: 800;
-}
-
-.table-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 17rem;
-  gap: 1rem;
-  align-items: start;
-}
-
-.table-zone {
-  padding: 0.75rem;
 
 /* The Forge rules: the shell. */
 h1,
@@ -1905,12 +1879,6 @@ button,
   background-color: var(--color-surface);
 }
 
-.table-zone + .table-zone {
-  margin-top: 1rem;
-}
-
-.table-zone h2 {
-  margin: 0 0 0.5rem;
 .deck-header-art {
   position: relative;
   overflow: hidden;
@@ -1953,6 +1921,88 @@ button,
 }
 
 .zone h2 {
+  color: var(--color-link);
+  font-size: 0.875rem;
+}
+
+.deck-line {
+  font-size: 0.875rem;
+}
+
+.deck-line-name a {
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.deck-line-name a:hover {
+  color: var(--color-link);
+}
+
+@media (max-width: 37.5rem) {
+  .app-header {
+    position: static;
+    padding: 0.5rem 1rem;
+  }
+
+  .app-header nav {
+    flex-basis: 100%;
+    order: 1;
+  }
+
+  .app-footer {
+    padding: 0.75rem 1rem;
+  }
+
+  .app-main {
+    padding: 1.5rem 1rem;
+  }
+
+  .deck-header {
+    padding: 1rem;
+  }
+
+  .deck-header h1 {
+    font-size: 1.75rem;
+  }
+}
+
+/* The table of the deck testing modes. */
+.table-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.table-life {
+  display: inline-flex;
+  gap: 0.5rem;
+  align-items: center;
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+.table-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 17rem;
+  gap: 1rem;
+  align-items: start;
+}
+
+.table-zone {
+  padding: 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  background-color: var(--color-surface);
+}
+
+.table-zone + .table-zone {
+  margin-top: 1rem;
+}
+
+.table-zone h2 {
+  margin: 0 0 0.5rem;
   color: var(--color-link);
   font-size: 0.875rem;
 }
@@ -2051,43 +2101,5 @@ button,
 @media (prefers-reduced-motion: reduce) {
   .table-card-face {
     transition: none;
-.deck-line {
-  font-size: 0.875rem;
-}
-
-.deck-line-name a {
-  color: var(--color-text);
-  text-decoration: none;
-}
-
-.deck-line-name a:hover {
-  color: var(--color-link);
-}
-
-@media (max-width: 37.5rem) {
-  .app-header {
-    position: static;
-    padding: 0.5rem 1rem;
-  }
-
-  .app-header nav {
-    flex-basis: 100%;
-    order: 1;
-  }
-
-  .app-footer {
-    padding: 0.75rem 1rem;
-  }
-
-  .app-main {
-    padding: 1.5rem 1rem;
-  }
-
-  .deck-header {
-    padding: 1rem;
-  }
-
-  .deck-header h1 {
-    font-size: 1.75rem;
   }
 }
