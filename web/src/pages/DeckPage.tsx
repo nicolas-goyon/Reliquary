@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type DragEvent, type FormEvent } from 'react'
+import { useCallback, useEffect, useState, type CSSProperties, type DragEvent, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { AutocompleteItem } from '../api/cards'
 import { ApiError, apiRequest } from '../api/client'
@@ -176,8 +176,10 @@ function DeckHeader({ deck, onSave }: { deck: Deck; onSave(fields: { name?: stri
   }
 
   const total = deck.counts.commander + deck.counts.companion + deck.counts.main
+  const commander = deck.lines.find((line) => line.zone === 'commander')
+  const art = commander && lineImage(deck, commander)
   return (
-    <header className="deck-header">
+    <header className={art ? 'deck-header deck-header-art' : 'deck-header'} style={art ? ({ '--deck-art': `url("${art}")` } as CSSProperties) : undefined}>
       {editing ? (
         <form className="form-inline" onSubmit={handleSubmit}>
           <TextField label={t('fields.name')} value={name} maxLength={100} autoFocus onChange={(event) => setName(event.target.value)} />
