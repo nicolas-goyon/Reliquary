@@ -1,22 +1,22 @@
-/* Base styles of the skeleton. The design system of Reliquary replaces them later. */
+/* The Forge style. The tokens come first, then the rules of each part of the interface. */
 :root {
-  --color-background: #fbfaf8;
+  --color-background: #f3f4f7;
   --color-surface: #ffffff;
-  --color-text: #1d1b19;
-  --color-text-muted: #57524c;
-  --color-border: #d9d4cd;
+  --color-text: #171b24;
+  --color-text-muted: #525b6b;
+  --color-border: #dde1e8;
   /* The border of a form control or a button. It has a contrast of 3:1 or more with the background and the surface. */
-  --color-control-border: #8a837b;
-  --color-link: #1f5fa8;
-  --color-focus: #1f5fa8;
-  --color-primary: #1f5fa8;
+  --color-control-border: #858d9c;
+  --color-link: #a8440c;
+  --color-focus: #a8440c;
+  --color-primary: #a8440c;
   --color-on-primary: #ffffff;
   --color-danger: #b42318;
   --color-success: #2e7d32;
-  --color-warning: #9a6700;
-  --color-chart-bar: #3f72b0;
-  --color-chart-track: #ece8e2;
-  --color-chart-heat: #1f5fa8;
+  --color-warning: #8a5c00;
+  --color-chart-bar: #c2571a;
+  --color-chart-track: #e9ebf0;
+  --color-chart-heat: #a8440c;
   --color-mana-w: #e6dfa8;
   --color-mana-u: #3f86c4;
   --color-mana-b: #5b524c;
@@ -25,7 +25,7 @@
   --color-mana-c: #a39d96;
 
   color-scheme: light dark;
-  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-family: 'Manrope Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
   line-height: 1.5;
   color: var(--color-text);
   background-color: var(--color-background);
@@ -43,22 +43,22 @@
 
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --color-background: #161514;
-  --color-surface: #201f1d;
-  --color-text: #f1eee9;
-  --color-text-muted: #b8b2aa;
-  --color-border: #3a3733;
-  --color-control-border: #77716a;
-  --color-link: #8cb8f0;
-  --color-focus: #8cb8f0;
-  --color-primary: #8cb8f0;
-  --color-on-primary: #10233a;
+  --color-background: #0f1218;
+  --color-surface: #161a23;
+  --color-text: #e8ecf3;
+  --color-text-muted: #a3adbf;
+  --color-border: #262c39;
+  --color-control-border: #667085;
+  --color-link: #ff9a5c;
+  --color-focus: #ff9a5c;
+  --color-primary: #ff9a5c;
+  --color-on-primary: #23130a;
   --color-danger: #f3877b;
   --color-success: #8fd19e;
   --color-warning: #e3b341;
-  --color-chart-bar: #7fa9de;
-  --color-chart-track: #2c2a27;
-  --color-chart-heat: #8cb8f0;
+  --color-chart-bar: #ff9a5c;
+  --color-chart-track: #232936;
+  --color-chart-heat: #ff9a5c;
   --color-mana-w: #efe7b4;
   --color-mana-u: #6aa8dc;
   --color-mana-b: #9a8f87;
@@ -70,22 +70,22 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
     color-scheme: dark;
-    --color-background: #161514;
-    --color-surface: #201f1d;
-    --color-text: #f1eee9;
-    --color-text-muted: #b8b2aa;
-    --color-border: #3a3733;
-    --color-control-border: #77716a;
-    --color-link: #8cb8f0;
-    --color-focus: #8cb8f0;
-    --color-primary: #8cb8f0;
-    --color-on-primary: #10233a;
+    --color-background: #0f1218;
+    --color-surface: #161a23;
+    --color-text: #e8ecf3;
+    --color-text-muted: #a3adbf;
+    --color-border: #262c39;
+    --color-control-border: #667085;
+    --color-link: #ff9a5c;
+    --color-focus: #ff9a5c;
+    --color-primary: #ff9a5c;
+    --color-on-primary: #23130a;
     --color-danger: #f3877b;
     --color-success: #8fd19e;
     --color-warning: #e3b341;
-    --color-chart-bar: #7fa9de;
-    --color-chart-track: #2c2a27;
-    --color-chart-heat: #8cb8f0;
+    --color-chart-bar: #ff9a5c;
+    --color-chart-track: #232936;
+    --color-chart-heat: #ff9a5c;
     --color-mana-w: #efe7b4;
     --color-mana-u: #6aa8dc;
     --color-mana-b: #9a8f87;
@@ -161,9 +161,9 @@ a {
 .app-main {
   flex: 1;
   width: 100%;
-  max-width: 48rem;
+  max-width: 80rem;
   margin: 0 auto;
-  padding: 2rem 1rem;
+  padding: 2rem;
 }
 
 .tagline {
@@ -1717,4 +1717,251 @@ kbd {
 .collection-suggestion {
   margin: 0.25rem 0 0;
   color: var(--color-text-muted);
+}
+
+
+/* The Forge rules: the shell. */
+h1,
+h2,
+h3 {
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  flex-wrap: wrap;
+  gap: 0.5rem 2rem;
+  justify-content: flex-start;
+  padding: 0.5rem 2rem;
+}
+
+.app-header nav {
+  flex: 1;
+}
+
+.app-name {
+  color: var(--color-text);
+  font-size: 1.25rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.app-header a {
+  color: var(--color-text);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.app-header .app-name {
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.app-header a:hover,
+.app-header a[aria-current='page'] {
+  color: var(--color-link);
+}
+
+.app-header-end {
+  font-size: 0.875rem;
+}
+
+.language-switcher select,
+.theme-switcher select {
+  min-height: 2.25rem;
+  background-color: var(--color-surface);
+}
+
+.app-header .button-link {
+  color: var(--color-text);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.app-footer {
+  padding: 0.75rem 2rem;
+}
+
+/* The Forge rules: the controls. */
+button,
+.button {
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.button-primary {
+  font-weight: 700;
+}
+
+.field label {
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.field input,
+.field select {
+  border-radius: 0.5rem;
+}
+
+.panel,
+.zone {
+  border-radius: 0.75rem;
+}
+
+/* The Forge rules: the public decks. */
+.public-decks {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
+  gap: 1.125rem;
+}
+
+.public-deck {
+  flex-direction: column;
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* The art is in the top half of a card image. */
+.public-deck-image.card-image {
+  width: 100%;
+  height: 8rem;
+  aspect-ratio: auto;
+  border-radius: 0;
+  object-position: 50% 18%;
+}
+
+.public-deck-body {
+  width: 100%;
+  padding: 0.75rem 0.875rem 0.875rem;
+}
+
+.public-deck-body a {
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.public-deck-body :is(h2, h3) a:hover {
+  color: var(--color-link);
+}
+
+.deck-filters .field {
+  flex: 1 1 9rem;
+  min-width: 0;
+}
+
+.deck-filters .field input,
+.deck-filters .field select {
+  width: 100%;
+  min-width: 0;
+}
+
+.deck-filters .form-actions {
+  flex-basis: 100%;
+}
+
+.deck-filters {
+  margin-bottom: 1.25rem;
+}
+
+/* The Forge rules: the deck page. */
+.deck-header {
+  margin-bottom: 1rem;
+  padding: 1.5rem 1.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  background-color: var(--color-surface);
+}
+
+.deck-header-art {
+  position: relative;
+  overflow: hidden;
+  border-color: transparent;
+  background-color: #000000;
+  background-image: var(--deck-art);
+  background-position: 50% 22%;
+  background-size: cover;
+  color: #ffffff;
+}
+
+/* The scrim keeps the text readable on each image. */
+.deck-header-art::before {
+  position: absolute;
+  inset: 0;
+  background-color: rgb(0 0 0 / 62%);
+  content: '';
+}
+
+.deck-header-art > * {
+  position: relative;
+}
+
+.deck-header-art .deck-meta,
+.deck-header-art .field-hint {
+  color: #ffffff;
+}
+
+.deck-header-art a,
+.deck-header-art .button-link {
+  color: #ffc9a6;
+}
+
+.deck-header h1 {
+  font-size: 2.25rem;
+}
+
+.zones {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 24rem), 1fr));
+}
+
+.zone h2 {
+  color: var(--color-link);
+  font-size: 0.875rem;
+}
+
+.deck-line {
+  font-size: 0.875rem;
+}
+
+.deck-line-name a {
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.deck-line-name a:hover {
+  color: var(--color-link);
+}
+
+@media (max-width: 37.5rem) {
+  .app-header {
+    position: static;
+    padding: 0.5rem 1rem;
+  }
+
+  .app-header nav {
+    flex-basis: 100%;
+    order: 1;
+  }
+
+  .app-footer {
+    padding: 0.75rem 1rem;
+  }
+
+  .app-main {
+    padding: 1.5rem 1rem;
+  }
+
+  .deck-header {
+    padding: 1rem;
+  }
+
+  .deck-header h1 {
+    font-size: 1.75rem;
+  }
 }

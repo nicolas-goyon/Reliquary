@@ -28,6 +28,7 @@ import { LanguageSwitcher } from './components/LanguageSwitcher'
 import { ShortcutHelp } from './components/ShortcutHelp'
 import { ThemeSwitcher } from './components/ThemeSwitcher'
 import { UpdatePrompt } from './components/UpdatePrompt'
+import { Link } from './router/Link'
 import { useLocation } from './router/navigation'
 import { usePageTitle } from './router/pageTitle'
 import { shortcutElement, takePendingFocus, useShortcuts } from './shortcuts/shortcuts'
@@ -127,7 +128,9 @@ function Shell() {
         {t('navigation.skipToContent')}
       </a>
       <header className="app-header">
-        <span className="app-name">{t('app.name')}</span>
+        <Link to="/" className="app-name">
+          {t('app.name')}
+        </Link>
         <nav aria-label={t('navigation.label')}>
           <Slot name="navigation" context={{ account }} className="slot-inline" />
         </nav>
