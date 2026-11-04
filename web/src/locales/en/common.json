@@ -89,6 +89,7 @@
     "delegation_limit": "You have the maximum number of delegations. Revoke a delegation, then try again.",
     "provider_not_enabled": "This sign-in service is not available on this instance.",
     "external_sign_in_failed": "The sign-in with the external service failed. Try again.",
+    "account_name_taken": "An account has this public name. Use a different name.",
     "external_email_missing": "The external service did not give an email address. Use a different sign-in method.",
     "external_email_not_verified": "The external service did not check your email address. Check the address on that service, or sign in with your password.",
     "search_syntax_error": "The search has a syntax error. Correct the search, then try again.",

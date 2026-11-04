@@ -10,9 +10,10 @@ using Reliquary.BuildingBlocks.Api;
 
 namespace Reliquary.Accounts.Auth;
 
-/// <summary>The OAuth providers that the instance enables.</summary>
-/// <param name="Providers">The names of the providers, for example <c>github</c>.</param>
-public sealed record ProvidersResponse(IReadOnlyList<string> Providers);
+/// <summary>The sign-in methods that the instance enables.</summary>
+/// <param name="Providers">The names of the OAuth providers, for example <c>github</c>.</param>
+/// <param name="AccountsWithoutEmail">Whether a user can make an account with no email address.</param>
+public sealed record ProvidersResponse(IReadOnlyList<string> Providers, bool AccountsWithoutEmail);
 
 /// <summary>
 /// The endpoints of the sign-in with an OAuth provider: Google, GitHub or Discord.
@@ -36,9 +37,9 @@ internal static class ExternalEndpoints
     {
         var auth = api.MapGroup("/auth").WithTags("Authentication");
 
-        auth.MapGet("/providers", (EnabledProviders providers) => TypedResults.Ok(new ProvidersResponse(providers.Names)))
+        auth.MapGet("/providers", (EnabledProviders providers, IOptions<AuthOptions> options) => TypedResults.Ok(new ProvidersResponse(providers.Names, options.Value.AllowAccountsWithoutEmail)))
             .WithName("ListProviders")
-            .WithSummary("Lists the OAuth providers that the instance enables.");
+            .WithSummary("Lists the sign-in methods that the instance enables.");
 
         auth.MapGet("/external/complete", CompleteAsync)
             .WithName("CompleteExternalSignIn")

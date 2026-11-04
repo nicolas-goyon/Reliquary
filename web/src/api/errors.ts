@@ -15,6 +15,7 @@ export const translatedErrorCodes = [
   'invalid_credentials',
   'email_not_checked',
   'invalid_token',
+  'account_name_taken',
   'session_expired',
   'api_key_limit',
   'delegation_limit',

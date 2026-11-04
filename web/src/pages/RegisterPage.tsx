@@ -1,14 +1,19 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { apiRequest } from '../api/client'
+import type { ProvidersResponse } from '../api/types'
+import { useAuth } from '../auth/session'
 import { ErrorAlert, SuccessAlert, TextField } from '../components/Forms'
 import { isSupportedLanguage, supportedLanguages } from '../i18n'
 import { Link } from '../router/Link'
+import { navigate } from '../router/navigation'
 
 /** The registration page. */
 export function RegisterPage() {
   const { t, i18n } = useTranslation('auth')
   const { t: tCommon } = useTranslation()
+  const { signIn } = useAuth()
+  const [accountsWithoutEmail, setAccountsWithoutEmail] = useState(false)
   const [email, setEmail] = useState('')
   const [displayName, setDisplayName] = useState('')
   const [password, setPassword] = useState('')
@@ -17,13 +22,26 @@ export function RegisterPage() {
   const [busy, setBusy] = useState(false)
   const [done, setDone] = useState(false)
 
+  useEffect(() => {
+    const controller = new AbortController()
+    apiRequest<ProvidersResponse>('/auth/providers', { signal: controller.signal })
+      .then((response) => setAccountsWithoutEmail(response.accountsWithoutEmail))
+      .catch(() => setAccountsWithoutEmail(false))
+    return () => controller.abort()
+  }, [])
+
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
     setBusy(true)
     setError(null)
     try {
-      await apiRequest('/auth/register', { method: 'POST', body: { email, displayName, password, language } })
-      setDone(true)
+      await apiRequest('/auth/register', { method: 'POST', body: { email: accountsWithoutEmail ? null : email, displayName, password, language } })
+      if (accountsWithoutEmail) {
+        await signIn(displayName, password)
+        navigate('/', { replace: true })
+      } else {
+        setDone(true)
+      }
     } catch (caught) {
       setError(caught)
     } finally {
@@ -47,7 +65,9 @@ export function RegisterPage() {
     <section className="page page-narrow">
       <h1>{t('register.title')}</h1>
       <form className="form" onSubmit={(event) => void handleSubmit(event)} noValidate>
-        <TextField label={t('fields.email')} field="email" error={error} type="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} />
+        {!accountsWithoutEmail && (
+          <TextField label={t('fields.email')} field="email" error={error} type="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} />
+        )}
         <TextField
           label={t('fields.displayName')}
           field="displayName"

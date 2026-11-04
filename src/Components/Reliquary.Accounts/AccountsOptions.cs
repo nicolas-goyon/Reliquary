@@ -29,6 +29,12 @@ public sealed class AuthOptions
     /// <summary>Gets or sets whether a user must check the email address before the first sign-in with a password.</summary>
     public bool RequireCheckedEmail { get; set; } = true;
 
+    /// <summary>
+    /// Gets or sets whether a user can make an account with a public name and a password, with no email address.
+    /// Use it on a development instance only: an account with no address cannot reset its password.
+    /// </summary>
+    public bool AllowAccountsWithoutEmail { get; set; }
+
     /// <summary>Gets or sets the lifetime of the link that checks an email address.</summary>
     public TimeSpan EmailCheckLifetime { get; set; } = TimeSpan.FromHours(48);
 

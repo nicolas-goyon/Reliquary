@@ -42,4 +42,5 @@ export interface CreatedApiKey {
 
 export interface ProvidersResponse {
   providers: string[]
+  accountsWithoutEmail: boolean
 }

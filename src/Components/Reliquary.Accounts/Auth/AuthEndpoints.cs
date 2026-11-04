@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.Options;
 using Reliquary.Accounts.Data;
 using Reliquary.Accounts.Security;
 using Reliquary.BuildingBlocks.Api;
@@ -68,7 +69,7 @@ internal static class AuthEndpoints
 
         limited.MapPost("/register", RegisterAsync)
             .WithName("Register")
-            .WithSummary("Makes a new account with a password. The response is the same when the address has an account, and the API then sends an email to the address.");
+            .WithSummary("Makes a new account with a password. The response is the same when the address has an account, and the API then sends an email to the address. When the instance allows accounts with no email address, you can omit the address. The response is then 409 when the public name has an account.");
 
         limited.MapPost("/email-check", CheckEmailAsync)
             .WithName("CheckEmail")
@@ -99,8 +100,13 @@ internal static class AuthEndpoints
             .WithSummary("Stops the web session of the refresh cookie and deletes the cookie.");
     }
 
-    private static async Task<Results<Accepted, ProblemHttpResult>> RegisterAsync(RegisterRequest request, AccountService accounts, CancellationToken cancellationToken)
+    private static async Task<Results<Accepted, ProblemHttpResult>> RegisterAsync(RegisterRequest request, AccountService accounts, IOptions<AuthOptions> options, CancellationToken cancellationToken)
     {
+        if (options.Value.AllowAccountsWithoutEmail && string.IsNullOrWhiteSpace(request.Email))
+        {
+            return await RegisterWithoutEmailAsync(request, accounts, cancellationToken);
+        }
+
         var errors = AccountValidation.Email(request.Email)
             .Concat(AccountValidation.Password(request.Password))
             .Concat(AccountValidation.DisplayName(request.DisplayName, required: true))
@@ -113,6 +119,29 @@ internal static class AuthEndpoints
 
         await accounts.RegisterAsync(request.Email!, request.Password!, request.DisplayName!, request.Language!, cancellationToken);
         return TypedResults.Accepted((string?)null);
+    }
+
+    private static async Task<Results<Accepted, ProblemHttpResult>> RegisterWithoutEmailAsync(RegisterRequest request, AccountService accounts, CancellationToken cancellationToken)
+    {
+        var errors = AccountValidation.Password(request.Password)
+            .Concat(AccountValidation.DisplayName(request.DisplayName, required: true))
+            .Concat(AccountValidation.Language(request.Language, required: true))
+            .ToList();
+
+        // The sign-in uses the character @ to find an email address, so a name with this character cannot sign in.
+        if (request.DisplayName?.Contains('@', StringComparison.Ordinal) == true)
+        {
+            errors.Add(new FieldError("displayName", FieldErrorCodes.InvalidFormat, "The public name must not contain the character @."));
+        }
+
+        if (errors.Count > 0)
+        {
+            return ApiProblems.Validation(errors);
+        }
+
+        return await accounts.RegisterWithoutEmailAsync(request.DisplayName!, request.Password!, request.Language!, cancellationToken)
+            ? TypedResults.Accepted((string?)null)
+            : ApiProblems.Problem(StatusCodes.Status409Conflict, AccountErrorCodes.AccountNameTaken, "An account has this public name. Use a different name.");
     }
 
     private static async Task<Results<NoContent, ProblemHttpResult>> CheckEmailAsync(TokenRequest request, AccountService accounts, CancellationToken cancellationToken)
