@@ -205,7 +205,7 @@ internal sealed class CardCatalog(IDatabase database) : ICardCatalog
     /// Normalizes a name for the lookup. Some tools write the halves of a split card with three slashes.
     /// </summary>
     internal static string NormalizeForLookup(string name) =>
-        NameNormalizer.Normalize(name.Replace("///", "//", StringComparison.Ordinal));
+        NameNormalizer.Normalize(name.Replace("///", "//", StringComparison.Ordinal).Replace(" / ", " // ", StringComparison.Ordinal));
 
     private const string PrintingColumns = """
         p.id, p.oracle_id as OracleId, p.set_code as SetCode, p.collector_number as CollectorNumber, p.lang, p.finishes,

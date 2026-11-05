@@ -5,8 +5,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## Unreleased
 
+### Fixed
+
+- The deck import finds a card with two faces when the name has one slash, as in the text of Moxfield: `Front / Back`.
+
 ### Added
 
+- The recipe `just full-cards`: it imports all the cards into a local instance with Docker Compose.
 - The table engine and the goldfish mode: opening hand, London mulligan, draw, zones, tokens, counters, flip, life points and hand statistics.
 - The Forge visual style: new colors, the Manrope font, cards with art for the public decks, and a deck header with the commander art.
 - Purchase preferences on the deck lines: wanted or avoided printings, languages, minimum condition, foil and maximum price.

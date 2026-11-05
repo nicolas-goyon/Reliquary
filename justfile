@@ -52,6 +52,10 @@ restore-backup name:
 demo:
     {{ compose }} --profile app run --rm migrate demo load
 
+# Import all the cards from Scryfall into the local instance. Set RELIQUARY_CARD_IMPORT_DIRECTORY to nothing in .env to keep them up to date.
+full-cards:
+    {{ compose }} --profile app run --rm --env Cards__Import__Directory= migrate jobs run cards.import --force
+
 # Start Grafana and the OpenTelemetry collector of the local instance on http://localhost:3000.
 observability:
     {{ compose }} --profile observability up --detach observability
