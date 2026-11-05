@@ -5,6 +5,25 @@ namespace Reliquary.Decks.Tests;
 public sealed class DeckTextTests
 {
     [Fact]
+    public void ParserReadsTheBulkEditTextOfMoxfield()
+    {
+        var result = DeckText.Parse("""
+            1 Barad-dûr (LTR) 253
+            1 Lazotep Plating (PLST) WAR-59
+            1 Sundering Eruption / Volcanic Fissure (MH3) 248
+            1 Dreadhorde Twins (WAR) 126 *F*
+            """);
+
+        Assert.Empty(result.Errors);
+        Assert.Collection(
+            result.Lines,
+            line => Assert.Equal(("Barad-dûr", "ltr", "253"), (line.Name, line.SetCode, line.CollectorNumber)),
+            line => Assert.Equal(("Lazotep Plating", "plst", "WAR-59"), (line.Name, line.SetCode, line.CollectorNumber)),
+            line => Assert.Equal(("Sundering Eruption / Volcanic Fissure", "mh3", "248"), (line.Name, line.SetCode, line.CollectorNumber)),
+            line => Assert.Equal(("Dreadhorde Twins", "126", "foil"), (line.Name, line.CollectorNumber, line.Finish)));
+    }
+
+    [Fact]
     public void ParserReadsEachElementOfTheSyntax()
     {
         var result = DeckText.Parse("""

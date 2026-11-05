@@ -19,7 +19,8 @@ x-backend-environment: &backend-environment
   Email__Smtp__Host: mailpit
   Email__Smtp__Port: "1025"
   Email__Smtp__Security: None
-  Cards__Import__Directory: /data/cards
+  Cards__Import__Directory: ${RELIQUARY_CARD_IMPORT_DIRECTORY-/data/cards}
+  Cards__Import__BulkType: ${RELIQUARY_CARD_BULK_TYPE:-default_cards}
   Recommendations__Enabled: ${RELIQUARY_RECOMMENDATIONS:-false}
 
 services:

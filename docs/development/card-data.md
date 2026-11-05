@@ -37,6 +37,13 @@ To download less, use the smaller card file:
 Cards__Import__BulkType=default_cards just cli jobs run cards.import --force
 ```
 
+On a local instance with Docker Compose, the demo dataset has 342 cards only.
+To import all the cards with the file `default_cards`:
+
+1. In the `.env` file, add the line `RELIQUARY_CARD_IMPORT_DIRECTORY=` with no value.
+2. Run `just up`.
+3. Run `just full-cards`.
+
 ## Import local files
 
 To work without the network, put the files in a folder and set `Cards:Import:Directory`:
