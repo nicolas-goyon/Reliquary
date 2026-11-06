@@ -20,7 +20,7 @@ Users want to import a deck from its link. Before this decision, they had to exp
 - The HTTP client does not follow redirects.
 - The setting `Decks:LinkImport:MoxfieldUserAgent` enables Moxfield.
 - When the setting is empty, the API gives the error `deck_link_site_unavailable`. The interface then tells the user to paste the text.
-- The API converts the data of the other site to the deck text format, so the import of a link and the import of a text give the same result.
+- The API converts the data of the other site to the deck text format. Thus the import of a link and the import of a text give the same result.
 
 ## Consequences
 
