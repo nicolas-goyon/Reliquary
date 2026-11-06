@@ -113,6 +113,9 @@ Rules for the error codes:
 | `scope_missing` | 403 | The delegation token does not have the scope of the endpoint, or the endpoint does not accept delegation tokens. |
 | `delegation_limit` | 409 | The account has the maximum number of active delegations. |
 | `service_account_name_taken` | 409 | A service account with the same name exists. |
+| `deck_link_site_unavailable` | 503 | The instance cannot read the decks of this site. For Moxfield, an administrator must set `Decks:LinkImport:MoxfieldUserAgent`. |
+| `deck_link_not_found` | 422 | The site has no public deck at the link. |
+| `deck_link_site_failed` | 502 | The other site did not give the deck. |
 | `deck_text_invalid` | 400 | The deck text has lines that the API cannot use. The member `lineErrors` gives the number, the reason code and the text of each line. |
 | `deck_version_conflict` | 409 | The deck changed since the client read it. Read the deck again, then repeat the change. |
 | `report_exists` | 409 | The user has an open report about the item. |

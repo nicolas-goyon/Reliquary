@@ -11,6 +11,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Added
 
+- The deck import from a link of Moxfield or Archidekt. Moxfield needs a user agent that Moxfield support allows.
 - The recipe `just full-cards`: it imports all the cards into a local instance with Docker Compose.
 - The table engine and the goldfish mode: opening hand, London mulligan, draw, zones, tokens, counters, flip, life points and hand statistics.
 - The Forge visual style: new colors, the Manrope font, cards with art for the public decks, and a deck header with the commander art.

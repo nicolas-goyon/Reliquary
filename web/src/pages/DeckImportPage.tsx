@@ -17,6 +17,8 @@ export function DeckImportPage() {
   const fileId = useId()
   const textId = useId()
   const formatId = useId()
+  const linkId = useId()
+  const [link, setLink] = useState('')
   const [content, setContent] = useState('')
   const [fileFormat, setFileFormat] = useState<FileFormat>('moxfield')
   const [name, setName] = useState('')
@@ -57,16 +59,19 @@ export function DeckImportPage() {
     setLineErrors([])
     const columnMap = Object.fromEntries(Object.entries(columns).filter(([, header]) => header))
     try {
-      const result = await request<{ deck: Deck; warnings: ImportWarning[] }>('/decks/import', {
+      const fromLink = link.trim().length > 0
+      const result = await request<{ deck: Deck; warnings: ImportWarning[] }>(fromLink ? '/decks/import-link' : '/decks/import', {
         method: 'POST',
-        body: {
-          format: fileFormat,
-          content,
-          name,
-          deckFormat,
-          visibility,
-          ...(fileFormat === 'csv' && Object.keys(columnMap).length > 0 ? { columns: columnMap } : {}),
-        },
+        body: fromLink
+          ? { url: link.trim(), name, deckFormat, visibility }
+          : {
+              format: fileFormat,
+              content,
+              name,
+              deckFormat,
+              visibility,
+              ...(fileFormat === 'csv' && Object.keys(columnMap).length > 0 ? { columns: columnMap } : {}),
+            },
       })
       if (result.warnings.length === 0) {
         navigate(`/decks/${result.deck.id}`)
@@ -100,6 +105,12 @@ export function DeckImportPage() {
       <h1>{t('import.title')}</h1>
       <form className="form" onSubmit={(event) => void handleSubmit(event)} noValidate>
         <div className="field">
+          <label htmlFor={linkId}>{t('import.link')}</label>
+          <input id={linkId} type="url" inputMode="url" autoComplete="off" placeholder="https://moxfield.com/decks/…" value={link} onChange={(event) => setLink(event.target.value)} />
+          <p className="field-hint">{t('import.linkHint')}</p>
+        </div>
+        <p className="import-or">{t('import.or')}</p>
+        <div className="field">
           <label htmlFor={fileId}>{t('import.file')}</label>
           <input id={fileId} type="file" accept=".txt,.dek,.csv,.dck" onChange={(event) => void handleFile(event)} />
           <p className="field-hint">{t('import.fileHint')}</p>
@@ -125,7 +136,7 @@ export function DeckImportPage() {
         <LineErrorList title={t('import.errors')} lines={lineErrors} />
         <ErrorAlert error={error} />
         <div className="form-actions">
-          <button type="submit" className="button-primary" disabled={content.trim().length === 0}>
+          <button type="submit" className="button-primary" disabled={content.trim().length === 0 && link.trim().length === 0}>
             {t('import.submit')}
           </button>
           <Link to="/decks">{t('actions.cancel')}</Link>

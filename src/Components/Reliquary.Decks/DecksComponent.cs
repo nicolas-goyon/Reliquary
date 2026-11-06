@@ -79,6 +79,20 @@ public sealed class DecksComponent : ICoreComponent
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         });
         services.AddSingleton<IRecommendationSource, RecommanderSource>();
+        services.Configure<DeckLinkOptions>(configuration.GetSection(DeckLinkOptions.Section));
+        services.AddHttpClient(DeckLinkReader.HttpClientName, (provider, client) =>
+            {
+                var settings = provider.GetRequiredService<IOptions<DeckLinkOptions>>().Value;
+                var version = typeof(DecksComponent).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion?.Split('+')[0] ?? "0";
+                client.Timeout = settings.Timeout;
+                client.MaxResponseContentBufferSize = settings.MaxResponseBytes;
+                client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Reliquary", version));
+                client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("(+https://github.com/nicolas-goyon/reliquary)"));
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            })
+            // The API builds the address from the link. A redirect must not send the request to another host.
+            .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler { AllowAutoRedirect = false });
+        services.AddSingleton<DeckLinkReader>();
         services.AddSingleton<IRecommendationCache, RedisRecommendationCache>();
         services.AddSingleton<RecommendationService>();
     }

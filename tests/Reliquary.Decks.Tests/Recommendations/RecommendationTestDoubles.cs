@@ -39,11 +39,14 @@ internal sealed class RecordedHandler(Func<HttpRequestMessage, HttpResponseMessa
 
     public ConcurrentQueue<(Uri? Uri, string Body)> Requests { get; } = new();
 
+    public ConcurrentQueue<string> UserAgents { get; } = new();
+
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         Interlocked.Increment(ref count);
         var body = request.Content is null ? string.Empty : await request.Content.ReadAsStringAsync(cancellationToken);
         Requests.Enqueue((request.RequestUri, body));
+        UserAgents.Enqueue(request.Headers.UserAgent.ToString());
         return answer(request);
     }
 }

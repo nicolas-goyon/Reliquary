@@ -7,9 +7,33 @@ Terms follow the [glossary](../glossary.md).
 
 - `POST /api/v1/decks/import` makes a new deck from a file.
   The body gives the file format, the content of the file, and the name, the format and the visibility of the new deck.
+- `POST /api/v1/decks/import-link` makes a new deck from the link of a public or unlisted deck on Moxfield or Archidekt.
+  The body gives the link, and the name, the format and the visibility of the new deck. When the name is empty, the deck gets the name of the deck on the other site.
 - `GET /api/v1/decks/{id}/export?format=moxfield` gives a deck as a file: its name, its media type and its content.
 
 The import accepts all the card names: Oracle names, face names, localized names and alternate names.
+
+## Import from a link
+
+The API accepts these links:
+
+| Site | Link | Request of the API |
+| --- | --- | --- |
+| Moxfield | `https://moxfield.com/decks/{id}` | `https://api2.moxfield.com/v3/decks/all/{id}` |
+| Archidekt | `https://archidekt.com/decks/{number}/{name}` | `https://archidekt.com/api/decks/{number}/` |
+
+The API makes the request itself. It does not follow a redirect, and it accepts a response of 8 MB or less.
+
+Moxfield has no public API, and Cloudflare blocks the requests of a server.
+To read the decks of Moxfield, ask Moxfield support for a user agent on their allow list.
+Then set `Decks:LinkImport:MoxfieldUserAgent`, or `RELIQUARY_MOXFIELD_USER_AGENT` with Docker Compose.
+When the setting is empty, the API gives the error `deck_link_site_unavailable` for a Moxfield link.
+ADR [0041](../decisions/0041-deck-import-from-a-link.md) gives the reasons.
+
+The import keeps these values:
+
+- Moxfield: the boards Commander, Companion, Mainboard, Sideboard and Maybeboard, the quantity, the printing and the finish. The import ignores the tokens.
+- Archidekt: the quantity, the printing and the finish. A category Commander, Companion, Sideboard or Maybeboard gives the zone. A category that is not in the deck gives the zone Considering. The other categories become local tags.
 
 ## Formats
 

@@ -21,6 +21,7 @@ x-backend-environment: &backend-environment
   Email__Smtp__Security: None
   Cards__Import__Directory: ${RELIQUARY_CARD_IMPORT_DIRECTORY-/data/cards}
   Cards__Import__BulkType: ${RELIQUARY_CARD_BULK_TYPE:-default_cards}
+  Decks__LinkImport__MoxfieldUserAgent: ${RELIQUARY_MOXFIELD_USER_AGENT:-}
   Recommendations__Enabled: ${RELIQUARY_RECOMMENDATIONS:-false}
 
 services:

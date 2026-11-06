@@ -52,6 +52,11 @@ internal static class DeckEndpoints
             .WithSummary("Creates a deck from a file of another tool. The API makes no deck when a line has an error. See docs/development/deck-import-export.md.")
             .RequireScope(Scopes.DecksWrite);
 
+        owner.MapPost("/import-link", ImportLinkAsync)
+            .WithName("ImportDeckFromLink")
+            .WithSummary("Creates a deck from the link of a public deck on Moxfield or Archidekt. The API makes no deck when a line has an error. Moxfield needs the setting Decks:LinkImport:MoxfieldUserAgent.")
+            .RequireScope(Scopes.DecksWrite);
+
         decks.MapGet("/{deckId:guid}", GetAsync)
             .WithName("GetDeck")
             .WithSummary("Gets a deck with its lines and the data of its cards. The owner gets each deck. The other users and the visitors get the unlisted and public decks.")
@@ -623,6 +628,38 @@ internal static class DeckEndpoints
             user.GetAccountId(),
             format,
             request.Content!,
+            new NewDeck(name, request.DeckFormat ?? "commander", request.Visibility ?? "private", null, string.Empty, null),
+            cancellationToken);
+        var view = await decks.GetAsync(user.GetAccountId(), deck.Id, cancellationToken);
+        return TypedResults.Created(
+            $"{ApiRoutes.Base}/decks/{deck.Id}",
+            new ImportDeckResponse(await ToResponseAsync(view, catalog, cancellationToken), [.. warnings.Select(warning => new DeckTextLineError(warning.Line, warning.Code, warning.Text))]));
+    }
+
+    private static async Task<Results<Created<ImportDeckResponse>, ProblemHttpResult>> ImportLinkAsync(
+        ImportDeckLinkRequest request, ClaimsPrincipal user, DeckLinkReader reader, DeckExchangeService exchange, DeckService decks, ICardCatalog catalog, CancellationToken cancellationToken)
+    {
+        var errors = new List<FieldError>();
+        var link = DeckLinks.Parse(request.Url);
+        if (link is null)
+        {
+            errors.Add(new FieldError("url", string.IsNullOrWhiteSpace(request.Url) ? FieldErrorCodes.Required : FieldErrorCodes.InvalidFormat, "Give the address of a deck page on Moxfield or Archidekt."));
+        }
+
+        var requestedName = string.IsNullOrWhiteSpace(request.Name) ? null : request.Name.Trim();
+        ValidateDeckFields(errors, requestedName ?? "Imported deck", request.DeckFormat, request.Visibility, null);
+        if (errors.Count > 0)
+        {
+            return ApiProblems.Validation(errors);
+        }
+
+        var linked = await reader.ReadAsync(link!, cancellationToken);
+        var remoteName = linked.Name.Trim();
+        var name = requestedName ?? (remoteName.Length is > 0 and <= DeckRules.MaxNameLength ? remoteName : "Imported deck");
+        var (deck, warnings) = await exchange.ImportAsync(
+            user.GetAccountId(),
+            DeckFormats.All["text"],
+            linked.Text,
             new NewDeck(name, request.DeckFormat ?? "commander", request.Visibility ?? "private", null, string.Empty, null),
             cancellationToken);
         var view = await decks.GetAsync(user.GetAccountId(), deck.Id, cancellationToken);

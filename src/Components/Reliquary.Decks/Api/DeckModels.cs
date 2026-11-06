@@ -297,6 +297,13 @@ public sealed record CopyDeckRequest(string? Name, string? Visibility, Guid? Fol
 /// <param name="Columns">For the format <c>csv</c> only: the header of the column of each field, for example <c>{"name": "Card"}</c>.</param>
 public sealed record ImportDeckRequest(string? Format, string? Content, string? Name, string? DeckFormat, string? Visibility, IReadOnlyDictionary<string, string>? Columns = null);
 
+/// <summary>A request to import a deck from a link of another site.</summary>
+/// <param name="Url">The address of the deck page on Moxfield or Archidekt.</param>
+/// <param name="Name">The name of the new deck. When it is empty, the deck gets the name of the deck on the other site.</param>
+/// <param name="DeckFormat">The format of the new deck. The default is <c>commander</c>.</param>
+/// <param name="Visibility">The visibility of the new deck. The default is <c>private</c>.</param>
+public sealed record ImportDeckLinkRequest(string? Url, string? Name, string? DeckFormat, string? Visibility);
+
 /// <summary>The result of an import.</summary>
 /// <param name="Deck">The new deck.</param>
 /// <param name="Warnings">The lines that the import changed, for example a printing that it did not find. The line stays in the deck with no printing.</param>

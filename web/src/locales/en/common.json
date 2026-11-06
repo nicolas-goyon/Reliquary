@@ -104,7 +104,10 @@
     "not_enough_cards": "The origin does not have enough copies of the card. Give a lower quantity.",
     "inventory_applied": "Reliquary applied this inventory before. Start a new inventory.",
     "deck_assembled": "The deck is an assembled deck. Release it first, then try again.",
-    "deck_not_assembled": "The deck is not an assembled deck. Mark a version as the assembled version first."
+    "deck_not_assembled": "The deck is not an assembled deck. Mark a version as the assembled version first.",
+    "deck_link_site_unavailable": "This instance cannot read the decks of this site. On the site, export the deck as text and paste the text below.",
+    "deck_link_not_found": "The site has no public deck at this link. Make sure that the deck is public or unlisted.",
+    "deck_link_site_failed": "The other site did not give the deck. Try again later, or export the deck as text and paste the text."
   },
   "fieldErrors": {
     "required": "This field is necessary.",

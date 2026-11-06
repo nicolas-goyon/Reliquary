@@ -210,6 +210,9 @@
   },
   "import": {
     "title": "Importer un deck",
+    "link": "Lien d’un deck",
+    "linkHint": "Un deck public ou non répertorié de Moxfield ou d’Archidekt. Avec un lien, l’application ignore le fichier.",
+    "or": "Ou donnez un fichier",
     "file": "Fichier",
     "fileHint": "Choisissez un fichier, ou collez la liste dans le champ ci-dessous.",
     "content": "Contenu du fichier",
