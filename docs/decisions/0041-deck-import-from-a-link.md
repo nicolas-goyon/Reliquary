@@ -15,7 +15,9 @@ Users want to import a deck from its link. Before this decision, they had to exp
 ## Decision
 
 - The endpoint `POST /decks/import-link` reads the deck on the server and uses the usual import.
-- The API accepts only the deck pages of Moxfield and Archidekt. It makes the address of the request from the ID of the deck, so a user cannot send a request to another server. The HTTP client does not follow redirects.
+- The API accepts only the deck pages of Moxfield and Archidekt.
+- The API makes the address of the request from the ID of the deck. Thus a user cannot send a request to another server.
+- The HTTP client does not follow redirects.
 - The setting `Decks:LinkImport:MoxfieldUserAgent` enables Moxfield.
 - When the setting is empty, the API gives the error `deck_link_site_unavailable`. The interface then tells the user to paste the text.
 - The API converts the data of the other site to the deck text format, so the import of a link and the import of a text give the same result.
