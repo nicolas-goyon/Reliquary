@@ -13,6 +13,8 @@ Terms follow the [glossary](../glossary.md).
 
 The three modes use the same code. A local instance and a pre-production instance can run on the same computer at the same time.
 
+The three modes work on Linux and on Windows with WSL 2. The pages have a tab for each system. [Install the software](requirements.md#install-the-software) tells how to prepare the computer.
+
 ```mermaid
 flowchart LR
     source["Source code<br/>(a branch)"] -->|just up| local["Local instance<br/>localhost:8080"]

@@ -29,9 +29,40 @@ A production instance uses the same files and the same script as a [pre-producti
 - An email server (SMTP) for the account emails.
 - A place on a different computer for the backups.
 
+The server must use Linux. Docker Desktop is not for servers.
+You can manage the server from a Linux computer or from a Windows computer.
+
+## Connect to the server
+
+Run the commands of this page on the server, through SSH:
+
+/// tab | Linux
+
+```shell
+ssh your-user@your-server
+```
+
+///
+
+/// tab | Windows
+
+Windows 10 and Windows 11 contain the SSH client. In PowerShell:
+
+```powershell
+ssh your-user@your-server
+```
+
+///
+
 ## Install
 
-1. On the server, make a user for Reliquary. Add this user to the group `docker`.
+1. On the server, make a user for Reliquary, and add this user to the group `docker`:
+
+   ```shell
+   sudo adduser reliquary
+   sudo usermod --append --groups docker reliquary
+   ```
+
 2. As this user, make the folder of the instance and get the script of the release:
 
    ```shell
@@ -93,6 +124,31 @@ The script makes a backup before each update. Make a backup each day too, and co
    ```
 
 2. Copy the folder `backups` to a different computer each day, for example with `rsync` or `restic`.
+   On the different computer:
+
+   /// tab | Linux
+
+   ```shell
+   rsync --archive reliquary@your-server:reliquary/backups/ ~/reliquary-backups/
+   ```
+
+   To do it each day, add this command to the `crontab` of the different computer.
+
+   ///
+
+   /// tab | Windows
+
+   In PowerShell:
+
+   ```powershell
+   New-Item -ItemType Directory -Force "$HOME\reliquary-backups" | Out-Null
+   scp -r "reliquary@your-server:reliquary/backups/*" "$HOME\reliquary-backups\"
+   ```
+
+   The command `scp` copies all the backups each time. To do it each day, make a task in the Task Scheduler of Windows.
+
+   ///
+
 3. Also keep a copy of the `.env` file in a safe place. A backup is not usable without the database password and the signing key.
 
 To restore a backup on a new server, install the same version, stop the API and the worker, and run the CLI restore.

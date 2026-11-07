@@ -13,13 +13,27 @@ Terms follow the [glossary](../glossary.md).
 | [just](https://just.systems) | 1.40 or later | Development commands |
 | Python | 3.11 or later | Check of the writing rules |
 
-On Windows, run the `just` recipes in Git Bash or in WSL.
+[Install the software](../deployment/requirements.md#install-the-software) tells how to install Docker and `just`.
+
+/// tab | Linux
+
+Run the commands of this guide in a terminal of your desktop.
+
+///
+
+/// tab | Windows
+
+Run the commands of this guide in the Ubuntu terminal of WSL 2, and install the .NET SDK and Node.js in WSL.
+Keep the repository in the Linux file system, for example in `~/reliquary`, and not in `/mnt/c`.
+[Develop with hot reload](../deployment/local-development.md#develop-with-hot-reload) gives the commands and the editor settings.
+
+///
 
 ## Try a full local instance
 
 You need Docker with Compose and `just` only.
 
-1. Clone the repository and open its folder.
+1. Clone the repository and open its folder: `git clone https://github.com/nicolas-goyon/reliquary.git && cd reliquary`.
 2. Copy `.env.example` to `.env`. Change the ports if other programs use them.
 3. Run `just up`.
    The command builds the images, applies the migrations, loads the demo data and starts the instance.
@@ -40,7 +54,7 @@ A deployed instance uses the published images and keeps its data after each upda
 
 ## Start Reliquary for development
 
-1. Clone the repository and open its folder.
+1. Clone the repository and open its folder: `git clone https://github.com/nicolas-goyon/reliquary.git && cd reliquary`.
 2. Copy `.env.example` to `.env`. Change the ports if other programs use them.
 3. Run `just infra` to start PostgreSQL, Redis and Mailpit.
 4. Run `just restore` to install the .NET packages and the npm packages.
