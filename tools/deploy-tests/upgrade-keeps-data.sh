@@ -82,6 +82,8 @@ sed -i.bak \
     -e "s|^RELIQUARY_MAILPIT_PORT=.*|RELIQUARY_MAILPIT_PORT=18135|" \
     -e "s|^RELIQUARY_PUBLIC_URL=.*|RELIQUARY_PUBLIC_URL=$base|" \
     "$home/.env"
+# The test checks the script of this commit, so the script must not replace itself with the script of an image.
+printf 'RELIQUARY_SELF_UPDATE=false\n' >> "$home/.env"
 if [ -n "${RELIQUARY_IMAGE_PREFIX:-}" ]; then
     printf 'RELIQUARY_IMAGE_PREFIX=%s\n' "$RELIQUARY_IMAGE_PREFIX" >> "$home/.env"
 fi
