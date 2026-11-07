@@ -1,0 +1,106 @@
+name: Release
+
+# Prepares and publishes the releases with release-please. See docs/decisions/0043-releases-with-release-please.md.
+# 1. A pull request merges develop into main with a merge commit.
+# 2. On main, release-please opens or updates the release pull request "chore(release): release X.Y.Z".
+#    The job "changelog" moves the section "Unreleased" of CHANGELOG.md to the section of X.Y.Z in this pull request.
+# 3. When the release pull request merges, release-please creates the tag vX.Y.Z and the GitHub release.
+#    The job "images" publishes the images X.Y.Z, X.Y and latest.
+#    The job "back-merge" opens a pull request that merges main into develop.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release-please:
+    name: Release please
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+      prs_created: ${{ steps.release.outputs.prs_created }}
+      pr: ${{ steps.release.outputs.pr }}
+    steps:
+      - id: release
+        uses: googleapis/release-please-action@v5
+        with:
+          target-branch: main
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+  changelog:
+    name: Changelog of the release pull request
+    needs: release-please
+    if: needs.release-please.outputs.prs_created == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Read the release pull request
+        id: pr
+        env:
+          PR: ${{ needs.release-please.outputs.pr }}
+        run: |
+          set -euo pipefail
+          branch=$(printf '%s' "$PR" | jq -r '.headBranchName')
+          version=$(printf '%s' "$PR" | jq -r '.title' | sed -n 's/.*release \([0-9][^ ]*\)$/\1/p')
+          if [ -z "$version" ]; then
+            echo "The title of the release pull request has no version."
+            exit 1
+          fi
+          echo "branch=$branch" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ steps.pr.outputs.branch }}
+
+      - name: Move the section "Unreleased" to the release
+        env:
+          VERSION: ${{ steps.pr.outputs.version }}
+        run: |
+          set -euo pipefail
+          python3 tools/release/changelog.py "$VERSION"
+          if git diff --quiet; then
+            echo "CHANGELOG.md already has the section of $VERSION."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git commit --all --message "chore(release): move the unreleased notes to $VERSION"
+          git push
+
+  images:
+    name: Images of the release
+    needs: release-please
+    if: needs.release-please.outputs.release_created == 'true'
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/images.yml
+    with:
+      release-tag: ${{ needs.release-please.outputs.tag_name }}
+
+  back-merge:
+    name: Merge main into develop
+    needs: release-please
+    if: needs.release-please.outputs.release_created == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Open the pull request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.release-please.outputs.tag_name }}
+        run: |
+          set -euo pipefail
+          gh pr create --repo "$GITHUB_REPOSITORY" --base develop --head main \
+            --title "chore(release): merge $TAG into develop" \
+            --body "This pull request brings the version and the changelog of $TAG back to develop. Merge it with \"Create a merge commit\" (ADR 0005)."

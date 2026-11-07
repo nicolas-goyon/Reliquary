@@ -117,6 +117,10 @@ lint-docs:
     python3 tools/ste-lint/lint-docs.py
     npx --yes markdownlint-cli2@0.24.0
 
+# Open the pull request that merges develop into main. Then release-please prepares the release. See docs/decisions/0043-releases-with-release-please.md.
+release-start:
+    gh pr create --base main --head develop --title "chore(release): merge develop into main" --body "Merge with \"Create a merge commit\". Then release-please opens the release pull request on main."
+
 # Correct the format of the .NET code.
 format:
     dotnet format
