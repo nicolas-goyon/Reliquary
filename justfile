@@ -4,6 +4,7 @@
 set dotenv-load := true
 
 instance := env("RELIQUARY_INSTANCE", "dev")
+_instance_check := if instance == "preprod" { error("The instance name \"preprod\" is for the deployed instance. Use a different RELIQUARY_INSTANCE.") } else { "" }
 compose := "docker compose --project-name reliquary-" + instance + " --file compose.yaml"
 
 # List the recipes.
@@ -63,6 +64,27 @@ observability:
 # Show the state of the local instance.
 ps:
     {{ compose }} --profile app ps
+
+# The folder of the pre-production instance. See docs/deployment/docker-compose.md.
+preprod_home := env("RELIQUARY_PREPROD_HOME", home_directory() / "reliquary-preprod")
+
+# Install the script of the pre-production instance and make its .env file with new secrets. VERSION is "develop", "latest" or a release number.
+preprod-install version="develop":
+    mkdir -p "{{ preprod_home }}"
+    cp deploy/reliquary-update deploy/.env.example "{{ preprod_home }}/"
+    "{{ preprod_home }}/reliquary-update" --init {{ version }}
+
+# Update the pre-production instance to VERSION ("develop", "latest" or a release number), with a backup before the update.
+preprod-update *version:
+    "{{ preprod_home }}/reliquary-update" {{ version }}
+
+# Start the previous version of the pre-production instance again, with the data of the backup before the last update.
+preprod-rollback:
+    "{{ preprod_home }}/reliquary-update" --rollback
+
+# Show the version and the containers of the pre-production instance.
+preprod-status:
+    "{{ preprod_home }}/reliquary-update" --status
 
 # Install the .NET packages and the npm packages.
 restore:
