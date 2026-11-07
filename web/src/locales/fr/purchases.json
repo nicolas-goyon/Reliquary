@@ -1,0 +1,128 @@
+{
+  "preferences": {
+    "open": "Préférences",
+    "openLabel": "Définir les préférences d’achat de {{name}}",
+    "marker": "Préférences d’achat",
+    "markerLabel": "{{name}} a des préférences d’achat",
+    "title": "Préférences d’achat de {{name}}",
+    "help": "La liste d’achat utilise ces préférences pour trouver les exemplaires de la collection qui conviennent à la ligne.",
+    "languages": "Langues",
+    "languagesHint": "Ne sélectionnez aucune langue pour accepter toutes les langues.",
+    "foil": "Foil",
+    "foilValues": {
+      "any": "Foil ou non foil",
+      "foil": "Foil uniquement",
+      "nonfoil": "Non foil uniquement"
+    },
+    "minimumCondition": "État minimum",
+    "anyCondition": "Tous les états",
+    "printings": "Impressions",
+    "printingsHint": "Sans impression voulue, chaque impression qui n’est pas évitée convient à la ligne.",
+    "printingChoice": "Choix pour l’impression {{printing}}",
+    "choices": {
+      "accepted": "Acceptée",
+      "wanted": "Voulue",
+      "avoided": "Évitée"
+    },
+    "loadingPrintings": "Chargement des impressions.",
+    "printingsError": "Les impressions n’ont pas pu être chargées. Vous pouvez définir les autres préférences.",
+    "morePrintings": "Afficher plus d’impressions",
+    "otherPrinting": "Impression absente de la liste",
+    "maximumPrice": "Prix maximum",
+    "amount": "Montant",
+    "currency": "Devise",
+    "priceHint": "Laissez le montant vide pour ne fixer aucune limite. L’export en texte brut affiche le prix maximum.",
+    "invalidPrice": "Le montant n’est pas valide. Indiquez un montant supérieur à 0, par exemple 2.50.",
+    "save": "Enregistrer les préférences",
+    "clear": "Supprimer les préférences",
+    "cancel": "Annuler"
+  },
+  "page": {
+    "title": "Liste d’achat de {{name}}",
+    "loading": "Calcul de la liste d’achat.",
+    "openDeck": "Ouvrir le deck",
+    "open": "Liste d’achat",
+    "help": "La liste d’achat compare le deck avec les cartes disponibles de la collection. Les cartes restantes sont les cartes à acheter.",
+    "includeTokens": "Inclure les jetons",
+    "caption": "Lignes de la liste d’achat",
+    "columns": {
+      "card": "Carte",
+      "zone": "Zone",
+      "needed": "Nécessaires",
+      "inDeck": "Dans le deck",
+      "fromCollection": "Depuis la collection",
+      "toBuy": "À acheter"
+    },
+    "total_one": "{{count}} carte à acheter",
+    "total_other": "{{count}} cartes à acheter",
+    "nothingToBuy": "La collection contient toutes les cartes du deck. Aucune carte n’est à acheter.",
+    "empty": "Le deck n’a aucune carte dans ces zones.",
+    "fromCopy": "{{count}} dans {{place}}",
+    "locked": "Verrouillé",
+    "lockedHint": "Déverrouillez {{place}} avant de déplacer les cartes.",
+    "lockedAlert": "Des cartes sont dans un emplacement verrouillé. Déverrouillez l’emplacement avant de déplacer les cartes.",
+    "closestTitle": "Exemplaires les plus proches",
+    "noClosest": "La collection n’a aucun autre exemplaire de cette carte.",
+    "closest": "{{reasons}} : {{copies}} dans {{place}}",
+    "copies_one": "{{count}} exemplaire en {{language}}",
+    "copies_other": "{{count}} exemplaires en {{language}}",
+    "reasons": {
+      "printingWanted": "Pas une impression voulue",
+      "printingAvoided": "Impression évitée",
+      "language": "Pas en {{languages}}",
+      "finishFoil": "Pas en foil",
+      "finishNonfoil": "En foil, et la ligne veut du non foil",
+      "finish": "Autre finition",
+      "condition": "État moins bon que {{condition}}",
+      "conditionUnknown": "Autre état",
+      "unavailable": "Dans un autre deck monté ou dans un emplacement non piochable"
+    }
+  },
+  "languages": {
+    "en": "anglais",
+    "es": "espagnol",
+    "fr": "français",
+    "de": "allemand",
+    "it": "italien",
+    "pt": "portugais",
+    "ja": "japonais",
+    "ko": "coréen",
+    "ru": "russe",
+    "zhs": "chinois simplifié",
+    "zht": "chinois traditionnel",
+    "he": "hébreu",
+    "la": "latin",
+    "grc": "grec ancien",
+    "ar": "arabe",
+    "sa": "sanskrit",
+    "ph": "phyrexian",
+    "qya": "quenya"
+  },
+  "export": {
+    "title": "Exporter les cartes à acheter",
+    "format": "Format",
+    "formats": {
+      "cardmarket": "Liste de souhaits Cardmarket",
+      "tcgplayer": "Saisie en masse TCGplayer",
+      "text": "Texte brut"
+    },
+    "hints": {
+      "cardmarket": "Une ligne par carte : la quantité et le nom anglais de la carte. Collez le texte dans une liste de souhaits de Cardmarket.",
+      "tcgplayer": "Une ligne par carte : la quantité, le nom anglais de la carte et le code de l’extension quand la ligne veut une seule impression. Collez le texte dans la saisie en masse de TCGplayer.",
+      "text": "Une ligne par carte, avec l’impression et le prix maximum quand la ligne les a."
+    },
+    "preview": "Texte de l’export",
+    "copy": "Copier le texte",
+    "download": "Télécharger le fichier",
+    "copied": "Le texte est dans le presse-papiers.",
+    "copyFailed": "Le navigateur n’a pas copié le texte. Téléchargez le fichier."
+  },
+  "proxies": {
+    "print": "Imprimer des proxies des cartes à acheter",
+    "working": "Création du fichier PDF.",
+    "done": "Le fichier PDF est prêt.",
+    "failed_one": "{{count}} image n’a pas pu être chargée. Le fichier PDF affiche le nom de la carte dans son cadre.",
+    "failed_other": "{{count}} images n’ont pas pu être chargées. Le fichier PDF affiche le nom des cartes dans leur cadre.",
+    "error": "La création du fichier PDF a échoué. Réessayez."
+  }
+}

@@ -1,0 +1,562 @@
+{
+  "fields": {
+    "name": "Name",
+    "format": "Format",
+    "visibility": "Visibility"
+  },
+  "formats": {
+    "commander": "Commander",
+    "brawl": "Brawl",
+    "standardbrawl": "Standard Brawl",
+    "oathbreaker": "Oathbreaker",
+    "paupercommander": "Pauper Commander",
+    "standard": "Standard",
+    "pioneer": "Pioneer",
+    "modern": "Modern",
+    "legacy": "Legacy",
+    "vintage": "Vintage",
+    "pauper": "Pauper",
+    "freeform": "Freeform"
+  },
+  "visibility": {
+    "private": "Private",
+    "unlisted": "Unlisted",
+    "public": "Public"
+  },
+  "visibilityHint": {
+    "private": "Only you can open the deck.",
+    "unlisted": "The people with the link can open the deck.",
+    "public": "All the people can find and open the deck."
+  },
+  "zones": {
+    "commander": "Commander",
+    "companion": "Companion",
+    "main": "Main deck",
+    "sideboard": "Sideboard",
+    "considering": "Considering",
+    "tokens": "Tokens"
+  },
+  "finishes": {
+    "foil": "Foil",
+    "etched": "Etched",
+    "nonfoil": "Nonfoil"
+  },
+  "categories": {
+    "ramp": "Ramp",
+    "card_draw": "Card draw",
+    "targeted_interaction": "Targeted interaction",
+    "board_wipe": "Board wipe",
+    "synergy": "Synergy",
+    "land": "Land",
+    "win_condition": "Win condition",
+    "protection": "Protection"
+  },
+  "autoTag": {
+    "open": "Auto-tag",
+    "title": "Auto-tag",
+    "help": "Auto-tag suggests the categories of each card from the Scryfall tags and the card text. Select the lines to change. Change the categories if necessary, then apply.",
+    "loading": "Loading the suggestions…",
+    "empty": "The deck has no card to tag.",
+    "noChange": "Each line already has the suggested categories.",
+    "onlyChanges": "Show only the changes",
+    "selectChanges": "Select all the changes",
+    "selectNone": "Clear the selection",
+    "tableCaption": "Suggested categories of the cards",
+    "columns": {
+      "apply": "Apply",
+      "card": "Card",
+      "current": "Current categories",
+      "suggested": "Suggested categories",
+      "reason": "Reason"
+    },
+    "select": "Apply the suggestion for {{name}}",
+    "edit": "Change the categories of {{name}}",
+    "editorLegend": "Categories of {{name}}",
+    "noCategory": "No category",
+    "source": {
+      "user_rule": "Your earlier choice",
+      "oracle_tag": "Scryfall tag",
+      "text_rule": "Card text",
+      "none": "No suggestion"
+    },
+    "reason": {
+      "oracleTag": "Scryfall tag: {{tag}}"
+    },
+    "ruleHint": "Each change of a suggestion becomes your rule for this card. The next suggestions use your rules first.",
+    "conflict": "The deck changed after auto-tag read it. Close auto-tag and open it again.",
+    "apply_one": "Apply {{count}} change",
+    "apply_other": "Apply {{count}} changes"
+  },
+  "actions": {
+    "save": "Save",
+    "cancel": "Cancel"
+  },
+  "list": {
+    "title": "My decks",
+    "create": "Make a deck",
+    "createSubmit": "Make the deck",
+    "empty": "You have no deck. Make your first deck.",
+    "cards": "Cards",
+    "updated": "Last change",
+    "more": "Show more decks",
+    "colors": "Colors",
+    "tags": "Deck tags",
+    "pinned": "Pinned",
+    "archived": "Archived",
+    "colorless": "Colorless"
+  },
+  "editor": {
+    "loading": "The application loads the deck.",
+    "actions": "Deck actions",
+    "rename": "Rename",
+    "textMode": "Text mode",
+    "visualMode": "Card mode",
+    "copy": "Copy the deck",
+    "delete": "Delete the deck",
+    "deleteConfirm": "Delete the deck \"{{name}}\"? You cannot undo this operation.",
+    "cardCount_one": "{{count}} card",
+    "cardCount_other": "{{count}} cards",
+    "original": "Original deck",
+    "addCard": "Add a card",
+    "addCardPlaceholder": "Type a card name in any language",
+    "zone": "Zone",
+    "emptyZone": "This zone has no card.",
+    "decrease": "Remove one {{name}}",
+    "increase": "Add one {{name}}",
+    "quantity": "Quantity of {{name}}",
+    "moveTo": "Zone of {{name}}",
+    "remove": "Remove {{name}} from the deck",
+    "export": "Export",
+    "tableMode": "Table mode"
+  },
+  "recommendations": {
+    "title": "Recommendations",
+    "loading": "The application loads the recommendations.",
+    "noCommander": "The deck has no commander. Put a card in the commander zone to get recommendations.",
+    "unavailable": "The recommendations are not available now. Try again later.",
+    "empty": "The source has no other card to recommend for these commanders.",
+    "addButton": "Add",
+    "considerButton": "Consider",
+    "addToMainLabel": "Add {{name}} to the main deck",
+    "addToConsideringLabel": "Add {{name}} to the considering zone",
+    "credit": "Recommendations by"
+  },
+  "legality": {
+    "legal": "The deck is legal in {{format}}.",
+    "title": "The deck is not legal in {{format}}",
+    "problems": {
+      "deck_size": "The deck has {{count}} cards. It must have {{limit}} cards.",
+      "too_many_copies": "The deck has {{count}} copies of {{card}}. The limit is {{limit}}.",
+      "sideboard_size": "The sideboard has {{count}} cards. The limit is {{limit}}.",
+      "card_banned": "This format bans {{card}}.",
+      "card_not_legal": "{{card}} is not legal in this format.",
+      "card_restricted": "This format restricts {{card}}: the deck can have one copy only.",
+      "commander_missing": "The deck has no commander. Put a card in the commander zone.",
+      "commander_not_allowed": "{{card}} cannot be a commander.",
+      "too_many_commanders": "The deck has more than two commanders.",
+      "commanders_cannot_pair": "The two commanders cannot be together. They need Partner, Friends forever, a Background or a Doctor pair.",
+      "outside_color_identity": "{{card}} is outside the color identity of the commanders.",
+      "companion_not_allowed": "{{card}} has no companion ability.",
+      "other": "The deck has a problem."
+    }
+  },
+  "text": {
+    "title": "Text mode",
+    "help": "One card for each line: quantity, name, optional set and number, #tags and -- note. The sections are Commander, Main, Sideboard, Considering and Tokens.",
+    "label": "Deck list",
+    "save": "Save the list",
+    "errors": "Some lines are not correct. The deck did not change.",
+    "lineError": {
+      "missing_name": "Line {{line}}: the line has no card name. \"{{text}}\"",
+      "quantity_out_of_range": "Line {{line}}: the quantity must be from 1 to 999. \"{{text}}\"",
+      "tag_too_long": "Line {{line}}: a tag is too long. \"{{text}}\"",
+      "unknown_category": "Line {{line}}: the category is not known. \"{{text}}\"",
+      "card_not_found": "Line {{line}}: no card has this name. \"{{text}}\"",
+      "printing_not_found": "Line {{line}}: the set and the number do not give a printing of this card. \"{{text}}\"",
+      "invalid_file": "Line {{line}}: the application cannot read the file. \"{{text}}\"",
+      "missing_column": "Line {{line}}: the file has no column for the card names. Select the column of the card names. \"{{text}}\"",
+      "unknown_zone": "Line {{line}}: the zone is not known. \"{{text}}\"",
+      "other": "Line {{line}}: the line is not correct. \"{{text}}\""
+    }
+  },
+  "copy": {
+    "defaultName": "Copy of {{name}}",
+    "submit": "Make the copy",
+    "signIn": "Sign in to copy this deck."
+  },
+  "fileFormats": {
+    "text": "Reliquary text",
+    "moxfield": "Moxfield",
+    "mtga": "MTG Arena",
+    "mtgo": "Magic Online (text)",
+    "dek": "Magic Online (.dek)",
+    "archidekt": "Archidekt",
+    "csv": "CSV",
+    "deckbox": "Deckbox (CSV)",
+    "manabox": "ManaBox (CSV)",
+    "dragonshield": "Dragon Shield (CSV)"
+  },
+  "csvFields": {
+    "quantity": "Quantity",
+    "name": "Card name",
+    "setCode": "Set code",
+    "collectorNumber": "Collector number",
+    "finish": "Finish",
+    "zone": "Zone",
+    "tags": "Tags",
+    "globalTags": "Global tags",
+    "categories": "Categories",
+    "note": "Note"
+  },
+  "import": {
+    "title": "Import a deck",
+    "link": "Link of a deck",
+    "linkHint": "A public or unlisted deck of Moxfield or Archidekt. When you give a link, the application ignores the file.",
+    "or": "Or give a file",
+    "file": "File",
+    "fileHint": "Select a file, or paste the list in the field below.",
+    "content": "Content of the file",
+    "fileFormat": "File format",
+    "columns": "Columns of the CSV file",
+    "automatic": "Automatic: {{header}}",
+    "noColumn": "No column",
+    "submit": "Import the deck",
+    "errors": "Some lines are not correct. The application did not make the deck.",
+    "warnings": "The application made the deck. Some lines changed:",
+    "open": "Open the deck \"{{name}}\""
+  },
+  "export": {
+    "title": "Export the deck",
+    "submit": "Download the file",
+    "hint": {
+      "text": "The file keeps all the data of the deck.",
+      "moxfield": "Moxfield has no tokens zone. The file does not contain the tokens.",
+      "mtga": "The file contains the commanders, the companions, the main deck and the sideboard, with no tags and no notes.",
+      "mtgo": "The file contains the main deck and the sideboard. In Commander, the commanders are in the sideboard.",
+      "dek": "The file contains the main deck and the sideboard. In Commander, the commanders are in the sideboard.",
+      "archidekt": "The zones and the tags become Archidekt categories.",
+      "csv": "The file keeps all the data of the deck.",
+      "deckbox": "The file contains the commanders, the companions and the main deck.",
+      "manabox": "The file contains the commanders, the companions and the main deck.",
+      "dragonshield": "The file contains the commanders, the companions and the main deck."
+    }
+  },
+  "analysis": {
+    "title": "Deck analysis",
+    "loading": "The application calculates the analysis.",
+    "failed": "The application cannot get the analysis. Reload the page to try again.",
+    "cards": "Cards",
+    "status": "Status",
+    "tabs": {
+      "curve": "Mana curve",
+      "distribution": "Distribution",
+      "mana": "Mana sources",
+      "draws": "Draw probabilities",
+      "combos": "Combos",
+      "commander": "Commander needs"
+    },
+    "summary": {
+      "cards": "Cards",
+      "lands": "Lands",
+      "modalLands": "Modal lands",
+      "spells": "Spells",
+      "averageManaValue": "Average mana value"
+    },
+    "curve": {
+      "title": "Mana curve",
+      "manaValue": "Mana value",
+      "orMore": "{{manaValue}}+",
+      "hint": "The curve counts the cards that are not lands. A modal land counts with its spell face."
+    },
+    "types": {
+      "title": "Card types",
+      "type": "Card type",
+      "keys": {
+        "artifact": "Artifact",
+        "battle": "Battle",
+        "creature": "Creature",
+        "enchantment": "Enchantment",
+        "instant": "Instant",
+        "kindred": "Kindred",
+        "land": "Land",
+        "planeswalker": "Planeswalker",
+        "sorcery": "Sorcery",
+        "other": "Other type"
+      }
+    },
+    "colors": {
+      "title": "Colors",
+      "color": "Color",
+      "keys": {
+        "W": "White",
+        "U": "Blue",
+        "B": "Black",
+        "R": "Red",
+        "G": "Green",
+        "C": "Colorless"
+      }
+    },
+    "categories": {
+      "title": "Categories",
+      "category": "Category",
+      "uncategorized": "No category"
+    },
+    "mana": {
+      "hint": "The required sources come from the tables of Frank Karsten for decks of {{size}} cards.",
+      "empty": "No card of the deck needs colored mana, and no card produces colored mana.",
+      "symbols": "Mana symbols",
+      "landSources": "Lands",
+      "otherSources": "Other sources",
+      "sources": "Sources",
+      "required": "Required",
+      "card": "Most demanding card",
+      "cardPips_one": "{{card}} ({{count}} symbol)",
+      "cardPips_other": "{{card}} ({{count}} symbols)",
+      "status": {
+        "ok": "Enough sources",
+        "low": "Too few sources",
+        "no_requirement": "No requirement"
+      }
+    },
+    "draws": {
+      "hint": "The library has {{librarySize}} cards and {{lands}} lands. The probabilities do not include mulligans.",
+      "checkpoint": "Moment",
+      "atLeast_one": "At least {{count}} land",
+      "atLeast_other": "At least {{count}} lands",
+      "checkpoints": {
+        "opening_hand": "Opening hand",
+        "turn_2_play": "Turn 2, on the play",
+        "turn_2_draw": "Turn 2, on the draw",
+        "turn_3_play": "Turn 3, on the play",
+        "turn_3_draw": "Turn 3, on the draw",
+        "turn_4_play": "Turn 4, on the play",
+        "turn_4_draw": "Turn 4, on the draw",
+        "other": "Other moment"
+      }
+    },
+    "needs": {
+      "title": "Category needs",
+      "target": "Target",
+      "range": "{{target}} (from {{min}} to {{max}})",
+      "status": {
+        "low_one": "Too few: add {{count}} card",
+        "low_other": "Too few: add {{count}} cards",
+        "ok_one": "In the range",
+        "ok_other": "In the range",
+        "high_one": "Too many: {{count}} card more than the target",
+        "high_other": "Too many: {{count}} cards more than the target",
+        "no_target_one": "No target",
+        "no_target_other": "No target"
+      }
+    },
+    "bracket": {
+      "title": "Indicative bracket",
+      "value": "Bracket {{bracket}}",
+      "hint": "The bracket is indicative. It is the lowest bracket that the deck fits.",
+      "noReason": "No card of the deck needs a bracket higher than 1.",
+      "reasonBracket": "bracket {{bracket}} or higher",
+      "reasons": {
+        "game_changers": "Game Changers",
+        "mass_land_denial": "Mass land denial",
+        "extra_turns": "Extra turn cards",
+        "two_card_combos": "Early-game two-card combos",
+        "late_two_card_combos": "Late-game two-card combos",
+        "other": "Other rule"
+      },
+      "unchecked": {
+        "two_card_combos": "The instance has no combo data, so the analysis does not check two-card combos. A combo can put the deck in a higher bracket.",
+        "other": "The analysis does not check some rules yet. The deck can be in a higher bracket."
+      }
+    },
+    "combos": {
+      "unavailable": "The instance has no combo data. The administrator must import the combos of Commander Spellbook.",
+      "complete_one": "{{count}} complete combo",
+      "complete_other": "{{count}} complete combos",
+      "noComplete": "The deck contains no complete combo.",
+      "near_one": "{{count}} combo that needs one more card",
+      "near_other": "{{count}} combos that need one more card",
+      "noNear": "No combo needs only one more card.",
+      "nearLimit": "The list shows the {{shown}} most popular combos of {{total}}.",
+      "copies": "{{card}} ×{{quantity}}",
+      "missing": "Missing card: {{card}}",
+      "results": "Results:",
+      "open": "Open on Commander Spellbook",
+      "openLabel": "Open the combo {{cards}} on Commander Spellbook",
+      "credit": "Combos by"
+    }
+  },
+  "folders": {
+    "title": "Folders",
+    "all": "All the decks",
+    "none": "No folder",
+    "create": "New folder",
+    "createIn": "New folder in the selected folder",
+    "createSubmit": "Add",
+    "rename": "Rename the folder {{name}}",
+    "renameLabel": "New name of the folder {{name}}",
+    "delete": "Delete the folder {{name}}",
+    "deleteConfirm": "Delete the folder \"{{name}}\" and its subfolders? The decks stay, with no folder."
+  },
+  "filters": {
+    "allFormats": "All the formats",
+    "colors": "Color identity",
+    "color": {
+      "W": "White",
+      "U": "Blue",
+      "B": "Black",
+      "R": "Red",
+      "G": "Green"
+    },
+    "tag": "Deck tag",
+    "allTags": "All the deck tags",
+    "archived": "Archived decks",
+    "archivedExclude": "Hide",
+    "archivedInclude": "Show",
+    "archivedOnly": "Show only",
+    "sort": "Sort",
+    "sorts": {
+      "updated": "Last change",
+      "created": "Creation date",
+      "name": "Name",
+      "format": "Format"
+    }
+  },
+  "group": {
+    "title_one": "{{count}} deck selected",
+    "title_other": "{{count}} decks selected",
+    "select": "Select {{name}}",
+    "selectAll": "Select all the decks",
+    "folder": "Folder",
+    "move": "Move",
+    "tag": "Deck tag",
+    "addTag": "Add the tag",
+    "removeTag": "Remove the tag",
+    "pin": "Pin",
+    "unpin": "Unpin",
+    "archive": "Archive",
+    "unarchive": "Unarchive",
+    "export": "Export",
+    "delete": "Delete",
+    "deleteConfirm_one": "Delete {{count}} deck? You cannot undo this operation.",
+    "deleteConfirm_other": "Delete {{count}} decks? You cannot undo this operation."
+  },
+  "table": {
+    "title": "Table of the deck lines",
+    "caption": "The lines of the deck. Select lines, then apply a group action.",
+    "filterName": "Card name",
+    "filterZone": "Zone",
+    "filterLabel": "Tag or category",
+    "allZones": "All the zones",
+    "allLabels": "All the tags and categories",
+    "tags": "Tags",
+    "categories": "Categories",
+    "columns": {
+      "quantity": "Quantity",
+      "name": "Card",
+      "zone": "Zone",
+      "manaValue": "Mana value",
+      "type": "Type",
+      "labels": "Tags and categories",
+      "printing": "Printing"
+    },
+    "selectAll": "Select all the lines",
+    "select": "Select {{name}}",
+    "empty": "No line agrees with the filters.",
+    "defaultPrintingShort": "Default printing",
+    "groupActions": "Group actions",
+    "selected_one": "{{count}} selected line",
+    "selected_other": "{{count}} selected lines",
+    "zone": "New zone",
+    "move": "Move",
+    "tag": "Tag",
+    "globalTag": "Global tag",
+    "addTag": "Add the tag",
+    "removeTag": "Remove the tag",
+    "category": "Category",
+    "addCategory": "Add the category",
+    "removeCategory": "Remove the category",
+    "finish": "Finish",
+    "setFinish": "Set the finish",
+    "defaultPrinting": "Use the default printing",
+    "addOne": "Add one card to each line",
+    "removeOne": "Remove one card from each line",
+    "removeLines": "Remove the lines",
+    "removeConfirm_one": "Remove {{count}} line from the deck?",
+    "removeConfirm_other": "Remove {{count}} lines from the deck?"
+  },
+  "explore": {
+    "title": "Explore the public decks",
+    "views": "Deck lists",
+    "view": {
+      "search": "Search",
+      "favorites": "My favorites",
+      "following": "Followed authors"
+    },
+    "name": "Deck name",
+    "commander": "Commander",
+    "card": "Card in the deck",
+    "search": "Search",
+    "clear": "Clear the filters",
+    "loading": "The application loads the decks.",
+    "empty": "No deck agrees with the search.",
+    "by": "By",
+    "cards_one": "{{count}} card",
+    "cards_other": "{{count}} cards",
+    "copies_one": "{{count}} copy",
+    "copies_other": "{{count}} copies",
+    "favorites_one": "{{count}} favorite",
+    "favorites_other": "{{count}} favorites",
+    "sorts": {
+      "recent": "Most recent",
+      "popular": "Most popular"
+    }
+  },
+  "author": {
+    "follow": "Follow",
+    "unfollow": "Stop following",
+    "decks_one": "{{count}} public deck",
+    "decks_other": "{{count}} public decks",
+    "followers_one": "{{count}} follower",
+    "followers_other": "{{count}} followers",
+    "publicDecks": "Public decks"
+  },
+  "social": {
+    "favorite": "Add to my favorites",
+    "unfavorite": "Remove from my favorites",
+    "share": "Copy the link",
+    "copied": "The application copied the link."
+  },
+  "proxies": {
+    "open": "Print proxies",
+    "title": "Print proxies",
+    "description": "The PDF shows 9 cards on each page. Each card has the real card size: 63 × 88 mm.",
+    "source": "Cards to print",
+    "sourceDeck": "All the cards of the deck",
+    "addZone": "Add the zone {{zone}}",
+    "sourceSelection": "Selected cards",
+    "lines": "Deck lines",
+    "selectAll": "Select all",
+    "selectNone": "Clear the selection",
+    "line": "{{quantity}} × {{name}}",
+    "paper": "Paper size",
+    "papers": {
+      "a4": "A4",
+      "letter": "Letter"
+    },
+    "scaleHint": "Print the PDF at 100% scale. Do not use the option that fits the page.",
+    "backFaces": "Add the back face of each double-faced card",
+    "noCards": "Select one card or more.",
+    "cardCount_one": "{{count}} card",
+    "cardCount_other": "{{count}} cards",
+    "pageCount_one": "{{count}} page",
+    "pageCount_other": "{{count}} pages",
+    "progressLabel": "Card images",
+    "progress": "The application loads the card images: {{loaded}} of {{total}}.",
+    "done": "The PDF is ready. The browser downloads the file.",
+    "failed_one": "{{count}} card image did not load. The PDF shows a frame with the card name in its place. Make the PDF again to try again.",
+    "failed_other": "{{count}} card images did not load. The PDF shows a frame with the card name in their place. Make the PDF again to try again.",
+    "error": "The application cannot make the PDF. Examine the network connection, then try again.",
+    "submit": "Make the PDF",
+    "close": "Close"
+  }
+}

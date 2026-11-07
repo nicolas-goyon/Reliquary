@@ -1,0 +1,562 @@
+{
+  "fields": {
+    "name": "Nom",
+    "format": "Format",
+    "visibility": "Visibilité"
+  },
+  "formats": {
+    "commander": "Commander",
+    "brawl": "Brawl",
+    "standardbrawl": "Standard Brawl",
+    "oathbreaker": "Oathbreaker",
+    "paupercommander": "Pauper Commander",
+    "standard": "Standard",
+    "pioneer": "Pioneer",
+    "modern": "Modern",
+    "legacy": "Legacy",
+    "vintage": "Vintage",
+    "pauper": "Pauper",
+    "freeform": "Freeform"
+  },
+  "visibility": {
+    "private": "Privé",
+    "unlisted": "Non répertorié",
+    "public": "Public"
+  },
+  "visibilityHint": {
+    "private": "Vous seul pouvez ouvrir le deck.",
+    "unlisted": "Les personnes qui ont le lien peuvent ouvrir le deck.",
+    "public": "Tout le monde peut trouver et ouvrir le deck."
+  },
+  "zones": {
+    "commander": "Commandant",
+    "companion": "Compagnon",
+    "main": "Deck principal",
+    "sideboard": "Réserve",
+    "considering": "À l’étude",
+    "tokens": "Jetons"
+  },
+  "finishes": {
+    "foil": "Foil",
+    "etched": "Gravé",
+    "nonfoil": "Non foil"
+  },
+  "categories": {
+    "ramp": "Accélération",
+    "card_draw": "Pioche",
+    "targeted_interaction": "Interaction ciblée",
+    "board_wipe": "Balayage",
+    "synergy": "Synergie",
+    "land": "Terrain",
+    "win_condition": "Condition de victoire",
+    "protection": "Protection"
+  },
+  "autoTag": {
+    "open": "Tag automatique",
+    "title": "Tag automatique",
+    "help": "Le tag automatique suggère les catégories de chaque carte à partir des tags Scryfall et du texte des cartes. Sélectionnez les lignes à modifier, corrigez les catégories si nécessaire, puis appliquez.",
+    "loading": "Chargement des suggestions…",
+    "empty": "Le deck n’a aucune carte à catégoriser.",
+    "noChange": "Chaque ligne a déjà les catégories suggérées.",
+    "onlyChanges": "Afficher seulement les changements",
+    "selectChanges": "Sélectionner tous les changements",
+    "selectNone": "Vider la sélection",
+    "tableCaption": "Catégories suggérées pour les cartes",
+    "columns": {
+      "apply": "Appliquer",
+      "card": "Carte",
+      "current": "Catégories actuelles",
+      "suggested": "Catégories suggérées",
+      "reason": "Raison"
+    },
+    "select": "Appliquer la suggestion pour {{name}}",
+    "edit": "Modifier les catégories de {{name}}",
+    "editorLegend": "Catégories de {{name}}",
+    "noCategory": "Aucune catégorie",
+    "source": {
+      "user_rule": "Votre choix précédent",
+      "oracle_tag": "Tag Scryfall",
+      "text_rule": "Texte de la carte",
+      "none": "Aucune suggestion"
+    },
+    "reason": {
+      "oracleTag": "Tag Scryfall : {{tag}}"
+    },
+    "ruleHint": "Chaque modification d’une suggestion devient votre règle pour cette carte. Les prochaines suggestions utilisent d’abord vos règles.",
+    "conflict": "Le deck a changé après la lecture du tag automatique. Fermez le tag automatique et ouvrez-le de nouveau.",
+    "apply_one": "Appliquer {{count}} changement",
+    "apply_other": "Appliquer {{count}} changements"
+  },
+  "actions": {
+    "save": "Enregistrer",
+    "cancel": "Annuler"
+  },
+  "list": {
+    "title": "Mes decks",
+    "create": "Créer un deck",
+    "createSubmit": "Créer le deck",
+    "empty": "Vous n’avez aucun deck. Créez votre premier deck.",
+    "cards": "Cartes",
+    "updated": "Dernière modification",
+    "more": "Afficher plus de decks",
+    "colors": "Couleurs",
+    "tags": "Étiquettes",
+    "pinned": "Épinglé",
+    "archived": "Archivé",
+    "colorless": "Incolore"
+  },
+  "editor": {
+    "loading": "L’application charge le deck.",
+    "actions": "Actions du deck",
+    "rename": "Renommer",
+    "textMode": "Mode texte",
+    "visualMode": "Mode cartes",
+    "copy": "Copier le deck",
+    "delete": "Supprimer le deck",
+    "deleteConfirm": "Supprimer le deck « {{name}} » ? Cette opération est définitive.",
+    "cardCount_one": "{{count}} carte",
+    "cardCount_other": "{{count}} cartes",
+    "original": "Deck d’origine",
+    "addCard": "Ajouter une carte",
+    "addCardPlaceholder": "Saisissez un nom de carte dans n’importe quelle langue",
+    "zone": "Zone",
+    "emptyZone": "Cette zone ne contient aucune carte.",
+    "decrease": "Retirer un exemplaire de {{name}}",
+    "increase": "Ajouter un exemplaire de {{name}}",
+    "quantity": "Quantité de {{name}}",
+    "moveTo": "Zone de {{name}}",
+    "remove": "Retirer {{name}} du deck",
+    "export": "Exporter",
+    "tableMode": "Mode tableau"
+  },
+  "recommendations": {
+    "title": "Recommandations",
+    "loading": "L’application charge les recommandations.",
+    "noCommander": "Le deck n’a pas de commandant. Mettez une carte dans la zone du commandant pour obtenir des recommandations.",
+    "unavailable": "Les recommandations ne sont pas disponibles pour le moment. Réessayez plus tard.",
+    "empty": "La source n’a pas d’autre carte à recommander pour ces commandants.",
+    "addButton": "Ajouter",
+    "considerButton": "À l’étude",
+    "addToMainLabel": "Ajouter {{name}} au deck principal",
+    "addToConsideringLabel": "Ajouter {{name}} à la zone « À l’étude »",
+    "credit": "Recommandations de"
+  },
+  "legality": {
+    "legal": "Le deck est légal en {{format}}.",
+    "title": "Le deck n’est pas légal en {{format}}",
+    "problems": {
+      "deck_size": "Le deck contient {{count}} cartes. Il doit en contenir {{limit}}.",
+      "too_many_copies": "Le deck contient {{count}} exemplaires de {{card}}. La limite est de {{limit}}.",
+      "sideboard_size": "La réserve contient {{count}} cartes. La limite est de {{limit}}.",
+      "card_banned": "{{card}} est bannie dans ce format.",
+      "card_not_legal": "{{card}} n’est pas légale dans ce format.",
+      "card_restricted": "{{card}} est restreinte : le deck ne peut en contenir qu’un exemplaire.",
+      "commander_missing": "Le deck n’a pas de commandant. Placez une carte dans la zone Commandant.",
+      "commander_not_allowed": "{{card}} ne peut pas être un commandant.",
+      "too_many_commanders": "Le deck a plus de deux commandants.",
+      "commanders_cannot_pair": "Les deux commandants ne peuvent pas être associés. Il leur faut Partenaire, Amis pour toujours, un Historique ou une paire Docteur.",
+      "outside_color_identity": "{{card}} est en dehors de l’identité de couleur des commandants.",
+      "companion_not_allowed": "{{card}} n’a pas la capacité Compagnon.",
+      "other": "Le deck a un problème."
+    }
+  },
+  "text": {
+    "title": "Mode texte",
+    "help": "Une carte par ligne : quantité, nom, puis édition et numéro facultatifs, #tags et -- note. Les sections sont Commander, Main, Sideboard, Considering et Tokens.",
+    "label": "Liste du deck",
+    "save": "Enregistrer la liste",
+    "errors": "Certaines lignes sont incorrectes. Le deck n’a pas changé.",
+    "lineError": {
+      "missing_name": "Ligne {{line}} : la ligne n’a pas de nom de carte. « {{text}} »",
+      "quantity_out_of_range": "Ligne {{line}} : la quantité doit être comprise entre 1 et 999. « {{text}} »",
+      "tag_too_long": "Ligne {{line}} : un tag est trop long. « {{text}} »",
+      "unknown_category": "Ligne {{line}} : la catégorie est inconnue. « {{text}} »",
+      "card_not_found": "Ligne {{line}} : aucune carte ne porte ce nom. « {{text}} »",
+      "printing_not_found": "Ligne {{line}} : l’édition et le numéro ne correspondent à aucune impression de cette carte. « {{text}} »",
+      "invalid_file": "Ligne {{line}} : le fichier est illisible. « {{text}} »",
+      "missing_column": "Ligne {{line}} : le fichier n’a pas de colonne pour les noms de cartes. Choisissez la colonne des noms de cartes. « {{text}} »",
+      "unknown_zone": "Ligne {{line}} : la zone est inconnue. « {{text}} »",
+      "other": "Ligne {{line}} : la ligne est incorrecte. « {{text}} »"
+    }
+  },
+  "copy": {
+    "defaultName": "Copie de {{name}}",
+    "submit": "Créer la copie",
+    "signIn": "Connectez-vous pour copier ce deck."
+  },
+  "fileFormats": {
+    "text": "Texte Reliquary",
+    "moxfield": "Moxfield",
+    "mtga": "MTG Arena",
+    "mtgo": "Magic Online (texte)",
+    "dek": "Magic Online (.dek)",
+    "archidekt": "Archidekt",
+    "csv": "CSV",
+    "deckbox": "Deckbox (CSV)",
+    "manabox": "ManaBox (CSV)",
+    "dragonshield": "Dragon Shield (CSV)"
+  },
+  "csvFields": {
+    "quantity": "Quantité",
+    "name": "Nom de la carte",
+    "setCode": "Code de l’extension",
+    "collectorNumber": "Numéro de collection",
+    "finish": "Finition",
+    "zone": "Zone",
+    "tags": "Tags",
+    "globalTags": "Tags globaux",
+    "categories": "Catégories",
+    "note": "Note"
+  },
+  "import": {
+    "title": "Importer un deck",
+    "link": "Lien d’un deck",
+    "linkHint": "Un deck public ou non répertorié de Moxfield ou d’Archidekt. Avec un lien, l’application ignore le fichier.",
+    "or": "Ou donnez un fichier",
+    "file": "Fichier",
+    "fileHint": "Choisissez un fichier, ou collez la liste dans le champ ci-dessous.",
+    "content": "Contenu du fichier",
+    "fileFormat": "Format du fichier",
+    "columns": "Colonnes du fichier CSV",
+    "automatic": "Automatique : {{header}}",
+    "noColumn": "Aucune colonne",
+    "submit": "Importer le deck",
+    "errors": "Certaines lignes sont incorrectes. Le deck n’a pas été créé.",
+    "warnings": "Le deck a été créé. Certaines lignes ont changé :",
+    "open": "Ouvrir le deck « {{name}} »"
+  },
+  "export": {
+    "title": "Exporter le deck",
+    "submit": "Télécharger le fichier",
+    "hint": {
+      "text": "Le fichier garde toutes les données du deck.",
+      "moxfield": "Moxfield n’a pas de zone de jetons. Le fichier ne contient pas les jetons.",
+      "mtga": "Le fichier contient les commandants, les compagnons, le deck principal et la réserve, sans tags ni notes.",
+      "mtgo": "Le fichier contient le deck principal et la réserve. En Commander, les commandants sont dans la réserve.",
+      "dek": "Le fichier contient le deck principal et la réserve. En Commander, les commandants sont dans la réserve.",
+      "archidekt": "Les zones et les tags deviennent des catégories Archidekt.",
+      "csv": "Le fichier garde toutes les données du deck.",
+      "deckbox": "Le fichier contient les commandants, les compagnons et le deck principal.",
+      "manabox": "Le fichier contient les commandants, les compagnons et le deck principal.",
+      "dragonshield": "Le fichier contient les commandants, les compagnons et le deck principal."
+    }
+  },
+  "analysis": {
+    "title": "Analyse du deck",
+    "loading": "L’application calcule l’analyse.",
+    "failed": "L’application ne peut pas obtenir l’analyse. Rechargez la page pour réessayer.",
+    "cards": "Cartes",
+    "status": "État",
+    "tabs": {
+      "curve": "Courbe de mana",
+      "distribution": "Répartition",
+      "mana": "Sources de mana",
+      "draws": "Probabilités de pioche",
+      "combos": "Combos",
+      "commander": "Besoins Commander"
+    },
+    "summary": {
+      "cards": "Cartes",
+      "lands": "Terrains",
+      "modalLands": "Terrains modaux",
+      "spells": "Sorts",
+      "averageManaValue": "Valeur de mana moyenne"
+    },
+    "curve": {
+      "title": "Courbe de mana",
+      "manaValue": "Valeur de mana",
+      "orMore": "{{manaValue}}+",
+      "hint": "La courbe compte les cartes qui ne sont pas des terrains. Un terrain modal compte avec sa face de sort."
+    },
+    "types": {
+      "title": "Types de carte",
+      "type": "Type de carte",
+      "keys": {
+        "artifact": "Artefact",
+        "battle": "Bataille",
+        "creature": "Créature",
+        "enchantment": "Enchantement",
+        "instant": "Éphémère",
+        "kindred": "Tribal",
+        "land": "Terrain",
+        "planeswalker": "Planeswalker",
+        "sorcery": "Rituel",
+        "other": "Autre type"
+      }
+    },
+    "colors": {
+      "title": "Couleurs",
+      "color": "Couleur",
+      "keys": {
+        "W": "Blanc",
+        "U": "Bleu",
+        "B": "Noir",
+        "R": "Rouge",
+        "G": "Vert",
+        "C": "Incolore"
+      }
+    },
+    "categories": {
+      "title": "Catégories",
+      "category": "Catégorie",
+      "uncategorized": "Sans catégorie"
+    },
+    "mana": {
+      "hint": "Les sources requises viennent des tables de Frank Karsten pour les decks de {{size}} cartes.",
+      "empty": "Aucune carte du deck ne demande de mana coloré, et aucune carte n’en produit.",
+      "symbols": "Symboles de mana",
+      "landSources": "Terrains",
+      "otherSources": "Autres sources",
+      "sources": "Sources",
+      "required": "Requis",
+      "card": "Carte la plus exigeante",
+      "cardPips_one": "{{card}} ({{count}} symbole)",
+      "cardPips_other": "{{card}} ({{count}} symboles)",
+      "status": {
+        "ok": "Sources suffisantes",
+        "low": "Sources insuffisantes",
+        "no_requirement": "Aucune exigence"
+      }
+    },
+    "draws": {
+      "hint": "La bibliothèque contient {{librarySize}} cartes, dont {{lands}} terrains. Les probabilités ne tiennent pas compte des mulligans.",
+      "checkpoint": "Moment",
+      "atLeast_one": "Au moins {{count}} terrain",
+      "atLeast_other": "Au moins {{count}} terrains",
+      "checkpoints": {
+        "opening_hand": "Main de départ",
+        "turn_2_play": "Tour 2, en premier",
+        "turn_2_draw": "Tour 2, en second",
+        "turn_3_play": "Tour 3, en premier",
+        "turn_3_draw": "Tour 3, en second",
+        "turn_4_play": "Tour 4, en premier",
+        "turn_4_draw": "Tour 4, en second",
+        "other": "Autre moment"
+      }
+    },
+    "needs": {
+      "title": "Besoins par catégorie",
+      "target": "Cible",
+      "range": "{{target}} (de {{min}} à {{max}})",
+      "status": {
+        "low_one": "Insuffisant : ajoutez {{count}} carte",
+        "low_other": "Insuffisant : ajoutez {{count}} cartes",
+        "ok_one": "Dans la plage",
+        "ok_other": "Dans la plage",
+        "high_one": "Trop : {{count}} carte de plus que la cible",
+        "high_other": "Trop : {{count}} cartes de plus que la cible",
+        "no_target_one": "Aucune cible",
+        "no_target_other": "Aucune cible"
+      }
+    },
+    "bracket": {
+      "title": "Bracket indicatif",
+      "value": "Bracket {{bracket}}",
+      "hint": "Le bracket est indicatif. C’est le bracket le plus bas qui convient au deck.",
+      "noReason": "Aucune carte du deck ne demande un bracket supérieur à 1.",
+      "reasonBracket": "bracket {{bracket}} ou plus",
+      "reasons": {
+        "game_changers": "Game Changers",
+        "mass_land_denial": "Destruction massive de terrains",
+        "extra_turns": "Cartes de tours supplémentaires",
+        "two_card_combos": "Combos à deux cartes en début de partie",
+        "late_two_card_combos": "Combos à deux cartes en fin de partie",
+        "other": "Autre règle"
+      },
+      "unchecked": {
+        "two_card_combos": "L’instance n’a pas de données de combos, donc l’analyse ne vérifie pas les combos à deux cartes. Un combo peut placer le deck dans un bracket plus élevé.",
+        "other": "L’analyse ne vérifie pas encore certaines règles. Le deck peut être dans un bracket plus élevé."
+      }
+    },
+    "combos": {
+      "unavailable": "L’instance n’a pas de données de combos. L’administrateur doit importer les combos de Commander Spellbook.",
+      "complete_one": "{{count}} combo complet",
+      "complete_other": "{{count}} combos complets",
+      "noComplete": "Le deck ne contient aucun combo complet.",
+      "near_one": "{{count}} combo auquel il manque une carte",
+      "near_other": "{{count}} combos auxquels il manque une carte",
+      "noNear": "Aucun combo ne demande une seule carte de plus.",
+      "nearLimit": "La liste montre les {{shown}} combos les plus populaires sur {{total}}.",
+      "copies": "{{card}} ×{{quantity}}",
+      "missing": "Carte manquante : {{card}}",
+      "results": "Résultats :",
+      "open": "Ouvrir sur Commander Spellbook",
+      "openLabel": "Ouvrir le combo {{cards}} sur Commander Spellbook",
+      "credit": "Combos par"
+    }
+  },
+  "folders": {
+    "title": "Dossiers",
+    "all": "Tous les decks",
+    "none": "Sans dossier",
+    "create": "Nouveau dossier",
+    "createIn": "Nouveau dossier dans le dossier choisi",
+    "createSubmit": "Ajouter",
+    "rename": "Renommer le dossier {{name}}",
+    "renameLabel": "Nouveau nom du dossier {{name}}",
+    "delete": "Supprimer le dossier {{name}}",
+    "deleteConfirm": "Supprimer le dossier « {{name}} » et ses sous-dossiers ? Les decks restent, sans dossier."
+  },
+  "filters": {
+    "allFormats": "Tous les formats",
+    "colors": "Identité de couleur",
+    "color": {
+      "W": "Blanc",
+      "U": "Bleu",
+      "B": "Noir",
+      "R": "Rouge",
+      "G": "Vert"
+    },
+    "tag": "Étiquette de deck",
+    "allTags": "Toutes les étiquettes",
+    "archived": "Decks archivés",
+    "archivedExclude": "Masquer",
+    "archivedInclude": "Afficher",
+    "archivedOnly": "Afficher uniquement",
+    "sort": "Tri",
+    "sorts": {
+      "updated": "Dernière modification",
+      "created": "Date de création",
+      "name": "Nom",
+      "format": "Format"
+    }
+  },
+  "group": {
+    "title_one": "{{count}} deck sélectionné",
+    "title_other": "{{count}} decks sélectionnés",
+    "select": "Sélectionner {{name}}",
+    "selectAll": "Sélectionner tous les decks",
+    "folder": "Dossier",
+    "move": "Déplacer",
+    "tag": "Étiquette de deck",
+    "addTag": "Ajouter l’étiquette",
+    "removeTag": "Retirer l’étiquette",
+    "pin": "Épingler",
+    "unpin": "Désépingler",
+    "archive": "Archiver",
+    "unarchive": "Désarchiver",
+    "export": "Exporter",
+    "delete": "Supprimer",
+    "deleteConfirm_one": "Supprimer {{count}} deck ? Cette opération est définitive.",
+    "deleteConfirm_other": "Supprimer {{count}} decks ? Cette opération est définitive."
+  },
+  "table": {
+    "title": "Tableau des lignes du deck",
+    "caption": "Les lignes du deck. Sélectionnez des lignes, puis appliquez une action groupée.",
+    "filterName": "Nom de la carte",
+    "filterZone": "Zone",
+    "filterLabel": "Tag ou catégorie",
+    "allZones": "Toutes les zones",
+    "allLabels": "Tous les tags et catégories",
+    "tags": "Tags",
+    "categories": "Catégories",
+    "columns": {
+      "quantity": "Quantité",
+      "name": "Carte",
+      "zone": "Zone",
+      "manaValue": "Valeur de mana",
+      "type": "Type",
+      "labels": "Tags et catégories",
+      "printing": "Impression"
+    },
+    "selectAll": "Sélectionner toutes les lignes",
+    "select": "Sélectionner {{name}}",
+    "empty": "Aucune ligne ne correspond aux filtres.",
+    "defaultPrintingShort": "Impression par défaut",
+    "groupActions": "Actions groupées",
+    "selected_one": "{{count}} ligne sélectionnée",
+    "selected_other": "{{count}} lignes sélectionnées",
+    "zone": "Nouvelle zone",
+    "move": "Déplacer",
+    "tag": "Tag",
+    "globalTag": "Tag global",
+    "addTag": "Ajouter le tag",
+    "removeTag": "Retirer le tag",
+    "category": "Catégorie",
+    "addCategory": "Ajouter la catégorie",
+    "removeCategory": "Retirer la catégorie",
+    "finish": "Finition",
+    "setFinish": "Appliquer la finition",
+    "defaultPrinting": "Utiliser l’impression par défaut",
+    "addOne": "Ajouter un exemplaire à chaque ligne",
+    "removeOne": "Retirer un exemplaire de chaque ligne",
+    "removeLines": "Retirer les lignes",
+    "removeConfirm_one": "Retirer {{count}} ligne du deck ?",
+    "removeConfirm_other": "Retirer {{count}} lignes du deck ?"
+  },
+  "explore": {
+    "title": "Explorer les decks publics",
+    "views": "Listes de decks",
+    "view": {
+      "search": "Recherche",
+      "favorites": "Mes favoris",
+      "following": "Auteurs suivis"
+    },
+    "name": "Nom du deck",
+    "commander": "Commandant",
+    "card": "Carte du deck",
+    "search": "Rechercher",
+    "clear": "Effacer les filtres",
+    "loading": "Chargement des decks…",
+    "empty": "Aucun deck ne correspond à la recherche.",
+    "by": "Par",
+    "cards_one": "{{count}} carte",
+    "cards_other": "{{count}} cartes",
+    "copies_one": "{{count}} copie",
+    "copies_other": "{{count}} copies",
+    "favorites_one": "{{count}} favori",
+    "favorites_other": "{{count}} favoris",
+    "sorts": {
+      "recent": "Les plus récents",
+      "popular": "Les plus populaires"
+    }
+  },
+  "author": {
+    "follow": "Suivre",
+    "unfollow": "Ne plus suivre",
+    "decks_one": "{{count}} deck public",
+    "decks_other": "{{count}} decks publics",
+    "followers_one": "{{count}} abonné",
+    "followers_other": "{{count}} abonnés",
+    "publicDecks": "Decks publics"
+  },
+  "social": {
+    "favorite": "Ajouter à mes favoris",
+    "unfavorite": "Retirer de mes favoris",
+    "share": "Copier le lien",
+    "copied": "Lien copié."
+  },
+  "proxies": {
+    "open": "Imprimer des proxies",
+    "title": "Imprimer des proxies",
+    "description": "Le PDF contient 9 cartes par page. Chaque carte a la taille réelle d’une carte : 63 × 88 mm.",
+    "source": "Cartes à imprimer",
+    "sourceDeck": "Toutes les cartes du deck",
+    "addZone": "Ajouter la zone {{zone}}",
+    "sourceSelection": "Cartes sélectionnées",
+    "lines": "Lignes du deck",
+    "selectAll": "Tout sélectionner",
+    "selectNone": "Effacer la sélection",
+    "line": "{{quantity}} × {{name}}",
+    "paper": "Format du papier",
+    "papers": {
+      "a4": "A4",
+      "letter": "Lettre US"
+    },
+    "scaleHint": "Imprimez le PDF à l’échelle 100 %. N’utilisez pas l’option « Ajuster à la page ».",
+    "backFaces": "Ajouter le verso de chaque carte recto verso",
+    "noCards": "Sélectionnez au moins une carte.",
+    "cardCount_one": "{{count}} carte",
+    "cardCount_other": "{{count}} cartes",
+    "pageCount_one": "{{count}} page",
+    "pageCount_other": "{{count}} pages",
+    "progressLabel": "Images des cartes",
+    "progress": "Chargement des images des cartes : {{loaded}} sur {{total}}.",
+    "done": "Le PDF est prêt. Le navigateur télécharge le fichier.",
+    "failed_one": "{{count}} image de carte n’a pas pu être chargée. Le PDF affiche un cadre avec le nom de la carte à sa place. Générez le PDF à nouveau pour réessayer.",
+    "failed_other": "{{count}} images de cartes n’ont pas pu être chargées. Le PDF affiche un cadre avec le nom de la carte à leur place. Générez le PDF à nouveau pour réessayer.",
+    "error": "L’application ne peut pas générer le PDF. Vérifiez la connexion réseau, puis réessayez.",
+    "submit": "Générer le PDF",
+    "close": "Fermer"
+  }
+}

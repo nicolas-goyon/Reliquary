@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Reliquary.BuildingBlocks\Reliquary.BuildingBlocks.csproj" />
+    <ProjectReference Include="..\..\src\Components\Reliquary.Accounts\Reliquary.Accounts.csproj" />
+    <ProjectReference Include="..\..\src\Components\Reliquary.Cards\Reliquary.Cards.csproj" />
+    <ProjectReference Include="..\..\src\Components\Reliquary.Collection\Reliquary.Collection.csproj" />
+    <ProjectReference Include="..\..\src\Components\Reliquary.Decks\Reliquary.Decks.csproj" />
+    <ProjectReference Include="..\..\src\Components\Reliquary.Playtest\Reliquary.Playtest.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+</Project>

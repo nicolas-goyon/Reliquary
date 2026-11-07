@@ -1,0 +1,28 @@
+<Solution>
+  <Folder Name="/bench/">
+    <Project Path="bench/Reliquary.Cards.Benchmark/Reliquary.Cards.Benchmark.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Components/Reliquary.Accounts/Reliquary.Accounts.csproj" />
+    <Project Path="src/Components/Reliquary.Cards/Reliquary.Cards.csproj" />
+    <Project Path="src/Components/Reliquary.Collection/Reliquary.Collection.csproj" />
+    <Project Path="src/Components/Reliquary.Decks/Reliquary.Decks.csproj" />
+    <Project Path="src/Components/Reliquary.Playtest/Reliquary.Playtest.csproj" />
+    <Project Path="src/Reliquary.Api/Reliquary.Api.csproj" />
+    <Project Path="src/Reliquary.BuildingBlocks/Reliquary.BuildingBlocks.csproj" />
+    <Project Path="src/Reliquary.Cli/Reliquary.Cli.csproj" />
+    <Project Path="src/Reliquary.Hosting/Reliquary.Hosting.csproj" />
+    <Project Path="src/Reliquary.Platform/Reliquary.Platform.csproj" />
+    <Project Path="src/Reliquary.Worker/Reliquary.Worker.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Reliquary.Accounts.Tests/Reliquary.Accounts.Tests.csproj" />
+    <Project Path="tests/Reliquary.Api.Tests/Reliquary.Api.Tests.csproj" />
+    <Project Path="tests/Reliquary.Architecture.Tests/Reliquary.Architecture.Tests.csproj" />
+    <Project Path="tests/Reliquary.BuildingBlocks.Tests/Reliquary.BuildingBlocks.Tests.csproj" />
+    <Project Path="tests/Reliquary.Cards.Tests/Reliquary.Cards.Tests.csproj" />
+    <Project Path="tests/Reliquary.Collection.Tests/Reliquary.Collection.Tests.csproj" />
+    <Project Path="tests/Reliquary.Decks.Tests/Reliquary.Decks.Tests.csproj" />
+    <Project Path="tests/Reliquary.Platform.Tests/Reliquary.Platform.Tests.csproj" />
+  </Folder>
+</Solution>

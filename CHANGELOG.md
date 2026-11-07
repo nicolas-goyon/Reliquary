@@ -1,0 +1,136 @@
+# Changelog
+
+This file lists the notable changes of each release.
+The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the versions follow [Semantic Versioning](https://semver.org).
+
+## Unreleased
+
+### Fixed
+
+- The deck import finds a card with two faces when the name has one slash, as in the text of Moxfield: `Front / Back`.
+- `reliquary restore --replace` also works after an update that added tables.
+- Behind a reverse proxy with HTTPS, the web container keeps the headers `X-Forwarded-Proto` and `X-Forwarded-Host` of the proxy.
+
+### Added
+
+- The documentation site on GitHub Pages, with the guides to install and update a local instance, a pre-production instance and a production instance.
+- The published container images on `ghcr.io/nicolas-goyon` for each build of `develop` and each release (ADR 0042).
+- The script `reliquary-update`: it installs, updates, checks, backs up and rolls back a deployed instance with Docker Compose.
+- The releases with release-please (ADR 0043).
+
+- The deck import from a link of Moxfield or Archidekt. Moxfield needs a user agent that Moxfield support allows.
+- The recipe `just full-cards`: it imports all the cards into a local instance with Docker Compose.
+- The table engine and the goldfish mode: opening hand, London mulligan, draw, zones, tokens, counters, flip, life points and hand statistics.
+- The Forge visual style: new colors, the Manrope font, cards with art for the public decks, and a deck header with the commander art.
+- Purchase preferences on the deck lines: wanted or avoided printings, languages, minimum condition, foil and maximum price.
+- The purchase list of a deck or a variant: the cards of the deck minus the available cards of the collection.
+  When a card is missing, the list shows the closest copies of the collection with the reasons.
+- The transition plan from the assembled version to a variant.
+  It gives the cards to remove, the cards to take with their locations, and the cards to buy.
+
+- The purchase list page of the web app, and a dialog for the purchase preferences of each deck line.
+  The page exports the cards to buy as a Cardmarket wants list, as a TCGplayer mass entry or as plain text, and prints their proxies.
+
+- The import and the export of the collection: text, CSV, `.dek`, MTG Arena, Magic Online, Moxfield, Archidekt, Deckbox, ManaBox and Dragon Shield.
+  The import adds the cards of a file to a location, and gives each line that it cannot use with its number.
+  The export writes a location, a location with its sections, or all the collection.
+- The assembled version of a deck: the location of the assembled deck in the collection gets its cards.
+  A release gives the cards to another location.
+- Printable proxies: the deck page makes a PDF of the card images (ADR 0038).
+  Each A4 or Letter page has 9 cards of 63 × 88 mm and cut marks.
+- The comparison of any two lists, with the effect on the curve, the types and the categories, and the changes of the notes.
+- Deck versions as frozen commits, and the restore of a version (ADR 0033).
+- Variants of a deck, with the merge of a variant and the revert of a merge.
+
+- Moderation of the public content (ADR 0035): a user reports a public deck or an author profile with a reason and a comment.
+  An administrator resolves or dismisses the reports, hides a deck or an author profile and shows it again, on the page `/admin/moderation`.
+  A hidden item leaves the search of public decks at once, and a moderation log records each action.
+
+- Installable web app (PWA) with a web app manifest, icons and an update prompt.
+  A service worker keeps the application shell, so the web app opens without a network.
+  The main pages also work on screens less than 600 px wide.
+- Keyboard shortcuts for the frequent actions, with a list that `?` shows, and a theme field: system, light or dark.
+- Accessibility checks with axe on the main pages and a contrast test of the color tokens.
+  Each page now has its own title, and the selected suggestion of a field has a visible focus.
+  The borders of the form controls have a contrast of 3:1 or more.
+
+- The internal API for the modules under `/internal/v1`, with its own OpenAPI document (ADR 0036).
+  It gives the catalog of the domain events and the public profiles of the users. The core API version is now 1.1.0.
+- Service accounts for the modules, with the CLI command `reliquary service-accounts` and the admin API (ADR 0037).
+  A user gives a delegation to a module on the account page, with scopes and a duration, and revokes it there.
+  The module gets short delegation tokens and acts for the user on the deck endpoints and on the profile.
+
+- Web app: the history panel and the variant bar of the deck page, and the comparison page `/compare` for two lists.
+
+- Collection: locations with sections, the locked and pickable flags, location entries and movements in the API (ADR 0034).
+  The Decks component gets the copies of the collection and the locations of the assembled decks through two interfaces.
+- Advanced collection: the user enables the finish, the condition, the purchase price, the entry date and the note of the entries.
+- Collection pages: the global view of the cards and their locations, the list of the locations and the page of a location.
+  The global view of 50,000 entries gives its first page in less than 500 ms.
+- Movements: the user adds, removes and moves cards in one request, and reads the history of the movements.
+- Inventories: the user counts a location and gives the origin or the destination of each difference.
+  The history gives the content of the location at the date of each inventory.
+- Storage rules: a card search suggests the location of a new card. The user marks the tokens of each assembled deck as owned or not.
+- The CLI commands `reliquary backup` and `reliquary restore` for all the databases of an instance, and the recipes `just backup` and `just restore-backup`.
+- The export of all the data of an account as a ZIP archive, and the deletion of an account after 7 days (ADR 0032).
+- Repository rules, the English documentation with checks for ASD-STE100, and the backlog of the roadmap.
+- .NET 10 solution skeleton with the five core components and the architecture tests.
+- Web app skeleton with a French and English interface.
+- Local infrastructure with PostgreSQL and Redis, and CI for the backend, the web app and the documentation.
+- Database platform: connections through the shard directory, SQL migrations with DbUp, domain events through an outbox, and scheduled jobs.
+- Worker process and the command line tool `reliquary`, with the command `migrate`.
+- API conventions: problem details with stable error codes, paging with cursors, and JSON settings.
+- OpenTelemetry traces, metrics and logs, Prometheus endpoints, readiness checks for PostgreSQL and Redis, and an optional Grafana service.
+- Card reference data: sets, Oracle cards with all their faces and names, printings, tags, rulings and MTGJSON identifiers.
+  A scheduled job imports them every 12 hours.
+- Card endpoints: a card by its identifier or by any name, its printings and its rulings, a printing, and the sets.
+- The CLI commands `jobs list` and `jobs run`.
+- Accounts: registration with an email check, sign-in with a password or with Google, GitHub and Discord, and password reset.
+  Web sessions use a short access token and a refresh cookie.
+- Personal API keys with daily quotas for each key and each account. The quotas use Redis, so all the API replicas share them.
+- Emails in English and French, and a Mailpit service in the local infrastructure.
+- Web app: sign-in, registration, email check, password reset and OAuth sign-in, in French and English.
+  An account page shows the profile, the password and the API keys.
+- Card search page with the Scryfall syntax, the autocomplete of the keywords and of the card names, and the position of the syntax errors.
+- Filter panel on the card search page: colors, color identity, card types, mana value, rarity, format legality and set.
+  The panel writes the terms into the search text and reads them from it.
+- Card page: the faces, the legalities, the other names, the rulings and the printings.
+- Deck list and deck page: make, rename, copy and delete a deck, and see the legality problems.
+  On the deck page, the user adds cards with the autocomplete, changes the quantities and moves the cards between the zones by drag and drop.
+- Text mode of the deck page, with the error of each line.
+- Interface slots: the core renders its navigation and its account panels through named slots.
+- Container images of the API, the worker, the CLI and the web app. `just up` builds and starts a full local instance with the demo data.
+- The CLI command `demo load` loads the demo cards and the demo accounts.
+- Extension registry: the administrator installs, enables and uninstalls extensions. The API refuses an extension for another version of the core API.
+- The autocomplete of card names in all the languages: `GET /api/v1/cards/autocomplete`.
+- The card catalog: the other core components get the card facts, resolve card names and find printings through `ICardCatalog`.
+- The analysis rules of the cards with more than one face (ADR 0025).
+- Decks: create, read, change and delete a deck and its lines, with the zones, the visibility and the version of the deck (ADR 0026).
+- The deck text format: quantities, printings, finishes, tags, notes and zone sections, with the bulk edit syntax of Moxfield.
+- Global tags, local tags and the predefined categories of the deck lines. Rename, merge and delete a tag.
+- Read and replace the lines of a deck as text, with the error of each line.
+- Deck analysis with `GET /api/v1/decks/{id}/analysis`: the mana curve, the distributions, the mana sources with the method of Frank Karsten and the draw probabilities.
+  For Commander, the analysis also gives the category needs and an indicative bracket (ADR 0027).
+- Web app: the analysis panels of the deck page, in tabs. Extensions can add tabs.
+- The legality check of a deck: deck size, copies, card legalities, commanders, pairs and color identity.
+- Web app: the folders, the filters, the selection and the group actions of the deck list.
+- Web app: the import page of decks, with the column map of a CSV file, and the export dialog of the deck page.
+- Deck import and export in the CSV formats of Deckbox, ManaBox and Dragon Shield, and in a generic CSV format with a column map.
+- Deck import and export in the formats of Moxfield, MTG Arena, Magic Online and Archidekt, and in the Reliquary text. A test proves the Moxfield round trip of the M1 gate.
+- The copy of a deck: one of the decks of the user, or an unlisted or public deck of another user.
+- Card search with the Scryfall syntax: `GET /api/v1/cards/search`, with all the names of a card, paging, warnings and errors with a position.
+- Parity tests of the card search against the examples of the Scryfall syntax guide, on the demo dataset in `data/demo`.
+- The search benchmark in `bench/Reliquary.Cards.Benchmark` and its GitHub workflow.
+- Table mode of the deck page: sort, filters and a selection of lines, with group actions in one request (`POST /api/v1/decks/{id}/lines/group`) and the `table.columns` slot.
+
+- Card recommendations for the commanders of a deck, from the public API of recommander.cards: `GET /api/v1/decks/{id}/recommendations` (ADR 0028).
+  The administrator enables them with `Recommendations:Enabled`. Redis keeps the list of each commander pair for 24 hours, and all the replicas share one rate limit.
+- Web app: the recommendations panel of the deck page, with the credit of the source. The owner adds a recommended card to the main deck or to the considering zone with one button.
+
+- Auto-tag: `GET /api/v1/decks/{id}/auto-tag` suggests the categories of the lines from the Oracle tags of Scryfall Tagger and from rules on the card text.
+  `POST` applies the accepted categories in one change. Each change becomes a category rule of the user.
+  The deck page has an auto-tag dialog (ADR 0031).
+
+- Combos of Commander Spellbook: the card import reads the bulk file of combos.
+  The deck analysis gives the complete combos and the combos that need one more card.
+  The bracket uses the two-card combos, and the deck page has a "Combos" tab (ADR 0030).

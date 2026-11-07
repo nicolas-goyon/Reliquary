@@ -1,0 +1,14 @@
+{
+  "email_check": {
+    "subject": "Check your email address for Reliquary",
+    "body": "Hello {displayName},\n\nTo complete your account on Reliquary, open this link:\n\n{link}\n\nThe link is valid for {hours} hours.\n\nIf you did not make an account on Reliquary, ignore this email."
+  },
+  "password_reset": {
+    "subject": "Reset your Reliquary password",
+    "body": "Hello {displayName},\n\nTo set a new password for Reliquary, open this link:\n\n{link}\n\nThe link is valid for {hours} hours. After the reset, all your sessions stop.\n\nIf you did not ask for a new password, ignore this email. Your password does not change."
+  },
+  "account_exists": {
+    "subject": "Your Reliquary account",
+    "body": "Hello {displayName},\n\nA person tried to make a new account on Reliquary with this email address. You already have an account with this address.\n\nTo sign in, open this link:\n\n{link}\n\nIf you forgot your password, use the link \"Forgot your password?\" on the sign-in page.\n\nIf you did not try to make an account, ignore this email."
+  }
+}

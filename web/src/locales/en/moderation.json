@@ -1,0 +1,73 @@
+{
+  "report": {
+    "button": "Report",
+    "title": {
+      "deck": "Report this deck",
+      "author": "Report this profile"
+    },
+    "description": "Tell the administrators about a problem with this content. An administrator reads each report.",
+    "reason": "Reason",
+    "reasons": {
+      "spam": "Spam or advertisement",
+      "offensive": "Offensive content",
+      "copyright": "Copyright problem",
+      "other": "Other problem"
+    },
+    "comment": "Comment",
+    "commentHint": "Optional. Use {{max}} characters or fewer.",
+    "submit": "Send the report",
+    "cancel": "Cancel",
+    "sent": "The administrators received your report.",
+    "tooMany": "You sent too many reports today. Try again tomorrow."
+  },
+  "hidden": {
+    "deck": "An administrator hid this deck. Other users cannot open it, and the search does not show it.",
+    "author": "An administrator hid your profile. Other users cannot open it, and the search does not show your decks."
+  },
+  "admin": {
+    "title": "Moderation",
+    "forbidden": "Only the administrators can open this page.",
+    "reports": "Reports",
+    "hidden": "Hidden content",
+    "log": "Moderation log",
+    "statusFilter": "Status",
+    "status": {
+      "open": "Open",
+      "resolved": "Resolved",
+      "dismissed": "Dismissed"
+    },
+    "itemTypes": {
+      "deck": "Deck",
+      "author": "Profile"
+    },
+    "columns": {
+      "item": "Item",
+      "owner": "Owner",
+      "report": "Report",
+      "date": "Date",
+      "actions": "Actions",
+      "moderator": "Administrator",
+      "action": "Action",
+      "reason": "Reason"
+    },
+    "reportedBy": "Reported by {{name}}",
+    "hiddenBadge": "Hidden",
+    "actionReason": "Reason for the moderation log",
+    "actionReasonHint": "Optional. The moderation log keeps this text with each action.",
+    "hide": "Hide",
+    "show": "Show again",
+    "resolve": "Resolve",
+    "dismiss": "Dismiss",
+    "actions": {
+      "hide": "Hid",
+      "show": "Showed again",
+      "resolve": "Resolved",
+      "dismiss": "Dismissed"
+    },
+    "deletedAccount": "Deleted account",
+    "noReports": "No report has this status.",
+    "noHidden": "No content is hidden.",
+    "noLog": "The moderation log is empty.",
+    "more": "Show more"
+  }
+}

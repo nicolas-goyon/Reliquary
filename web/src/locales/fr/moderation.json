@@ -1,0 +1,73 @@
+{
+  "report": {
+    "button": "Signaler",
+    "title": {
+      "deck": "Signaler ce deck",
+      "author": "Signaler ce profil"
+    },
+    "description": "Signalez un problème de ce contenu aux administrateurs. Un administrateur lit chaque signalement.",
+    "reason": "Motif",
+    "reasons": {
+      "spam": "Spam ou publicité",
+      "offensive": "Contenu offensant",
+      "copyright": "Problème de droits d’auteur",
+      "other": "Autre problème"
+    },
+    "comment": "Commentaire",
+    "commentHint": "Facultatif. {{max}} caractères au maximum.",
+    "submit": "Envoyer le signalement",
+    "cancel": "Annuler",
+    "sent": "Les administrateurs ont reçu votre signalement.",
+    "tooMany": "Vous avez envoyé trop de signalements aujourd’hui. Réessayez demain."
+  },
+  "hidden": {
+    "deck": "Un administrateur a masqué ce deck. Les autres utilisateurs ne peuvent pas l’ouvrir, et la recherche ne l’affiche pas.",
+    "author": "Un administrateur a masqué votre profil. Les autres utilisateurs ne peuvent pas l’ouvrir, et la recherche n’affiche pas vos decks."
+  },
+  "admin": {
+    "title": "Modération",
+    "forbidden": "Seuls les administrateurs peuvent ouvrir cette page.",
+    "reports": "Signalements",
+    "hidden": "Contenu masqué",
+    "log": "Journal de modération",
+    "statusFilter": "État",
+    "status": {
+      "open": "Ouvert",
+      "resolved": "Traité",
+      "dismissed": "Rejeté"
+    },
+    "itemTypes": {
+      "deck": "Deck",
+      "author": "Profil"
+    },
+    "columns": {
+      "item": "Élément",
+      "owner": "Propriétaire",
+      "report": "Signalement",
+      "date": "Date",
+      "actions": "Actions",
+      "moderator": "Administrateur",
+      "action": "Action",
+      "reason": "Motif"
+    },
+    "reportedBy": "Signalé par {{name}}",
+    "hiddenBadge": "Masqué",
+    "actionReason": "Motif pour le journal de modération",
+    "actionReasonHint": "Facultatif. Le journal de modération garde ce texte avec chaque action.",
+    "hide": "Masquer",
+    "show": "Afficher à nouveau",
+    "resolve": "Traiter",
+    "dismiss": "Rejeter",
+    "actions": {
+      "hide": "A masqué",
+      "show": "A affiché à nouveau",
+      "resolve": "A traité",
+      "dismiss": "A rejeté"
+    },
+    "deletedAccount": "Compte supprimé",
+    "noReports": "Aucun signalement n’a cet état.",
+    "noHidden": "Aucun contenu n’est masqué.",
+    "noLog": "Le journal de modération est vide.",
+    "more": "Afficher plus"
+  }
+}

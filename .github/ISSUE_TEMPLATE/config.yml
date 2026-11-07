@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/nicolas-goyon/reliquary/security/advisories/new
+    about: Report a vulnerability in private. Do not open a public issue.
+  - name: Documentation
+    url: https://github.com/nicolas-goyon/reliquary/blob/develop/docs/README.md
+    about: Read the specification, the architecture and the roadmap.

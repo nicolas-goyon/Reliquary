@@ -1,0 +1,121 @@
+{
+  "app": {
+    "name": "Reliquary",
+    "tagline": "Deck and collection manager for Magic: The Gathering"
+  },
+  "language": {
+    "label": "Language",
+    "en": "English",
+    "fr": "Français"
+  },
+  "theme": {
+    "label": "Theme",
+    "system": "System",
+    "light": "Light",
+    "dark": "Dark"
+  },
+  "shortcuts": {
+    "open": "Keyboard shortcuts",
+    "title": "Keyboard shortcuts",
+    "description": "The shortcuts do not work while the focus is in a field.",
+    "then": "then",
+    "close": "Close",
+    "actions": {
+      "search": "Go to the card search field",
+      "home": "Open the home page",
+      "cards": "Open the card search",
+      "decks": "Open your decks",
+      "explore": "Open the public decks",
+      "newDeck": "Make a deck, on the deck list",
+      "addCard": "Go to the field \"Add a card\", on the deck page",
+      "help": "Show the keyboard shortcuts"
+    }
+  },
+  "home": {
+    "title": "Manage your decks and your collection.",
+    "description": "Reliquary is in early development. The first milestone creates the foundations: card data, card search and accounts.",
+    "roadmapLink": "Read the roadmap"
+  },
+  "apiStatus": {
+    "checking": "The application checks the API.",
+    "available": "The API is available. Version {{version}}.",
+    "unavailable": "The API is not available."
+  },
+  "footer": {
+    "license": "Free software under the AGPL-3.0 license.",
+    "source": "Source code",
+    "version": "Version {{version}}."
+  },
+  "navigation": {
+    "label": "Main navigation",
+    "skipToContent": "Go to the content",
+    "home": "Home",
+    "account": "Account",
+    "signIn": "Sign in",
+    "register": "Make an account",
+    "signOut": "Sign out",
+    "cards": "Cards",
+    "decks": "Decks",
+    "explore": "Explore",
+    "moderation": "Moderation",
+    "collection": "Collection"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "description": "This page does not exist. Check the address."
+  },
+  "update": {
+    "available": "A new version of Reliquary is available.",
+    "apply": "Update"
+  },
+  "slots": {
+    "contributionFailed": "This part of the page has an error. The other parts continue to work."
+  },
+  "errors": {
+    "network_error": "The application cannot reach the server. Check your connection, then try again.",
+    "internal_error": "The server has an error. Try again later.",
+    "service_unavailable": "The server is not available. Try again later.",
+    "validation_failed": "Some fields are not correct. Correct them, then try again.",
+    "authentication_required": "Sign in to continue.",
+    "invalid_authentication": "Your session stopped. Sign in again.",
+    "forbidden": "You cannot do this operation.",
+    "not_found": "The item does not exist.",
+    "rate_limited": "You sent too many requests. Wait one minute, then try again.",
+    "quota_exceeded": "This API key used all its requests for today.",
+    "invalid_credentials": "The email address or the password is not correct.",
+    "email_not_checked": "Your email address is not checked. Open the link in the email that we sent to you.",
+    "invalid_token": "This link is not valid. It is possible that you used it before, or that it expired. Ask for a new email.",
+    "session_expired": "Your session stopped. Sign in again.",
+    "api_key_limit": "You have the maximum number of API keys. Revoke a key, then try again.",
+    "delegation_limit": "You have the maximum number of delegations. Revoke a delegation, then try again.",
+    "provider_not_enabled": "This sign-in service is not available on this instance.",
+    "external_sign_in_failed": "The sign-in with the external service failed. Try again.",
+    "account_name_taken": "An account has this public name. Use a different name.",
+    "external_email_missing": "The external service did not give an email address. Use a different sign-in method.",
+    "external_email_not_verified": "The external service did not check your email address. Check the address on that service, or sign in with your password.",
+    "search_syntax_error": "The search has a syntax error. Correct the search, then try again.",
+    "search_query_empty": "The search has no condition that the application knows. Change the search.",
+    "search_timeout": "The search took too much time. Make the search more specific.",
+    "report_exists": "You sent a report about this item before. An administrator reads it soon.",
+    "report_closed": "An administrator closed this report before. Read the list again.",
+    "unknown": "An error occurred. Try again.",
+    "location_locked": "The location is locked. Unlock the location, then try again.",
+    "location_not_empty": "The location or one of its sections has cards. Move or remove the cards, then try again.",
+    "deck_location": "This location is an assembled deck. Change the deck to change the location.",
+    "not_enough_cards": "The origin does not have enough copies of the card. Give a lower quantity.",
+    "inventory_applied": "Reliquary applied this inventory before. Start a new inventory.",
+    "deck_assembled": "The deck is an assembled deck. Release it first, then try again.",
+    "deck_not_assembled": "The deck is not an assembled deck. Mark a version as the assembled version first.",
+    "deck_link_site_unavailable": "This instance cannot read the decks of this site. On the site, export the deck as text and paste the text below.",
+    "deck_link_not_found": "The site has no public deck at this link. Make sure that the deck is public or unlisted.",
+    "deck_link_site_failed": "The other site did not give the deck. Try again later, or export the deck as text and paste the text."
+  },
+  "fieldErrors": {
+    "required": "This field is necessary.",
+    "too_short": "This value is too short.",
+    "too_long": "This value is too long.",
+    "invalid_format": "This value does not have the correct format.",
+    "not_allowed": "This value is not permitted.",
+    "unknown": "This value is not correct."
+  }
+}

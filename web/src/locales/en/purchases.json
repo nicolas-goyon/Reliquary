@@ -1,0 +1,128 @@
+{
+  "preferences": {
+    "open": "Preferences",
+    "openLabel": "Set the purchase preferences of {{name}}",
+    "marker": "Purchase preferences",
+    "markerLabel": "{{name}} has purchase preferences",
+    "title": "Purchase preferences of {{name}}",
+    "help": "The purchase list uses these preferences to find the copies of the collection that fit the line.",
+    "languages": "Languages",
+    "languagesHint": "Select no language to accept each language.",
+    "foil": "Foil",
+    "foilValues": {
+      "any": "Foil or nonfoil",
+      "foil": "Foil only",
+      "nonfoil": "Nonfoil only"
+    },
+    "minimumCondition": "Minimum condition",
+    "anyCondition": "Each condition",
+    "printings": "Printings",
+    "printingsHint": "With no wanted printing, each printing that is not avoided fits the line.",
+    "printingChoice": "Choice for the printing {{printing}}",
+    "choices": {
+      "accepted": "Accepted",
+      "wanted": "Wanted",
+      "avoided": "Avoided"
+    },
+    "loadingPrintings": "The application loads the printings.",
+    "printingsError": "The printings did not load. You can set the other preferences.",
+    "morePrintings": "Show more printings",
+    "otherPrinting": "Printing that is not in the list",
+    "maximumPrice": "Maximum price",
+    "amount": "Amount",
+    "currency": "Currency",
+    "priceHint": "Leave the amount empty for no limit. The plain text export shows the maximum price.",
+    "invalidPrice": "The amount is not valid. Give an amount more than 0, for example 2.50.",
+    "save": "Save the preferences",
+    "clear": "Remove the preferences",
+    "cancel": "Cancel"
+  },
+  "page": {
+    "title": "Purchase list of {{name}}",
+    "loading": "The application calculates the purchase list.",
+    "openDeck": "Open the deck",
+    "open": "Purchase list",
+    "help": "The purchase list compares the deck with the available cards of the collection. The cards that stay are the cards to buy.",
+    "includeTokens": "Include the tokens",
+    "caption": "Lines of the purchase list",
+    "columns": {
+      "card": "Card",
+      "zone": "Zone",
+      "needed": "Needed",
+      "inDeck": "In the deck",
+      "fromCollection": "From the collection",
+      "toBuy": "To buy"
+    },
+    "total_one": "{{count}} card to buy",
+    "total_other": "{{count}} cards to buy",
+    "nothingToBuy": "The collection has all the cards of the deck. There is no card to buy.",
+    "empty": "The deck has no card in these zones.",
+    "fromCopy": "{{count}} in {{place}}",
+    "locked": "Locked",
+    "lockedHint": "Unlock {{place}} before you move the cards.",
+    "lockedAlert": "Some cards are in a locked location. Unlock the location before you move the cards.",
+    "closestTitle": "Closest copies",
+    "noClosest": "The collection has no other copy of this card.",
+    "closest": "{{reasons}}: {{copies}} in {{place}}",
+    "copies_one": "{{count}} {{language}} copy",
+    "copies_other": "{{count}} {{language}} copies",
+    "reasons": {
+      "printingWanted": "Not a wanted printing",
+      "printingAvoided": "Avoided printing",
+      "language": "Not in {{languages}}",
+      "finishFoil": "Not foil",
+      "finishNonfoil": "Foil, and the line wants nonfoil",
+      "finish": "Other finish",
+      "condition": "Condition worse than {{condition}}",
+      "conditionUnknown": "Other condition",
+      "unavailable": "In another assembled deck or in a location that is not pickable"
+    }
+  },
+  "languages": {
+    "en": "English",
+    "es": "Spanish",
+    "fr": "French",
+    "de": "German",
+    "it": "Italian",
+    "pt": "Portuguese",
+    "ja": "Japanese",
+    "ko": "Korean",
+    "ru": "Russian",
+    "zhs": "Simplified Chinese",
+    "zht": "Traditional Chinese",
+    "he": "Hebrew",
+    "la": "Latin",
+    "grc": "Ancient Greek",
+    "ar": "Arabic",
+    "sa": "Sanskrit",
+    "ph": "Phyrexian",
+    "qya": "Quenya"
+  },
+  "export": {
+    "title": "Export the cards to buy",
+    "format": "Format",
+    "formats": {
+      "cardmarket": "Cardmarket wants list",
+      "tcgplayer": "TCGplayer mass entry",
+      "text": "Plain text"
+    },
+    "hints": {
+      "cardmarket": "One line for each card: the quantity and the English card name. Paste the text in a wants list of Cardmarket.",
+      "tcgplayer": "One line for each card: the quantity, the English card name and the set code when the line wants one printing. Paste the text in the mass entry of TCGplayer.",
+      "text": "One line for each card, with the printing and the maximum price when the line has them."
+    },
+    "preview": "Text of the export",
+    "copy": "Copy the text",
+    "download": "Download the file",
+    "copied": "The text is in the clipboard.",
+    "copyFailed": "The browser did not copy the text. Download the file."
+  },
+  "proxies": {
+    "print": "Print proxies of the cards to buy",
+    "working": "The application makes the PDF file.",
+    "done": "The PDF file is ready.",
+    "failed_one": "{{count}} image did not load. The PDF file shows the card name in its frame.",
+    "failed_other": "{{count}} images did not load. The PDF file shows the card names in their frames.",
+    "error": "The application could not make the PDF file. Try again."
+  }
+}

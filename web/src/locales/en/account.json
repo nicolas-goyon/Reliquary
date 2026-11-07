@@ -1,0 +1,88 @@
+{
+  "title": "Your account",
+  "profile": {
+    "title": "Profile",
+    "email": "Email address",
+    "displayName": "Public name",
+    "language": "Interface language",
+    "submit": "Save the profile",
+    "saved": "We saved the profile."
+  },
+  "password": {
+    "title": "Change the password",
+    "titleFirst": "Set a password",
+    "description": "After the change, your other sessions stop.",
+    "current": "Current password",
+    "new": "New password",
+    "submit": "Save the password",
+    "saved": "We saved the new password."
+  },
+  "logins": {
+    "title": "External sign-in services",
+    "none": "Your account has no external sign-in service."
+  },
+  "apiKeys": {
+    "title": "API keys",
+    "description": "An API key lets a script or another application use the Reliquary API for you. Each key has a daily quota. Keep your keys secret.",
+    "none": "You have no API key.",
+    "name": "Name",
+    "prefix": "Key",
+    "createdAt": "Created",
+    "lastUsedAt": "Last use",
+    "neverUsed": "Never",
+    "actions": "Actions",
+    "revoke": "Revoke",
+    "revokeConfirm": "Revoke the key \"{{name}}\"? The applications that use it stop working.",
+    "newName": "Name of the new key",
+    "create": "Create a key",
+    "createdOnce": "The key \"{{name}}\" is ready. Copy it now: the application shows it one time only."
+  },
+  "dataExport": {
+    "title": "Export your data",
+    "description": "Get all the data of your account in a ZIP archive. The archive contains your account, your decks in text and JSON files, your folders, your tags, your favorites and the authors that you follow. It stays available for 7 days.",
+    "request": "Ask for an export",
+    "pending": "The server prepares the archive. Come back in a few minutes.",
+    "download": "Download the archive",
+    "expires": "(available until {{date}})",
+    "status": {
+      "pending": "In progress",
+      "ready": "Ready",
+      "failed": "Failed. Ask for a new export."
+    }
+  },
+  "deletion": {
+    "title": "Delete your account",
+    "description": "Reliquary deletes your account and all your data 7 days after your request. You can cancel the request during these 7 days. Export your data first if you want to keep it.",
+    "password": "Password",
+    "submit": "Delete my account",
+    "confirm": "Delete your account and all your data in 7 days?",
+    "scheduled": "Reliquary deletes your account and all your data on {{date}}.",
+    "cancel": "Cancel the deletion"
+  },
+  "delegations": {
+    "title": "Delegations",
+    "description": "A delegation lets a module of this instance act for you, with the permissions that you choose, until a date. Revoke a delegation when you do not want the module to act for you.",
+    "none": "You have no delegation.",
+    "noServiceAccount": "No module of this instance can receive a delegation.",
+    "module": "Module",
+    "scopes": "Permissions",
+    "expiresAt": "Valid until",
+    "lastUsedAt": "Last use",
+    "neverUsed": "Never",
+    "actions": "Actions",
+    "revoke": "Revoke",
+    "revokeConfirm": "Revoke the delegation to \"{{name}}\"? The module stops acting for you immediately.",
+    "newTitle": "Give a delegation",
+    "duration": "Duration",
+    "days": "{{count}} days",
+    "submit": "Give the delegation",
+    "created": "The module \"{{name}}\" can now act for you until {{date}}.",
+    "scope": {
+      "decks_read": "Read your decks, folders and tags",
+      "decks_write": "Create, change and delete your decks, folders and tags",
+      "collection_read": "Read your collection",
+      "collection_write": "Change your collection",
+      "profile_read": "Read your account: email address, name and language"
+    }
+  }
+}

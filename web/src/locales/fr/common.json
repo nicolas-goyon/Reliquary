@@ -1,0 +1,121 @@
+{
+  "app": {
+    "name": "Reliquary",
+    "tagline": "Gestionnaire de decks et de collection pour Magic: The Gathering"
+  },
+  "language": {
+    "label": "Langue",
+    "en": "English",
+    "fr": "Français"
+  },
+  "theme": {
+    "label": "Thème",
+    "system": "Système",
+    "light": "Clair",
+    "dark": "Sombre"
+  },
+  "shortcuts": {
+    "open": "Raccourcis clavier",
+    "title": "Raccourcis clavier",
+    "description": "Les raccourcis ne fonctionnent pas quand le focus est dans un champ.",
+    "then": "puis",
+    "close": "Fermer",
+    "actions": {
+      "search": "Aller au champ de recherche de cartes",
+      "home": "Ouvrir la page d’accueil",
+      "cards": "Ouvrir la recherche de cartes",
+      "decks": "Ouvrir vos decks",
+      "explore": "Ouvrir les decks publics",
+      "newDeck": "Créer un deck, sur la liste des decks",
+      "addCard": "Aller au champ « Ajouter une carte », sur la page d’un deck",
+      "help": "Afficher les raccourcis clavier"
+    }
+  },
+  "home": {
+    "title": "Gérez vos decks et votre collection.",
+    "description": "Reliquary est au début de son développement. Le premier jalon pose les fondations : données des cartes, recherche de cartes et comptes.",
+    "roadmapLink": "Lire la feuille de route"
+  },
+  "apiStatus": {
+    "checking": "L’application vérifie l’API.",
+    "available": "L’API est disponible. Version {{version}}.",
+    "unavailable": "L’API n’est pas disponible."
+  },
+  "footer": {
+    "license": "Logiciel libre sous licence AGPL-3.0.",
+    "source": "Code source",
+    "version": "Version {{version}}."
+  },
+  "navigation": {
+    "label": "Navigation principale",
+    "skipToContent": "Aller au contenu",
+    "home": "Accueil",
+    "account": "Compte",
+    "signIn": "Se connecter",
+    "register": "Créer un compte",
+    "signOut": "Se déconnecter",
+    "cards": "Cartes",
+    "decks": "Decks",
+    "explore": "Explorer",
+    "moderation": "Modération",
+    "collection": "Collection"
+  },
+  "notFound": {
+    "title": "Page introuvable",
+    "description": "Cette page n’existe pas. Vérifiez l’adresse."
+  },
+  "update": {
+    "available": "Une nouvelle version de Reliquary est disponible.",
+    "apply": "Mettre à jour"
+  },
+  "slots": {
+    "contributionFailed": "Cette partie de la page a rencontré une erreur. Le reste de la page fonctionne toujours."
+  },
+  "errors": {
+    "network_error": "L’application ne parvient pas à joindre le serveur. Vérifiez votre connexion, puis réessayez.",
+    "internal_error": "Le serveur a rencontré une erreur. Réessayez plus tard.",
+    "service_unavailable": "Le serveur n’est pas disponible. Réessayez plus tard.",
+    "validation_failed": "Certains champs sont incorrects. Corrigez-les, puis réessayez.",
+    "authentication_required": "Connectez-vous pour continuer.",
+    "invalid_authentication": "Votre session a expiré. Reconnectez-vous.",
+    "forbidden": "Vous ne pouvez pas effectuer cette opération.",
+    "not_found": "L’élément n’existe pas.",
+    "rate_limited": "Vous avez envoyé trop de requêtes. Patientez une minute, puis réessayez.",
+    "quota_exceeded": "Cette clé d’API a utilisé toutes ses requêtes pour aujourd’hui.",
+    "invalid_credentials": "L’adresse e-mail ou le mot de passe est incorrect.",
+    "email_not_checked": "Votre adresse e-mail n’est pas vérifiée. Ouvrez le lien de l’e-mail que nous vous avons envoyé.",
+    "invalid_token": "Ce lien n’est pas valable. Il a peut-être déjà servi ou expiré. Demandez un nouvel e-mail.",
+    "session_expired": "Votre session a expiré. Reconnectez-vous.",
+    "api_key_limit": "Vous avez atteint le nombre maximal de clés d’API. Révoquez une clé, puis réessayez.",
+    "delegation_limit": "Vous avez le nombre maximal de délégations. Révoquez une délégation, puis réessayez.",
+    "provider_not_enabled": "Ce service de connexion n’est pas disponible sur cette instance.",
+    "external_sign_in_failed": "La connexion avec le service externe a échoué. Réessayez.",
+    "account_name_taken": "Un compte porte déjà ce nom public. Choisissez un autre nom.",
+    "external_email_missing": "Le service externe n’a pas fourni d’adresse e-mail. Utilisez une autre méthode de connexion.",
+    "external_email_not_verified": "Le service externe n’a pas vérifié votre adresse e-mail. Vérifiez l’adresse sur ce service, ou connectez-vous avec votre mot de passe.",
+    "search_syntax_error": "La recherche contient une erreur de syntaxe. Corrigez la recherche, puis réessayez.",
+    "search_query_empty": "La recherche ne contient aucun critère reconnu. Modifiez la recherche.",
+    "search_timeout": "La recherche a pris trop de temps. Précisez la recherche.",
+    "report_exists": "Vous avez déjà signalé cet élément. Un administrateur lira bientôt votre signalement.",
+    "report_closed": "Un administrateur a déjà fermé ce signalement. Rechargez la liste.",
+    "unknown": "Une erreur s’est produite. Réessayez.",
+    "location_locked": "L’emplacement est verrouillé. Déverrouillez-le, puis réessayez.",
+    "location_not_empty": "L’emplacement ou une de ses boîtes contient des cartes. Déplacez ou retirez les cartes, puis réessayez.",
+    "deck_location": "Cet emplacement est un deck monté. Modifiez le deck pour modifier l’emplacement.",
+    "not_enough_cards": "L’origine n’a pas assez d’exemplaires de la carte. Indiquez une quantité plus faible.",
+    "inventory_applied": "Reliquary a déjà appliqué cet inventaire. Commencez un nouvel inventaire.",
+    "deck_assembled": "Le deck est un deck assemblé. Désassemblez-le d’abord, puis réessayez.",
+    "deck_not_assembled": "Le deck n’est pas un deck assemblé. Marquez d’abord une version comme version assemblée.",
+    "deck_link_site_unavailable": "Cette instance ne peut pas lire les decks de ce site. Sur le site, exportez le deck en texte et collez le texte ci-dessous.",
+    "deck_link_not_found": "Le site n’a aucun deck public à ce lien. Vérifiez que le deck est public ou non répertorié.",
+    "deck_link_site_failed": "L’autre site n’a pas donné le deck. Réessayez plus tard, ou exportez le deck en texte et collez le texte."
+  },
+  "fieldErrors": {
+    "required": "Ce champ est obligatoire.",
+    "too_short": "Cette valeur est trop courte.",
+    "too_long": "Cette valeur est trop longue.",
+    "invalid_format": "Cette valeur n’a pas le bon format.",
+    "not_allowed": "Cette valeur n’est pas autorisée.",
+    "unknown": "Cette valeur est incorrecte."
+  }
+}

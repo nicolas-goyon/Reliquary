@@ -1,0 +1,591 @@
+#!/bin/sh
+# reliquary-update: installs, updates and restores a deployed instance of Reliquary with Docker Compose.
+# See https://nicolas-goyon.github.io/reliquary/deployment/pre-production/, or run "reliquary-update --help".
+#
+# The folder of the instance (RELIQUARY_HOME, default: the folder of this script) contains:
+#   .env             the settings of the instance (secrets included)
+#   .state/          the images and the Compose file of the running version, the restore points and the lock
+#   backups/         the backups of the databases (RELIQUARY_BACKUP_DIRECTORY)
+#
+# Requirements: Docker with the Compose plugin, and a POSIX shell.
+#
+# POSIX shell functions have no local variables. Each function starts the names of its variables with its own prefix.
+
+# The revision of this script. The script replaces itself only with a script that has a higher revision.
+# reliquary-update-revision: 2
+
+set -eu
+
+# Variables of the shell must not change the project or the images of the instance.
+unset CDPATH COMPOSE_PROJECT_NAME COMPOSE_FILE COMPOSE_PROFILES COMPOSE_ENV_FILES \
+    RELIQUARY_IMAGE_API RELIQUARY_IMAGE_WORKER RELIQUARY_IMAGE_CLI RELIQUARY_IMAGE_WEB RELIQUARY_RUNNING_VERSION
+
+script_path=$(cd -P -- "$(dirname -- "$0")" >/dev/null && pwd)/$(basename -- "$0")
+home=${RELIQUARY_HOME:-$(dirname -- "$script_path")}
+env_file=$home/.env
+state=$home/.state
+restore_points=$state/restore-points
+marker=$state/in-progress
+lock=$state/lock
+recovering=false
+
+usage() {
+    cat <<'EOF'
+Usage: reliquary-update [VERSION]          Update the instance to VERSION, or to RELIQUARY_VERSION of .env.
+                                           VERSION is "develop", "latest" or a release number, for example 0.2.0.
+       reliquary-update --init [VERSION]   Make the .env file with new secrets. The default VERSION is "latest".
+       reliquary-update --check [VERSION]  Tell if a different version is available. Change nothing.
+       reliquary-update --status           Show the running version, the containers and the restore points.
+       reliquary-update --backup [LABEL]   Back up the databases to the backups folder, in a folder DATE-LABEL.
+       reliquary-update --rollback [--yes] Start the previous version again, with the data of the backup before the update.
+       reliquary-update --recover          Finish an update or a rollback that stopped: restore its backup and start its version.
+       reliquary-update --import-cards     Import all the cards from Scryfall now.
+       reliquary-update --force [VERSION]  Update even when the images did not change.
+
+Environment: RELIQUARY_HOME (folder of the instance), RELIQUARY_PULL=false (use the local images only),
+RELIQUARY_SELF_UPDATE=false (do not replace this script with the script of the new version).
+EOF
+}
+
+log() {
+    printf 'reliquary-update: %s\n' "$*"
+}
+
+fail() {
+    printf 'reliquary-update: error: %s\n' "$*" >&2
+    exit 1
+}
+
+# The name of a new backup: the UTC date, then a label. The order of the names is the order of the dates.
+backup_name() {
+    printf '%s-%s' "$(date -u +%Y%m%dT%H%M%SZ)" "$1"
+}
+
+# Prints the value of a setting: the environment first, then the .env file, then the default.
+setting() {
+    setting_name=$1
+    setting_default=${2:-}
+    setting_value=$(printenv "$setting_name" 2>/dev/null || true)
+    if [ -z "$setting_value" ] && [ -f "$env_file" ]; then
+        setting_value=$(sed -n -e "s/^[[:space:]]*export[[:space:]][[:space:]]*$setting_name=//p" \
+            -e "s/^[[:space:]]*$setting_name=//p" "$env_file" | tail -n 1)
+        case "$setting_value" in
+            \"*) setting_value=$(printf '%s' "$setting_value" | sed -e 's/^"\([^"]*\)".*$/\1/') ;;
+            \'*) setting_value=$(printf '%s' "$setting_value" | sed -e "s/^'\([^']*\)'.*$/\1/") ;;
+            *) setting_value=$(printf '%s' "$setting_value" | sed -e 's/[[:space:]][[:space:]]*#.*$//' -e 's/[[:space:]]*$//') ;;
+        esac
+    fi
+    if [ -z "$setting_value" ]; then
+        setting_value=$setting_default
+    fi
+    printf '%s' "$setting_value"
+}
+
+require_docker() {
+    command -v docker >/dev/null 2>&1 || fail "Docker is not installed."
+    docker compose version >/dev/null 2>&1 || fail "The Docker Compose plugin is not installed."
+    docker info >/dev/null 2>&1 || fail "Docker does not answer. Start Docker, then try again."
+}
+
+require_env() {
+    [ -f "$env_file" ] || fail "$env_file does not exist. Run \"reliquary-update --init\" first."
+    [ -n "$(setting RELIQUARY_SIGNING_KEY)" ] || fail "Set RELIQUARY_SIGNING_KEY in $env_file."
+    [ -n "$(setting RELIQUARY_POSTGRES_PASSWORD)" ] || fail "Set RELIQUARY_POSTGRES_PASSWORD in $env_file."
+}
+
+prefix=
+project=
+backup_directory=
+
+load_settings() {
+    prefix=$(setting RELIQUARY_IMAGE_PREFIX ghcr.io/nicolas-goyon/reliquary)
+    project=$(setting RELIQUARY_PROJECT reliquary-preprod)
+    backup_directory=$(setting RELIQUARY_BACKUP_DIRECTORY ./backups)
+    case "$backup_directory" in
+        /*) ;;
+        *) backup_directory=$home/${backup_directory#./} ;;
+    esac
+    backup_directory=${backup_directory%/}
+    [ "$backup_directory" != "$home" ] || fail "RELIQUARY_BACKUP_DIRECTORY must be a folder of its own, not the folder of the instance."
+    # Compose reads the variables of the shell before the .env file, so the backup folder is always absolute.
+    RELIQUARY_BACKUP_DIRECTORY=$backup_directory
+    export RELIQUARY_BACKUP_DIRECTORY
+    # The CLI container runs with the user of this script, so only this user can read and write the backups.
+    mkdir -p "$backup_directory"
+    chmod 700 "$backup_directory"
+}
+
+# Takes the lock of the instance, so that two runs of the script cannot change the instance at the same time.
+take_lock() {
+    mkdir -p "$state"
+    if ! mkdir "$lock" 2>/dev/null; then
+        fail "An other run of reliquary-update uses the instance. If no other run exists, delete the folder $lock."
+    fi
+    trap 'on_exit' EXIT
+    trap 'exit 130' INT
+    trap 'exit 143' TERM
+    trap 'exit 129' HUP
+}
+
+# Runs Docker Compose with the images of a state: "current", "next" or the path of a state folder.
+compose() {
+    case "$1" in
+        current) compose_folder=$state/current ;;
+        next) compose_folder=$state/next ;;
+        *) compose_folder=$1 ;;
+    esac
+    shift
+    docker compose --project-name "$project" --project-directory "$home" --file "$compose_folder/compose.yaml" \
+        --env-file "$env_file" --env-file "$compose_folder/images.env" "$@"
+}
+
+# Runs the CLI of a state as the user of this script.
+cli() {
+    cli_state=$1
+    shift
+    compose "$cli_state" run --rm --user "$(id -u):$(id -g)" cli "$@"
+}
+
+# Prints a reference that does not move: the digest of the image in the registry, or else the local image ID.
+pinned_reference() {
+    pin_image=$1
+    pin_repository=${pin_image%:*}
+    pin_digest=$(docker image inspect --format '{{range .RepoDigests}}{{println .}}{{end}}' "$pin_image" | grep "^$pin_repository@" | head -n 1 || true)
+    if [ -n "$pin_digest" ]; then
+        printf '%s' "$pin_digest"
+    else
+        docker image inspect --format '{{.Id}}' "$pin_image"
+    fi
+}
+
+# Prints the version of the CLI image, for example 0.2.0 or 0.2.0-develop.42.
+image_version() {
+    iv_version=$(docker run --rm "$1" --version 2>/dev/null | head -n 1 || true)
+    iv_version=${iv_version%%+*}
+    if [ -z "$iv_version" ]; then
+        iv_version=$2
+    fi
+    printf '%s' "$iv_version"
+}
+
+# Gets the images of a version and writes a state folder: images.env, compose.yaml and the script of this version.
+# Then it checks the Compose file with the settings of the instance. It changes nothing in the instance.
+prepare() {
+    prepare_version=$1
+    prepare_folder=$2
+    rm -rf "$prepare_folder"
+    mkdir -p "$prepare_folder"
+    for prepare_host in api worker cli web; do
+        prepare_image=$prefix-$prepare_host:$prepare_version
+        if [ "$(setting RELIQUARY_PULL true)" != "false" ]; then
+            log "Pull $prepare_image."
+            docker pull --quiet "$prepare_image" >/dev/null || fail "Cannot pull $prepare_image. Check the version and the network."
+        fi
+        docker image inspect "$prepare_image" >/dev/null 2>&1 || fail "The image $prepare_image does not exist."
+        prepare_reference=$(pinned_reference "$prepare_image")
+        [ -n "$prepare_reference" ] || fail "Cannot read the digest of $prepare_image."
+        prepare_variable=RELIQUARY_IMAGE_$(printf '%s' "$prepare_host" | tr '[:lower:]' '[:upper:]')
+        printf '%s=%s\n' "$prepare_variable" "$prepare_reference" >> "$prepare_folder/images.env"
+    done
+    {
+        printf 'RELIQUARY_RUNNING_VERSION=%s\n' "$(image_version "$prefix-cli:$prepare_version" "$prepare_version")"
+        printf 'RELIQUARY_RUNNING_CHANNEL=%s\n' "$prepare_version"
+        printf 'RELIQUARY_INSTALLED_AT=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    } >> "$prepare_folder/images.env"
+
+    # The CLI image contains the Compose file and the script of its version.
+    prepare_container=$(docker create "$prefix-cli:$prepare_version")
+    if ! docker cp "$prepare_container:/app/deploy/compose.yaml" "$prepare_folder/compose.yaml" >/dev/null 2>&1; then
+        docker rm "$prepare_container" >/dev/null
+        fail "The image $prefix-cli:$prepare_version has no Compose file. Use a version that is more recent."
+    fi
+    docker cp "$prepare_container:/app/deploy/reliquary-update" "$prepare_folder/reliquary-update" >/dev/null 2>&1 || true
+    docker rm "$prepare_container" >/dev/null
+
+    compose "$prepare_folder" config --quiet ||
+        fail "The Compose file of $prepare_version does not work with $env_file. Read the message above, and add the missing settings."
+}
+
+state_value() {
+    sed -n "s/^$2=//p" "$1/images.env" 2>/dev/null | tail -n 1
+}
+
+images_of() {
+    grep '^RELIQUARY_IMAGE_' "$1/images.env" 2>/dev/null || true
+}
+
+backup() {
+    backup_state=$1
+    backup_label=$2
+    log "Back up the databases to $backup_directory/$backup_label."
+    compose "$backup_state" up --detach --wait postgres redis >/dev/null
+    cli "$backup_state" backup "/backups/$backup_label"
+}
+
+stop_application() {
+    log "Stop the API, the worker and the web app."
+    compose "$1" stop api worker web
+}
+
+# Records the state and the backup that give a working instance again, until the operation ends.
+# When the script stops before the end, the exit handler (or "reliquary-update --recover") restores them.
+begin_operation() {
+    printf 'RECOVER_STATE=%s\nRECOVER_BACKUP=%s\nRECOVER_OPERATION=%s\n' "$1" "$2" "$3" > "$marker"
+}
+
+end_operation() {
+    rm -f "$marker"
+}
+
+marker_value() {
+    sed -n "s/^$1=//p" "$marker" 2>/dev/null | tail -n 1
+}
+
+# Restores the backup of the marker, and starts the version of the marker. The state "current" becomes this version.
+recover_operation() {
+    recover_state=$(marker_value RECOVER_STATE)
+    recover_backup=$(marker_value RECOVER_BACKUP)
+    recover_operation=$(marker_value RECOVER_OPERATION)
+    [ -f "$recover_state/images.env" ] || fail "The state $recover_state of the stopped $recover_operation does not exist."
+    log "The $recover_operation did not end. Restore the backup $recover_backup and start version $(state_value "$recover_state" RELIQUARY_RUNNING_VERSION) again."
+    compose current stop api worker web >/dev/null 2>&1 || true
+    compose next stop api worker web >/dev/null 2>&1 || true
+    compose "$recover_state" up --detach --wait postgres redis mailpit
+    cli "$recover_state" restore "/backups/$recover_backup" --replace
+    cli "$recover_state" migrate
+    compose "$recover_state" up --detach --wait --remove-orphans
+    if [ "$recover_state" != "$state/current" ]; then
+        rm -rf "$state/current.new"
+        cp -R "$recover_state" "$state/current.new"
+        rm -rf "$state/current"
+        mv "$state/current.new" "$state/current"
+    fi
+    # The version of the restore point runs again, so the restore point is not necessary.
+    case "$recover_state" in
+        "$restore_points"/*) rm -rf "$recover_state" ;;
+    esac
+    rm -rf "$state/next" "$state/before-rollback"
+    end_operation
+    log "Version $(state_value "$state/current" RELIQUARY_RUNNING_VERSION) runs again with the data of the backup $recover_backup."
+}
+
+on_exit() {
+    on_exit_status=$?
+    trap - EXIT INT TERM HUP
+    if [ "$on_exit_status" -ne 0 ] && [ -f "$marker" ] && [ "$recovering" = "false" ]; then
+        on_exit_operation=$(marker_value RECOVER_OPERATION)
+        # A subshell in a condition ignores "set -e", so the subshell runs first and the status is read after.
+        set +e
+        (
+            set -e
+            recover_operation
+        )
+        on_exit_recovery=$?
+        if [ "$on_exit_recovery" -eq 0 ]; then
+            printf 'reliquary-update: error: the %s failed. The previous state runs again. Read the messages above.\n' "$on_exit_operation" >&2
+        else
+            printf 'reliquary-update: error: the recovery failed. Correct the problem, then run "reliquary-update --recover".\n' >&2
+        fi
+    fi
+    rmdir "$lock" 2>/dev/null || true
+    exit "$on_exit_status"
+}
+
+# Checks the state at the start of a command that changes the instance.
+check_state() {
+    # A run stopped between the two renames of the state "current".
+    if [ ! -d "$state/current" ] && [ -d "$state/previous" ]; then
+        mv "$state/previous" "$state/current"
+    fi
+    if [ -f "$marker" ]; then
+        recovering=true
+        fail "An earlier $(marker_value RECOVER_OPERATION) did not end. Run \"reliquary-update --recover\"."
+    fi
+}
+
+# Deletes the older backups and their restore points. RELIQUARY_KEEP_BACKUPS gives the number to keep.
+# The script deletes only the folders of backups that it made, and never the backup of the newest restore point.
+prune() {
+    prune_keep=$(setting RELIQUARY_KEEP_BACKUPS 10)
+    case "$prune_keep" in
+        '' | *[!0-9]*)
+            log "RELIQUARY_KEEP_BACKUPS is not a number. The script deletes no backup."
+            return 0
+            ;;
+    esac
+    [ "$prune_keep" -ge 1 ] || prune_keep=1
+    prune_newest_point=$(find "$restore_points" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | sort | tail -n 1)
+    prune_newest_point=${prune_newest_point##*/}
+    prune_count=0
+    # The names of the backups that the script makes have no spaces. The path of the folder can have spaces.
+    for prune_name in $(cd "$backup_directory" && find . -mindepth 1 -maxdepth 1 -type d \
+        -name '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]T[0-9][0-9][0-9][0-9][0-9][0-9]Z-*' | sed 's:^\./::' | sort -r); do
+        [ -f "$backup_directory/$prune_name/manifest.json" ] || continue
+        prune_count=$((prune_count + 1))
+        if [ "$prune_count" -gt "$prune_keep" ] && [ "$prune_name" != "$prune_newest_point" ]; then
+            log "Delete the old backup $prune_name."
+            rm -rf "${backup_directory:?}/$prune_name" "${restore_points:?}/$prune_name"
+        fi
+    done
+}
+
+script_revision() {
+    sed -n 's/^# reliquary-update-revision: \([0-9][0-9]*\)$/\1/p' "$1" 2>/dev/null | head -n 1
+}
+
+# Replaces this script with the script of the new version, when it has a higher revision.
+# The running shell keeps the old file open, so the replacement is safe.
+update_script() {
+    us_new_script=$state/current/reliquary-update
+    [ "$(setting RELIQUARY_SELF_UPDATE true)" != "false" ] || return 0
+    [ -f "$us_new_script" ] || return 0
+    [ "$(dirname -- "$script_path")" = "$home" ] || return 0
+    # Do not change a file of a Git working tree.
+    if git -C "$home" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+        return 0
+    fi
+    us_new_revision=$(script_revision "$us_new_script")
+    us_old_revision=$(script_revision "$script_path")
+    [ -n "$us_new_revision" ] || return 0
+    [ "$us_new_revision" -gt "${us_old_revision:-0}" ] || return 0
+    cp "$us_new_script" "$script_path.new"
+    chmod +x "$script_path.new"
+    mv -f "$script_path.new" "$script_path"
+    log "The script reliquary-update of this version (revision $us_new_revision) replaces the old script."
+}
+
+volume_exists() {
+    docker volume inspect "${project}_postgres-data" >/dev/null 2>&1
+}
+
+command_update() {
+    version=${1:-$(setting RELIQUARY_VERSION latest)}
+    force=$2
+    require_docker
+    require_env
+    load_settings
+    take_lock
+    check_state
+    prepare "$version" "$state/next"
+
+    if [ -f "$state/current/images.env" ] && [ "$force" = "false" ] &&
+        [ "$(images_of "$state/current")" = "$(images_of "$state/next")" ]; then
+        log "The instance already has the images of \"$version\" ($(state_value "$state/current" RELIQUARY_RUNNING_VERSION))."
+        rm -rf "$state/next"
+        compose current up --detach --wait postgres redis mailpit >/dev/null
+        cli current migrate >/dev/null
+        compose current up --detach --wait --remove-orphans >/dev/null
+        return 0
+    fi
+
+    new_version=$(state_value "$state/next" RELIQUARY_RUNNING_VERSION)
+
+    if [ ! -f "$state/current/images.env" ]; then
+        log "Install version $new_version (\"$version\")."
+        if volume_exists; then
+            # The volume has data, but the script has no state for it. Keep a copy of the data first.
+            log "The database volume of the project $project exists. Back up its data before the migrations."
+            backup next "$(backup_name existing-data)"
+        fi
+        compose next up --detach --wait postgres redis mailpit
+        log "Apply the migrations."
+        cli next migrate
+        log "Start the API, the worker and the web app."
+        log "At its first start, the worker imports all the cards from Scryfall. This takes some minutes and needs about 3 GB."
+        compose next up --detach --wait --remove-orphans ||
+            fail "The instance did not start. Read the logs with: docker compose --project-name $project logs"
+        mv "$state/next" "$state/current"
+    else
+        old_version=$(state_value "$state/current" RELIQUARY_RUNNING_VERSION)
+        log "Update from version $old_version to version $new_version (\"$version\")."
+        name=$(backup_name "$old_version")
+        # Stop the writers first, so that the backup contains all the data.
+        stop_application current
+        backup current "$name"
+        mkdir -p "$restore_points/$name"
+        cp "$state/current/images.env" "$state/current/compose.yaml" "$restore_points/$name/"
+        begin_operation "$restore_points/$name" "$name" update
+
+        compose next up --detach --wait postgres redis mailpit
+        log "Apply the migrations."
+        cli next migrate
+        log "Start the API, the worker and the web app."
+        compose next up --detach --wait --remove-orphans
+
+        rm -rf "$state/previous"
+        mv "$state/current" "$state/previous"
+        mv "$state/next" "$state/current"
+        rm -rf "$state/previous"
+        end_operation
+    fi
+
+    prune
+    log "Version $new_version runs on $(setting RELIQUARY_PUBLIC_URL http://localhost:8090)."
+    update_script
+}
+
+command_check() {
+    version=${1:-$(setting RELIQUARY_VERSION latest)}
+    require_docker
+    require_env
+    prefix=$(setting RELIQUARY_IMAGE_PREFIX ghcr.io/nicolas-goyon/reliquary)
+    project=$(setting RELIQUARY_PROJECT reliquary-preprod)
+    check_folder=$(mktemp -d)
+    trap 'rm -rf "$check_folder"' EXIT
+    prepare "$version" "$check_folder"
+    new_version=$(state_value "$check_folder" RELIQUARY_RUNNING_VERSION)
+    if [ "$(images_of "$state/current")" = "$(images_of "$check_folder")" ]; then
+        log "The instance is up to date: version $new_version (\"$version\")."
+    elif [ -f "$state/current/images.env" ]; then
+        log "A different version is available: $(state_value "$state/current" RELIQUARY_RUNNING_VERSION) -> $new_version (\"$version\")."
+        log "Run \"reliquary-update $version\" to update."
+    else
+        log "The instance is not installed. Version $new_version (\"$version\") is available."
+    fi
+}
+
+command_status() {
+    [ -f "$state/current/images.env" ] || fail "The instance is not installed."
+    require_docker
+    project=$(setting RELIQUARY_PROJECT reliquary-preprod)
+    log "Version $(state_value "$state/current" RELIQUARY_RUNNING_VERSION) (\"$(state_value "$state/current" RELIQUARY_RUNNING_CHANNEL)\"), installed at $(state_value "$state/current" RELIQUARY_INSTALLED_AT)."
+    images_of "$state/current"
+    compose current ps
+    if [ -f "$marker" ]; then
+        log "An earlier $(marker_value RECOVER_OPERATION) did not end. Run \"reliquary-update --recover\"."
+    fi
+    status_points=$(find "$restore_points" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | sort -r | sed 's:.*/::' | tr '\n' ' ')
+    [ -z "$status_points" ] || log "Restore points: $status_points"
+}
+
+command_backup() {
+    backup_request=${1:-manual}
+    case "$backup_request" in
+        *[!A-Za-z0-9._-]* | .*) fail "Use only letters, digits, \".\", \"_\" and \"-\" in the label, and do not start it with \".\"." ;;
+    esac
+    [ -f "$state/current/images.env" ] || fail "The instance is not installed."
+    require_docker
+    require_env
+    load_settings
+    take_lock
+    check_state
+    backup current "$(backup_name "$backup_request")"
+}
+
+command_rollback() {
+    confirmed=$1
+    [ -f "$state/current/images.env" ] || fail "The instance is not installed."
+    require_docker
+    require_env
+    load_settings
+    take_lock
+    check_state
+    name=$(find "$restore_points" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | sort | tail -n 1)
+    name=${name##*/}
+    [ -n "$name" ] || fail "There is no restore point. The script makes one before each update."
+    point=$restore_points/$name
+    [ -f "$backup_directory/$name/manifest.json" ] || fail "The backup $name of the restore point does not exist."
+    if [ "$(images_of "$point")" = "$(images_of "$state/current")" ]; then
+        fail "The restore point $name has the images of the running version. Delete the folder $point, then try again."
+    fi
+    log "The instance goes back to version $(state_value "$point" RELIQUARY_RUNNING_VERSION) with the data of the backup $name."
+    log "All the changes after this backup will be lost. A backup keeps them first."
+    if [ "$confirmed" != "true" ]; then
+        if [ -t 0 ]; then
+            printf 'reliquary-update: type "yes" to continue: '
+            read -r answer
+            [ "$answer" = "yes" ] || fail "Stopped. Nothing changed."
+        else
+            fail "Add --yes to confirm the rollback."
+        fi
+    fi
+    safety=$(backup_name before-rollback)
+    stop_application current
+    backup current "$safety"
+    rm -rf "$state/before-rollback"
+    cp -R "$state/current" "$state/before-rollback"
+    begin_operation "$state/before-rollback" "$safety" rollback
+
+    compose "$point" up --detach --wait postgres redis mailpit
+    cli "$point" restore "/backups/$name" --replace
+    cli "$point" migrate
+    compose "$point" up --detach --wait --remove-orphans
+
+    rm -rf "$state/current.new"
+    cp -R "$point" "$state/current.new"
+    rm -rf "$state/current"
+    mv "$state/current.new" "$state/current"
+    rm -rf "$point" "$state/before-rollback"
+    end_operation
+    log "Version $(state_value "$state/current" RELIQUARY_RUNNING_VERSION) runs again. The backup $safety keeps the data before the rollback."
+}
+
+command_recover() {
+    require_docker
+    require_env
+    load_settings
+    take_lock
+    if [ ! -f "$marker" ]; then
+        log "No update and no rollback stopped. Nothing to do."
+        return 0
+    fi
+    # When this recovery fails, the exit handler must not start a second recovery.
+    recovering=true
+    recover_operation
+}
+
+command_import_cards() {
+    [ -f "$state/current/images.env" ] || fail "The instance is not installed."
+    require_docker
+    require_env
+    load_settings
+    take_lock
+    check_state
+    log "Import all the cards from Scryfall. This step takes some minutes."
+    cli current jobs run cards.import --force
+}
+
+random_hex() {
+    od -An -tx1 -N"$1" /dev/urandom | tr -d ' \n'
+}
+
+command_init() {
+    version=${1:-latest}
+    [ -f "$env_file" ] && fail "$env_file exists. Change it, or delete it first."
+    mkdir -p "$home"
+    template=$(dirname -- "$script_path")/.env.example
+    if [ ! -f "$template" ]; then
+        require_docker
+        prefix=$(setting RELIQUARY_IMAGE_PREFIX ghcr.io/nicolas-goyon/reliquary)
+        template=$home/.env.example
+        docker run --rm --entrypoint cat "$prefix-cli:$version" /app/deploy/.env.example > "$template" ||
+            fail "Cannot read the settings template from $prefix-cli:$version."
+    fi
+    signing_key=$(head -c 32 /dev/urandom | base64 | tr -d '\n')
+    password=$(random_hex 24)
+    (
+        umask 077
+        sed -e "s|^RELIQUARY_VERSION=.*|RELIQUARY_VERSION=$version|" \
+            -e "s|^RELIQUARY_SIGNING_KEY=.*|RELIQUARY_SIGNING_KEY=$signing_key|" \
+            -e "s|^RELIQUARY_POSTGRES_PASSWORD=.*|RELIQUARY_POSTGRES_PASSWORD=$password|" \
+            "$template" > "$env_file"
+    )
+    log "The script made $env_file with new secrets. Read it, then run \"reliquary-update\"."
+}
+
+case "${1:-}" in
+    -h | --help) usage ;;
+    --init) shift; command_init "${1:-}" ;;
+    --check) shift; command_check "${1:-}" ;;
+    --status) command_status ;;
+    --backup) shift; command_backup "${1:-}" ;;
+    --rollback)
+        shift
+        if [ "${1:-}" = "--yes" ]; then command_rollback true; else command_rollback false; fi
+        ;;
+    --recover) command_recover ;;
+    --import-cards) command_import_cards ;;
+    --force) shift; command_update "${1:-}" true ;;
+    -*) usage >&2; exit 2 ;;
+    *) command_update "${1:-}" false ;;
+esac

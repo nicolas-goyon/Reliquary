@@ -1,0 +1,880 @@
+{
+  "queries": [
+    {
+      "query": "c:rg",
+      "section": "Colors and color identity",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "color>=uw -c:red",
+      "section": "Colors and color identity",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "id<=esper t:instant",
+      "section": "Colors and color identity",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "id:c t:land",
+      "section": "Colors and color identity",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "c=2 is:bear",
+      "section": "Colors and color identity",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "t:merfolk t:legend",
+      "section": "Card types",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "t:goblin -t:creature",
+      "section": "Card types",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "o:draw t:creature",
+      "section": "Card text",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "o:\"~ enters tapped\"",
+      "section": "Card text",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "kw:flying -t:creature",
+      "section": "Card text",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "mana:{G}{U}",
+      "section": "Mana costs",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "m:2WW",
+      "section": "Mana costs",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "m>3WU",
+      "section": "Mana costs",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "m:{R/P}",
+      "section": "Mana costs",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "c:u mv=5",
+      "section": "Mana costs",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "devotion:{u/b}{u/b}{u/b}",
+      "section": "Mana costs",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "produces=wu",
+      "section": "Mana costs",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "pow>=8",
+      "section": "Power, toughness and loyalty",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "pow>tou c:w t:creature",
+      "section": "Power, toughness and loyalty",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "t:planeswalker loy=3",
+      "section": "Power, toughness and loyalty",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "is:meld",
+      "section": "Multi-faced cards",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "is:split",
+      "section": "Multi-faced cards",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "c>=br is:spell f:duel",
+      "section": "Spells, permanents and effects",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "is:permanent t:rebel",
+      "section": "Spells, permanents and effects",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "is:vanilla",
+      "section": "Spells, permanents and effects",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "t:vanguard",
+      "section": "Extra cards and funny cards",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "t:plane -t:planeswalker",
+      "section": "Extra cards and funny cards",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "t:scheme",
+      "section": "Extra cards and funny cards",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "t:phenomenon",
+      "section": "Extra cards and funny cards",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "st:memorabilia",
+      "section": "Extra cards and funny cards",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "is:funny",
+      "section": "Extra cards and funny cards",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "t:scheme",
+      "section": "Extra cards and funny cards",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "power include:extras",
+      "section": "Extra cards and funny cards",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "r:common t:artifact",
+      "section": "Rarity",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "r>=r",
+      "section": "Rarity",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "rarity:common e:ima new:rarity",
+      "section": "Rarity",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "in:rare -rarity:rare",
+      "section": "Rarity",
+      "origin": "syntax-guide",
+      "knownDifference": "The demo dataset contains at most 3 English printings and 1 French printing of each card. The keyword in:rare uses all the printings of a card, so the dataset cannot give the result of Scryfall."
+    },
+    {
+      "query": "e:war",
+      "section": "Sets and blocks",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "e:war is:booster",
+      "section": "Sets and blocks",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "b:wwk",
+      "section": "Sets and blocks",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "g:fin or g:fic",
+      "section": "Sets and blocks",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "in:lea in:m15",
+      "section": "Sets and blocks",
+      "origin": "syntax-guide",
+      "knownDifference": "The demo dataset contains at most 3 English printings and 1 French printing of each card. The keyword in: uses all the printings of a card, so the dataset cannot give the result of Scryfall."
+    },
+    {
+      "query": "t:legendary -in:booster",
+      "section": "Sets and blocks",
+      "origin": "syntax-guide",
+      "knownDifference": "The demo dataset contains at most 3 English printings and 1 French printing of each card. The keyword in:booster uses all the printings of a card, so the dataset cannot give the result of Scryfall."
+    },
+    {
+      "query": "is:datestamped is:prerelease",
+      "section": "Sets and blocks",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "cube:vintage",
+      "section": "Cubes",
+      "origin": "syntax-guide",
+      "knownDifference": "Reliquary has no cube lists. The search ignores the keyword cube: and gives a warning."
+    },
+    {
+      "query": "cube:modern t:planeswalker",
+      "section": "Cubes",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "c:g t:creature f:pauper",
+      "section": "Format legality",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "banned:legacy",
+      "section": "Format legality",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "is:commander",
+      "section": "Format legality",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "is:reserved",
+      "section": "Format legality",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "edhrecrank<=100 sort:edhrec",
+      "section": "Format legality",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "usd>=0.50 e:ema",
+      "section": "Prices",
+      "origin": "syntax-guide-text",
+      "knownDifference": null
+    },
+    {
+      "query": "tix>15.00",
+      "section": "Prices",
+      "origin": "syntax-guide-text",
+      "knownDifference": null
+    },
+    {
+      "query": "a:\"proce\"",
+      "section": "Artist, flavor text and watermark",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "ft:mishra",
+      "section": "Artist, flavor text and watermark",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "ft:designed e:m15",
+      "section": "Artist, flavor text and watermark",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "wm:orzhov",
+      "section": "Artist, flavor text and watermark",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "e:m10 new:art is:reprint",
+      "section": "Artist, flavor text and watermark",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "new:art -new:artist st:masters game:paper",
+      "section": "Artist, flavor text and watermark",
+      "origin": "syntax-guide",
+      "knownDifference": "The demo dataset contains at most 3 English printings and 1 French printing of each card. The keyword new: compares a printing with all the earlier printings, so the dataset cannot give the result of Scryfall."
+    },
+    {
+      "query": "new:flavor e:m15 is:reprint",
+      "section": "Artist, flavor text and watermark",
+      "origin": "syntax-guide",
+      "knownDifference": "The demo dataset contains at most 3 English printings and 1 French printing of each card. The keyword new: compares a printing with all the earlier printings, so the dataset cannot give the result of Scryfall."
+    },
+    {
+      "query": "border:white t:creature",
+      "section": "Border, frame, foil and resolution",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "is:new r:mythic",
+      "section": "Border, frame, foil and resolution",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "is:old t:artifact",
+      "section": "Border, frame, foil and resolution",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "is:hires",
+      "section": "Border, frame, foil and resolution",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "is:foil e:c16",
+      "section": "Border, frame, foil and resolution",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "frame:2003 new:frame in:fut is:reprint",
+      "section": "Border, frame, foil and resolution",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "game:arena",
+      "section": "Games, promos and spotlights",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "-in:mtgo f:legacy",
+      "section": "Games, promos and spotlights",
+      "origin": "syntax-guide",
+      "knownDifference": "The demo dataset contains at most 3 English printings and 1 French printing of each card. The keyword in:mtgo uses all the printings of a card, so the dataset cannot give the result of Scryfall."
+    },
+    {
+      "query": "is:promo",
+      "section": "Games, promos and spotlights",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "is:spotlight",
+      "section": "Games, promos and spotlights",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "year<=1994",
+      "section": "Year",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "year=2026",
+      "section": "Year",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "date>=2015-08-18",
+      "section": "Year",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "date>ori",
+      "section": "Year",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "date>now",
+      "section": "Year",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "art:squirrel",
+      "section": "Tagger tags",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "function:removal",
+      "section": "Tagger tags",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "e:c16 not:reprint",
+      "section": "Reprints",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "e:ktk is:unique",
+      "section": "Reprints",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "sets>=20",
+      "section": "Reprints",
+      "origin": "syntax-guide",
+      "knownDifference": "The demo dataset contains at most 3 English printings and 1 French printing of each card. The keyword sets: uses all the printings of a card, so the dataset cannot give the result of Scryfall."
+    },
+    {
+      "query": "e:arn papersets=1",
+      "section": "Reprints",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "lang:japanese",
+      "section": "Languages",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "lang:any t:planeswalker unique:prints",
+      "section": "Languages",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "lang:ko new:language t:goblin",
+      "section": "Languages",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "in:ru in:zhs",
+      "section": "Languages",
+      "origin": "syntax-guide",
+      "knownDifference": "The demo dataset has no Russian and no Chinese printings. The keyword in: uses all the printings of a card."
+    },
+    {
+      "query": "is:dual",
+      "section": "Shortcuts and nicknames",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "is:fetchland",
+      "section": "Shortcuts and nicknames",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "is:colorshifted",
+      "section": "Shortcuts and nicknames",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "-fire c:r t:instant",
+      "section": "Negating conditions",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "o:changeling -t:creature",
+      "section": "Negating conditions",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "not:reprint e:c16",
+      "section": "Negating conditions",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "t:creature o:/^{T}:/",
+      "section": "Regular expressions",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "t:instant o:/\\spp/",
+      "section": "Regular expressions",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "name:/\\bizzet\\b/",
+      "section": "Regular expressions",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "!fire",
+      "section": "Exact names",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "!\"sift through sands\"",
+      "section": "Exact names",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "t:fish or t:bird",
+      "section": "Using OR",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "t:land (a:titus or a:avon)",
+      "section": "Using OR",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "t:legendary (t:goblin or t:elf)",
+      "section": "Nesting conditions",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "through (depths or sands or mists)",
+      "section": "Nesting conditions",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "!\"Lightning Bolt\" unique:prints",
+      "section": "Display keywords",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "t:forest a:avon unique:art",
+      "section": "Display keywords",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "f:modern order:rarity direction:asc",
+      "section": "Display keywords",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "t:human display:text",
+      "section": "Display keywords",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "in:leb game:paper prefer:newest",
+      "section": "Display keywords",
+      "origin": "syntax-guide",
+      "knownDifference": "The demo dataset contains at most 3 English printings and 1 French printing of each card. The keyword in:leb uses all the printings of a card, so the dataset cannot give the result of Scryfall."
+    },
+    {
+      "query": "year=2025 prefer:atypical",
+      "section": "Display keywords",
+      "origin": "syntax-guide",
+      "knownDifference": null
+    },
+    {
+      "query": "t:creature pow>=5 c:g",
+      "section": "Power, toughness and loyalty",
+      "origin": "reliquary",
+      "knownDifference": null
+    },
+    {
+      "query": "pt>=10",
+      "section": "Power, toughness and loyalty",
+      "origin": "reliquary",
+      "knownDifference": null
+    },
+    {
+      "query": "loy>=5",
+      "section": "Power, toughness and loyalty",
+      "origin": "reliquary",
+      "knownDifference": null
+    },
+    {
+      "query": "is:mdfc",
+      "section": "Multi-faced cards",
+      "origin": "reliquary",
+      "knownDifference": null
+    },
+    {
+      "query": "is:transform",
+      "section": "Multi-faced cards",
+      "origin": "reliquary",
+      "knownDifference": null
+    },
+    {
+      "query": "is:flip",
+      "section": "Multi-faced cards",
+      "origin": "reliquary",
+      "knownDifference": null
+    },
+    {
+      "query": "is:dfc",
+      "section": "Multi-faced cards",
+      "origin": "reliquary",
+      "knownDifference": null
+    },
+    {
+      "query": "id=wubrg",
+      "section": "Colors and color identity",
+      "origin": "reliquary",
+      "knownDifference": null
+    },
+    {
+      "query": "id<=gw t:legendary t:creature",
+      "section": "Colors and color identity",
+      "origin": "reliquary",
+      "knownDifference": null
+    },
+    {
+      "query": "c:m t:instant",
+      "section": "Colors and color identity",
+      "origin": "reliquary",
+      "knownDifference": null
+    },
+    {
+      "query": "c:colorless t:artifact mv<=2",
+      "section": "Colors and color identity",
+      "origin": "reliquary",
+      "knownDifference": null
+    },
+    {
+      "query": "fo:\"draw a card\" t:land",
+      "section": "Card text",
+      "origin": "reliquary",
+      "knownDifference": null
+    },
+    {
+      "query": "o:\"add {c}{c}\"",
+      "section": "Card text",
+      "origin": "reliquary",
+      "knownDifference": null
+    },
+    {
+      "query": "kw:\"first strike\"",
+      "section": "Card text",
+      "origin": "reliquary",
+      "knownDifference": null
+    },
+    {
+      "query": "o:/\\smr/",
+      "section": "Regular expressions",
+      "origin": "reliquary",
+      "knownDifference": null
+    },
+    {
+      "query": "m:{U/P}",
+      "section": "Mana costs",
+      "origin": "reliquary",
+      "knownDifference": null
+    },
+    {
+      "query": "mv>=7 -t:land",
+      "section": "Mana costs",
+      "origin": "reliquary",
+      "knownDifference": null
+    },
+    {
+      "query": "devotion:{g}{g}{g}",
+      "section": "Mana costs",
+      "origin": "reliquary",
+      "knownDifference": null
+    },
+    {
+      "query": "produces:c t:artifact",
+      "section": "Mana costs",
+      "origin": "reliquary",
+      "knownDifference": null
+    },
+    {
+      "query": "is:hybrid",
+      "section": "Mana costs",
+      "origin": "reliquary",
+      "knownDifference": null
+    },
+    {
+      "query": "is:phyrexian",
+      "section": "Mana costs",
+      "origin": "reliquary",
+      "knownDifference": null
+    },
+    {
+      "query": "r:mythic t:planeswalker",
+      "section": "Rarity",
+      "origin": "reliquary",
+      "knownDifference": null
+    },
+    {
+      "query": "banned:commander",
+      "section": "Format legality",
+      "origin": "reliquary",
+      "knownDifference": null
+    },
+    {
+      "query": "f:pauper t:land",
+      "section": "Format legality",
+      "origin": "reliquary",
+      "knownDifference": null
+    },
+    {
+      "query": "is:gamechanger",
+      "section": "Format legality",
+      "origin": "reliquary",
+      "knownDifference": null
+    },
+    {
+      "query": "!\"Sol Ring\"",
+      "section": "Exact names",
+      "origin": "reliquary",
+      "knownDifference": null
+    },
+    {
+      "query": "lang:fr foudre",
+      "section": "Languages",
+      "origin": "reliquary",
+      "knownDifference": null
+    },
+    {
+      "query": "ft:/\\bthe\\b/ t:creature",
+      "section": "Regular expressions",
+      "origin": "reliquary",
+      "knownDifference": null
+    },
+    {
+      "query": "t:/^legendary artifact/",
+      "section": "Regular expressions",
+      "origin": "reliquary",
+      "knownDifference": null
+    },
+    {
+      "query": "is:shockland",
+      "section": "Shortcuts and nicknames",
+      "origin": "reliquary",
+      "knownDifference": null
+    },
+    {
+      "query": "is:painland or is:checkland",
+      "section": "Shortcuts and nicknames",
+      "origin": "reliquary",
+      "knownDifference": null
+    },
+    {
+      "query": "a:avon",
+      "section": "Artist, flavor text and watermark",
+      "origin": "reliquary",
+      "knownDifference": null
+    },
+    {
+      "query": "in:paper -in:arena t:legendary",
+      "section": "Games, promos and spotlights",
+      "origin": "reliquary",
+      "knownDifference": "The demo dataset contains at most 3 English printings and 1 French printing of each card. The keyword in:arena uses all the printings of a card, so the dataset cannot give the result of Scryfall."
+    },
+    {
+      "query": "e:cmm cn<10",
+      "section": "Sets and blocks",
+      "origin": "reliquary",
+      "knownDifference": null
+    },
+    {
+      "query": "is:reprint e:cmm",
+      "section": "Reprints",
+      "origin": "reliquary",
+      "knownDifference": null
+    },
+    {
+      "query": "st:commander t:legendary",
+      "section": "Sets and blocks",
+      "origin": "reliquary",
+      "knownDifference": null
+    },
+    {
+      "query": "year>=2024 t:creature c:r",
+      "section": "Year",
+      "origin": "reliquary",
+      "knownDifference": null
+    },
+    {
+      "query": "-(t:creature or t:land) mv<=1",
+      "section": "Nesting conditions",
+      "origin": "reliquary",
+      "knownDifference": null
+    },
+    {
+      "query": "t:elf or (t:goblin -c:r)",
+      "section": "Nesting conditions",
+      "origin": "reliquary",
+      "knownDifference": null
+    },
+    {
+      "query": "otag:ramp -t:land",
+      "section": "Tagger tags",
+      "origin": "reliquary",
+      "knownDifference": null
+    }
+  ]
+}

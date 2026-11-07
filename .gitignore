@@ -1,0 +1,44 @@
+# .NET
+bin/
+obj/
+TestResults/
+*.user
+*.suo
+.vs/
+
+# Node.js and Vite
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+*.local
+
+# Python
+__pycache__/
+*.pyc
+
+# Local instance settings
+.env
+
+# Editors and operating systems
+.idea/
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Redis data of a local server
+dump.rdb
+
+# The backups of the local instance
+backups/
+
+# The state of a deployed instance, when its folder is deploy/
+deploy/.state/
+
+# The documentation site and its tools
+site/
+.venv-docs/

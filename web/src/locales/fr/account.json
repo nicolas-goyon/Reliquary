@@ -1,0 +1,88 @@
+{
+  "title": "Votre compte",
+  "profile": {
+    "title": "Profil",
+    "email": "Adresse e-mail",
+    "displayName": "Nom d’affichage",
+    "language": "Langue de l’interface",
+    "submit": "Enregistrer le profil",
+    "saved": "Le profil est enregistré."
+  },
+  "password": {
+    "title": "Changer le mot de passe",
+    "titleFirst": "Définir un mot de passe",
+    "description": "Après le changement, vos autres sessions sont fermées.",
+    "current": "Mot de passe actuel",
+    "new": "Nouveau mot de passe",
+    "submit": "Enregistrer le mot de passe",
+    "saved": "Le nouveau mot de passe est enregistré."
+  },
+  "logins": {
+    "title": "Services de connexion externes",
+    "none": "Aucun service externe n’est relié à votre compte."
+  },
+  "apiKeys": {
+    "title": "Clés d’API",
+    "description": "Une clé d’API permet à un script ou à une autre application d’utiliser l’API de Reliquary à votre place. Chaque clé a un quota quotidien. Gardez vos clés secrètes.",
+    "none": "Vous n’avez aucune clé d’API.",
+    "name": "Nom",
+    "prefix": "Clé",
+    "createdAt": "Créée le",
+    "lastUsedAt": "Dernière utilisation",
+    "neverUsed": "Jamais",
+    "actions": "Actions",
+    "revoke": "Révoquer",
+    "revokeConfirm": "Révoquer la clé « {{name}} » ? Les applications qui l’utilisent cesseront de fonctionner.",
+    "newName": "Nom de la nouvelle clé",
+    "create": "Créer une clé",
+    "createdOnce": "La clé « {{name}} » est prête. Copiez-la maintenant : l’application ne l’affiche qu’une seule fois."
+  },
+  "dataExport": {
+    "title": "Exporter vos données",
+    "description": "Obtenez toutes les données de votre compte dans une archive ZIP : votre compte, vos decks en fichiers texte et JSON, vos dossiers, vos tags, vos favoris et les auteurs que vous suivez. L’archive reste disponible 7 jours.",
+    "request": "Demander un export",
+    "pending": "Le serveur prépare l’archive. Revenez dans quelques minutes.",
+    "download": "Télécharger l’archive",
+    "expires": "(disponible jusqu’au {{date}})",
+    "status": {
+      "pending": "En cours",
+      "ready": "Prête",
+      "failed": "Échec. Demandez un nouvel export."
+    }
+  },
+  "deletion": {
+    "title": "Supprimer votre compte",
+    "description": "Reliquary supprime votre compte et toutes vos données 7 jours après votre demande. Vous pouvez annuler la demande pendant ces 7 jours. Exportez d’abord vos données si vous voulez les garder.",
+    "password": "Mot de passe",
+    "submit": "Supprimer mon compte",
+    "confirm": "Supprimer votre compte et toutes vos données dans 7 jours ?",
+    "scheduled": "Reliquary supprimera votre compte et toutes vos données le {{date}}.",
+    "cancel": "Annuler la suppression"
+  },
+  "delegations": {
+    "title": "Délégations",
+    "description": "Une délégation permet à un module de cette instance d’agir à votre place, avec les permissions que vous choisissez, jusqu’à une date. Révoquez une délégation quand vous ne voulez plus que le module agisse pour vous.",
+    "none": "Vous n’avez aucune délégation.",
+    "noServiceAccount": "Aucun module de cette instance ne peut recevoir de délégation.",
+    "module": "Module",
+    "scopes": "Permissions",
+    "expiresAt": "Valide jusqu’au",
+    "lastUsedAt": "Dernière utilisation",
+    "neverUsed": "Jamais",
+    "actions": "Actions",
+    "revoke": "Révoquer",
+    "revokeConfirm": "Révoquer la délégation à « {{name}} » ? Le module cesse immédiatement d’agir pour vous.",
+    "newTitle": "Donner une délégation",
+    "duration": "Durée",
+    "days": "{{count}} jours",
+    "submit": "Donner la délégation",
+    "created": "Le module « {{name}} » peut maintenant agir pour vous jusqu’au {{date}}.",
+    "scope": {
+      "decks_read": "Lire vos decks, dossiers et tags",
+      "decks_write": "Créer, modifier et supprimer vos decks, dossiers et tags",
+      "collection_read": "Lire votre collection",
+      "collection_write": "Modifier votre collection",
+      "profile_read": "Lire votre compte : adresse e-mail, nom et langue"
+    }
+  }
+}

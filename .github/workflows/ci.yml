@@ -1,0 +1,199 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop, main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: reliquary
+          POSTGRES_PASSWORD: reliquary
+          POSTGRES_DB: reliquary
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready --username=reliquary"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+      redis:
+        image: redis:8-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      RELIQUARY_TEST_POSTGRES: Host=localhost;Port=5432;Database=postgres;Username=reliquary;Password=reliquary
+      RELIQUARY_TEST_REDIS: localhost:6379
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Install the PostgreSQL 18 client for the backup tests
+        run: |
+          sudo apt-get install --yes --no-install-recommends postgresql-common
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install --yes --no-install-recommends postgresql-client-18
+
+      - name: Test
+        run: dotnet test --no-build --configuration Release
+
+      - name: Check the format
+        run: dotnet format --verify-no-changes --no-restore
+
+  web:
+    name: Web
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: web/.nvmrc
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+  docs:
+    name: Documentation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+
+      - name: Test the STE linter
+        run: python3 tools/ste-lint/ste-lint.py --selftest
+
+      - name: Check the text against ASD-STE100
+        run: python3 tools/ste-lint/lint-docs.py
+
+      - name: Check the Markdown format
+        uses: DavidAnson/markdownlint-cli2-action@v25
+        with:
+          globs: "**/*.md"
+
+  instance:
+    name: Local instance
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: just
+
+      - name: Create the first instance
+        run: just up
+
+      - name: Check the first instance
+        run: |
+          set -euo pipefail
+          base=http://localhost:8080
+          curl --fail --silent --show-error "$base/api/v1/status"
+          curl --fail --silent --show-error "$base/api/v1/cards/named?name=Sol%20Ring" | grep --quiet '"name":"Sol Ring"'
+          curl --fail --silent --show-error "$base/api/v1/cards/search?q=t%3Aartifact%20mv%3D1" | grep --quiet '"name":"Sol Ring"'
+          curl --fail --silent --show-error "$base/account" | grep --quiet 'id="root"'
+          curl --fail --silent --show-error --header 'Content-Type: application/json' \
+            --data '{"email":"demo@reliquary.localhost","password":"reliquary-demo"}' \
+            "$base/api/v1/auth/sign-in" | grep --quiet '"accessToken"'
+
+      - name: Back up, delete and restore the first instance
+        run: |
+          set -euo pipefail
+          base=http://localhost:8080
+          token=$(curl --fail --silent --show-error --header 'Content-Type: application/json' \
+            --data '{"email":"demo@reliquary.localhost","password":"reliquary-demo"}' \
+            "$base/api/v1/auth/sign-in" | python3 -c 'import json,sys; print(json.load(sys.stdin)["accessToken"])')
+          curl --fail --silent --show-error --header "Authorization: Bearer $token" --header 'Content-Type: application/json' \
+            --data '{"name":"Backup check","lines":[{"name":"Sol Ring"}]}' "$base/api/v1/decks" > /dev/null
+          just backup ci
+          just down
+          just restore-backup ci
+          token=$(curl --fail --silent --show-error --header 'Content-Type: application/json' \
+            --data '{"email":"demo@reliquary.localhost","password":"reliquary-demo"}' \
+            "$base/api/v1/auth/sign-in" | python3 -c 'import json,sys; print(json.load(sys.stdin)["accessToken"])')
+          curl --fail --silent --show-error --header "Authorization: Bearer $token" "$base/api/v1/decks" | grep --quiet '"name":"Backup check"'
+          curl --fail --silent --show-error "$base/api/v1/cards/named?name=Sol%20Ring" | grep --quiet '"name":"Sol Ring"'
+
+      - name: Create a second instance with other ports
+        env:
+          RELIQUARY_INSTANCE: second
+          RELIQUARY_APP_PORT: "8081"
+          RELIQUARY_POSTGRES_PORT: "15433"
+          RELIQUARY_REDIS_PORT: "16380"
+          RELIQUARY_SMTP_PORT: "11026"
+          RELIQUARY_MAILPIT_PORT: "18026"
+        run: |
+          set -euo pipefail
+          just up
+          curl --fail --silent --show-error http://localhost:8081/api/v1/status
+          curl --fail --silent --show-error http://localhost:8080/api/v1/status
+
+      - name: Show the logs
+        if: failure()
+        run: |
+          docker compose --project-name reliquary-dev --file compose.yaml --profile app logs --no-color
+          docker compose --project-name reliquary-second --file compose.yaml --profile app logs --no-color
+
+      - name: Destroy the instances
+        run: |
+          set -euo pipefail
+          just down
+          RELIQUARY_INSTANCE=second just down
+          for project in reliquary-dev reliquary-second; do
+            containers=$(docker ps --all --quiet --filter "label=com.docker.compose.project=$project")
+            volumes=$(docker volume ls --quiet --filter "label=com.docker.compose.project=$project")
+            if [ -n "$containers$volumes" ]; then
+              echo "The instance $project left containers or volumes: $containers $volumes"
+              exit 1
+            fi
+          done

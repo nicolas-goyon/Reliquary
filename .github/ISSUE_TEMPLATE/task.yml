@@ -1,0 +1,27 @@
+name: Task
+description: Describe technical work with no direct change for users.
+labels: ["type: task", "needs: triage"]
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: Tell why the work is necessary.
+    validations:
+      required: true
+  - type: textarea
+    id: tasks
+    attributes:
+      label: Tasks
+      description: Give the steps as a checklist.
+      value: |
+        - [ ]
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Give the results that a test or a review can check.
+    validations:
+      required: true

@@ -1,0 +1,136 @@
+# A deployed instance of Reliquary with Docker Compose, for example the pre-production instance.
+# It uses the published images, and it keeps its data in Docker volumes.
+# Do not start it directly. The script reliquary-update installs and updates it. See https://nicolas-goyon.github.io/reliquary/deployment/pre-production/.
+# The CLI image contains this file, so each version of the images comes with its own Compose file.
+# The settings come from the .env file next to the script. See .env.example.
+
+name: ${RELIQUARY_PROJECT:-reliquary-preprod}
+
+# The settings of the .NET hosts.
+x-backend-environment: &backend-environment
+  ConnectionStrings__Users: Host=postgres;Port=5432;Database=reliquary;Username=reliquary;Password=${RELIQUARY_POSTGRES_PASSWORD:?Set RELIQUARY_POSTGRES_PASSWORD in the .env file.}
+  ConnectionStrings__Redis: redis:6379
+  Auth__SigningKey: ${RELIQUARY_SIGNING_KEY:?Set RELIQUARY_SIGNING_KEY in the .env file. Make a key with "openssl rand -base64 32".}
+  Auth__PublicUrl: ${RELIQUARY_PUBLIC_URL:-http://localhost:8090}
+  Auth__AdministratorEmails__0: ${RELIQUARY_ADMINISTRATOR_EMAIL:-}
+  Auth__AllowAccountsWithoutEmail: ${RELIQUARY_ACCOUNTS_WITHOUT_EMAIL:-false}
+  Auth__RequireCheckedEmail: ${RELIQUARY_REQUIRE_CHECKED_EMAIL:-false}
+  Auth__Providers__Google__ClientId: ${RELIQUARY_GOOGLE_CLIENT_ID:-}
+  Auth__Providers__Google__ClientSecret: ${RELIQUARY_GOOGLE_CLIENT_SECRET:-}
+  Email__From: ${RELIQUARY_EMAIL_FROM:-Reliquary <noreply@reliquary.localhost>}
+  Email__Smtp__Host: ${RELIQUARY_SMTP_HOST:-mailpit}
+  Email__Smtp__Port: ${RELIQUARY_SMTP_PORT:-1025}
+  Email__Smtp__Security: ${RELIQUARY_SMTP_SECURITY:-None}
+  Email__Smtp__UserName: ${RELIQUARY_SMTP_USER_NAME:-}
+  Email__Smtp__Password: ${RELIQUARY_SMTP_PASSWORD:-}
+  # No folder: the worker downloads all the cards from Scryfall.
+  Cards__Import__Directory: ""
+  Cards__Import__BulkType: ${RELIQUARY_CARD_BULK_TYPE:-default_cards}
+  Decks__LinkImport__MoxfieldUserAgent: ${RELIQUARY_MOXFIELD_USER_AGENT:-}
+  Recommendations__Enabled: ${RELIQUARY_RECOMMENDATIONS:-false}
+
+# The images: the script reliquary-update writes RELIQUARY_IMAGE_* with the digest of each image,
+# so a tag that moves (for example "develop") does not change a running instance.
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: reliquary
+      POSTGRES_USER: reliquary
+      POSTGRES_PASSWORD: ${RELIQUARY_POSTGRES_PASSWORD:?Set RELIQUARY_POSTGRES_PASSWORD in the .env file.}
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready --username=reliquary --dbname=reliquary"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  # Redis keeps the keys that protect the cookies, so its data stays in a volume.
+  redis:
+    image: redis:8-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  # A test email server. It keeps all the emails and sends none. Read the emails at http://localhost:18035.
+  # To send real emails, set RELIQUARY_SMTP_HOST and the other SMTP settings.
+  mailpit:
+    image: axllent/mailpit:v1.32.0
+    restart: unless-stopped
+    ports:
+      - "${RELIQUARY_BIND_ADDRESS:-127.0.0.1}:${RELIQUARY_MAILPIT_PORT:-18035}:8025"
+
+  # The CLI: the migrations, the backups, the restores and the jobs. The script runs it. It does not start with "up".
+  cli:
+    image: ${RELIQUARY_IMAGE_CLI:-${RELIQUARY_IMAGE_PREFIX:-ghcr.io/nicolas-goyon/reliquary}-cli:${RELIQUARY_VERSION:-latest}}
+    profiles: ["tools"]
+    read_only: true
+    tmpfs:
+      - /tmp
+    environment: *backend-environment
+    volumes:
+      - ${RELIQUARY_BACKUP_DIRECTORY:-./backups}:/backups
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    image: ${RELIQUARY_IMAGE_API:-${RELIQUARY_IMAGE_PREFIX:-ghcr.io/nicolas-goyon/reliquary}-api:${RELIQUARY_VERSION:-latest}}
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    environment:
+      <<: *backend-environment
+      ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  worker:
+    image: ${RELIQUARY_IMAGE_WORKER:-${RELIQUARY_IMAGE_PREFIX:-ghcr.io/nicolas-goyon/reliquary}-worker:${RELIQUARY_VERSION:-latest}}
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    environment: *backend-environment
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # The web app on http://localhost:8090. Nginx sends the /api requests to the API.
+  # The health check asks the API and the worker, so "up --wait" waits for the full application.
+  web:
+    image: ${RELIQUARY_IMAGE_WEB:-${RELIQUARY_IMAGE_PREFIX:-ghcr.io/nicolas-goyon/reliquary}-web:${RELIQUARY_VERSION:-latest}}
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /etc/nginx/conf.d:uid=101
+    ports:
+      - "${RELIQUARY_BIND_ADDRESS:-127.0.0.1}:${RELIQUARY_APP_PORT:-8090}:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --output-document=/dev/null http://api:8080/health/ready && wget --quiet --output-document=/dev/null http://worker:8080/health/ready"]
+      interval: 5s
+      timeout: 5s
+      retries: 36
+    depends_on:
+      - api
+      - worker
+
+volumes:
+  postgres-data:
+  redis-data:

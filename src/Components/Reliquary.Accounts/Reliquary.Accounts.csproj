@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Core component. Reference Reliquary.BuildingBlocks only, never another core component. -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AspNet.Security.OAuth.Discord" />
+    <PackageReference Include="AspNet.Security.OAuth.GitHub" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Reliquary.BuildingBlocks\Reliquary.BuildingBlocks.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Migrations\**\*.sql" LogicalName="Migrations/%(RecursiveDir)%(Filename)%(Extension)" />
+    <EmbeddedResource Include="Emails\*.json" LogicalName="Emails/%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Reliquary.Accounts.Tests" />
+    <InternalsVisibleTo Include="Reliquary.Decks.Tests" />
+    <InternalsVisibleTo Include="Reliquary.Collection.Tests" />
+  </ItemGroup>
+</Project>

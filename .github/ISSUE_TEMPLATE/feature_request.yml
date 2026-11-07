@@ -1,0 +1,51 @@
+name: Feature request
+description: Propose a new behavior for users.
+labels: ["type: feature", "needs: triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Write in English. Use short sentences, one fact for each sentence.
+        Read the specification and the roadmap first: the feature can exist in a later milestone.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: Describe the problem of the user. Do not describe the solution here.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: Describe the behavior that solves the problem.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Cards and search
+        - Deck building
+        - Deck analysis
+        - Versions and variants
+        - Collection
+        - Deck testing
+        - Plugins and modules
+        - Accounts
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives
+      description: Describe the other solutions that you considered.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I searched the existing issues and the roadmap, and they do not contain this feature.
+          required: true

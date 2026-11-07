@@ -1,0 +1,57 @@
+{
+  "action": "Test the deck",
+  "title": "Test: {{name}}",
+  "turn": "Turn {{turn}}",
+  "loading": "The application loads the deck.",
+  "zones": {
+    "library": "Library",
+    "hand": "Hand",
+    "battlefield": "Battlefield",
+    "graveyard": "Graveyard",
+    "exile": "Exile",
+    "command": "Command zone"
+  },
+  "controls": {
+    "label": "Table actions",
+    "draw": "Draw",
+    "shuffle": "Shuffle",
+    "mulligan": "Mulligan",
+    "untapAll": "Untap all",
+    "nextTurn": "Next turn",
+    "restart": "New game"
+  },
+  "life": {
+    "label": "Life points",
+    "increase": "Add one life point",
+    "decrease": "Remove one life point"
+  },
+  "card": {
+    "play": "Play {{name}}",
+    "tap": "Tap or untap {{name}}",
+    "bottom": "Put {{name}} at the bottom of the library",
+    "moveTo": "Move {{name}} to",
+    "move": "Move",
+    "flip": "Flip {{name}}",
+    "addCounter": "Add a counter to {{name}}",
+    "removeCounter": "Remove a counter from {{name}}",
+    "counters_one": "{{count}} counter",
+    "counters_other": "{{count}} counters",
+    "back": "Back of a card"
+  },
+  "mulligan": {
+    "bottom_one": "Select {{count}} card of your hand. The card goes to the bottom of the library.",
+    "bottom_other": "Select {{count}} cards of your hand. The cards go to the bottom of the library."
+  },
+  "token": {
+    "name": "Token name",
+    "create": "Make a token"
+  },
+  "statistics": {
+    "title": "Hand statistics",
+    "samples": "Result of {{count}} random opening hands.",
+    "averageLands": "Average lands in a hand",
+    "keepable": "Hands with 2 to 4 lands",
+    "landsInHand_one": "{{count}} land in hand",
+    "landsInHand_other": "{{count}} lands in hand"
+  }
+}
