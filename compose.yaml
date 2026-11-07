@@ -54,7 +54,7 @@ services:
 
   # A test email server. It keeps all the emails and sends none. Read the emails at http://localhost:18025.
   mailpit:
-    image: axllent/mailpit:v1.32.0
+    image: axllent/mailpit:v1.33.0
     ports:
       - "127.0.0.1:${RELIQUARY_SMTP_PORT:-11025}:1025"
       - "127.0.0.1:${RELIQUARY_MAILPIT_PORT:-18025}:8025"
