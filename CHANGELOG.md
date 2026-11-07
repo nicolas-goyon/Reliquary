@@ -8,8 +8,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 
 - The deck import finds a card with two faces when the name has one slash, as in the text of Moxfield: `Front / Back`.
+- `reliquary restore --replace` also works after an update that added tables.
+- Behind a reverse proxy with HTTPS, the web container keeps the headers `X-Forwarded-Proto` and `X-Forwarded-Host` of the proxy.
 
 ### Added
+
+- The documentation site on GitHub Pages, with the guides to install and update a local instance, a pre-production instance and a production instance.
+- The published container images on `ghcr.io/nicolas-goyon` for each build of `develop` and each release (ADR 0042).
+- The script `reliquary-update`: it installs, updates, checks, backs up and rolls back a deployed instance with Docker Compose.
+- The releases with release-please (ADR 0043).
 
 - The deck import from a link of Moxfield or Archidekt. Moxfield needs a user agent that Moxfield support allows.
 - The recipe `just full-cards`: it imports all the cards into a local instance with Docker Compose.

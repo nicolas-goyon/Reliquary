@@ -1,22 +1,13 @@
-# Deploy with Docker Compose
+# Pre-production instance
 
-This guide tells how to install, update and restore a deployed instance of Reliquary with Docker Compose.
-The pre-production instance of the maintainer uses this procedure.
+A pre-production instance runs the published images on your computer with Docker Compose, and keeps its data after each update.
+The maintainer uses it to try the next release with real data.
+The script `reliquary-update` installs, updates, rolls back and backs up the instance.
 Terms follow the [glossary](../glossary.md).
 [ADR 0042](../decisions/0042-deployed-instances-and-updates.md) gives the reasons for the design.
 
-## Difference with the local instance
-
-| Item | Local instance (`just up`) | Deployed instance (`reliquary-update`) |
-| --- | --- | --- |
-| Use | Development and tests of a branch | Daily use, pre-production |
-| Images | Built from the source code | Published images of a channel or a release |
-| Data | Demo accounts and 342 demo cards | Your accounts and all the cards |
-| Secrets | Public test values | New secrets in your `.env` file |
-| Address | <http://localhost:8080> | <http://localhost:8090> |
-| `just reset` | Deletes the data | Has no effect on the deployed instance |
-
-The two instances can run at the same time.
+The [overview](index.md) compares this mode with the other modes.
+A [production instance on a server](production.md) uses the same script with more settings.
 
 ## Requirements
 
@@ -24,13 +15,17 @@ The two instances can run at the same time.
 - A POSIX shell. On Windows, use WSL.
 - About 4 GB of free disk space for the card data, and space for the backups.
 
-## Channels and versions
+[Requirements](requirements.md) gives the details.
+
+## Versions
 
 | Value | Images |
 | --- | --- |
-| `develop` | The last build of the branch `develop` |
+| `develop` | The last build of the branch `develop`. Use it for a pre-production instance. |
 | `latest` | The last release |
 | `0.2.0` | The release 0.2.0. This value never changes. |
+
+[Versions and updates](versions-and-updates.md) tells how the versions change.
 
 ## Install
 

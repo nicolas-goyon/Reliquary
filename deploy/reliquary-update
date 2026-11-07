@@ -1,6 +1,6 @@
 #!/bin/sh
 # reliquary-update: installs, updates and restores a deployed instance of Reliquary with Docker Compose.
-# See docs/deployment/docker-compose.md, or run "reliquary-update --help".
+# See https://nicolas-goyon.github.io/reliquary/deployment/pre-production/, or run "reliquary-update --help".
 #
 # The folder of the instance (RELIQUARY_HOME, default: the folder of this script) contains:
 #   .env             the settings of the instance (secrets included)
