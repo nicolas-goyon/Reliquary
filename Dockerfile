@@ -3,7 +3,8 @@
 # Build one image with: docker build --target api --tag reliquary/api:local .
 # The web app has its own Dockerfile in web/.
 
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+# The build stage runs on the platform of the builder. The output is portable .NET code, so each target platform uses it.
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /source
 
 # Restore first, so a change of the code does not restore the packages again.
@@ -22,9 +23,16 @@ COPY src/Components/Reliquary.Playtest/*.csproj src/Components/Reliquary.Playtes
 RUN dotnet restore src/Reliquary.Api && dotnet restore src/Reliquary.Worker && dotnet restore src/Reliquary.Cli
 
 COPY src/ src/
-RUN dotnet publish src/Reliquary.Api --no-restore --configuration Release --output /app/api \
-    && dotnet publish src/Reliquary.Worker --no-restore --configuration Release --output /app/worker \
-    && dotnet publish src/Reliquary.Cli --no-restore --configuration Release --output /app/cli
+# The CI gives the version and the commit of the image. A local build uses the version of Directory.Build.props.
+ARG RELIQUARY_VERSION=
+ARG RELIQUARY_COMMIT=
+RUN set -e; \
+    properties=""; \
+    if [ -n "$RELIQUARY_VERSION" ]; then properties="$properties -p:Version=$RELIQUARY_VERSION"; fi; \
+    if [ -n "$RELIQUARY_COMMIT" ]; then properties="$properties -p:SourceRevisionId=$RELIQUARY_COMMIT"; fi; \
+    dotnet publish src/Reliquary.Api --no-restore --configuration Release --output /app/api $properties; \
+    dotnet publish src/Reliquary.Worker --no-restore --configuration Release --output /app/worker $properties; \
+    dotnet publish src/Reliquary.Cli --no-restore --configuration Release --output /app/cli $properties
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
@@ -53,4 +61,6 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 USER $APP_UID
 COPY --from=build /app/cli .
+# The files of a deployed instance. The script reliquary-update reads them from the image of each version.
+COPY deploy/compose.yaml deploy/.env.example deploy/reliquary-update /app/deploy/
 ENTRYPOINT ["dotnet", "reliquary.dll"]

@@ -43,7 +43,8 @@
   },
   "footer": {
     "license": "Logiciel libre sous licence AGPL-3.0.",
-    "source": "Code source"
+    "source": "Code source",
+    "version": "Version {{version}}."
   },
   "navigation": {
     "label": "Navigation principale",

@@ -1,0 +1,173 @@
+name: Images
+
+# Builds the container images and pushes them to the GitHub Container Registry.
+# - A push to develop gives the tags "develop" and "sha-<commit>".
+# - A release tag vX.Y.Z gives the tags "X.Y.Z", "X.Y" and "latest".
+# - A pull request that changes the images builds them, and pushes nothing.
+# The release workflow calls this workflow with the tag of the release,
+# because a tag that a workflow creates does not start other workflows.
+
+on:
+  push:
+    branches: [develop]
+    tags: ["v*.*.*"]
+  pull_request:
+    branches: [develop, main]
+    paths:
+      - Dockerfile
+      - web/Dockerfile
+      - web/nginx.conf.template
+      - web/nginx-resolver.sh
+      - .github/workflows/images.yml
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      release-tag:
+        description: The tag of the release, for example v0.2.0.
+        type: string
+        required: true
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: images-${{ inputs.release-tag || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/reliquary
+
+jobs:
+  version:
+    name: Version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      commit: ${{ steps.version.outputs.commit }}
+      ref: ${{ steps.version.outputs.ref }}
+      release: ${{ steps.version.outputs.release }}
+      push: ${{ steps.version.outputs.push }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.release-tag || github.ref }}
+
+      - name: Calculate the version
+        id: version
+        env:
+          RELEASE_TAG: ${{ inputs.release-tag }}
+          EVENT: ${{ github.event_name }}
+          REF: ${{ github.ref }}
+          REF_NAME: ${{ github.ref_name }}
+          RUN_NUMBER: ${{ github.run_number }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          commit=$(git rev-parse HEAD)
+          # The version of the last release. A build of develop gets the next patch number with a prerelease part,
+          # so that Semantic Versioning puts it after the last release and before the next release.
+          last=$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' Directory.Build.props)
+          base="${last%.*}.$(( ${last##*.} + 1 ))"
+          tag=""
+          if [ -n "$RELEASE_TAG" ]; then
+            tag="$RELEASE_TAG"
+          elif [[ "$REF" == refs/tags/v* ]]; then
+            tag="$REF_NAME"
+          fi
+          if [ -n "$tag" ]; then
+            version="${tag#v}"
+            release=true
+            push=true
+            ref="refs/tags/$tag"
+          elif [ "$EVENT" = "pull_request" ]; then
+            version="$base-pr.$PR_NUMBER"
+            release=false
+            push=false
+            ref="$REF"
+          else
+            version="$base-develop.$RUN_NUMBER"
+            release=false
+            push=true
+            ref="$REF"
+          fi
+          {
+            echo "version=$version"
+            echo "commit=$commit"
+            echo "ref=$ref"
+            echo "release=$release"
+            echo "push=$push"
+          } >> "$GITHUB_OUTPUT"
+          echo "Version $version, commit $commit, push $push."
+
+  image:
+    name: Image ${{ matrix.image }}
+    needs: version
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: api
+            context: .
+            target: api
+          - image: worker
+            context: .
+            target: worker
+          - image: cli
+            context: .
+            target: cli
+          - image: web
+            context: web
+            target: ""
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.version.outputs.ref }}
+
+      - uses: docker/setup-qemu-action@v4
+
+      - uses: docker/setup-buildx-action@v4
+
+      - name: Sign in to the registry
+        if: needs.version.outputs.push == 'true'
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Calculate the tags and the labels
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ env.IMAGE_PREFIX }}-${{ matrix.image }}
+          flavor: latest=false
+          tags: |
+            type=raw,value=develop,enable=${{ needs.version.outputs.release == 'false' && github.event_name != 'pull_request' }}
+            type=raw,value=sha-${{ needs.version.outputs.commit }},enable=${{ needs.version.outputs.release == 'false' && github.event_name != 'pull_request' }}
+            type=raw,value=pr-${{ github.event.pull_request.number }},enable=${{ github.event_name == 'pull_request' }}
+            type=semver,pattern={{version}},value=${{ needs.version.outputs.version }},enable=${{ needs.version.outputs.release == 'true' }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ needs.version.outputs.version }},enable=${{ needs.version.outputs.release == 'true' }}
+            type=raw,value=latest,enable=${{ needs.version.outputs.release == 'true' && !contains(needs.version.outputs.version, '-') }}
+          labels: |
+            org.opencontainers.image.title=Reliquary ${{ matrix.image }}
+            org.opencontainers.image.version=${{ needs.version.outputs.version }}
+            org.opencontainers.image.revision=${{ needs.version.outputs.commit }}
+            org.opencontainers.image.licenses=AGPL-3.0-only
+
+      - name: Build and push
+        uses: docker/build-push-action@v7
+        with:
+          context: ${{ matrix.context }}
+          target: ${{ matrix.target }}
+          platforms: linux/amd64,linux/arm64
+          push: ${{ needs.version.outputs.push == 'true' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            RELIQUARY_VERSION=${{ needs.version.outputs.version }}
+            RELIQUARY_COMMIT=${{ needs.version.outputs.commit }}
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,scope=${{ matrix.image }},mode=max
