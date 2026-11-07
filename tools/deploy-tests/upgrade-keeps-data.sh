@@ -6,6 +6,8 @@
 # The test installs OLD_VERSION with the script reliquary-update, creates data, updates to NEW_VERSION,
 # and checks the data. Then it rolls back to OLD_VERSION and checks that the data is the data before the update.
 # Set RELIQUARY_PULL=false to use local images, and RELIQUARY_IMAGE_PREFIX to use other images.
+# OLD_PULL and NEW_PULL replace RELIQUARY_PULL for the installation and for the update, for example
+# to pull the old images from the registry and to use the new images of a local build.
 # The test uses the ports 8190 and 18135, and the Compose project "reliquary-gate". It deletes the project at the end.
 
 set -eu
@@ -89,7 +91,7 @@ if [ -n "${RELIQUARY_IMAGE_PREFIX:-}" ]; then
 fi
 
 log "Install version $old_version."
-"$home/reliquary-update" "$old_version"
+RELIQUARY_PULL=${OLD_PULL:-${RELIQUARY_PULL:-true}} "$home/reliquary-update" "$old_version"
 
 log "Create the data."
 curl --fail-with-body --silent --show-error --header 'Content-Type: application/json' \
@@ -103,7 +105,7 @@ api POST /collection/locations --data '{"name":"Gate binder","kind":"binder"}' >
 check_data "Before the update"
 
 log "Update to version $new_version."
-"$home/reliquary-update" "$new_version"
+RELIQUARY_PULL=${NEW_PULL:-${RELIQUARY_PULL:-true}} "$home/reliquary-update" "$new_version"
 check_data "After the update"
 api POST /decks --data '{"name":"Deck after the update","lines":[]}' >/dev/null
 
