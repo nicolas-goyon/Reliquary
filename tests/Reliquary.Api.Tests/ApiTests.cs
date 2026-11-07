@@ -26,6 +26,7 @@ public sealed class ApiTests(ApiFactory factory) : IClassFixture<ApiFactory>
         Assert.NotNull(status);
         Assert.Equal("Reliquary", status.Name);
         Assert.False(string.IsNullOrWhiteSpace(status.Version));
+        Assert.DoesNotContain("+", status.Version, StringComparison.Ordinal);
         Assert.Equal(["Accounts", "Cards", "Decks", "Collection", "Playtest"], status.Components);
     }
 
@@ -40,5 +41,5 @@ public sealed class ApiTests(ApiFactory factory) : IClassFixture<ApiFactory>
         Assert.Contains("/api/v1/status", await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), StringComparison.Ordinal);
     }
 
-    private sealed record StatusResponse(string Name, string Version, IReadOnlyList<string> Components, string CoreApi);
+    private sealed record StatusResponse(string Name, string Version, IReadOnlyList<string> Components, string CoreApi, string? Commit);
 }

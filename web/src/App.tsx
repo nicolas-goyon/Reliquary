@@ -36,6 +36,7 @@ import { shortcutElement, takePendingFocus, useShortcuts } from './shortcuts/sho
 import { SlotRegistry, SlotRegistryContext } from './slots/registry'
 import { Slot } from './slots/Slot'
 import { registerCoreContributions } from './slots/coreContributions'
+import { webVersion } from './version'
 
 const repositoryUrl = 'https://github.com/nicolas-goyon/reliquary'
 
@@ -150,7 +151,8 @@ function Shell() {
 
       <footer className="app-footer">
         <p>
-          {t('footer.license')} <a href={repositoryUrl}>{t('footer.source')}</a>
+          {t('footer.license')} <a href={repositoryUrl}>{t('footer.source')}</a>{' '}
+          <span className="app-version">{t('footer.version', { version: webVersion })}</span>
         </p>
         <button type="button" className="button-link" onClick={openHelp}>
           {t('shortcuts.open')}
