@@ -1,6 +1,6 @@
 # A deployed instance of Reliquary with Docker Compose, for example the pre-production instance.
 # It uses the published images, and it keeps its data in Docker volumes.
-# Do not start it directly. The script reliquary-update installs and updates it. See docs/deployment/docker-compose.md.
+# Do not start it directly. The script reliquary-update installs and updates it. See https://nicolas-goyon.github.io/reliquary/deployment/pre-production/.
 # The CLI image contains this file, so each version of the images comes with its own Compose file.
 # The settings come from the .env file next to the script. See .env.example.
 

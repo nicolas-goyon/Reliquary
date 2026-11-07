@@ -29,12 +29,20 @@ All documents are in English and follow the [writing rules](contributing/writing
 | [Technology stack](architecture/tech-stack.md) | Technologies and performance targets |
 | [Decision records](decisions/README.md) | The reasons for each important decision |
 
-## Deployment
+## Install and operate
+
+The [documentation site](https://nicolas-goyon.github.io/reliquary/) shows these pages with a search.
 
 | Document | Content |
 | --- | --- |
-| [Docker Compose](deployment/docker-compose.md) | Install, update, roll back and back up a deployed instance, for example the pre-production instance |
+| [Overview](deployment/index.md) | The three modes: local instance, pre-production instance and production instance |
+| [Requirements](deployment/requirements.md) | The software, the hardware and the ports of each mode |
+| [Local instance](deployment/local-development.md) | Install from the source code for development, and update to a new commit |
+| [Pre-production instance](deployment/pre-production.md) | Install the published images on your computer, update, roll back and back up |
+| [Production instance](deployment/production.md) | Install on a server with HTTPS, a real email server and backups on a different computer |
 | [Kubernetes](deployment/kubernetes.md) | The requirements of the images on Kubernetes |
+| [Versions and updates](deployment/versions-and-updates.md) | The channels, the release numbers, the steps of an update and the migration rules |
+| [Troubleshooting](deployment/troubleshooting.md) | The usual problems and their solutions |
 
 ## Development
 

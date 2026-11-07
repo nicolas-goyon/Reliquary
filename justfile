@@ -65,7 +65,7 @@ observability:
 ps:
     {{ compose }} --profile app ps
 
-# The folder of the pre-production instance. See docs/deployment/docker-compose.md.
+# The folder of the pre-production instance. See https://nicolas-goyon.github.io/reliquary/deployment/pre-production/.
 preprod_home := env("RELIQUARY_PREPROD_HOME", home_directory() / "reliquary-preprod")
 
 # Install the script of the pre-production instance and make its .env file with new secrets. VERSION is "develop", "latest" or a release number.
@@ -142,6 +142,12 @@ lint-docs:
 # Open the pull request that merges develop into main. Then release-please prepares the release. See docs/decisions/0043-releases-with-release-please.md.
 release-start:
     gh pr create --base main --head develop --title "chore(release): merge develop into main" --body "Merge with \"Create a merge commit\". Then release-please opens the release pull request on main."
+
+# Build the documentation site in the folder site/, then serve it on http://localhost:8000. Needs Python 3.
+docs-site:
+    python3 -m venv .venv-docs
+    .venv-docs/bin/pip install --quiet -r tools/docs-site/requirements.txt
+    NO_MKDOCS_2_WARNING=1 .venv-docs/bin/mkdocs serve
 
 # Correct the format of the .NET code.
 format:

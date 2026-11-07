@@ -1,0 +1,2 @@
+# The tools of the documentation site. See mkdocs.yml.
+mkdocs-material==9.8.1

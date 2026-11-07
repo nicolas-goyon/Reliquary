@@ -2,6 +2,19 @@
 # because the refresh cookie has the attribute SameSite=Strict.
 # This file is a template: at start, the Nginx image replaces ${RELIQUARY_API_URL} with its value.
 # The script 15-reliquary-resolver.sh writes the DNS resolver to 00-resolver.conf.
+
+# Behind a reverse proxy with HTTPS (production), keep the scheme and the host that the proxy received.
+# Without a reverse proxy, use the values of this server.
+map $http_x_forwarded_proto $reliquary_forwarded_proto {
+    default $http_x_forwarded_proto;
+    "" $scheme;
+}
+
+map $http_x_forwarded_host $reliquary_forwarded_host {
+    default $http_x_forwarded_host;
+    "" $host;
+}
+
 server {
     listen 8080;
     server_name _;
@@ -15,8 +28,8 @@ server {
         proxy_pass $api;
         proxy_set_header Host $host;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-Proto $reliquary_forwarded_proto;
+        proxy_set_header X-Forwarded-Host $reliquary_forwarded_host;
         client_max_body_size 10m;
     }
 

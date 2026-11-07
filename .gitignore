@@ -38,3 +38,7 @@ backups/
 
 # The state of a deployed instance, when its folder is deploy/
 deploy/.state/
+
+# The documentation site and its tools
+site/
+.venv-docs/
