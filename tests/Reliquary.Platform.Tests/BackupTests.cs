@@ -39,6 +39,33 @@ public sealed class BackupTests
     }
 
     [Fact]
+    public async Task RestoreWithReplaceDeletesTheTablesOfAMoreRecentVersion()
+    {
+        await using var host = await PlatformHost.CreateAsync(databaseCount: 2);
+        await AssignAsync(host, [Ids.New(), Ids.New()]);
+        await ExecuteAsync(host.Databases[1].ConnectionString, "create table content.backup_items (id uuid primary key, name text not null); insert into content.backup_items values (gen_random_uuid(), 'Sol Ring')");
+        var before = await SnapshotAsync(host);
+        var folder = Path.Combine(Path.GetTempPath(), $"reliquary-backup-{Guid.NewGuid():N}");
+        try
+        {
+            await host.Get<InstanceBackup>().BackupAsync(folder, Cancel);
+            // A migration of a more recent version adds a table and a schema after the backup.
+            await ExecuteAsync(host.Databases[0].ConnectionString, "create table users.newer_items (id int primary key); create schema newer; create table newer.items (id int primary key)");
+
+            await host.Get<InstanceBackup>().RestoreAsync(folder, replace: true, Cancel);
+
+            Assert.Equal(before, await SnapshotAsync(host));
+            await using var connection = new NpgsqlConnection(host.Databases[0].ConnectionString);
+            Assert.Null(await connection.ExecuteScalarAsync<string?>("select to_regclass('users.newer_items')::text"));
+            Assert.Null(await connection.ExecuteScalarAsync<string?>("select nspname from pg_namespace where nspname = 'newer'"));
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
+    [Fact]
     public async Task RestoreRefusesAnInstanceWithDataAndBackupRefusesAFullFolder()
     {
         await using var host = await PlatformHost.CreateAsync();

@@ -35,3 +35,6 @@ dump.rdb
 
 # The backups of the local instance
 backups/
+
+# The state of a deployed instance, when its folder is deploy/
+deploy/.state/

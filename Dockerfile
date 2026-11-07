@@ -61,4 +61,6 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 USER $APP_UID
 COPY --from=build /app/cli .
+# The files of a deployed instance. The script reliquary-update reads them from the image of each version.
+COPY deploy/compose.yaml deploy/.env.example deploy/reliquary-update /app/deploy/
 ENTRYPOINT ["dotnet", "reliquary.dll"]
