@@ -1,0 +1,111 @@
+name: Deployment
+
+# Checks for the deployed instances. See docs/decisions/0042-deployed-instances-and-updates.md.
+# - "Migrations": a pull request must not change, rename or delete a migration that its base contains.
+# - "Update keeps the data": the gate of the milestone M2.5 (UpgradeKeepsData).
+#   It installs the published images of the last release (or of develop before the first release),
+#   adds data, updates to the images of this commit, rolls back, and checks the data at each step.
+
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: read
+
+concurrency:
+  group: deployment-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  migrations:
+    name: Migrations
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Check that no existing migration changed
+        env:
+          BASE: origin/${{ github.base_ref }}
+        run: tools/deploy-tests/check-migrations.sh "$BASE"
+
+  upgrade:
+    name: Update keeps the data
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Select the run
+        id: scope
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE: origin/${{ github.base_ref }}
+        run: |
+          set -euo pipefail
+          run=true
+          if [ "$EVENT" = "pull_request" ]; then
+            changed=$(git diff --name-only "$(git merge-base "$BASE" HEAD)" HEAD)
+            if ! printf '%s\n' "$changed" | grep --quiet --extended-regexp \
+              '^(src/.*/Migrations/|src/Reliquary\.Platform/Backup/|src/Reliquary\.Cli/|deploy/|tools/deploy-tests/|Dockerfile$|web/Dockerfile$|web/nginx|\.github/workflows/deployment\.yml$)'; then
+              run=false
+            fi
+          fi
+          echo "run=$run" >> "$GITHUB_OUTPUT"
+          echo "Run the gate: $run."
+
+      - name: Sign in to the registry
+        if: steps.scope.outputs.run == 'true'
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Select the old version
+        if: steps.scope.outputs.run == 'true'
+        id: old
+        run: |
+          set -euo pipefail
+          prefix=ghcr.io/${{ github.repository_owner }}/reliquary
+          old=""
+          for candidate in latest develop; do
+            if docker pull --quiet "$prefix-cli:$candidate" >/dev/null 2>&1; then
+              old=$candidate
+              break
+            fi
+          done
+          if [ -z "$old" ] || ! docker run --rm --entrypoint test "$prefix-cli:$old" -f /app/deploy/compose.yaml; then
+            echo "::notice::No published CLI image contains the deployment files yet. The gate starts after the first image of develop with them."
+            echo "version=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "version=$old" >> "$GITHUB_OUTPUT"
+          echo "Old version: $old."
+
+      - name: Build the images of this commit
+        if: steps.old.outputs.version != ''
+        run: |
+          set -euo pipefail
+          prefix=ghcr.io/${{ github.repository_owner }}/reliquary
+          for target in api worker cli; do
+            docker build --quiet --target "$target" --build-arg RELIQUARY_VERSION=0.0.0-ci --tag "$prefix-$target:ci" .
+          done
+          docker build --quiet --build-arg RELIQUARY_VERSION=0.0.0-ci --tag "$prefix-web:ci" web
+
+      - name: Install the old version, update, roll back and check the data
+        if: steps.old.outputs.version != ''
+        env:
+          OLD_VERSION: ${{ steps.old.outputs.version }}
+          OLD_PULL: "true"
+          NEW_PULL: "false"
+        run: tools/deploy-tests/upgrade-keeps-data.sh "$OLD_VERSION" ci
