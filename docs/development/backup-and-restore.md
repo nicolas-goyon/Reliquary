@@ -51,6 +51,7 @@ The copies of two different databases can be some seconds apart.
    ```
 
    The command refuses an instance that has data. To replace the data, add `--replace`.
+   With `--replace`, the command first deletes all the schemas of each database, also the tables that a more recent version added.
 
 4. Apply the migrations of the current version:
 
