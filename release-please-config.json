@@ -1,0 +1,28 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "release-type": "simple",
+  "include-component-in-tag": false,
+  "include-v-in-tag": true,
+  "bump-minor-pre-major": true,
+  "bump-patch-for-minor-pre-major": false,
+  "skip-changelog": true,
+  "pull-request-title-pattern": "chore(release): release ${version}",
+  "pull-request-header": "This pull request makes the release. Merge it to create the tag, the GitHub release and the images. See docs/decisions/0043-releases-with-release-please.md.",
+  "packages": {
+    ".": {
+      "package-name": "reliquary",
+      "extra-files": [
+        {
+          "type": "xml",
+          "path": "Directory.Build.props",
+          "xpath": "//Project/PropertyGroup/Version"
+        },
+        {
+          "type": "json",
+          "path": "web/package.json",
+          "jsonpath": "$.version"
+        }
+      ]
+    }
+  }
+}
