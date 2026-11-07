@@ -8,7 +8,7 @@ All documents are in English and follow the [writing rules](contributing/writing
 | Document | Content |
 | --- | --- |
 | [Specification](specification/README.md) | What Reliquary must do, for each feature area |
-| [Roadmap](roadmap.md) | The milestones M0 to M4, their gates, and the work after M4 |
+| [Roadmap](roadmap.md) | The milestones M0 to M4 and M2.5, their gates, and the work after M4 |
 | [Glossary](glossary.md) | One meaning for each term, with the French interface term |
 
 ## Architecture
@@ -28,6 +28,13 @@ All documents are in English and follow the [writing rules](contributing/writing
 | [Service accounts](architecture/service-accounts.md) | Service accounts, delegations, delegation tokens and scopes |
 | [Technology stack](architecture/tech-stack.md) | Technologies and performance targets |
 | [Decision records](decisions/README.md) | The reasons for each important decision |
+
+## Deployment
+
+| Document | Content |
+| --- | --- |
+| [Docker Compose](deployment/docker-compose.md) | Install, update, roll back and back up a deployed instance, for example the pre-production instance |
+| [Kubernetes](deployment/kubernetes.md) | The requirements of the images on Kubernetes |
 
 ## Development
 

@@ -35,6 +35,9 @@ The instance contains the demo cards of `data/demo` and these demo accounts:
 
 The passwords are public. Do not open a local instance to other computers.
 
+To use Reliquary every day with your own data, use a deployed instance: [Deploy with Docker Compose](../deployment/docker-compose.md).
+A deployed instance uses the published images and keeps its data after each update. `just reset` does not change it.
+
 ## Start Reliquary for development
 
 1. Clone the repository and open its folder.
