@@ -120,6 +120,11 @@ public sealed class InstanceBackup(DataSources sources, IOptions<BackupOptions> 
             var role = database.Roles.FirstOrDefault(targets.ContainsKey)
                 ?? throw new InvalidOperationException($"The configuration has no database for the roles {string.Join(", ", database.Roles)}. Add the shards of the backup to Database:Shards.");
             var file = Path.Combine(directory, Path.GetFileName(database.File));
+            if (replace)
+            {
+                await ClearAsync(targets[role], cancellationToken);
+            }
+
             await RunAsync("pg_restore", targets[role], ["--clean", "--if-exists", "--no-owner", "--no-privileges", "--single-transaction", file], cancellationToken);
         }
 
@@ -160,6 +165,31 @@ public sealed class InstanceBackup(DataSources sources, IOptions<BackupOptions> 
     {
         var builder = new NpgsqlConnectionStringBuilder(connectionString);
         return $"{builder.Host}:{builder.Port}/{builder.Database}";
+    }
+
+    private const string ClearSql = """
+        do $$
+        declare
+            schema_name text;
+        begin
+            for schema_name in select nspname from pg_namespace where nspname <> 'information_schema' and nspname not like 'pg\_%' loop
+                execute format('drop schema %I cascade', schema_name);
+            end loop;
+            create schema if not exists public;
+        end
+        $$
+        """;
+
+    /// <summary>
+    /// Deletes all the schemas of a database, and creates an empty schema <c>public</c>.
+    /// A more recent version can add tables that the backup does not contain.
+    /// <c>pg_restore --clean</c> deletes only the objects of the backup, so it cannot delete a schema that contains such a table.
+    /// </summary>
+    private async Task ClearAsync(string connectionString, CancellationToken cancellationToken)
+    {
+        await using var connection = await sources.Pool(connectionString).OpenConnectionAsync(cancellationToken);
+        await using var command = new NpgsqlCommand(ClearSql, connection);
+        await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
     private async Task<bool> HasDataAsync(CancellationToken cancellationToken)
