@@ -215,6 +215,42 @@ describe('deck import and export', () => {
     expect(window.location.pathname).toBe('/decks/import')
   })
 
+  it('imports a deck from a Moxfield link', async () => {
+    window.history.replaceState(null, '', '/decks/import')
+    const calls = mockApi({
+      'POST /auth/refresh': () => session(),
+      'POST /decks/import-link': () => Response.json({ deck: deck({ name: 'Sauron' }), warnings: [] }, { status: 201 }),
+    })
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.type(await screen.findByLabelText('Link of a deck'), 'https://moxfield.com/decks/abc')
+    await user.click(screen.getByRole('button', { name: 'Import the deck' }))
+
+    await waitFor(() => expect(window.location.pathname).toBe(`/decks/${deckId}`))
+    expect(calls.find((call) => call.key === 'POST /decks/import-link')?.body).toEqual({
+      url: 'https://moxfield.com/decks/abc',
+      name: '',
+      deckFormat: 'commander',
+      visibility: 'private',
+    })
+  })
+
+  it('explains that the instance cannot read Moxfield', async () => {
+    window.history.replaceState(null, '', '/decks/import')
+    mockApi({
+      'POST /auth/refresh': () => session(),
+      'POST /decks/import-link': () => problem(503, 'deck_link_site_unavailable'),
+    })
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.type(await screen.findByLabelText('Link of a deck'), 'https://moxfield.com/decks/abc')
+    await user.click(screen.getByRole('button', { name: 'Import the deck' }))
+
+    expect(await screen.findByText(/This instance cannot read the decks of this site\./)).toBeInTheDocument()
+  })
+
   it('downloads the export of a deck', async () => {
     window.history.replaceState(null, '', `/decks/${deckId}`)
     const createObjectURL = vi.fn<(blob: Blob) => string>(() => 'blob:deck')

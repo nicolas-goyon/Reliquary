@@ -821,4 +821,13 @@ public static class DeckErrorCodes
 
     /// <summary>The working list did not change since the last version.</summary>
     public const string NoChanges = "deck_no_changes";
+
+    /// <summary>The instance cannot read the decks of this site.</summary>
+    public const string LinkSiteUnavailable = "deck_link_site_unavailable";
+
+    /// <summary>The site has no public deck at the link.</summary>
+    public const string LinkDeckNotFound = "deck_link_not_found";
+
+    /// <summary>The other site did not give the deck.</summary>
+    public const string LinkSiteFailed = "deck_link_site_failed";
 }

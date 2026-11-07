@@ -35,6 +35,9 @@ export const translatedErrorCodes = [
   'inventory_applied',
   'deck_assembled',
   'deck_not_assembled',
+  'deck_link_site_unavailable',
+  'deck_link_not_found',
+  'deck_link_site_failed',
 ] as const
 
 export type TranslatedErrorCode = (typeof translatedErrorCodes)[number]

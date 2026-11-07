@@ -104,7 +104,10 @@
     "not_enough_cards": "L’origine n’a pas assez d’exemplaires de la carte. Indiquez une quantité plus faible.",
     "inventory_applied": "Reliquary a déjà appliqué cet inventaire. Commencez un nouvel inventaire.",
     "deck_assembled": "Le deck est un deck assemblé. Désassemblez-le d’abord, puis réessayez.",
-    "deck_not_assembled": "Le deck n’est pas un deck assemblé. Marquez d’abord une version comme version assemblée."
+    "deck_not_assembled": "Le deck n’est pas un deck assemblé. Marquez d’abord une version comme version assemblée.",
+    "deck_link_site_unavailable": "Cette instance ne peut pas lire les decks de ce site. Sur le site, exportez le deck en texte et collez le texte ci-dessous.",
+    "deck_link_not_found": "Le site n’a aucun deck public à ce lien. Vérifiez que le deck est public ou non répertorié.",
+    "deck_link_site_failed": "L’autre site n’a pas donné le deck. Réessayez plus tard, ou exportez le deck en texte et collez le texte."
   },
   "fieldErrors": {
     "required": "Ce champ est obligatoire.",
