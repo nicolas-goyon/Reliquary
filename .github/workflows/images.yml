@@ -66,7 +66,10 @@ jobs:
         run: |
           set -euo pipefail
           commit=$(git rev-parse HEAD)
-          base=$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' Directory.Build.props)
+          # The version of the last release. A build of develop gets the next patch number with a prerelease part,
+          # so that Semantic Versioning puts it after the last release and before the next release.
+          last=$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' Directory.Build.props)
+          base="${last%.*}.$(( ${last##*.} + 1 ))"
           tag=""
           if [ -n "$RELEASE_TAG" ]; then
             tag="$RELEASE_TAG"

@@ -50,6 +50,7 @@ Each record gives the context, the decision and its consequences.
 | [0040](0040-table-engine-in-the-browser.md) | The table engine runs in the browser | Accepted |
 | [0041](0041-deck-import-from-a-link.md) | The API reads a deck from a link of Moxfield or Archidekt | Accepted |
 | [0042](0042-deployed-instances-and-updates.md) | Deployed instances with the published images, the script `reliquary-update`, and the migration rules | Accepted |
+| [0043](0043-releases-with-release-please.md) | Releases with release-please on `main`, and a changelog written by hand | Accepted |
 
 ## Open decisions
 
