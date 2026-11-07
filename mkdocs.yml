@@ -17,6 +17,8 @@ theme:
     - navigation.sections
     - navigation.top
     - content.code.copy
+    # Select "Windows" or "Linux" in one tab group, and the site shows the same system in all the tab groups.
+    - content.tabs.link
     - search.highlight
   palette:
     - media: "(prefers-color-scheme: light)"
@@ -36,6 +38,12 @@ markdown_extensions:
   - tables
   - toc:
       permalink: true
+  # The tabs for Linux and Windows. The syntax "/// tab | Linux" needs no indent, so markdownlint reads the content as usual Markdown.
+  # The Markdown files indent the content of a list item by 2 or 3 spaces, as CommonMark and GitHub allow. Python-Markdown needs 4 spaces without this extension.
+  - mdx_truly_sane_lists:
+      nested_indent: 2
+  - pymdownx.blocks.tab:
+      alternate_style: true
   - pymdownx.superfences:
       custom_fences:
         - name: mermaid

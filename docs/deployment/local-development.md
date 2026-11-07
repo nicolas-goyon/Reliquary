@@ -8,20 +8,41 @@ To use Reliquary every day with your own data, use a [pre-production instance](p
 
 ## Requirements
 
-- Docker with the Compose plugin, Git and `just`. See [Requirements](requirements.md).
-- For hot reload only: the .NET SDK 10.0 and Node.js 24.
+- Docker with the Compose plugin, Git and `just`. [Install the software](requirements.md#install-the-software) tells how to install them.
+- For hot reload only: the .NET SDK 10.0 and Node.js 24. See [Develop with hot reload](#develop-with-hot-reload).
 
 ## Install
 
-1. Clone the repository and open its folder:
+1. Open a terminal:
+
+   /// tab | Linux
+
+   Open a terminal of your desktop.
+
+   ///
+
+   /// tab | Windows
+
+   Open **Ubuntu** in the Start menu.
+   The commands put the repository in the Linux file system, in `~/reliquary`.
+   Do not clone it in `/mnt/c`: the build is much slower there.
+
+   ///
+
+2. Clone the repository and open its folder:
 
    ```shell
    git clone https://github.com/nicolas-goyon/reliquary.git
    cd reliquary
    ```
 
-2. Copy `.env.example` to `.env`. Change the ports if other programs use them.
-3. Run the command:
+3. Copy `.env.example` to `.env`. Change the ports if other programs use them:
+
+   ```shell
+   cp .env.example .env
+   ```
+
+4. Run the command:
 
    ```shell
    just up
@@ -30,7 +51,7 @@ To use Reliquary every day with your own data, use a [pre-production instance](p
    The command builds the images, applies the migrations, loads the demo data and starts the instance.
    The first run takes some minutes.
 
-4. Open <http://localhost:8080>.
+5. Open <http://localhost:8080> in a browser. On Windows, use the browser of Windows. Docker Desktop sends the port to Windows.
 
 The demo accounts are:
 
@@ -41,6 +62,46 @@ The demo accounts are:
 | `admin@reliquary.localhost` | `reliquary-admin` | Administrator |
 
 ## Develop with hot reload
+
+Install the .NET SDK 10.0 and Node.js 24 first:
+
+/// tab | Linux
+
+1. Install the .NET SDK with the script of Microsoft, then add it to the variable `PATH`:
+
+   ```shell
+   curl -sSL https://dot.net/v1/dotnet-install.sh | bash -s -- --channel 10.0
+   echo 'export PATH="$HOME/.dotnet:$PATH"' >> ~/.bashrc
+   ```
+
+   For the packages of your distribution, read the [instructions of Microsoft](https://learn.microsoft.com/dotnet/core/install/linux).
+
+2. Install Node.js with [nvm](https://github.com/nvm-sh/nvm). In the folder `web`, run `nvm install`. The command reads the version in `web/.nvmrc`.
+3. Open a new terminal, and check the versions with `dotnet --version` and `node --version`.
+
+///
+
+/// tab | Windows
+
+Install the tools in WSL, not in Windows. The commands of `just` run in the Ubuntu terminal.
+
+1. In the Ubuntu terminal, install the .NET SDK with the script of Microsoft, then add it to the variable `PATH`:
+
+   ```shell
+   curl -sSL https://dot.net/v1/dotnet-install.sh | bash -s -- --channel 10.0
+   echo 'export PATH="$HOME/.dotnet:$PATH"' >> ~/.bashrc
+   ```
+
+2. Install Node.js with [nvm](https://github.com/nvm-sh/nvm). In the folder `web`, run `nvm install`. The command reads the version in `web/.nvmrc`.
+3. Open a new Ubuntu terminal, and check the versions with `dotnet --version` and `node --version`.
+4. To edit the code, install [Visual Studio Code](https://code.visualstudio.com) in Windows with the extension **WSL**.
+   In the folder of the repository, run `code .`. The editor then uses the tools of WSL.
+
+The browser of Windows opens <http://localhost:5080> and <http://localhost:5173>, because WSL sends the ports to Windows.
+
+///
+
+Then start the instance:
 
 1. Run `just infra` to start PostgreSQL, Redis and Mailpit only.
 2. Run `just restore` to install the .NET packages and the npm packages.
