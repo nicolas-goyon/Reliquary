@@ -11,8 +11,8 @@ A [production instance on a server](production.md) uses the same script with mor
 
 ## Requirements
 
-- Docker with the Compose plugin 2.17 or later.
-- A POSIX shell. On Windows, use WSL.
+- Docker with the Compose plugin 2.17 or later. [Install the software](requirements.md#install-the-software) tells how to install it on Linux and on Windows.
+- A POSIX shell. On Windows, use the Ubuntu terminal of WSL 2.
 - About 4 GB of free disk space for the card data, and space for the backups.
 
 [Requirements](requirements.md) gives the details.
@@ -28,6 +28,25 @@ A [production instance on a server](production.md) uses the same script with mor
 [Versions and updates](versions-and-updates.md) tells how the versions change.
 
 ## Install
+
+Open a terminal first:
+
+/// tab | Linux
+
+Open a terminal of your desktop. The instance goes in the folder `~/reliquary-preprod`.
+
+///
+
+/// tab | Windows
+
+1. Start Docker Desktop.
+2. Open **Ubuntu** in the Start menu. Run all the commands of this page in this terminal.
+
+The instance goes in the folder `~/reliquary-preprod` of the Linux file system.
+In the File Explorer, this folder is `\\wsl.localhost\Ubuntu\home\<your Linux user name>\reliquary-preprod`.
+Do not put the instance in `/mnt/c`: the backups then lose their Linux permissions.
+
+///
 
 ### With a clone of the repository
 
@@ -77,6 +96,25 @@ A [production instance on a server](production.md) uses the same script with mor
 At its first start, the worker imports all the cards from Scryfall. This import takes some minutes.
 The card search gives few results until the import is complete.
 Mailpit at <http://localhost:18035> keeps the emails of the instance.
+
+## Start with the computer
+
+The containers start again when Docker starts. Docker must start with the computer:
+
+/// tab | Linux
+
+```shell
+sudo systemctl enable docker
+```
+
+///
+
+/// tab | Windows
+
+In Docker Desktop, open **Settings → General**, and select **Start Docker Desktop when you sign in to your computer**.
+The instance is available some seconds after Docker Desktop starts.
+
+///
 
 ## Update
 
@@ -149,7 +187,32 @@ Until then, the other commands that change the instance refuse to start.
 - The script keeps the last `RELIQUARY_KEEP_BACKUPS` backups (default 10), and deletes the older backups.
   It deletes only the backups that it made, and never the backup of the last restore point.
 - Only your user can open the folder `backups`, because the backups contain the data of all the accounts.
-- The backups are in the folder `backups`. Copy them to a different computer or to a storage service.
+- The backups are in the folder `backups`. Copy them to a different disk, to a different computer or to a storage service.
+
+To copy the backups to a different disk:
+
+/// tab | Linux
+
+```shell
+rsync --archive backups/ /media/$USER/my-disk/reliquary-backups/
+```
+
+Replace `/media/$USER/my-disk` with the folder of your disk.
+
+///
+
+/// tab | Windows
+
+The disks of Windows are in `/mnt`. For example, for the disk `D:`:
+
+```shell
+mkdir -p /mnt/d/reliquary-backups
+cp --recursive backups/. /mnt/d/reliquary-backups/
+```
+
+The disks of Windows do not keep the Linux permissions. Other Windows users of the computer can open the copy.
+
+///
 
 [Backup and restore](../development/backup-and-restore.md) gives the content of a backup.
 
