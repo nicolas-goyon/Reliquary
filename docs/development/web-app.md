@@ -69,7 +69,7 @@ Thus the user does not lose the data of a form that is not saved.
 
 ### Server settings
 
-The Nginx configuration of the web image (`web/nginx.conf`) applies these settings:
+The Nginx configuration of the web image (`web/nginx.conf.template`) applies these settings:
 
 | Path | `Cache-Control` | Note |
 | --- | --- | --- |

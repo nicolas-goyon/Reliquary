@@ -2,6 +2,7 @@
 # - The infrastructure: PostgreSQL, Redis and a test email server. "just infra" starts it only.
 # - The profile "app": the API, the worker, the web app and the CLI, built from the source code. "just up" starts all.
 # Use the justfile recipes: just up, just infra, just stop, just reset and just down.
+# The application containers have a read-only root file system, as in a production deployment.
 # The settings come from the .env file. See .env.example.
 
 # The settings of the .NET hosts in the containers.
@@ -61,6 +62,9 @@ services:
   # Applies the migrations. "just up" runs it before it starts the API and the worker.
   migrate:
     image: reliquary/cli:local
+    read_only: true
+    tmpfs:
+      - /tmp
     build:
       context: .
       target: cli
@@ -75,6 +79,9 @@ services:
 
   api:
     image: reliquary/api:local
+    read_only: true
+    tmpfs:
+      - /tmp
     build:
       context: .
       target: api
@@ -90,6 +97,9 @@ services:
 
   worker:
     image: reliquary/worker:local
+    read_only: true
+    tmpfs:
+      - /tmp
     build:
       context: .
       target: worker
@@ -106,6 +116,10 @@ services:
   # The web app on http://localhost:8080. Nginx sends the /api requests to the API.
   web:
     image: reliquary/web:local
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /etc/nginx/conf.d:uid=101
     build:
       context: web
     profiles: ["app"]

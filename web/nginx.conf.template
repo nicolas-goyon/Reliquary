@@ -1,13 +1,15 @@
 # The web app and a reverse proxy to the API. The API must be on the same site as the web app,
 # because the refresh cookie has the attribute SameSite=Strict.
+# This file is a template: at start, the Nginx image replaces ${RELIQUARY_API_URL} with its value.
+# The script 15-reliquary-resolver.sh writes the DNS resolver to 00-resolver.conf.
 server {
     listen 8080;
     server_name _;
     root /usr/share/nginx/html;
 
-    # The API of the Compose service "api". The variable makes Nginx resolve the name at each request.
-    resolver 127.0.0.11 valid=10s ipv6=off;
-    set $api http://api:8080;
+    # The address of the API. The default is the Compose service "api".
+    # The variable makes Nginx resolve the name again when the time of the resolver ends.
+    set $api ${RELIQUARY_API_URL};
 
     location /api/ {
         proxy_pass $api;
