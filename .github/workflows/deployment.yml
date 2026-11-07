@@ -163,3 +163,5 @@ jobs:
           powershell -NoProfile -ExecutionPolicy Bypass -File "$folder\reliquary-update.ps1" --init develop
           if ($LASTEXITCODE -ne 1) { Write-Error 'A second --init must fail.'; exit 1 }
           'The script works with Windows PowerShell 5.1.'
+          # The second --init sets LASTEXITCODE to 1, and the runner uses LASTEXITCODE as the result of the step.
+          exit 0
