@@ -95,18 +95,21 @@ Run one of these commands in the folder of the instance:
 | `./reliquary-update 0.2.0` | Update to the release 0.2.0 |
 | `./reliquary-update --check` | Tell if a different version is available. Change nothing. |
 | `./reliquary-update --status` | Show the running version, the containers and the restore points |
+| `./reliquary-update --recover` | Finish an update or a rollback that stopped. See [Recover](#recover). |
 
 With a clone of the repository, `just preprod-update`, `just preprod-update develop` and `just preprod-status` do the same.
 
 The update does these steps:
 
 1. Pull the images, and read the Compose file of the new version from its CLI image.
-2. Back up the databases to `backups/<date>-<old version>`, and record a restore point with the old images.
-3. Stop the API, the worker and the web app.
+   Check the Compose file with the settings of `.env`. When a setting is missing, the script stops here and changes nothing.
+2. Stop the API, the worker and the web app.
+3. Back up the databases to `backups/<date>-<old version>`, and record a restore point with the old images.
 4. Apply the migrations of the new version.
 5. Start the new version, and wait until the API and the worker are ready.
 
-When step 4 or step 5 fails, the script restores the backup and starts the old version again.
+When a step after step 2 fails, the script restores the backup and starts the old version again.
+It does the same when the script stops, for example with Ctrl+C.
 Then it stops with an error message. Read the messages, and tell the maintainers.
 
 When the images did not change, the script changes nothing.
@@ -121,18 +124,36 @@ To go back to the version before the last update:
 
 The command does these steps:
 
-1. Make a backup `<date>-before-rollback` of the current data.
-2. Restore the backup of the last restore point.
-3. Start the images of the last restore point.
+1. Stop the API, the worker and the web app.
+2. Make a backup `<date>-before-rollback` of the current data.
+3. Restore the backup of the last restore point.
+4. Start the images of the last restore point.
+
+When a step after step 1 fails, the script restores the backup of step 2 and starts the current version again.
 
 The changes after the update are not in the restored data. The backup of step 1 keeps them.
 Run the command again to go back one more version.
 
+## Recover
+
+The script records each update and each rollback until its end.
+When the recovery of a failed update also fails (for example, Docker stops), the script tells you to run this command:
+
+```shell
+./reliquary-update --recover
+```
+
+The command restores the backup of the update or of the rollback, and starts the version before it.
+Until then, the other commands that change the instance refuse to start.
+
 ## Backups
 
 - The script makes a backup before each update and before each rollback.
-- `./reliquary-update --backup LABEL` makes a backup `<date>-LABEL` at any time.
+- `./reliquary-update --backup LABEL` makes a backup `<date>-LABEL` at any time. The label contains only letters, digits, `.`, `_` and `-`.
+- The date in the names is in UTC, for example `20261107T142233Z`.
 - The script keeps the last `RELIQUARY_KEEP_BACKUPS` backups (default 10), and deletes the older backups.
+  It deletes only the backups that it made, and never the backup of the last restore point.
+- Only your user can open the folder `backups`, because the backups contain the data of all the accounts.
 - The backups are in the folder `backups`. Copy them to a different computer or to a storage service.
 
 [Backup and restore](../development/backup-and-restore.md) gives the content of a backup.
@@ -160,6 +181,8 @@ Do not change `RELIQUARY_POSTGRES_PASSWORD` after the installation. The database
 | `.env` | The settings and the secrets. Keep this file private. |
 | `.state/current/` | The image digests and the Compose file of the running version |
 | `.state/restore-points/` | One folder for each backup before an update: the image digests and the Compose file |
+| `.state/in-progress` | The update or the rollback that runs now, or that stopped. See [Recover](#recover). |
+| `.state/lock` | The lock of a run. Delete it only when no other run of the script exists. |
 | `backups/` | The backups of the databases |
 
 The data of the databases is in the Docker volumes `reliquary-preprod_postgres-data` and `reliquary-preprod_redis-data`.

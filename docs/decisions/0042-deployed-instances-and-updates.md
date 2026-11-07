@@ -46,10 +46,11 @@ The production instance will run on Kubernetes ([#64](https://github.com/nicolas
 - The script `reliquary-update` is the only tool for the operations of the instance:
   - `reliquary-update VERSION` installs or updates the instance. VERSION is a channel (`develop`, `latest`) or a release number.
   - The script pins each image by its digest. A channel tag that moves does not change a running instance.
-  - Before an update, the script makes a backup and a restore point: the digests and the Compose file of the old version.
-  - When the migrations or the start of the new version fail, the script restores the backup and starts the old version again.
+  - Before an update, the script stops the application. Then it makes a backup and a restore point: the digests and the Compose file of the old version.
+  - The script records the update until its end. When a step fails, or when the script stops, it restores the backup and starts the old version again.
+    `reliquary-update --recover` does the same after a failed recovery.
   - `reliquary-update --rollback` starts the version of the last restore point with the data of its backup. It makes a backup of the current data first.
-  - After a successful update, the script replaces itself with the script of the new version.
+  - After a successful update, the script replaces itself with the script of the new version, when that script has a higher revision.
 - The name of the Compose project is `reliquary-preprod` by default. The recipes of the local instance refuse the instance name `preprod`.
 
 ### Migration rules
