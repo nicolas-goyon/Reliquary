@@ -2,11 +2,15 @@
 # Container image of the web app: the built files behind Nginx.
 # Nginx also sends the /api requests to the API, so the web app and the API are on the same site.
 
-FROM node:24-alpine AS build
+# The build stage runs on the platform of the builder. The output is the same for each target platform.
+FROM --platform=$BUILDPLATFORM node:24-alpine AS build
 WORKDIR /web
 COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund
 COPY . .
+# The CI gives the version of the image. A local build uses the version of package.json.
+ARG RELIQUARY_VERSION=
+ENV RELIQUARY_VERSION=$RELIQUARY_VERSION
 RUN npm run build
 
 FROM nginxinc/nginx-unprivileged:1.28-alpine

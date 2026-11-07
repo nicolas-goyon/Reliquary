@@ -43,7 +43,8 @@
   },
   "footer": {
     "license": "Free software under the AGPL-3.0 license.",
-    "source": "Source code"
+    "source": "Source code",
+    "version": "Version {{version}}."
   },
   "navigation": {
     "label": "Main navigation",
