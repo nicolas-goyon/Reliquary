@@ -16,7 +16,8 @@ on:
     paths:
       - Dockerfile
       - web/Dockerfile
-      - web/nginx.conf
+      - web/nginx.conf.template
+      - web/nginx-resolver.sh
       - .github/workflows/images.yml
   workflow_dispatch:
   workflow_call:
