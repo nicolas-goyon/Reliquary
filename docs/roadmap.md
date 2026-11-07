@@ -12,7 +12,8 @@ The plugin ecosystem opens last.
 
 The roadmap puts decks first, then the collection, deck testing and plugins.
 It has five milestones, with a gate between each pair of milestones.
-A sixth milestone, Later, contains the work after M4.
+A small milestone, M2.5, adds a deployed instance between M2 and M3.
+A last milestone, Later, contains the work after M4.
 
 ```mermaid
 flowchart TB
@@ -22,10 +23,12 @@ flowchart TB
     g1{{"Gate: the import, editing and export of a Moxfield deck lose no data."}}
     m2["M2 · Versions and collection<br/>Deck versions, variants, transition plan, locations, inventories"]
     g2{{"Gate: the purchase list is correct for each card."}}
+    m25["M2.5 · Pre-production deployment<br/>Published images, deployed instance, updates and rollback, releases"]
+    g25{{"Gate: an update keeps the data, and a rollback gives the data before the update."}}
     m3["M3 · Deck testing<br/>Goldfish, local multiplayer, shared screen, simplified online games"]
     g3{{"Gate: an online game with 4 players runs for one hour with no desynchronization."}}
     m4["M4 · Plugins<br/>Plugin SDK, slots, linked accounts, plugin catalog, card scan plugin, Helm chart"]
-    m0 --> g0 --> m1 --> g1 --> m2 --> g2 --> m3 --> g3 --> m4
+    m0 --> g0 --> m1 --> g1 --> m2 --> g2 --> m25 --> g25 --> m3 --> g3 --> m4
 ```
 
 The [specification](./specification/README.md) gives the milestone of each feature.
@@ -64,6 +67,18 @@ M1 is the main milestone.
 - Differences between a deck and the available cards
 
 **Gate**: the purchase list (the variant minus the available cards) is correct for each card.
+
+## [M2.5: Pre-production deployment](https://github.com/nicolas-goyon/reliquary/milestone/7)
+
+- The CI publishes the images of each build of `develop` and of each release
+- Images that work on Docker Compose and on Kubernetes with no change
+- A deployed instance with Docker Compose, and the script `reliquary-update`: install, update, check and roll back
+- Releases with release-please
+- The migration rules of the deployed instances
+
+The Kubernetes deployment stays in M4. It uses the same images.
+
+**Gate**: the test `UpgradeKeepsData` installs a version, adds data, updates the instance, and finds the data again. Then it rolls back and finds the data of before the update.
 
 ## [M3: Deck testing](https://github.com/nicolas-goyon/reliquary/milestone/4)
 
