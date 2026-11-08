@@ -5,6 +5,8 @@ name: Deployment
 # - "Update keeps the data": the gate of the milestone M2.5 (UpgradeKeepsData).
 #   It installs the published images of the last release (or of develop before the first release),
 #   adds data, updates to the images of this commit, rolls back, and checks the data at each step.
+#   It runs once with the POSIX script reliquary-update, and once with the PowerShell script reliquary-update.ps1.
+# - "PowerShell script on Windows": Windows PowerShell 5.1 reads the PowerShell script and runs --help and --init.
 
 on:
   pull_request:
@@ -109,3 +111,57 @@ jobs:
           OLD_PULL: "true"
           NEW_PULL: "false"
         run: tools/deploy-tests/upgrade-keeps-data.sh "$OLD_VERSION" ci
+
+      - name: Do the same with the PowerShell script
+        if: steps.old.outputs.version != ''
+        env:
+          OLD_VERSION: ${{ steps.old.outputs.version }}
+          OLD_PULL: "true"
+          NEW_PULL: "false"
+          UPDATE_SCRIPT: pwsh
+        run: tools/deploy-tests/upgrade-keeps-data.sh "$OLD_VERSION" ci
+
+  windows:
+    name: PowerShell script on Windows
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      # The runners of Windows cannot run Linux containers, so this job checks the script with no Docker.
+      # The job "Update keeps the data" runs the full test with PowerShell 7 on Linux.
+      - name: Read the script with Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile("$PWD\deploy\reliquary-update.ps1", [ref] $null, [ref] $errors) | Out-Null
+          if ($errors) { $errors | ForEach-Object { Write-Error $_.ToString() }; exit 1 }
+
+      - name: Check the rules of PSScriptAnalyzer
+        shell: pwsh
+        run: |
+          $results = @(Invoke-ScriptAnalyzer -Path deploy/reliquary-update.ps1 -Settings tools/deploy-tests/PSScriptAnalyzerSettings.psd1)
+          $results | Format-Table -AutoSize | Out-String -Width 200
+          if ($results.Count -gt 0) { exit 1 }
+
+      - name: Run --help and --init with Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          $folder = Join-Path $env:RUNNER_TEMP 'instance'
+          New-Item -ItemType Directory -Path $folder | Out-Null
+          Copy-Item deploy\reliquary-update.ps1, deploy\.env.example -Destination $folder
+          powershell -NoProfile -ExecutionPolicy Bypass -File "$folder\reliquary-update.ps1" --help
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          powershell -NoProfile -ExecutionPolicy Bypass -File "$folder\reliquary-update.ps1" --init develop
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          $bytes = [System.IO.File]::ReadAllBytes("$folder\.env")
+          if ($bytes[0] -eq 0xEF) { Write-Error 'The .env file starts with a byte order mark.'; exit 1 }
+          $text = [System.IO.File]::ReadAllText("$folder\.env")
+          foreach ($pattern in '(?m)^RELIQUARY_VERSION=develop$', '(?m)^RELIQUARY_SIGNING_KEY=\S{44}$', '(?m)^RELIQUARY_POSTGRES_PASSWORD=[0-9a-f]{48}$') {
+            if ($text -notmatch $pattern) { Write-Error "The .env file does not match $pattern."; exit 1 }
+          }
+          powershell -NoProfile -ExecutionPolicy Bypass -File "$folder\reliquary-update.ps1" --init develop
+          if ($LASTEXITCODE -ne 1) { Write-Error 'A second --init must fail.'; exit 1 }
+          'The script works with Windows PowerShell 5.1.'
+          # The second --init sets LASTEXITCODE to 1, and the runner uses LASTEXITCODE as the result of the step.
+          exit 0

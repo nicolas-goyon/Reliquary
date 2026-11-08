@@ -12,7 +12,7 @@ A [production instance on a server](production.md) uses the same script with mor
 ## Requirements
 
 - Docker with the Compose plugin 2.17 or later. [Install the software](requirements.md#install-the-software) tells how to install it on Linux and on Windows.
-- A POSIX shell. On Windows, use the Ubuntu terminal of WSL 2.
+- A POSIX shell for the script `reliquary-update`. On Windows, use PowerShell with the script `reliquary-update.ps1`, or the Ubuntu terminal of WSL 2.
 - About 4 GB of free disk space for the card data, and space for the backups.
 
 [Requirements](requirements.md) gives the details.
@@ -29,22 +29,53 @@ A [production instance on a server](production.md) uses the same script with mor
 
 ## Install
 
-Open a terminal first:
+Select your system:
 
 /// tab | Linux
 
-Open a terminal of your desktop. The instance goes in the folder `~/reliquary-preprod`.
+Open a terminal of your desktop, then follow the steps below. The instance goes in the folder `~/reliquary-preprod`.
 
 ///
 
 /// tab | Windows
 
-1. Start Docker Desktop.
-2. Open **Ubuntu** in the Start menu. Run all the commands of this page in this terminal.
+Use PowerShell and the script `reliquary-update.ps1`. You need only Docker Desktop.
+[Install the software](requirements.md#install-the-software) tells how to install it and how to let PowerShell run the script.
 
-The instance goes in the folder `~/reliquary-preprod` of the Linux file system.
-In the File Explorer, this folder is `\\wsl.localhost\Ubuntu\home\<your Linux user name>\reliquary-preprod`.
-Do not put the instance in `/mnt/c`: the backups then lose their Linux permissions.
+1. Start Docker Desktop, and open PowerShell.
+2. Make a folder for the instance, and get the script from the CLI image:
+
+   ```powershell
+   New-Item -ItemType Directory -Path "$HOME\reliquary-preprod" | Out-Null
+   Set-Location "$HOME\reliquary-preprod"
+   $container = docker create ghcr.io/nicolas-goyon/reliquary-cli:develop
+   docker cp "$($container):/app/deploy/reliquary-update.ps1" .
+   docker rm $container | Out-Null
+   ```
+
+   Get the script from the image `develop` also for a release. This script works with all the versions.
+
+3. Make the `.env` file with new secrets:
+
+   ```powershell
+   .\reliquary-update.ps1 --init develop
+   ```
+
+4. Open `.env` with `notepad .env`. Set `RELIQUARY_ADMINISTRATOR_EMAIL` to your email address.
+5. Install the instance:
+
+   ```powershell
+   .\reliquary-update.ps1
+   ```
+
+6. Open <http://localhost:8090> and make your account.
+
+The script `reliquary-update.ps1` has the same commands as `reliquary-update`. On this page, replace `./reliquary-update` with `.\reliquary-update.ps1`.
+For example, `.\reliquary-update.ps1 --rollback`.
+The instance is in `C:\Users\<your user name>\reliquary-preprod`. Only your user can open this folder.
+
+To use the Ubuntu terminal of WSL 2 instead, follow the steps for Linux in the Ubuntu terminal.
+Do not use Git Bash: see [Git Bash](requirements.md#git-bash).
 
 ///
 
@@ -203,14 +234,14 @@ Replace `/media/$USER/my-disk` with the folder of your disk.
 
 /// tab | Windows
 
-The disks of Windows are in `/mnt`. For example, for the disk `D:`:
+In PowerShell, for example for the disk `D:`:
 
-```shell
-mkdir -p /mnt/d/reliquary-backups
-cp --recursive backups/. /mnt/d/reliquary-backups/
+```powershell
+New-Item -ItemType Directory -Force -Path D:\reliquary-backups | Out-Null
+Copy-Item -Recurse -Force backups\* D:\reliquary-backups\
 ```
 
-The disks of Windows do not keep the Linux permissions. Other Windows users of the computer can open the copy.
+The disk `D:` does not keep the permissions of your user folder. Other users of the computer can maybe open the copy.
 
 ///
 
@@ -235,7 +266,8 @@ Do not change `RELIQUARY_POSTGRES_PASSWORD` after the installation. The database
 
 | Path | Content |
 | --- | --- |
-| `reliquary-update` | The script |
+| `reliquary-update` | The script for Linux, macOS and WSL 2 |
+| `reliquary-update.ps1` | The script for PowerShell on Windows |
 | `.env` | The settings and the secrets. Keep this file private. |
 | `.state/current/` | The image digests and the Compose file of the running version |
 | `.state/restore-points/` | One folder for each backup before an update: the image digests and the Compose file |
