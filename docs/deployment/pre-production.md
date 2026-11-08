@@ -54,6 +54,7 @@ Use PowerShell and the script `reliquary-update.ps1`. You need only Docker Deskt
    ```
 
    Get the script from the image `develop` also for a release. This script works with all the versions.
+   When you download the script with a browser instead, run `Unblock-File .\reliquary-update.ps1`. Otherwise PowerShell asks for a signature.
 
 3. Make the `.env` file with new secrets:
 
