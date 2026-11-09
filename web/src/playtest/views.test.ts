@@ -220,6 +220,19 @@ describe('shared vectors for the C# side', () => {
     await expect(vectorFile('The view of each viewer, its canonical JSON and its hash. See web/src/playtest/views.ts.', items)).toMatchFileSnapshot(`${vectorFolder}/views.json`)
   })
 
+  it('full states and the view hash of each viewer', async () => {
+    // The C# tests make the view of each viewer from the full state, so these vectors check the C# projection (the hidden cards).
+    // The states have face-down cards on the battlefield, in the graveyard and in the exile.
+    const steps = randomGame(41, 160, 8)
+    const states = [table(41, 8), ...steps.filter((_, index) => index % 40 === 39).map((step) => step.state)]
+    const items = states.map((state, index) => ({
+      name: `state ${index}`,
+      state,
+      hashes: Object.fromEntries(viewers.map((viewerId) => [viewerId, viewHash(playerView(state, viewerId))])),
+    }))
+    await expect(vectorFile('Full states and the view hash of each viewer. Make the view of each viewer from state: it has the hash of hashes. See web/src/playtest/projection.ts.', items)).toMatchFileSnapshot(`${vectorFolder}/projections.json`)
+  })
+
   it('patches', async () => {
     const steps = randomGame(31, 24, 12)
     const items = steps.flatMap(({ action, state }, index) => {
