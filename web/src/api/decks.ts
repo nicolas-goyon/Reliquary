@@ -26,6 +26,8 @@ export interface DeckSummary {
   updatedAt: string
   tags: string[]
   colorIdentity: string
+  /** Whether the deck is an assembled deck. */
+  assembled: boolean
 }
 
 export interface DeckFolder {
@@ -60,13 +62,17 @@ export interface DeckListFilters {
   colors: string
   tag: string
   archived: 'exclude' | 'include' | 'only'
+  /** `true` for the assembled decks only, `false` for the other decks, or empty for all the decks. */
+  assembled: '' | 'true' | 'false'
+  /** `true` for the decks that the available cards complete, `false` for the decks with cards to buy, or empty for all the decks. */
+  complete: '' | 'true' | 'false'
   sort: DeckSort
 }
 
 /** Gets the query of the deck list for the filters. */
 export function deckListQuery(filters: DeckListFilters): string {
   const query = new URLSearchParams({ limit: '100' })
-  for (const key of ['folderId', 'format', 'colors', 'tag'] as const) {
+  for (const key of ['folderId', 'format', 'colors', 'tag', 'assembled', 'complete'] as const) {
     if (filters[key]) {
       query.set(key, filters[key])
     }

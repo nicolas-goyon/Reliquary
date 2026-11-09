@@ -103,6 +103,7 @@
     "tags": "Étiquettes",
     "pinned": "Épinglé",
     "archived": "Archivé",
+    "assembled": "Deck monté",
     "colorless": "Incolore"
   },
   "editor": {
@@ -413,6 +414,15 @@
     "archivedExclude": "Masquer",
     "archivedInclude": "Afficher",
     "archivedOnly": "Afficher uniquement",
+    "assembled": "Decks montés",
+    "assembledAll": "Tous les decks",
+    "assembledOnly": "Uniquement les decks montés",
+    "assembledNot": "Uniquement les decks non montés",
+    "complete": "Complétude",
+    "completeAll": "Tous les decks",
+    "completeYes": "Toutes les cartes sont disponibles",
+    "completeNo": "Il manque des cartes",
+    "completeHint": "Compare le deck avec les cartes disponibles de la collection, comme la liste d’achat.",
     "sort": "Tri",
     "sorts": {
       "updated": "Dernière modification",

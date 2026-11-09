@@ -318,6 +318,7 @@ describe('deck organization', () => {
     updatedAt: '2026-10-27T10:00:00Z',
     tags: index === 0 ? ['Casual'] : [],
     colorIdentity: index === 0 ? 'WUBG' : '',
+    assembled: index === 0,
   })
 
   it('moves five decks to a folder in one action', async () => {
@@ -367,12 +368,15 @@ describe('deck organization', () => {
     await user.click(screen.getByRole('checkbox', { name: 'Green' }))
     await user.click(screen.getByRole('checkbox', { name: 'White' }))
     await user.selectOptions(screen.getByLabelText('Deck tag'), 'Casual')
+    await user.selectOptions(screen.getByLabelText('Assembled decks'), 'true')
+    await user.selectOptions(screen.getByLabelText('Completeness'), 'false')
     await user.selectOptions(screen.getByLabelText('Sort'), 'name')
+    expect(screen.getByText('Assembled deck')).toBeInTheDocument()
     await user.type(screen.getByLabelText('New folder'), 'Modern')
     await user.click(screen.getByRole('button', { name: 'Add' }))
 
     await waitFor(() => expect(calls.some((call) => call.key === 'POST /deck-folders')).toBe(true))
     const lastList = (fetch as unknown as { mock: { calls: [string][] } }).mock.calls.map(([url]) => url).filter((url) => url.startsWith('/api/v1/decks?')).at(-1)
-    expect(lastList).toBe('/api/v1/decks?limit=100&colors=WG&tag=Casual&sort=name')
+    expect(lastList).toBe('/api/v1/decks?limit=100&colors=WG&tag=Casual&assembled=true&complete=false&sort=name')
   })
 })

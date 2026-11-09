@@ -41,6 +41,24 @@ public sealed class DelegationScopeTests(DecksInstance instance)
     }
 
     [Fact]
+    public async Task CompletenessFilterNeedsTheScopeOfTheCollection()
+    {
+        using var user = await instance.NewUserAsync();
+        await CreateDeckAsync(user, "Deck");
+        using var decksOnly = await DelegatedClientAsync(user, "decks:read");
+        using var both = await DelegatedClientAsync(user, "decks:read", "collection:read");
+
+        var refused = await decksOnly.GetAsync(new Uri("/api/v1/decks?complete=true", UriKind.Relative), Cancel);
+        var assembled = await decksOnly.GetAsync(new Uri("/api/v1/decks?assembled=false", UriKind.Relative), Cancel);
+        var accepted = await both.GetAsync(new Uri("/api/v1/decks?complete=true", UriKind.Relative), Cancel);
+
+        Assert.Equal(HttpStatusCode.Forbidden, refused.StatusCode);
+        Assert.Equal("scope_missing", await CodeAsync(refused));
+        Assert.Equal(HttpStatusCode.OK, assembled.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, accepted.StatusCode);
+    }
+
+    [Fact]
     public async Task WriteScopeChangesTheDecksOfTheUser()
     {
         using var user = await instance.NewUserAsync();

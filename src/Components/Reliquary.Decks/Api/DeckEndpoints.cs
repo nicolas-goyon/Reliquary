@@ -7,6 +7,7 @@ using Reliquary.BuildingBlocks.Api;
 using Reliquary.BuildingBlocks.Cards;
 using Reliquary.BuildingBlocks.Security;
 using Reliquary.Decks.Data;
+using Reliquary.Decks.Purchases;
 using Reliquary.Decks.Text;
 using static Reliquary.Decks.Api.DeckRequestRules;
 using static Reliquary.Decks.Api.DeckResponses;
@@ -29,7 +30,7 @@ internal static class DeckEndpoints
 
         owner.MapGet(string.Empty, ListAsync)
             .WithName("ListDecks")
-            .WithSummary("Lists the decks of the user with filters by folder, format, color identity, deck tag and archive. The pinned decks come first, then the sort applies.")
+            .WithSummary("Lists the decks of the user with filters by folder, format, color identity, deck tag, archive, assembled deck and completeness. The pinned decks come first, then the sort applies. The completeness filter needs the scope collection:read for a delegation token.")
             .RequireScope(Scopes.DecksRead);
 
         owner.MapPost(string.Empty, CreateAsync)
@@ -136,6 +137,7 @@ internal static class DeckEndpoints
     private static async Task<Results<Ok<Page<DeckSummaryResponse>>, ProblemHttpResult>> ListAsync(
         ClaimsPrincipal user,
         DeckService decks,
+        PurchaseListService purchases,
         int? limit,
         string? cursor,
         string? folderId,
@@ -144,6 +146,8 @@ internal static class DeckEndpoints
         string? tag,
         string? archived,
         string? sort,
+        string? assembled,
+        string? complete,
         CancellationToken cancellationToken)
     {
         if (!PageRequest.TryCreate(limit, cursor, out var page, out var error))
@@ -184,13 +188,38 @@ internal static class DeckEndpoints
 
         AddChoiceError(errors, "archived", archived, ArchivedChoices);
         AddChoiceError(errors, "sort", sort, SortChoices);
+        AddChoiceError(errors, "assembled", assembled, BooleanChoices);
+        AddChoiceError(errors, "complete", complete, BooleanChoices);
         if (errors.Count > 0)
         {
             return ApiProblems.Validation(errors);
         }
 
-        var query = new DeckListQuery(folder, folderId == "none", format, colorIdentity, tag, archived ?? "exclude", sort ?? "updated", offset, page.Limit + 1);
-        var rows = await decks.ListAsync(user.GetAccountId(), query, cancellationToken);
+        // The completeness reads the collection, so a delegation token needs the scope of the collection too.
+        if (complete is not null && user.IsDelegated() && !user.HasScope(Scopes.CollectionRead))
+        {
+            return ApiProblems.Problem(
+                StatusCodes.Status403Forbidden,
+                "scope_missing",
+                $"The filter complete needs the scope {Scopes.CollectionRead}. Ask for a token with this scope.",
+                new Dictionary<string, object?> { ["scope"] = Scopes.CollectionRead });
+        }
+
+        var ownerId = user.GetAccountId();
+        var assembledFilter = assembled is null ? (bool?)null : assembled == "true";
+        IReadOnlyList<DeckSummaryRow> rows;
+        if (complete is null)
+        {
+            rows = await decks.ListAsync(ownerId, new DeckListQuery(folder, folderId == "none", format, colorIdentity, tag, archived ?? "exclude", sort ?? "updated", offset, page.Limit + 1, assembledFilter), cancellationToken);
+        }
+        else
+        {
+            // The completeness comes from the collection, not from the database of the decks. The API checks all the decks of the other filters, then makes the page.
+            var all = await decks.ListAsync(ownerId, new DeckListQuery(folder, folderId == "none", format, colorIdentity, tag, archived ?? "exclude", sort ?? "updated", 0, null, assembledFilter), cancellationToken);
+            var completeIds = await purchases.FindCompleteDecksAsync(ownerId, [.. all.Select(row => row.Id)], cancellationToken);
+            rows = [.. all.Where(row => completeIds.Contains(row.Id) == (complete == "true")).Skip(offset).Take(page.Limit + 1)];
+        }
+
         var items = rows.Take(page.Limit).Select(row => new DeckSummaryResponse(
             row.Id,
             row.Name,
@@ -204,7 +233,8 @@ internal static class DeckEndpoints
             Utc(row.CreatedAt),
             Utc(row.UpdatedAt),
             row.Tags,
-            row.ColorIdentity)).ToList();
+            row.ColorIdentity,
+            row.Assembled)).ToList();
         var next = rows.Count > page.Limit ? Cursors.Encode(new DeckListCursor(offset + page.Limit)) : null;
         return TypedResults.Ok(new Page<DeckSummaryResponse>(items, next));
     }
@@ -315,6 +345,8 @@ internal static class DeckEndpoints
     private static readonly string[] ArchivedChoices = ["exclude", "include", "only"];
 
     private static readonly string[] SortChoices = ["updated", "created", "name", "format"];
+
+    private static readonly string[] BooleanChoices = ["true", "false"];
 
     private sealed record DeckListCursor(int Offset);
 }

@@ -131,9 +131,18 @@ The query of `GET /decks` accepts these parameters:
 | `colors` | The exact color identity: the letters `W`, `U`, `B`, `R` and `G` in any order, or `C` for colorless | All the colors |
 | `tag` | A deck tag. The comparison ignores the case. | All the decks |
 | `archived` | `exclude`, `include` or `only` | `exclude` |
+| `assembled` | `true` for the assembled decks only, `false` for the other decks | All the decks |
+| `complete` | `true` for the complete decks only, `false` for the decks with cards to buy | All the decks |
 | `sort` | `updated`, `created`, `name` or `format` | `updated` |
 
 The pinned decks always come first. Then the sort applies.
+Each deck of the list has the field `assembled`.
+
+A deck is complete when its [purchase list](purchase-list.md#purchase-list) with no tokens has no card to buy.
+The purchase list compares the commander, companion, main and sideboard zones with the available cards and with the cards in the location of the deck.
+A deck with no card in these zones is complete.
+The filter reads the collection, so a delegation token needs the scope `collection:read` for `complete`.
+With `complete`, the API calculates the purchase list of each deck of the other filters, then makes the page.
 
 The color identity of a deck is the color identity of its commanders.
 A deck with no commander uses the cards of its main deck and its companions.

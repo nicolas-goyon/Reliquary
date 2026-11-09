@@ -261,6 +261,7 @@ public sealed record DeckPrintingResponse(string SetCode, string CollectorNumber
 /// <param name="UpdatedAt">The time of the last change.</param>
 /// <param name="Tags">The deck tags.</param>
 /// <param name="ColorIdentity">The color identity, with the letters W, U, B, R and G. An empty text is colorless.</param>
+/// <param name="Assembled">Whether the deck is an assembled deck.</param>
 public sealed record DeckSummaryResponse(
     Guid Id,
     string Name,
@@ -274,7 +275,8 @@ public sealed record DeckSummaryResponse(
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,
     IReadOnlyList<string> Tags,
-    string ColorIdentity);
+    string ColorIdentity,
+    bool Assembled);
 
 /// <summary>The legality of a deck in its format.</summary>
 /// <param name="Format">The format of the deck.</param>

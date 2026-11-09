@@ -84,6 +84,8 @@ internal sealed class DeckSummaryRow
     public string[] Tags { get; set; } = [];
 
     public string ColorIdentity { get; set; } = string.Empty;
+
+    public bool Assembled { get; set; }
 }
 
 /// <summary>
@@ -115,7 +117,8 @@ internal sealed class FolderRow
 /// <param name="Archived"><c>exclude</c>, <c>include</c> or <c>only</c>.</param>
 /// <param name="Sort"><c>updated</c>, <c>created</c>, <c>name</c> or <c>format</c>.</param>
 /// <param name="Offset">The number of decks before the page.</param>
-/// <param name="Limit">The maximum number of decks.</param>
+/// <param name="Limit">The maximum number of decks, or <see langword="null"/> for all the decks.</param>
+/// <param name="Assembled">Only the assembled decks (<see langword="true"/>), only the other decks (<see langword="false"/>), or all the decks.</param>
 internal sealed record DeckListQuery(
     Guid? FolderId,
     bool NoFolder,
@@ -125,7 +128,8 @@ internal sealed record DeckListQuery(
     string Archived,
     string Sort,
     int Offset,
-    int Limit);
+    int? Limit,
+    bool? Assembled = null);
 
 /// <summary>
 /// A line of the working list of a deck.
@@ -252,6 +256,15 @@ internal sealed class DeckStore(IDatabase database)
             cancellationToken: cancellationToken))).ToList();
 
     /// <summary>
+    /// Lists the lines of several decks in some zones, for the purchase lists.
+    /// </summary>
+    public static async Task<IReadOnlyList<DeckLineRow>> ListLinesOfDecksAsync(NpgsqlConnection connection, IReadOnlyCollection<Guid> deckIds, IReadOnlyCollection<string> zones, CancellationToken cancellationToken) =>
+        (await connection.QueryAsync<DeckLineRow>(new CommandDefinition(
+            $"select {LineColumns} from content.deck_lines l where l.deck_id = any(@deckIds) and l.zone = any(@zones) order by l.created_at, l.id",
+            new { deckIds = deckIds.ToArray(), zones = zones.ToArray() },
+            cancellationToken: cancellationToken))).ToList();
+
+    /// <summary>
     /// Lists the decks of an owner with filters. The pinned decks come first, then the sort applies.
     /// </summary>
     public static async Task<IReadOnlyList<DeckSummaryRow>> ListDecksAsync(NpgsqlConnection connection, Guid ownerId, DeckListQuery query, CancellationToken cancellationToken)
@@ -267,6 +280,7 @@ internal sealed class DeckStore(IDatabase database)
             $"""
             select d.id, d.name, d.format, d.visibility, d.folder_id as FolderId, d.pinned, d.archived_at as ArchivedAt,
                 d.created_at as CreatedAt, d.updated_at as UpdatedAt, d.tags, d.color_identity as ColorIdentity,
+                d.assembled_version_id is not null as Assembled,
                 coalesce((select sum(l.quantity) from content.deck_lines l where l.deck_id = d.id and l.zone in ('commander', 'companion', 'main')), 0)::int as CardCount,
                 coalesce((select array_agg(l.oracle_id order by l.created_at) from content.deck_lines l where l.deck_id = d.id and l.zone = 'commander'), array[]::uuid[]) as CommanderIds
             from content.decks d
@@ -278,11 +292,12 @@ internal sealed class DeckStore(IDatabase database)
                 and (@colorIdentity::text is null or d.color_identity = @colorIdentity)
                 and (@tag::text is null or exists (select 1 from unnest(d.tags) t where lower(t) = lower(@tag)))
                 and (@archived = 'include' or (@archived = 'only') = (d.archived_at is not null))
+                and (@assembled::boolean is null or @assembled = (d.assembled_version_id is not null))
             order by d.pinned desc, {order}, d.id desc
             offset @offset
             limit @limit
             """,
-            new { ownerId, query.FolderId, query.NoFolder, query.Format, query.ColorIdentity, query.Tag, query.Archived, query.Offset, query.Limit },
+            new { ownerId, query.FolderId, query.NoFolder, query.Format, query.ColorIdentity, query.Tag, query.Archived, query.Offset, query.Limit, query.Assembled },
             cancellationToken: cancellationToken))).ToList();
     }
 
