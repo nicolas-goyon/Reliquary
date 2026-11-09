@@ -7,6 +7,10 @@
 export const tableZones = ['library', 'hand', 'battlefield', 'graveyard', 'exile', 'command'] as const
 export type TableZone = (typeof tableZones)[number]
 
+/** The counters of a player. The players enter them by hand: the engine has no game rules. */
+export const playerCounters = ['poison', 'energy', 'experience'] as const
+export type PlayerCounter = (typeof playerCounters)[number]
+
 /** The number of cards of an opening hand. */
 export const openingHandSize = 7
 
@@ -31,6 +35,7 @@ export interface TablePlayer {
   life: number
   /** The commander damage that this player took, by the ID of the other player. */
   commanderDamage: Record<string, number>
+  counters: Record<PlayerCounter, number>
   mulligans: number
   /** The number of cards that the player must put at the bottom of the library after a mulligan. */
   cardsToBottom: number
@@ -39,6 +44,8 @@ export interface TablePlayer {
 
 export interface TableState {
   players: TablePlayer[]
+  /** Whether the game uses the commander damage. It is true for a game of the Commander format or for a deck with a commander. */
+  commander: boolean
   activePlayerId: string
   turn: number
   /** The state of the random number generator. */
@@ -69,6 +76,7 @@ export type TableAction =
   | { type: 'token'; playerId: string; name: string }
   | { type: 'life'; playerId: string; change: number }
   | { type: 'commanderDamage'; playerId: string; fromPlayerId: string; change: number }
+  | { type: 'playerCounter'; playerId: string; counter: PlayerCounter; change: number }
   | { type: 'nextTurn' }
 
 /** The mulberry32 generator. A seed gives a repeatable game, so a test can check a shuffle. */
@@ -97,7 +105,7 @@ function freshCard(card: PlayerSetup['library'][number]): TableCard {
 }
 
 /** Starts a table: each library has a random order, and each player has an opening hand. */
-export function createTable(setups: readonly PlayerSetup[], seed: number, startingLife: number): TableState {
+export function createTable(setups: readonly PlayerSetup[], seed: number, startingLife: number, options: { commander?: boolean } = {}): TableState {
   let current = seed
   const players = setups.map((setup): TablePlayer => {
     const library = shuffled(setup.library.map(freshCard), current)
@@ -107,6 +115,7 @@ export function createTable(setups: readonly PlayerSetup[], seed: number, starti
       name: setup.name,
       life: startingLife,
       commanderDamage: {},
+      counters: { poison: 0, energy: 0, experience: 0 },
       mulligans: 0,
       cardsToBottom: 0,
       zones: {
@@ -119,7 +128,7 @@ export function createTable(setups: readonly PlayerSetup[], seed: number, starti
       },
     }
   })
-  return { players, activePlayerId: players[0]?.id ?? '', turn: 1, seed: current, nextTokenId: 1 }
+  return { players, commander: options.commander ?? false, activePlayerId: players[0]?.id ?? '', turn: 1, seed: current, nextTokenId: 1 }
 }
 
 function updatePlayer(state: TableState, playerId: string, update: (player: TablePlayer) => TablePlayer): TableState {
@@ -232,9 +241,17 @@ export function applyAction(state: TableState, action: TableAction): TableState 
     case 'life':
       return updatePlayer(state, action.playerId, (player) => ({ ...player, life: player.life + action.change }))
     case 'commanderDamage':
+      if (!state.commander) {
+        return state
+      }
       return updatePlayer(state, action.playerId, (player) => ({
         ...player,
         commanderDamage: { ...player.commanderDamage, [action.fromPlayerId]: Math.max(0, (player.commanderDamage[action.fromPlayerId] ?? 0) + action.change) },
+      }))
+    case 'playerCounter':
+      return updatePlayer(state, action.playerId, (player) => ({
+        ...player,
+        counters: { ...player.counters, [action.counter]: Math.max(0, player.counters[action.counter] + action.change) },
       }))
     case 'nextTurn': {
       const index = state.players.findIndex((player) => player.id === state.activePlayerId)

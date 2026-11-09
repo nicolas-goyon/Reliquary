@@ -53,5 +53,55 @@
     "keepable": "Hands with 2 to 4 lands",
     "landsInHand_one": "{{count}} land in hand",
     "landsInHand_other": "{{count}} lands in hand"
+  },
+  "stepper": {
+    "increase": "Add one: {{label}}",
+    "decrease": "Remove one: {{label}}"
+  },
+  "counters": {
+    "title": "Player counters",
+    "poison": "Poison",
+    "energy": "Energy",
+    "experience": "Experience",
+    "commanderDamage": "Commander damage from {{name}}"
+  },
+  "local": {
+    "action": "Local multiplayer",
+    "title": "Local multiplayer: {{name}}",
+    "setup": "New local multiplayer game",
+    "playerCount": "Number of players",
+    "playerCountValue_one": "{{count}} player",
+    "playerCountValue_other": "{{count}} players",
+    "firstPlayer": "Player 1 plays {{name}}.",
+    "playerDeck": "Deck of player {{number}}",
+    "mode": "How do you play the decks?",
+    "modes": {
+      "turns": "One window",
+      "turnsHint": "You give the turn to the next deck. The hand of each player stays hidden until you show it.",
+      "windows": "One window for each player",
+      "windowsHint": "This window keeps the game. Open the player window of each player in a new window or on a second screen."
+    },
+    "start": "Start the game",
+    "players": "Players",
+    "active": "Active",
+    "facts": "{{life}} life points, {{hand}} cards in hand, {{library}} cards in library",
+    "nextPlayer": "Next player",
+    "board": "Board of {{name}}",
+    "handHidden": "The hand of {{name}} is hidden. Show it only when the other players do not look at the screen.",
+    "showHand": "Show the hand of {{name}}",
+    "hideHand": "Hide the hand of {{name}}",
+    "windowsTitle": "Player windows",
+    "windowsHint": "Each player window shows the board and the hand of one player. Keep this window open: when you close it, the game stops.",
+    "openPlayerWindow": "Open the window of {{name}}"
+  },
+  "playerWindow": {
+    "title": "Player window: {{name}}",
+    "titleEmpty": "Player window",
+    "status": {
+      "waiting": "The window waits for the game window. Open the game in this browser.",
+      "closed": "The game window closed. Start a new game.",
+      "unsupported": "This browser cannot connect windows. Use the mode with one window.",
+      "unknownPlayer": "The game has no player with this ID."
+    }
   }
 }

@@ -5,31 +5,22 @@ import { useAuth } from '../auth/session'
 import { ErrorAlert } from '../components/Forms'
 import { HandStatisticsPanel } from '../components/table/HandStatisticsPanel'
 import { PlayerTable } from '../components/table/PlayerTable'
-import { playerSetup, startingLife } from '../playtest/deckSetup'
-import { applyAction, createTable, type TableAction, type TableState } from '../playtest/engine'
+import { playerSetup, startingLife, usesCommanderDamage } from '../playtest/deckSetup'
+import { createTable } from '../playtest/engine'
+import { gameReducer, newSeed } from '../playtest/game'
 import { Link } from '../router/Link'
-
-function newSeed(): number {
-  return crypto.getRandomValues(new Uint32Array(1))[0]
-}
-
-type GameAction = TableAction | { type: 'restart'; table: TableState }
-
-function reducer(state: TableState, action: GameAction): TableState {
-  return action.type === 'restart' ? action.table : applyAction(state, action)
-}
 
 function Game({ deck }: { deck: Deck }) {
   const { t } = useTranslation('playtest')
   const setup = useMemo(() => playerSetup(deck, 'player-1', deck.name), [deck])
   const [seed, setSeed] = useState(newSeed)
-  const [table, dispatch] = useReducer(reducer, undefined, () => createTable([setup], seed, startingLife(deck.format)))
+  const [table, dispatch] = useReducer(gameReducer, undefined, () => createTable([setup], seed, startingLife(deck.format), { commander: usesCommanderDamage([deck]) }))
   const player = table.players[0]
 
   function restart() {
     const next = newSeed()
     setSeed(next)
-    dispatch({ type: 'restart', table: createTable([setup], next, startingLife(deck.format)) })
+    dispatch({ type: 'restart', table: createTable([setup], next, startingLife(deck.format), { commander: usesCommanderDamage([deck]) }) })
   }
 
   return (
@@ -42,6 +33,9 @@ function Game({ deck }: { deck: Deck }) {
         <button type="button" onClick={restart}>
           {t('controls.restart')}
         </button>
+        <Link to={`/decks/${deck.id}/test/local`} className="button">
+          {t('local.action')}
+        </Link>
       </div>
       <PlayerTable player={player} dispatch={dispatch} />
       <HandStatisticsPanel player={player} seed={seed} />

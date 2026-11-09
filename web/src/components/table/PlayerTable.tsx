@@ -1,4 +1,4 @@
-import { useId, useState, type Dispatch, type FormEvent } from 'react'
+import { useId, useState, type Dispatch, type FormEvent, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { tableZones, type TableAction, type TableCard, type TablePlayer, type TableZone } from '../../playtest/engine'
 import { CardImage } from '../CardImage'
@@ -68,9 +68,20 @@ function CardControl({ card, zone, player, dispatch }: { card: TableCard; zone: 
   )
 }
 
-function CardZone({ zone, player, dispatch }: { zone: TableZone; player: TablePlayer; dispatch: Dispatch<TableAction> }) {
+/** A zone of a player. When hidden is set, the zone shows only the number of cards and the hidden content. */
+function CardZone({ zone, player, dispatch, hidden }: { zone: TableZone; player: TablePlayer; dispatch: Dispatch<TableAction>; hidden?: ReactNode }) {
   const { t } = useTranslation('playtest')
   const cards = player.zones[zone]
+  if (hidden !== undefined) {
+    return (
+      <section className="table-zone table-zone-hidden" aria-label={t(`zones.${zone}`)}>
+        <h2>
+          {t(`zones.${zone}`)} ({cards.length})
+        </h2>
+        {hidden}
+      </section>
+    )
+  }
   return (
     <section className="table-zone" aria-label={t(`zones.${zone}`)}>
       <h2>
@@ -85,8 +96,20 @@ function CardZone({ zone, player, dispatch }: { zone: TableZone; player: TablePl
   )
 }
 
+interface PlayerTableProps {
+  player: TablePlayer
+  dispatch: Dispatch<TableAction>
+  /**
+   * Hides the cards of the hand: the hand zone shows only the number of cards and this content.
+   * Local multiplayer hides the hand until the player shows it.
+   */
+  hiddenHand?: ReactNode
+  /** An element at the top of the side column, for example the counters of the player. */
+  side?: ReactNode
+}
+
 /** The zones and the controls of one player. */
-export function PlayerTable({ player, dispatch }: { player: TablePlayer; dispatch: Dispatch<TableAction> }) {
+export function PlayerTable({ player, dispatch, hiddenHand, side }: PlayerTableProps) {
   const { t } = useTranslation('playtest')
   const [tokenName, setTokenName] = useState('')
   const playerId = player.id
@@ -127,7 +150,7 @@ export function PlayerTable({ player, dispatch }: { player: TablePlayer; dispatc
           </button>
         </div>
       </div>
-      {player.cardsToBottom > 0 && (
+      {player.cardsToBottom > 0 && hiddenHand === undefined && (
         <p className="alert alert-warning" role="status">
           {t('mulligan.bottom', { count: player.cardsToBottom })}
         </p>
@@ -135,9 +158,10 @@ export function PlayerTable({ player, dispatch }: { player: TablePlayer; dispatc
       <div className="table-layout">
         <div>
           <CardZone zone="battlefield" player={player} dispatch={dispatch} />
-          <CardZone zone="hand" player={player} dispatch={dispatch} />
+          <CardZone zone="hand" player={player} dispatch={dispatch} hidden={hiddenHand} />
         </div>
         <div className="table-side">
+          {side}
           <form className="form table-zone" onSubmit={createToken}>
             <div className="field">
               <label htmlFor={tokenField}>{t('token.name')}</label>
