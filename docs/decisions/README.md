@@ -53,7 +53,7 @@ Each record gives the context, the decision and its consequences.
 | [0043](0043-releases-with-release-please.md) | Releases with release-please on `main`, and a changelog written by hand | Accepted |
 | [0044](0044-powershell-update-script-for-windows.md) | The script `reliquary-update.ps1` for PowerShell on Windows, with the same commands and files as `reliquary-update` | Accepted |
 | [0045](0045-window-sync-with-broadcastchannel.md) | The windows of a game on one computer sync with BroadcastChannel | Accepted |
-| [0046](0046-deck-image-and-embed.md) | Deck image in the browser, link previews from the read model with Nginx SSI, and an embed page for public decks | Proposed |
+| [0046](0046-deck-image-and-embed.md) | Deck image in the browser, link previews from the read model with Nginx SSI, and an embed page for public decks | Accepted |
 | [0047](0047-trusted-server-for-online-games.md) | Online games use a trusted server: the API keeps the full state, and each player gets only their view | Accepted |
 
 ## Open decisions
