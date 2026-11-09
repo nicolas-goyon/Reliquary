@@ -23,7 +23,8 @@ The options are:
 - One window keeps the state: the game window. Only the game window applies the actions with the table engine.
 - Each other window is a viewer with a viewer ID: the ID of a player, or `table` for the table window.
 - A viewer sends its actions on the control channel of the game. The game window checks the format of each action, and it applies only the actions that the viewer can do. A player window acts only for its own player. The table window does no actions.
-- The game window sends the state of each viewer on a channel for that viewer only. A view function gives the state that each viewer can see.
+- The game window sends the state of each viewer on a channel for that viewer only.
+- The view function is `projectPublicState(state, viewerId)` in `web/src/playtest/projection.ts`. It is a pure function. It removes the identity of each card that the viewer cannot see. These cards are the libraries, the hands of the other players and their face-down cards. It also removes the seed.
 - A random game ID of 64 bits is in the name of each channel and in the path of each player window.
 - The code is in `web/src/playtest/sync.ts`.
 
@@ -31,5 +32,5 @@ The options are:
 
 - The windows must be in the same browser profile, on the same computer. A window in a different browser cannot join the game.
 - When the game window closes, the game stops. A reload of the game window starts a new game.
-- The view function has the same contract as the view of a player in an online game ([ADR 0047](0047-trusted-server-for-online-games.md)). In an online game, the API makes the view of each player on the server.
+- The view function has the same contract as the view of a player in an online game ([ADR 0047](0047-trusted-server-for-online-games.md)). In an online game, the API makes the view of each player on the server with the C# engine. The tests of `projectPublicState` can give test vectors for that view.
 - `BroadcastChannel` is not a security limit: each script of the origin can read the channels. The per-viewer channels prevent mistakes in what a window shows. They do not hide data from the user of the computer.

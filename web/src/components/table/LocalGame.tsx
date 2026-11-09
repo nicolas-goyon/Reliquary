@@ -4,20 +4,21 @@ import type { Deck } from '../../api/decks'
 import { playerSetups, startingLife, usesCommanderDamage } from '../../playtest/deckSetup'
 import { createTable, type TableAction, type TableState } from '../../playtest/engine'
 import { gameReducer, newSeed } from '../../playtest/game'
-import { newGameId, playerWindowPath } from '../../playtest/gameId'
+import { newGameId } from '../../playtest/gameId'
+import { projectPublicState } from '../../playtest/projection'
 import { useGameHost } from '../../playtest/sync'
 import type { LocalMode } from './LocalGameSetup'
 import { PlayerCounters } from './PlayerCounters'
 import { PlayerSummary } from './PlayerSummary'
 import { PlayerTable } from './PlayerTable'
-
-/** In local multiplayer, each player window gets the full state. A player window shows only the hand of its own player. */
-const fullState = (state: TableState) => state
+import { SharedScreenPanel } from './SharedScreenPanel'
 
 /**
  * A local multiplayer game: one person plays 3 or 4 decks on one computer.
  * - Mode "turns": one window. The board of the active player shows, and the hand stays hidden until the person shows it.
  * - Mode "windows": this window keeps the game, and each player has a player window.
+ * In the two modes, this window is the game window: the user can open a table window for the shared screen.
+ * Each other window gets only the public projection of the game for its viewer.
  */
 export function LocalGame({ decks, mode }: { decks: Deck[]; mode: LocalMode }) {
   const { t } = useTranslation('playtest')
@@ -27,7 +28,7 @@ export function LocalGame({ decks, mode }: { decks: Deck[]; mode: LocalMode }) {
   const [table, dispatch] = useReducer(gameReducer, undefined, () => createTable(setups, newSeed(), life, options))
   const [gameId] = useState(newGameId)
   const tableDispatch = useCallback((action: TableAction) => dispatch(action), [])
-  useGameHost(mode === 'windows' ? gameId : null, table, tableDispatch, fullState)
+  useGameHost(gameId, table, tableDispatch, projectPublicState)
 
   function restart() {
     dispatch({ type: 'restart', table: createTable(setups, newSeed(), life, options) })
@@ -44,7 +45,8 @@ export function LocalGame({ decks, mode }: { decks: Deck[]; mode: LocalMode }) {
           {t('controls.restart')}
         </button>
       </div>
-      {mode === 'turns' ? <TurnsBoard table={table} dispatch={tableDispatch} /> : <WindowsBoard table={table} gameId={gameId} />}
+      {mode === 'turns' ? <TurnsBoard table={table} dispatch={tableDispatch} /> : <PlayerSummary table={table} />}
+      <SharedScreenPanel gameId={gameId} players={mode === 'windows' ? table.players : []} />
     </>
   )
 }
@@ -86,29 +88,6 @@ function TurnsBoard({ table, dispatch }: { table: TableState; dispatch: (action:
           </button>
         </div>
       )}
-    </>
-  )
-}
-
-/** Mode "windows": this window keeps the game and gives a link to the window of each player. */
-function WindowsBoard({ table, gameId }: { table: TableState; gameId: string }) {
-  const { t } = useTranslation('playtest')
-  return (
-    <>
-      <PlayerSummary table={table} />
-      <section className="panel">
-        <h2>{t('local.windowsTitle')}</h2>
-        <p>{t('local.windowsHint')}</p>
-        <ul className="table-window-links">
-          {table.players.map((player) => (
-            <li key={player.id}>
-              <a href={playerWindowPath(gameId, player.id)} target="_blank" rel="noopener">
-                {t('local.openPlayerWindow', { name: player.name })}
-              </a>
-            </li>
-          ))}
-        </ul>
-      </section>
     </>
   )
 }

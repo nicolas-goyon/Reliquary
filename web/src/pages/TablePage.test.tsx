@@ -1,6 +1,6 @@
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { App } from '../App'
 import { mockApi, problem } from '../test/mockApi'
 
@@ -28,6 +28,7 @@ const deck = {
 
 describe('goldfish mode', () => {
   beforeEach(() => window.history.replaceState(null, '', `/decks/${id}/test`))
+  afterEach(() => window.history.replaceState(null, '', '/'))
 
   it('shows an opening hand, plays a card, and does the London mulligan', async () => {
     mockApi({ 'POST /auth/refresh': () => problem(401, 'session_expired'), [`GET /decks/${id}`]: () => Response.json(deck) })
@@ -49,5 +50,29 @@ describe('goldfish mode', () => {
     expect(screen.getByRole('status')).toHaveTextContent('Select 1 card of your hand.')
     await user.click(within(hand).getAllByRole('button', { name: 'Put Plains at the bottom of the library' })[0])
     expect(within(hand).getAllByRole('button', { name: 'Play Plains' })).toHaveLength(6)
+  })
+
+  it('opens a table window that masks the hand and the library', async () => {
+    mockApi({ 'POST /auth/refresh': () => problem(401, 'session_expired'), [`GET /decks/${id}`]: () => Response.json(deck) })
+    const user = userEvent.setup()
+    render(<App />)
+
+    const hand = await screen.findByRole('region', { name: 'Hand' })
+    await user.click(within(hand).getAllByRole('button', { name: 'Play Plains' })[0])
+    const path = screen.getByRole('link', { name: 'Open the table window' }).getAttribute('href') ?? ''
+    expect(screen.queryByRole('link', { name: /Open the player window/ })).not.toBeInTheDocument()
+
+    window.history.replaceState(null, '', path)
+    const second = document.createElement('div')
+    document.body.append(second)
+    render(<App />, { container: second })
+    const view = within(second)
+    const board = await view.findByRole('region', { name: 'Test deck' })
+    expect(board).toHaveTextContent('Hand6Library13')
+    expect(view.getAllByRole('img').map((image) => image.getAttribute('aria-label') ?? image.getAttribute('alt'))).toEqual(['Plains', 'Leader'])
+
+    await user.click(screen.getByRole('button', { name: 'Draw (13)' }))
+    await waitFor(() => expect(board).toHaveTextContent('Hand7Library12'))
+    expect(view.getAllByRole('img')).toHaveLength(2)
   })
 })

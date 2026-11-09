@@ -36,7 +36,9 @@
     "removeCounter": "Remove a counter from {{name}}",
     "counters_one": "{{count}} counter",
     "counters_other": "{{count}} counters",
-    "back": "Back of a card"
+    "back": "Back of a card",
+    "tapped": "{{name}}, tapped",
+    "backTapped": "Back of a card, tapped"
   },
   "mulligan": {
     "bottom_one": "Select {{count}} card of your hand. The card goes to the bottom of the library.",
@@ -89,10 +91,7 @@
     "board": "Board of {{name}}",
     "handHidden": "The hand of {{name}} is hidden. Show it only when the other players do not look at the screen.",
     "showHand": "Show the hand of {{name}}",
-    "hideHand": "Hide the hand of {{name}}",
-    "windowsTitle": "Player windows",
-    "windowsHint": "Each player window shows the board and the hand of one player. Keep this window open: when you close it, the game stops.",
-    "openPlayerWindow": "Open the window of {{name}}"
+    "hideHand": "Hide the hand of {{name}}"
   },
   "playerWindow": {
     "title": "Player window: {{name}}",
@@ -103,5 +102,16 @@
       "unsupported": "This browser cannot connect windows. Use the mode with one window.",
       "unknownPlayer": "The game has no player with this ID."
     }
+  },
+  "shared": {
+    "title": "Shared screen",
+    "hint": "Open the table window on a second screen, or share it on Discord or in a stream. The table window masks the hands and the libraries. Keep this window open: when you close it, the other windows stop.",
+    "openTable": "Open the table window",
+    "openPlayer": "Open the player window of {{name}}",
+    "tableTitle": "Table window",
+    "zoneOf": "{{zone}} of {{name}}",
+    "life_one": "{{count}} life point",
+    "life_other": "{{count}} life points",
+    "counterValue": "{{label}}: {{value}}"
   }
 }

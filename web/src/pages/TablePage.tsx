@@ -1,13 +1,17 @@
-import { useEffect, useMemo, useReducer, useState } from 'react'
+import { useCallback, useEffect, useMemo, useReducer, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Deck } from '../api/decks'
 import { useAuth } from '../auth/session'
 import { ErrorAlert } from '../components/Forms'
 import { HandStatisticsPanel } from '../components/table/HandStatisticsPanel'
 import { PlayerTable } from '../components/table/PlayerTable'
+import { SharedScreenPanel } from '../components/table/SharedScreenPanel'
 import { playerSetup, startingLife, usesCommanderDamage } from '../playtest/deckSetup'
-import { createTable } from '../playtest/engine'
+import { createTable, type TableAction } from '../playtest/engine'
 import { gameReducer, newSeed } from '../playtest/game'
+import { newGameId } from '../playtest/gameId'
+import { projectPublicState } from '../playtest/projection'
+import { useGameHost } from '../playtest/sync'
 import { Link } from '../router/Link'
 
 function Game({ deck }: { deck: Deck }) {
@@ -16,6 +20,10 @@ function Game({ deck }: { deck: Deck }) {
   const [seed, setSeed] = useState(newSeed)
   const [table, dispatch] = useReducer(gameReducer, undefined, () => createTable([setup], seed, startingLife(deck.format), { commander: usesCommanderDamage([deck]) }))
   const player = table.players[0]
+  const [gameId] = useState(newGameId)
+  const tableDispatch = useCallback((action: TableAction) => dispatch(action), [])
+  // This window is the game window of the shared screen. The table window gets the public projection only.
+  useGameHost(gameId, table, tableDispatch, projectPublicState)
 
   function restart() {
     const next = newSeed()
@@ -39,6 +47,7 @@ function Game({ deck }: { deck: Deck }) {
       </div>
       <PlayerTable player={player} dispatch={dispatch} />
       <HandStatisticsPanel player={player} seed={seed} />
+      <SharedScreenPanel gameId={gameId} players={[]} />
     </>
   )
 }

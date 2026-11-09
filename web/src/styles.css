@@ -2208,6 +2208,82 @@ fieldset.field legend {
   list-style: none;
 }
 
+/* The table window of the shared screen. */
+.table-shared {
+  margin-top: 1rem;
+}
+
+.table-window-turn {
+  margin: 0 0 1rem;
+}
+
+.table-public {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 28rem), 1fr));
+  gap: 1rem;
+}
+
+.table-public-player {
+  display: grid;
+  gap: 0.75rem;
+  align-content: start;
+  padding: 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  background-color: var(--color-background);
+}
+
+.table-public-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.table-public-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.table-public-player .table-zone + .table-zone {
+  margin-top: 0;
+}
+
+.table-public-player .table-zone h3 {
+  margin: 0 0 0.5rem;
+  color: var(--color-link);
+  font-size: 0.875rem;
+}
+
+.table-public-player .table-cards {
+  min-height: 0;
+}
+
+.table-public-side {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
+  gap: 0.75rem;
+}
+
+.table-hidden-counts {
+  margin: 0;
+}
+
+.table-public-counters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.875rem;
+}
+
+.table-card-small {
+  width: 5.5rem;
+}
+
 @media (max-width: 60rem) {
   .table-layout {
     grid-template-columns: minmax(0, 1fr);

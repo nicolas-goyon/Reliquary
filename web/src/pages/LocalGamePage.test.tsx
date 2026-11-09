@@ -75,7 +75,7 @@ describe('local multiplayer', () => {
 
     await user.click(await screen.findByRole('radio', { name: /One window for each player/ }))
     await user.click(screen.getByRole('button', { name: 'Start the game' }))
-    const link = await screen.findByRole('link', { name: 'Open the window of Goblins' })
+    const link = await screen.findByRole('link', { name: 'Open the player window of Goblins' })
     expect(link).toHaveAttribute('target', '_blank')
     const path = link.getAttribute('href') ?? ''
     expect(path).toMatch(/^\/test\/games\/[0-9a-f]{16}\/players\/player-2$/)
@@ -113,6 +113,41 @@ describe('local multiplayer', () => {
     const counters = await screen.findByRole('region', { name: 'Player counters' })
     expect(within(counters).getByRole('group', { name: 'Poison' })).toBeInTheDocument()
     expect(within(counters).queryByRole('group', { name: /Commander damage/ })).not.toBeInTheDocument()
+  })
+
+  it('opens a table window that shows the boards and masks the hands of all the players', async () => {
+    mockApi(handlers)
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.click(await screen.findByRole('radio', { name: '3 players' }))
+    await user.click(screen.getByRole('button', { name: 'Start the game' }))
+    await user.click(within(await screen.findByRole('region', { name: 'Hand' })).getByRole('button', { name: 'Show the hand of Atraxa superfriends' }))
+    await user.click(within(screen.getByRole('region', { name: 'Hand' })).getAllByRole('button', { name: 'Play Forest' })[0])
+    await user.click(screen.getByRole('button', { name: 'Add one: Poison' }))
+    const path = screen.getByRole('link', { name: 'Open the table window' }).getAttribute('href') ?? ''
+    expect(path).toMatch(/^\/test\/games\/[0-9a-f]{16}\/table$/)
+
+    window.history.replaceState(null, '', path)
+    const second = document.createElement('div')
+    document.body.append(second)
+    render(<App />, { container: second })
+    const view = within(second)
+    const board = await view.findByRole('region', { name: 'Atraxa superfriends' })
+    expect(view.getAllByRole('heading', { level: 2 }).map((heading) => heading.textContent)).toEqual(['Atraxa superfriends Active', 'Goblins', 'Atraxa superfriends (2)'])
+    expect(within(board).getByRole('region', { name: 'Battlefield of Atraxa superfriends' })).toContainElement(within(board).getByRole('img', { name: 'Forest' }))
+    expect(within(board).getByText('Poison: 1')).toBeInTheDocument()
+    expect(board).toHaveTextContent('Hand6Library14')
+    // The table window shows no card of a hand or a library: only the commanders and the land on the battlefield have a name.
+    expect(view.getAllByRole('img').map((image) => image.getAttribute('aria-label') ?? image.getAttribute('alt'))).toEqual([
+      'Forest',
+      "Atraxa, Praetors' Voice",
+      "Atraxa, Praetors' Voice",
+      "Atraxa, Praetors' Voice",
+    ])
+    // The table window has no game controls.
+    expect(within(view.getByRole('main')).queryByRole('button')).not.toBeInTheDocument()
+    expect(await seriousAccessibilityProblems(second)).toEqual([])
   })
 
   it('shows a message when the game window is not open', async () => {
