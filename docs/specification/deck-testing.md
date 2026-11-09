@@ -63,6 +63,25 @@ Reliquary applies no game rules to them.
 - Commander damage from each other player, only in a game that uses it: the Commander format, or a deck with a commander
 - Counters on a card on the battlefield
 
+## Shared screen
+
+The goldfish page and the local multiplayer page are game windows.
+Each game window has a panel "Shared screen" with a link to the table window.
+In the local multiplayer mode with one window for each player, the panel also has a link to the player window of each player.
+
+- The table window shows the board of each player: the battlefield, the command zone, the graveyard and the exile.
+- The table window shows the life points, the counters and the commander damage of each player.
+- The table window shows only the number of cards of each hand and of each library.
+- The table window shows the back of each face-down card.
+- The table window has no game controls. The user plays in the game window or in the player windows.
+- The player window shows the hand of its player. It shows the back of the face-down cards of the other players.
+
+The game window sends to each window only the public projection of the game for that window.
+The function `projectPublicState` in `web/src/playtest/projection.ts` makes the projection.
+It removes the identity of each hidden card: the name, the Oracle ID, the image and the ID of the copy.
+It also removes the seed of the random number generator, because the seed gives the order of the libraries.
+Online games can use the same function. [ADR 0045](../decisions/0045-window-sync-with-broadcastchannel.md) gives the design.
+
 ## Milestones
 
 The project delivers the features of this file in this [milestone](../roadmap.md).

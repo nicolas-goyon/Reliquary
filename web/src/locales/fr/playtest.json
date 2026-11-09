@@ -36,7 +36,9 @@
     "removeCounter": "Retirer un marqueur de {{name}}",
     "counters_one": "{{count}} marqueur",
     "counters_other": "{{count}} marqueurs",
-    "back": "Dos de carte"
+    "back": "Dos de carte",
+    "tapped": "{{name}}, engagée",
+    "backTapped": "Dos de carte, engagée"
   },
   "mulligan": {
     "bottom_one": "Choisissez {{count}} carte de votre main. Elle va sous la bibliothèque.",
@@ -89,10 +91,7 @@
     "board": "Plateau de {{name}}",
     "handHidden": "La main de {{name}} est cachée. Affichez-la seulement quand les autres joueurs ne regardent pas l’écran.",
     "showHand": "Afficher la main de {{name}}",
-    "hideHand": "Cacher la main de {{name}}",
-    "windowsTitle": "Fenêtres joueur",
-    "windowsHint": "Chaque fenêtre joueur montre le plateau et la main d’un joueur. Gardez cette fenêtre ouverte : si vous la fermez, la partie s’arrête.",
-    "openPlayerWindow": "Ouvrir la fenêtre de {{name}}"
+    "hideHand": "Cacher la main de {{name}}"
   },
   "playerWindow": {
     "title": "Fenêtre joueur : {{name}}",
@@ -103,5 +102,16 @@
       "unsupported": "Ce navigateur ne peut pas relier les fenêtres. Utilisez le mode à une seule fenêtre.",
       "unknownPlayer": "La partie n’a pas de joueur avec cet identifiant."
     }
+  },
+  "shared": {
+    "title": "Affichage partagé",
+    "hint": "Ouvrez la fenêtre table sur un second écran, ou partagez-la sur Discord ou en stream. La fenêtre table masque les mains et les bibliothèques. Gardez cette fenêtre ouverte : si vous la fermez, les autres fenêtres s’arrêtent.",
+    "openTable": "Ouvrir la fenêtre table",
+    "openPlayer": "Ouvrir la fenêtre joueur de {{name}}",
+    "tableTitle": "Fenêtre table",
+    "zoneOf": "{{zone}} de {{name}}",
+    "life_one": "{{count}} point de vie",
+    "life_other": "{{count}} points de vie",
+    "counterValue": "{{label}} : {{value}}"
   }
 }

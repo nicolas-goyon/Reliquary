@@ -10,3 +10,8 @@ export function newGameId(): string {
 export function playerWindowPath(gameId: string, playerId: string): string {
   return `/test/games/${gameId}/players/${playerId}`
 }
+
+/** The path of the table window of a game. */
+export function tableWindowPath(gameId: string): string {
+  return `/test/games/${gameId}/table`
+}
