@@ -148,11 +148,20 @@ describe('hub client', () => {
     expect(test.socket().invocations('Resync')).toEqual([])
     vi.advanceTimersByTime(1)
     expect(test.socket().invocations('Resync')).toHaveLength(1)
+    expect(test.socket().invocations('Resync')[0].arguments).toEqual(['gap'])
     test.socket().patch(14)
     test.socket().complete('Resync', { seq: 13, view: {}, hash: 'h13' })
     expect(test.snapshots.map((snapshot) => snapshot.seq)).toEqual([10, 13])
     expect(test.patches).toEqual([14])
     expect(test.client.seq).toBe(14)
+  })
+
+  it('sends the reason of a Resync, with "hash" as the default', () => {
+    const test = joined(10)
+    test.client.resync()
+    test.socket().complete('Resync', { seq: 10, view: {}, hash: 'h10' })
+    test.client.resync('patch')
+    expect(test.socket().invocations('Resync').map((message) => message.arguments)).toEqual([['hash'], ['patch']])
   })
 
   it('holds the patches that arrive before the first snapshot', () => {

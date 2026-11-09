@@ -71,6 +71,9 @@ public sealed class PlaytestInstance : IAsyncDisposable
             builder.UseSetting("Auth:RequireCheckedEmail", "false");
             builder.UseSetting("Auth:RequestsPerMinute", "100000");
             builder.UseSetting("Playtest:JoinsPerIpPerMinute", JoinsPerIpPerMinute.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            // The gate test sends the actions of one hour in less than one minute.
+            builder.UseSetting("Playtest:ActionsPerSecond", "1000");
+            builder.UseSetting("Playtest:ActionBurst", "1000");
         });
     }
 

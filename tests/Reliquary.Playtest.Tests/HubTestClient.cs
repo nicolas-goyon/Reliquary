@@ -106,7 +106,8 @@ public sealed class HubTestClient : IAsyncDisposable
     private async Task ReadAsync()
     {
         var buffer = new byte[64 * 1024];
-        var text = new StringBuilder();
+        // The bytes of one message. A UTF-8 character can be split between two receives, so decode the full message only.
+        using var message = new MemoryStream();
         var handshake = true;
         try
         {
@@ -118,14 +119,14 @@ public sealed class HubTestClient : IAsyncDisposable
                     break;
                 }
 
-                text.Append(Encoding.UTF8.GetString(buffer, 0, result.Count));
+                message.Write(buffer, 0, result.Count);
                 if (!result.EndOfMessage)
                 {
                     continue;
                 }
 
-                var frame = text.ToString();
-                text.Clear();
+                var frame = Encoding.UTF8.GetString(message.GetBuffer(), 0, (int)message.Length);
+                message.SetLength(0);
                 lock (gate)
                 {
                     Frames.Add(frame);

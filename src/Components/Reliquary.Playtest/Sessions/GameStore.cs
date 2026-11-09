@@ -91,13 +91,19 @@ public sealed class GameStoreOptions
 /// </para>
 /// </remarks>
 /// <typeparam name="T">The type of the game state. The store writes it as JSON with <see cref="TableJson.Options"/>.</typeparam>
-internal sealed class GameStore<T>(Lazy<IConnectionMultiplexer> redis, IOptions<GameStoreOptions> options)
+internal sealed class GameStore<T>(Lazy<IConnectionMultiplexer> redis, IOptions<GameStoreOptions> options, TimeProvider? time = null)
     where T : class
 {
     private static readonly JsonSerializerOptions Json = TableJson.Options;
 
     /// <summary>The start of all the Redis keys of the online games.</summary>
     public const string KeyPrefix = "reliquary:playtest:game:";
+
+    /// <summary>
+    /// The key of the open games: a sorted set of the game IDs, with the time of the last change in milliseconds as the score.
+    /// It is only for the gauge <c>reliquary.playtest.games.active</c>. The games do not use it.
+    /// </summary>
+    public const string ActiveKey = "reliquary:playtest:games:active";
 
     // KEYS: 1 state, 2 seq, 3 log. ARGV: 1 state, 2 TTL in milliseconds, 3 log entry.
     private const string CreateScript = """
@@ -195,7 +201,13 @@ internal sealed class GameStore<T>(Lazy<IConnectionMultiplexer> redis, IOptions<
             CreateScript,
             [StateKey(gameId), SeqKey(gameId), LogKey(gameId)],
             [JsonSerializer.Serialize(state, Json), Ttl, change.Action]);
-        return (long)result == 1;
+        if ((long)result != 1)
+        {
+            return false;
+        }
+
+        MarkActive(gameId);
+        return true;
     }
 
     /// <summary>
@@ -261,7 +273,26 @@ internal sealed class GameStore<T>(Lazy<IConnectionMultiplexer> redis, IOptions<
             3 => GameWriteStatus.Duplicate,
             _ => GameWriteStatus.NotFound,
         };
+        if (status == GameWriteStatus.Written)
+        {
+            MarkActive(gameId);
+        }
+
         return new GameWriteResult(status, (long)values[1]);
+    }
+
+    /// <summary>
+    /// Finds an action of a seat in the recent client action IDs.
+    /// </summary>
+    /// <param name="gameId">The ID of the game.</param>
+    /// <param name="seat">The seat.</param>
+    /// <param name="clientActionId">The ID that the client gave to the action.</param>
+    /// <returns>The sequence number of the action, or <see langword="null"/> when the store did not apply it, or forgot it.</returns>
+    public async Task<long?> FindActionAsync(string gameId, int seat, string clientActionId)
+    {
+        CheckId(gameId);
+        var value = await Database.HashGetAsync(ActionsKey(gameId), $"id:{seat.ToString(CultureInfo.InvariantCulture)}:{clientActionId}");
+        return value.IsNull ? null : (long)value;
     }
 
     /// <summary>
@@ -295,12 +326,33 @@ internal sealed class GameStore<T>(Lazy<IConnectionMultiplexer> redis, IOptions<
         var deleted = await Database.ScriptEvaluateAsync(
             DeleteScript,
             [StateKey(gameId), SeqKey(gameId), LogKey(gameId), ActionsKey(gameId)]);
+        await Database.SortedSetRemoveAsync(ActiveKey, gameId);
         return (long)deleted > 0;
+    }
+
+    /// <summary>
+    /// Counts the open games: the games with a change in the idle lifetime. The count also removes the older games from the set.
+    /// </summary>
+    /// <returns>The number of open games.</returns>
+    public async Task<long> CountActiveAsync()
+    {
+        var oldest = Now - Ttl;
+        await Database.SortedSetRemoveRangeByScoreAsync(ActiveKey, double.NegativeInfinity, oldest, Exclude.Stop);
+        return await Database.SortedSetLengthAsync(ActiveKey);
     }
 
     private IDatabase Database => redis.Value.GetDatabase();
 
     private long Ttl => (long)Settings.IdleLifetime.TotalMilliseconds;
+
+    private long Now => (time ?? TimeProvider.System).GetUtcNow().ToUnixTimeMilliseconds();
+
+    /// <summary>
+    /// Sets the time of the last change of a game in the set of the open games. The store does not wait for the answer:
+    /// the set is only for a metric, so it does not make the actions slower.
+    /// </summary>
+    private void MarkActive(string gameId) =>
+        Database.SortedSetAdd(ActiveKey, gameId, Now, CommandFlags.FireAndForget);
 
     private static void CheckId(string gameId)
     {

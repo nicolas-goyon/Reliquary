@@ -252,6 +252,42 @@ public sealed class GameStoreTests(RedisFixture redis)
         }
     }
 
+    [Fact]
+    public async Task OpenGamesSetHasTheGamesWithARecentChange()
+    {
+        var connection = await redis.GetAsync();
+        var database = connection.GetDatabase();
+        var (store, gameId) = await NewStoreAsync();
+        var old = $"test-{Guid.NewGuid():N}";
+        // A game with no change for 2 hours: the count removes it.
+        await database.SortedSetAddAsync(GameStore<TableState>.ActiveKey, old, DateTimeOffset.UtcNow.AddHours(-2).ToUnixTimeMilliseconds());
+
+        await store.CreateAsync(gameId, TableStateTests.SampleState(), Created());
+        await store.WriteAsync(gameId, 0, TableStateTests.SampleState(), Act(0, "a"));
+        var count = await store.CountActiveAsync();
+        var created = await database.SortedSetScoreAsync(GameStore<TableState>.ActiveKey, gameId);
+        var removed = await database.SortedSetScoreAsync(GameStore<TableState>.ActiveKey, old);
+        await store.DeleteAsync(gameId);
+        var deleted = await database.SortedSetScoreAsync(GameStore<TableState>.ActiveKey, gameId);
+
+        Assert.True(count >= 1);
+        Assert.NotNull(created);
+        Assert.Null(removed);
+        Assert.Null(deleted);
+    }
+
+    [Fact]
+    public async Task FindActionGivesTheSequenceNumberOfAnAppliedAction()
+    {
+        var (store, gameId) = await NewStoreAsync();
+        await store.CreateAsync(gameId, TableStateTests.SampleState(), Created());
+        await store.WriteAsync(gameId, 0, TableStateTests.SampleState(), Act(1, "x"));
+
+        Assert.Equal(1, await store.FindActionAsync(gameId, 1, "x"));
+        Assert.Null(await store.FindActionAsync(gameId, 0, "x"));
+        Assert.Null(await store.FindActionAsync(gameId, 1, "y"));
+    }
+
     [Theory]
     [InlineData("")]
     [InlineData("a:b")]

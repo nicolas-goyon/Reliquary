@@ -28,6 +28,13 @@ export interface Patch {
 
 export type ActResult = { accepted: number } | { rejected: string }
 
+/**
+ * Why the client asks for a full view. The server counts each reason in the metric reliquary.playtest.desyncs.
+ * hash: the hash of the view after a patch is not the hash of the patch. gap: a sequence number did not arrive in time.
+ * patch: the client cannot apply a patch. view: the client has no view, for example after the start. It is not a desynchronization.
+ */
+export type ResyncReason = 'hash' | 'gap' | 'patch' | 'view'
+
 export type HubStatus = 'connecting' | 'connected' | 'reconnecting' | 'closed'
 
 /** The part of the browser WebSocket that the client uses. A test can give a fake socket. */
@@ -145,8 +152,8 @@ export class HubClient {
     })
   }
 
-  /** Asks for a full view. Call it when the hash of the view after a patch is not the hash of the patch. */
-  resync(): void {
+  /** Asks for a full view. Call it when the hash of the view after a patch is not the hash of the patch, or with the reason of the call. */
+  resync(reason: ResyncReason = 'hash'): void {
     if (this.resyncing || !this.handshakeDone) {
       return
     }
@@ -157,7 +164,7 @@ export class HubClient {
     // The snapshot goes to the view directly in the completion, before the patches of the next frames.
     this.send({
       method: 'Resync',
-      args: [],
+      args: [reason],
       resolve: (snapshot) => {
         done()
         this.acceptSnapshot(snapshot as Snapshot)
@@ -324,7 +331,7 @@ export class HubClient {
     this.timers.gap = setTimeout(() => {
       const current = this.buffer?.gapAge(Date.now())
       if (current !== null && current !== undefined && current >= gapTimeout) {
-        this.resync()
+        this.resync('gap')
       } else {
         this.watchGap()
       }

@@ -35,7 +35,7 @@ public sealed class TableHubTests(PlaytestInstance instance)
         var start = await host.InvokeAsync("Start");
         var startSeq = start["result"]!.GetValue<long>();
         var startPatch = (await player.NextAsync("Patch"))!.AsObject();
-        var snapshot = (await player.InvokeAsync("Resync"))["result"]!.AsObject();
+        var snapshot = (await player.InvokeAsync("Resync", "view"))["result"]!.AsObject();
         var act = await host.InvokeAsync("Act", "a-1", new { type = "draw", playerId = "0", count = 2 });
         var patch = (await player.NextAsync("Patch"))!.AsObject();
 
@@ -80,8 +80,8 @@ public sealed class TableHubTests(PlaytestInstance instance)
         await JoinAsync(player);
         await host.InvokeAsync("Start");
 
-        var hostView = (await host.InvokeAsync("Resync"))["result"]!["view"]!.AsObject();
-        var playerView = (await player.InvokeAsync("Resync"))["result"]!["view"]!.AsObject();
+        var hostView = (await host.InvokeAsync("Resync", "view"))["result"]!["view"]!.AsObject();
+        var playerView = (await player.InvokeAsync("Resync", "view"))["result"]!["view"]!.AsObject();
 
         var hostHand = hostView["players"]![0]!["zones"]!["hand"]!.AsArray();
         Assert.Equal(7, hostHand.Count);
@@ -134,10 +134,60 @@ public sealed class TableHubTests(PlaytestInstance instance)
         await using var again = await HubTestClient.ConnectAsync(await instance.GetSecondAsync(), created.GameToken, Cancel);
         await JoinAsync(again);
         var retry = await again.InvokeAsync("Act", "same", new { type = "life", playerId = "0", change = -3 });
-        var snapshot = (await again.InvokeAsync("Resync"))["result"]!.AsObject();
+        var snapshot = (await again.InvokeAsync("Resync", "view"))["result"]!.AsObject();
 
         Assert.Equal(first["result"]!["accepted"]!.GetValue<long>(), retry["result"]!["accepted"]!.GetValue<long>());
         Assert.Equal(37, snapshot["view"]!["players"]![0]!["life"]!.GetValue<int>());
+    }
+
+    [Fact]
+    public async Task RetryOfAnActionThatIsNotValidAnyMoreGivesTheFirstSequenceNumber()
+    {
+        var (created, guest) = await NewGameWithGuestAsync();
+        await using var host = await HubTestClient.ConnectAsync(await instance.GetAsync(), created.GameToken, Cancel);
+        await JoinAsync(host);
+        await host.InvokeAsync("Start");
+
+        // After "nextTurn", the host is not the active player. A retry must not get "not_your_turn".
+        var first = await host.InvokeAsync("Act", "turn", new { type = "nextTurn" });
+        var retry = await host.InvokeAsync("Act", "turn", new { type = "nextTurn" });
+        var other = await host.InvokeAsync("Act", "turn-2", new { type = "nextTurn" });
+
+        Assert.Equal(first["result"]!["accepted"]!.GetValue<long>(), retry["result"]!["accepted"]!.GetValue<long>());
+        Assert.Equal("not_your_turn", other["result"]!["rejected"]!.GetValue<string>());
+    }
+
+    [Fact]
+    public async Task ResyncCountsADesyncWithItsReason()
+    {
+        var (created, _) = await NewGameWithGuestAsync();
+        await using var host = await HubTestClient.ConnectAsync(await instance.GetAsync(), created.GameToken, Cancel);
+        await JoinAsync(host);
+        await host.InvokeAsync("Start");
+        var reasons = new List<string?>();
+        using var listener = new System.Diagnostics.Metrics.MeterListener();
+        listener.InstrumentPublished = (instrument, meterListener) =>
+        {
+            if (instrument.Name == PlaytestMetrics.DesyncsName)
+            {
+                meterListener.EnableMeasurementEvents(instrument);
+            }
+        };
+        listener.SetMeasurementEventCallback<long>((_, _, tags, _) =>
+        {
+            lock (reasons)
+            {
+                reasons.Add(tags.ToArray().Single(tag => tag.Key == "reason").Value as string);
+            }
+        });
+        listener.Start();
+
+        await host.InvokeAsync("Resync", "view");
+        await host.InvokeAsync("Resync", "hash");
+        await host.InvokeAsync("Resync", "gap");
+        await host.InvokeAsync("Resync", "something");
+
+        Assert.Equal(["hash", "gap", "other"], reasons);
     }
 
     [Fact]
@@ -238,8 +288,8 @@ public sealed class TableHubTests(PlaytestInstance instance)
             player.InvokeAsync("Act", $"p-{index}", new { type = "life", playerId = "1", change = -1 }),
         }).ToList();
         var results = await Task.WhenAll(calls);
-        var hostView = (await host.InvokeAsync("Resync"))["result"]!.AsObject();
-        var playerView = (await player.InvokeAsync("Resync"))["result"]!.AsObject();
+        var hostView = (await host.InvokeAsync("Resync", "view"))["result"]!.AsObject();
+        var playerView = (await player.InvokeAsync("Resync", "view"))["result"]!.AsObject();
 
         var sequences = results.Select(result => result["result"]!["accepted"]!.GetValue<long>()).Order().ToList();
         Assert.Equal(Enumerable.Range(1, 40).Select(value => startSeq + value), sequences);

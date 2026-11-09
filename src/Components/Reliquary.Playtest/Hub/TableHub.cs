@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Reliquary.BuildingBlocks.Api;
 using Reliquary.Playtest.Engine;
 using Reliquary.Playtest.Sessions;
@@ -38,16 +40,10 @@ public sealed record HubPatch(long Seq, string ActorSeat, string Log, IReadOnlyL
 /// <para>The hub is thin: it calls <see cref="GameService"/> and sends the results with <see cref="TableBroadcaster"/>.
 /// The order of the changes is the sequence number of the game store, not the order of the messages: the client keeps a reorder buffer.</para>
 /// </remarks>
-internal sealed class TableHub(GameService games, GameTokens tokens, TableBroadcaster broadcaster, ILogger<TableHub> logger) : Microsoft.AspNetCore.SignalR.Hub
+internal sealed class TableHub(GameService games, GameTokens tokens, TableBroadcaster broadcaster, IOptions<GameOptions> options, ILogger<TableHub> logger) : Microsoft.AspNetCore.SignalR.Hub
 {
     /// <summary>The path of the hub in the public API.</summary>
     public const string Path = "/playtest/hub";
-
-    /// <summary>The maximum number of actions of one connection in one second, on average.</summary>
-    public const double ActionsPerSecond = 10;
-
-    /// <summary>The maximum number of actions of one connection in a burst.</summary>
-    public const double ActionBurst = 30;
 
     private const string AccessItem = "reliquary.access";
 
@@ -68,7 +64,7 @@ internal sealed class TableHub(GameService games, GameTokens tokens, TableBroadc
         {
             var (stored, seat) = await games.ReadForSeatAsync(claims.GameId, token);
             Context.Items[AccessItem] = new SeatAccess(claims.GameId, seat, token!);
-            Context.Items[BucketItem] = new ActionBucket(ActionsPerSecond, ActionBurst);
+            Context.Items[BucketItem] = new ActionBucket(options.Value.ActionsPerSecond, options.Value.ActionBurst);
             await Groups.AddToGroupAsync(Context.ConnectionId, TableBroadcaster.SeatGroup(claims.GameId, seat, claims.TokenId));
             await Clients.Caller.SendAsync("Lobby", TableBroadcaster.Lobby(stored.State, seat));
         }
@@ -90,9 +86,19 @@ internal sealed class TableHub(GameService games, GameTokens tokens, TableBroadc
 
     /// <summary>
     /// Gives the full view of the caller again. The client calls it when its view is not in sync.
+    /// The metric <c>reliquary.playtest.desyncs</c> counts the calls, with the reason.
     /// </summary>
+    /// <param name="reason">
+    /// Why the client asks for a full view: <c>hash</c> (the hash of the view is not the hash of the patch),
+    /// <c>gap</c> (a sequence number did not arrive in time), <c>patch</c> (the client cannot apply a patch),
+    /// or <c>view</c> (the client has no view, for example after the start: not a desynchronization).
+    /// </param>
     /// <returns>The snapshot.</returns>
-    public Task<HubSnapshot> Resync() => SnapshotAsync();
+    public Task<HubSnapshot> Resync(string? reason)
+    {
+        PlaytestMetrics.RecordResync(reason);
+        return SnapshotAsync();
+    }
 
     /// <summary>
     /// Applies an action of the caller to the table.
@@ -102,10 +108,20 @@ internal sealed class TableHub(GameService games, GameTokens tokens, TableBroadc
     /// <returns><c>{ accepted: seq }</c> or <c>{ rejected: code }</c>.</returns>
     public async Task<JsonObject> Act(string clientActionId, JsonElement action)
     {
+        var started = Stopwatch.GetTimestamp();
+        var (answer, result) = await ActAsync(clientActionId, action);
+        PlaytestMetrics.RecordAction(Stopwatch.GetElapsedTime(started).TotalSeconds, result);
+        return answer;
+    }
+
+    /// <summary>Applies an action and sends the patches.</summary>
+    /// <returns>The answer to the client, and the result for the metric: <c>accepted</c>, <c>duplicate</c> or <c>rejected</c>.</returns>
+    private async Task<(JsonObject Answer, string Result)> ActAsync(string clientActionId, JsonElement action)
+    {
         var access = Access();
         if (Context.Items[BucketItem] is ActionBucket bucket && !bucket.TryTake())
         {
-            return Rejected(ActionRejections.RateLimited);
+            return (Rejected(ActionRejections.RateLimited), "rejected");
         }
 
         TableAction? parsed;
@@ -120,7 +136,7 @@ internal sealed class TableHub(GameService games, GameTokens tokens, TableBroadc
 
         if (parsed is null)
         {
-            return Rejected(ActionRejections.InvalidAction);
+            return (Rejected(ActionRejections.InvalidAction), "rejected");
         }
 
         var result = await CallAsync(() => games.ActAsync(access.GameId, access.Token, clientActionId, parsed));
@@ -129,7 +145,13 @@ internal sealed class TableHub(GameService games, GameTokens tokens, TableBroadc
             await broadcaster.SendPatchesAsync(update);
         }
 
-        return result.Rejected is { } code ? Rejected(code) : new JsonObject { ["accepted"] = result.Seq!.Value };
+        if (result.Rejected is { } code)
+        {
+            return (Rejected(code), "rejected");
+        }
+
+        // A retry of an action that the store applied before has no update.
+        return (new JsonObject { ["accepted"] = result.Seq!.Value }, result.Update is null ? "duplicate" : "accepted");
     }
 
     /// <summary>
