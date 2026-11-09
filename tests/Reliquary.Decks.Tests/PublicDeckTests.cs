@@ -1,6 +1,8 @@
 using System.Diagnostics;
 using System.Net;
 using System.Net.Http.Json;
+using Dapper;
+using Npgsql;
 using Reliquary.BuildingBlocks.Api;
 using Reliquary.Decks.Api;
 using Reliquary.Decks.Exploration;
@@ -50,6 +52,37 @@ public sealed class PublicDeckTests(DecksInstance instance)
         Assert.Equal(2, (await SearchAsync(visitor, $"q={tag}")).Count);
         var unknown = await visitor.GetAsync(new Uri("/api/v1/public-decks?card=No such card", UriKind.Relative), Cancel);
         Assert.Equal(HttpStatusCode.BadRequest, unknown.StatusCode);
+    }
+
+    [Fact]
+    public async Task SearchFiltersByARangeOfDatesOfTheLastChange()
+    {
+        using var author = await instance.NewUserAsync();
+        using var visitor = (await instance.GetAsync()).CreateClient();
+        var tag = Guid.NewGuid().ToString("N");
+        var october = await CreateDeckAsync(author, $"October {tag}", "public", new { name = "Sol Ring" });
+        var start = await CreateDeckAsync(author, $"Start {tag}", "public", new { name = "Sol Ring" });
+        var end = await CreateDeckAsync(author, $"End {tag}", "public", new { name = "Sol Ring" });
+        await instance.PublishEventsAsync();
+        await SetUpdatedAtAsync(october.Id, new DateTime(2026, 10, 31, 23, 59, 59, DateTimeKind.Utc));
+        await SetUpdatedAtAsync(start.Id, new DateTime(2026, 11, 1, 0, 0, 0, DateTimeKind.Utc));
+        await SetUpdatedAtAsync(end.Id, new DateTime(2026, 11, 3, 23, 59, 59, DateTimeKind.Utc));
+
+        var range = await SearchAsync(visitor, $"q={tag}&updatedFrom=2026-11-01&updatedTo=2026-11-03");
+        var fromOnly = await SearchAsync(visitor, $"q={tag}&updatedFrom=2026-11-02");
+        var toOnly = await SearchAsync(visitor, $"q={tag}&updatedTo=2026-10-31");
+        var oneDay = await SearchAsync(visitor, $"q={tag}&updatedFrom=2026-11-01&updatedTo=2026-11-01");
+        var wrongFormat = await visitor.GetAsync(new Uri("/api/v1/public-decks?updatedFrom=01/11/2026", UriKind.Relative), Cancel);
+        var wrongOrder = await visitor.GetAsync(new Uri("/api/v1/public-decks?updatedFrom=2026-11-03&updatedTo=2026-11-01", UriKind.Relative), Cancel);
+
+        Assert.Equal([end.Id, start.Id], range.Select(deck => deck.Id));
+        Assert.Equal([end.Id], fromOnly.Select(deck => deck.Id));
+        Assert.Equal([october.Id], toOnly.Select(deck => deck.Id));
+        Assert.Equal([start.Id], oneDay.Select(deck => deck.Id));
+        Assert.Equal(HttpStatusCode.BadRequest, wrongFormat.StatusCode);
+        Assert.Contains("\"field\":\"updatedFrom\"", await wrongFormat.Content.ReadAsStringAsync(Cancel), StringComparison.Ordinal);
+        Assert.Equal(HttpStatusCode.BadRequest, wrongOrder.StatusCode);
+        Assert.Contains("\"field\":\"updatedTo\"", await wrongOrder.Content.ReadAsStringAsync(Cancel), StringComparison.Ordinal);
     }
 
     [Fact]
@@ -116,6 +149,16 @@ public sealed class PublicDeckTests(DecksInstance instance)
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.False(opened!.IsOwner);
         Assert.Empty(opened.DeckTags);
+    }
+
+    /// <summary>
+    /// Sets the time of the last change of a deck in the read model. The test cannot wait for days.
+    /// </summary>
+    private async Task SetUpdatedAtAsync(Guid deckId, DateTime updatedAt)
+    {
+        await using var connection = new NpgsqlConnection(instance.ConnectionString);
+        var changed = await connection.ExecuteAsync("update users.public_decks set updated_at = @updatedAt where deck_id = @deckId", new { deckId, updatedAt });
+        Assert.Equal(1, changed);
     }
 
     private static async Task<List<PublicDeckResponse>> SearchAsync(HttpClient client, string query) =>

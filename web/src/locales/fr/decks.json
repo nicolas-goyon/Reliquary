@@ -505,6 +505,8 @@
     "name": "Nom du deck",
     "commander": "Commandant",
     "card": "Carte du deck",
+    "updatedFrom": "Dernière modification depuis le",
+    "updatedTo": "Dernière modification jusqu’au",
     "search": "Rechercher",
     "clear": "Effacer les filtres",
     "loading": "Chargement des decks…",

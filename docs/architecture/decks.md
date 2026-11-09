@@ -195,6 +195,8 @@ The query of `GET /public-decks` accepts these parameters:
 | `card` | The Oracle ID or the name of a card of the main zones, in any language |
 | `colors` | The exact color identity, like the deck list |
 | `author` | The account ID of the author |
+| `updatedFrom` | The first day of the last change of the deck, in the format `yyyy-MM-dd`. The day is a UTC day. |
+| `updatedTo` | The last day of the last change of the deck, in the format `yyyy-MM-dd`. It must be on or after `updatedFrom`. |
 | `sort` | `recent` (default) or `popular`: the number of copies by other users plus the number of favorites |
 
 A visitor with no account opens an unlisted or public deck with its link: `GET /decks/{id}`.

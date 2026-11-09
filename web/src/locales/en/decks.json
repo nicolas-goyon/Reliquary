@@ -505,6 +505,8 @@
     "name": "Deck name",
     "commander": "Commander",
     "card": "Card in the deck",
+    "updatedFrom": "Last change from",
+    "updatedTo": "Last change to",
     "search": "Search",
     "clear": "Clear the filters",
     "loading": "The application loads the decks.",

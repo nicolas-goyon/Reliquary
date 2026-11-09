@@ -129,7 +129,36 @@ describe('public decks', () => {
 
   it('writes and reads the filters of the address', () => {
     const filters = filtersFromSearch('?q=goblins&colors=r&sort=popular&unknown=1')
-    expect(filters).toEqual({ q: 'goblins', format: '', commander: '', card: '', colors: 'r', sort: 'popular' })
+    expect(filters).toEqual({ q: 'goblins', format: '', commander: '', card: '', colors: 'r', updatedFrom: '', updatedTo: '', sort: 'popular' })
     expect(publicDeckQuery(filters, authorId)).toBe(`limit=50&q=goblins&colors=r&sort=popular&author=${authorId}`)
+    const dates = filtersFromSearch('?updatedFrom=2026-11-01&updatedTo=2026-11-03')
+    expect(publicDeckQuery(dates)).toBe('limit=50&updatedFrom=2026-11-01&updatedTo=2026-11-03')
+  })
+
+  it('searches the public decks by a range of dates of the last change', async () => {
+    window.history.replaceState(null, '', '/explore')
+    const urls: string[] = []
+    mockApi({
+      'POST /auth/refresh': () => problem(401, 'session_expired'),
+      'GET /public-decks': ({ url }) => {
+        urls.push(url.search)
+        return Response.json({ items: url.searchParams.has('updatedFrom') ? [publicDeck] : [], nextCursor: null })
+      },
+    })
+    const user = userEvent.setup()
+    render(<App />)
+
+    expect(await screen.findByText('No deck agrees with the search.')).toBeInTheDocument()
+    const from = screen.getByLabelText('Last change from')
+    const to = screen.getByLabelText('Last change to')
+    await user.type(from, '2026-11-01')
+    await user.type(to, '2026-11-03')
+    expect(from).toHaveAttribute('max', '2026-11-03')
+    expect(to).toHaveAttribute('min', '2026-11-01')
+    await user.click(screen.getByRole('button', { name: 'Search' }))
+
+    expect(await screen.findByRole('link', { name: 'Atraxa superfriends' })).toBeInTheDocument()
+    expect(urls.at(-1)).toBe('?limit=50&updatedFrom=2026-11-01&updatedTo=2026-11-03')
+    expect(window.location.search).toBe('?updatedFrom=2026-11-01&updatedTo=2026-11-03')
   })
 })

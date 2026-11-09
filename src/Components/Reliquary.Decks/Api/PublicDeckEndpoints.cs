@@ -27,7 +27,7 @@ internal static class PublicDeckEndpoints
 
         decks.MapGet(string.Empty, SearchAsync)
             .WithName("SearchPublicDecks")
-            .WithSummary("Searches the public decks of all the users by name, format, commander, color identity, card and author. A visitor with no account can search.");
+            .WithSummary("Searches the public decks of all the users by name, format, commander, color identity, card, author and date of the last change. A visitor with no account can search.");
 
         user.MapGet("/favorites", ListFavoritesAsync)
             .WithName("ListFavoriteDecks")
@@ -96,6 +96,8 @@ internal static class PublicDeckEndpoints
         string? card,
         Guid? author,
         string? sort,
+        string? updatedFrom,
+        string? updatedTo,
         CancellationToken cancellationToken)
     {
         if (!TryReadPage(limit, cursor, out var page, out var offset, out var pageError))
@@ -115,6 +117,13 @@ internal static class PublicDeckEndpoints
             errors.Add(new FieldError("sort", FieldErrorCodes.NotAllowed, $"Use one of these values: {string.Join(", ", Sorts)}."));
         }
 
+        var from = ReadDate(errors, "updatedFrom", updatedFrom);
+        var to = ReadDate(errors, "updatedTo", updatedTo);
+        if (from is not null && to is not null && from > to)
+        {
+            errors.Add(new FieldError("updatedTo", FieldErrorCodes.OutOfRange, "The end date must be on or after the start date."));
+        }
+
         var commanderId = await ResolveCardAsync(catalog, errors, "commander", commander, cancellationToken);
         var cardId = await ResolveCardAsync(catalog, errors, "card", card, cancellationToken);
         if (errors.Count > 0)
@@ -132,8 +141,29 @@ internal static class PublicDeckEndpoints
             null,
             sort ?? "recent",
             offset,
-            page.Limit + 1);
+            page.Limit + 1,
+            from?.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc),
+            to is { } end && end < DateOnly.MaxValue ? end.AddDays(1).ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc) : null);
         return TypedResults.Ok(ToPage(await service.SearchAsync(query, cancellationToken), page.Limit, offset));
+    }
+
+    /// <summary>
+    /// Reads a date of the query in the format <c>yyyy-MM-dd</c>. The day is a UTC day.
+    /// </summary>
+    private static DateOnly? ReadDate(List<FieldError> errors, string field, string? value)
+    {
+        if (value is null)
+        {
+            return null;
+        }
+
+        if (DateOnly.TryParseExact(value, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var date))
+        {
+            return date;
+        }
+
+        errors.Add(new FieldError(field, FieldErrorCodes.InvalidFormat, "Give a date in the format yyyy-MM-dd."));
+        return null;
     }
 
     private static async Task<Results<Ok<Page<PublicDeckResponse>>, ProblemHttpResult>> ListFavoritesAsync(
