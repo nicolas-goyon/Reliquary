@@ -7,4 +7,8 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Reliquary.BuildingBlocks\Reliquary.BuildingBlocks.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Reliquary.Playtest.Tests" />
+  </ItemGroup>
 </Project>
