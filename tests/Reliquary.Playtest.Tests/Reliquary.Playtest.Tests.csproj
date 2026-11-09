@@ -3,18 +3,26 @@
     <OutputType>Exe</OutputType>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
+    <!-- The tests use inline arrays in the request bodies. -->
+    <NoWarn>$(NoWarn);CA1861</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+    <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
     <PackageReference Include="xunit.v3" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Components\Reliquary.Playtest\Reliquary.Playtest.csproj" />
+    <!-- The endpoint tests start the API host with the real components. -->
+    <ProjectReference Include="..\..\src\Reliquary.Api\Reliquary.Api.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <Compile Include="..\Shared\**\*.cs" Link="Shared\%(RecursiveDir)%(Filename)%(Extension)" />
+    <!-- The card fixtures of the Cards tests: the decks of the games need real card data. -->
+    <None Include="..\Reliquary.Cards.Tests\Fixtures\**\*" Link="Fixtures\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

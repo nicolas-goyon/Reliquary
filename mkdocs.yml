@@ -92,4 +92,5 @@ nav:
       - Writing style: contributing/writing-style.md
   - Architecture:
       - Overview: architecture/overview.md
+      - Online games: architecture/online-games.md
       - Decision records: decisions/README.md

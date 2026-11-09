@@ -128,6 +128,11 @@ Rules for the error codes:
 | `deck_location` | 409 | The location belongs to an assembled deck. Change the deck to change the location. |
 | `not_enough_cards` | 409 | The origin location does not have enough copies of a card. |
 | `inventory_applied` | 409 | The inventory of the location is applied. It cannot change. |
+| `game_invite_invalid` | 404 | The online game does not exist, it ended, the invite secret is not correct, or the invite link expired. See [Online games](online-games.md). |
+| `game_token_invalid` | 401 | The game token is missing, is not valid, expired, or a newer token or a kick replaced it. Join the game again. |
+| `game_full` | 409 | All the seats of the online game have a player. |
+| `game_started` | 409 | The online game started. New players cannot join it, and the lobby cannot change. |
+| `game_open_limit` | 409 | The account has the maximum number of open online games. Close a game, then try again. |
 
 An endpoint can add a more specific code.
 The OpenAPI document of the endpoint lists its specific codes.
