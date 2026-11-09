@@ -50,6 +50,8 @@ internal sealed class PublicDeckRow
 /// <param name="Sort"><c>recent</c> or <c>popular</c>.</param>
 /// <param name="Offset">The number of decks before the page.</param>
 /// <param name="Limit">The maximum number of decks.</param>
+/// <param name="UpdatedFrom">Only the decks with a last change at this time or after it, or <see langword="null"/>.</param>
+/// <param name="UpdatedBefore">Only the decks with a last change before this time, or <see langword="null"/>.</param>
 internal sealed record PublicDeckQuery(
     string? Text,
     string? Format,
@@ -60,7 +62,9 @@ internal sealed record PublicDeckQuery(
     Guid? FavoriteOf,
     string Sort,
     int Offset,
-    int Limit);
+    int Limit,
+    DateTime? UpdatedFrom = null,
+    DateTime? UpdatedBefore = null);
 
 /// <summary>
 /// The SQL of the read model of the public decks, in the users database.
@@ -133,6 +137,8 @@ internal static class PublicDeckStore
                 and (@cardId::uuid is null or p.card_ids @> array[@cardId::uuid])
                 and (@hasAuthors = false or p.owner_id = any(@authorIds))
                 and (@favoriteOf::uuid is null or exists (select 1 from users.deck_favorites f where f.deck_id = p.deck_id and f.account_id = @favoriteOf))
+                and (@updatedFrom::timestamptz is null or p.updated_at >= @updatedFrom)
+                and (@updatedBefore::timestamptz is null or p.updated_at < @updatedBefore)
             order by {order}, p.deck_id
             offset @offset
             limit @limit
@@ -147,6 +153,8 @@ internal static class PublicDeckStore
                 hasAuthors = query.AuthorIds is not null,
                 authorIds = query.AuthorIds?.ToArray() ?? [],
                 favoriteOf = query.FavoriteOf,
+                updatedFrom = query.UpdatedFrom,
+                updatedBefore = query.UpdatedBefore,
                 offset = query.Offset,
                 limit = query.Limit,
             },

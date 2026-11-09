@@ -85,6 +85,14 @@ export function ExplorePage() {
             <input id={`${id}-colors`} placeholder="WUBRG" maxLength={5} value={form.colors} onChange={(event) => setForm({ ...form, colors: event.target.value })} />
           </div>
           <div className="field">
+            <label htmlFor={`${id}-updated-from`}>{t('explore.updatedFrom')}</label>
+            <input id={`${id}-updated-from`} type="date" value={form.updatedFrom} max={form.updatedTo || undefined} onChange={(event) => setForm({ ...form, updatedFrom: event.target.value })} />
+          </div>
+          <div className="field">
+            <label htmlFor={`${id}-updated-to`}>{t('explore.updatedTo')}</label>
+            <input id={`${id}-updated-to`} type="date" value={form.updatedTo} min={form.updatedFrom || undefined} onChange={(event) => setForm({ ...form, updatedTo: event.target.value })} />
+          </div>
+          <div className="field">
             <label htmlFor={`${id}-sort`}>{t('filters.sort')}</label>
             <select id={`${id}-sort`} value={form.sort} onChange={(event) => setForm({ ...form, sort: event.target.value as PublicDeckSort })}>
               {publicDeckSorts.map((sort) => (
