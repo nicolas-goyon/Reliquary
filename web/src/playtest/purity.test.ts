@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest'
 
 /**
  * Architecture test of the table engine. ADR 0040: the engine is a pure reducer.
- * The test reads the source of engine.ts and of each module that it imports, directly or through other modules.
+ * The test reads the source of each entry module and of each module that it imports, directly or through other modules.
+ * The entry modules are the engine, the game reducer and the projection of the state for each viewer.
+ * sync.ts (React, BroadcastChannel) and gameId.ts (random IDs and seeds) are not pure, and the pure modules must not import them.
  * Each of these modules must:
  * - import only modules of the playtest folder, with a relative path,
  * - not import React or another package,
@@ -11,8 +13,8 @@ import { describe, expect, it } from 'vitest'
 
 const sources = import.meta.glob<string>(['./*.ts', '!./*.test.ts'], { query: '?raw', import: 'default', eager: true })
 
-/** The entry point of the pure modules. */
-const entry = './engine.ts'
+/** The entry points of the pure modules. */
+const entries = ['./engine.ts', './game.ts', './projection.ts']
 
 /** Global names and calls that make a module impure. Each pattern applies to the code without comments and strings. */
 const forbidden: [string, RegExp][] = [
@@ -51,11 +53,11 @@ function resolve(specifier: string): string | null {
   return path in sources ? path : null
 }
 
-/** Finds the modules that engine.ts uses, and the rules that each module breaks. */
+/** Finds the modules that the entry modules use, and the rules that each module breaks. */
 function check(): { modules: string[]; violations: string[] } {
   const modules: string[] = []
   const violations: string[] = []
-  const queue = [entry]
+  const queue = [...entries]
   while (queue.length > 0) {
     const path = queue.shift()!
     if (modules.includes(path)) continue
@@ -75,9 +77,16 @@ function check(): { modules: string[]; violations: string[] } {
 }
 
 describe('table engine purity', () => {
-  it('finds the source of the engine', () => {
-    expect(Object.keys(sources)).toContain(entry)
-    expect(sources[entry]).toContain('export function applyAction')
+  it('finds the source of each entry module', () => {
+    expect(Object.keys(sources)).toEqual(expect.arrayContaining(entries))
+    expect(sources['./engine.ts']).toContain('export function applyAction')
+  })
+
+  it('checks the entry modules and the modules that they import, but not sync.ts', () => {
+    const { modules } = check()
+
+    expect(modules).toEqual(expect.arrayContaining(entries))
+    expect(modules).not.toContain('./sync.ts')
   })
 
   it('imports only pure modules of the playtest folder and uses no browser, network, clock or random global', () => {

@@ -7,8 +7,3 @@ export type GameAction = TableAction | { type: 'restart'; table: TableState }
 export function gameReducer(state: TableState, action: GameAction): TableState {
   return action.type === 'restart' ? action.table : applyAction(state, action)
 }
-
-/** Gives a random seed for a new game. */
-export function newSeed(): number {
-  return crypto.getRandomValues(new Uint32Array(1))[0]
-}

@@ -185,7 +185,7 @@ The architecture tests also check these rules between the layers:
 - `Reliquary.BuildingBlocks` references no other project.
 - `Reliquary.Platform` references `Reliquary.BuildingBlocks` only.
 - The hosts `Reliquary.Api`, `Reliquary.Worker` and `Reliquary.Cli` reference `Reliquary.Hosting` only.
-- The table engine `web/src/playtest/engine.ts` imports only pure modules of `web/src/playtest`. It does not use React, the browser, the network, the clock or `Math.random`. The test is `web/src/playtest/purity.test.ts`.
+- The table engine modules `engine.ts`, `game.ts` and `projection.ts` of `web/src/playtest` import only pure modules of that folder. They do not use React, the browser, the network, the clock or a random source such as `Math.random`. The test is `web/src/playtest/purity.test.ts`.
 
 The [architecture overview](../architecture/overview.md) and [ADR 0007](../decisions/0007-modular-monolith.md) give the reasons.
 
