@@ -43,6 +43,9 @@ Also, the maintainer knows C# better than Go.
 - **Stateless API**: the API keeps no session in memory, and each request carries an authentication token.
   Any replica of the API can serve any request.
 - **Real time**: SignalR uses a Redis backplane, so that the players of one game session can use different replicas.
+  The web app does not use the npm package of SignalR.
+  A small client in `web/src/playtest/online/hubClient.ts` uses the JSON hub protocol over the browser WebSocket, with no negotiation.
+  The backplane can change the order of the messages, so the client puts the patches in order by their sequence numbers.
 - **Background tasks**: separate workers run the background tasks: the Scryfall synchronization, auto-tag and the tasks of modules.
   The workers scale independently of the API.
 - **Quotas**: Redis counts the requests for the quotas, so that the counts agree on all replicas.
