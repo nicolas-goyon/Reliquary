@@ -151,7 +151,7 @@ CI runs the same checks for each pull request.
 | `src/Reliquary.Cli` | The command line tool `reliquary`, for example `reliquary migrate` |
 | `src/Reliquary.Hosting` | Registers the platform and the core components in the three hosts |
 | `src/Reliquary.Platform` | Shared infrastructure: connections, shard directory, migrations, outbox and scheduled jobs |
-| `src/Reliquary.BuildingBlocks` | Shared contracts, for example `ICoreComponent`, `IDatabase` and `IDomainEventWriter` |
+| `src/Reliquary.BuildingBlocks` | Shared contracts, for example `ICoreComponent`, `IDatabase` and `IDomainEventWriter`, and neutral helpers, for example the CSV reader `Text/Csv.cs` |
 | `src/Components/Reliquary.Accounts` | Accounts, authentication, API keys and quotas |
 | `src/Components/Reliquary.Cards` | Card reference data, card search and deck analysis |
 | `src/Components/Reliquary.Decks` | Decks, deck versions, variants, tags and folders |

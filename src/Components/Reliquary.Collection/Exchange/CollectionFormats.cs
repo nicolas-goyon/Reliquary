@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Linq;
+using Reliquary.BuildingBlocks.Text;
 
 namespace Reliquary.Collection.Exchange;
 
@@ -560,8 +561,8 @@ internal sealed class MoxfieldFormat : ICollectionFormat
 
     public ParsedFile Parse(string content)
     {
-        var header = CollectionCsv.Read(content).FirstOrDefault()?.Cells ?? [];
-        var csv = header.Count > 1 && header.Any(cell => CollectionCsv.SameHeader(cell, "Count")) && header.Any(cell => CollectionCsv.SameHeader(cell, "Name"));
+        var header = Csv.Read(content).FirstOrDefault()?.Cells ?? [];
+        var csv = header.Count > 1 && header.Any(cell => Csv.SameHeader(cell, "Count")) && header.Any(cell => Csv.SameHeader(cell, "Name"));
         return csv ? CollectionCsvFormats.Moxfield.Parse(content) : CollectionText.Parse(content);
     }
 

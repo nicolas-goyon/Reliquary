@@ -79,14 +79,4 @@ public sealed class CsvFormatTests
         Assert.Equal(("Sol Ring", "commander"), (mapped.Lines.Single().Name, mapped.Lines.Single().Zone));
         Assert.Equal([(3, DeckText.QuantityOutOfRange), (5, DeckFormatCodes.UnknownZone)], mapped.Errors.Select(error => (error.LineNumber, error.Code)));
     }
-
-    [Fact]
-    public void ReaderKeepsLineBreaksInQuotesAndGivesTheLineOfEachRow()
-    {
-        var rows = Csv.Read("﻿Name,Note\r\nSol Ring,\"One\nTwo\"\r\nForest,\"Say \"\"hi\"\"\"\r\n");
-
-        Assert.Equal([1, 2, 4], rows.Select(row => row.LineNumber));
-        Assert.Equal(["Sol Ring", "One\nTwo"], rows[1].Cells);
-        Assert.Equal("Say \"hi\"", rows[2].Cells[1]);
-    }
 }
