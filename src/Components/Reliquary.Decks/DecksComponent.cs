@@ -71,6 +71,9 @@ public sealed class DecksComponent : ICoreComponent
     public void AddApiServices(IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<RecommendationOptions>(configuration.GetSection(RecommendationOptions.Section));
+
+        // The deck sharing uses the address of the web interface of the setting Auth:PublicUrl.
+        services.Configure<DeckSharingOptions>(configuration.GetSection("Auth"));
         services.AddHttpClient(RecommanderSource.HttpClientName, (provider, client) =>
         {
             var settings = provider.GetRequiredService<IOptions<RecommendationOptions>>().Value;

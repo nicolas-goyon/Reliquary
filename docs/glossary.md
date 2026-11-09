@@ -37,6 +37,9 @@ The French column gives the term for the French interface.
 | Visibility | Who can open a deck: only the owner (private), people with the link (unlisted) or everyone (public). | Visibilité : privé, non listé, public |
 | Purchase preferences | The rules of one deck line for purchases: wanted or avoided printings, languages, minimum condition, foil and maximum price. | Préférences d'achat |
 | Purchase list | The cards to buy to complete a deck or a variant. It is the deck list minus the available cards. | Liste d'achat |
+| Deck image | A PNG file that shows a public deck, for Discord and for forums. The web app makes it in the browser. | Image du deck |
+| Embed | A read-only view of a public deck that another site shows in an iframe. | Intégration |
+| Link preview | The title, text and image that a chat application or a forum shows for the link of a public deck. | Aperçu du lien |
 | Proxy | A printed copy of a card image that replaces the card in a test game. A proxy is not a real card. Reliquary prints proxies as a PDF file. | Proxy |
 | Transition plan | The steps from the assembled version to a variant: cards to remove from the deck, cards to take from a location and cards to buy. | Plan de transition |
 | Commander | The Magic: The Gathering format, also known as EDH. Write "commander" in lowercase for the card in the command zone. | Commander |

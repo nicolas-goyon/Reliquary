@@ -1,8 +1,11 @@
 using System.Security.Claims;
+using System.Text;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.Options;
 using Reliquary.BuildingBlocks.Api;
 using Reliquary.BuildingBlocks.Cards;
 using Reliquary.BuildingBlocks.Security;
@@ -33,6 +36,21 @@ internal static class PublicDeckEndpoints
         user.MapGet("/following", ListFollowedDecksAsync)
             .WithName("ListFollowedAuthorDecks")
             .WithSummary("Lists the public decks of the authors that the user follows, the most recent change first.");
+
+        decks.MapGet("/{deckId:guid}", GetAsync)
+            .WithName("GetPublicDeck")
+            .WithSummary("Gets one public deck: name, format, commanders, author and counts. A private, unlisted or hidden deck gives the status 404.");
+
+        decks.MapGet("/{deckId:guid}/preview", GetPreviewAsync)
+            .WithName("GetPublicDeckPreview")
+            .WithSummary("Gets the HTML tags of the link preview of a public deck: Open Graph, Twitter card and oEmbed discovery. The web server puts them in the deck page. Other decks give the status 404.")
+            .Produces<string>(StatusCodes.Status200OK, "text/html");
+
+        api.MapGet("/oembed", GetOEmbedAsync)
+            .WithTags("Public decks")
+            .AddEndpointFilter<DeckExceptionFilter>()
+            .WithName("GetOEmbed")
+            .WithSummary("Gives the oEmbed response of the link of a public deck. Only the format json is available. See https://oembed.com.");
 
         decks.MapGet("/{deckId:guid}/social", GetSocialAsync)
             .WithName("GetPublicDeckSocial")
@@ -139,6 +157,43 @@ internal static class PublicDeckEndpoints
         }
 
         return TypedResults.Ok(ToPage(await service.ListFollowedDecksAsync(user.GetAccountId(), offset, page.Limit + 1, cancellationToken), page.Limit, offset));
+    }
+
+    private static async Task<Ok<PublicDeckResponse>> GetAsync(Guid deckId, PublicDeckService service, CancellationToken cancellationToken) =>
+        TypedResults.Ok(await service.GetAsync(deckId, cancellationToken));
+
+    private static async Task<ContentHttpResult> GetPreviewAsync(
+        Guid deckId, PublicDeckService service, IOptions<DeckSharingOptions> options, HttpResponse response, CancellationToken cancellationToken)
+    {
+        var (deck, description) = await service.GetWithDescriptionAsync(deckId, cancellationToken);
+        response.Headers.CacheControl = "public, max-age=300";
+        return TypedResults.Content(DeckSharing.PreviewTags(deck, description, options.Value), "text/html", Encoding.UTF8);
+    }
+
+    private static async Task<Results<Ok<OEmbedResponse>, ProblemHttpResult>> GetOEmbedAsync(
+        PublicDeckService service,
+        IOptions<DeckSharingOptions> options,
+        string? url,
+        string? format,
+        [FromQuery(Name = "maxwidth")] int? maxWidth,
+        [FromQuery(Name = "maxheight")] int? maxHeight,
+        HttpResponse response,
+        CancellationToken cancellationToken)
+    {
+        if (format is not null && format != "json")
+        {
+            // The oEmbed specification asks for the status 501 when the provider does not give the format.
+            return ApiProblems.Problem(StatusCodes.Status501NotImplemented, DeckErrorCodes.OEmbedFormatNotAvailable, "Only the format json is available. Use format=json.");
+        }
+
+        if (DeckSharing.ReadDeckLink(url) is not { } deckId)
+        {
+            return ApiProblems.Validation(new FieldError("url", FieldErrorCodes.InvalidFormat, "Give the link of a deck page, for example https://reliquary.example.org/decks/{id}."));
+        }
+
+        var deck = await service.GetAsync(deckId, cancellationToken);
+        response.Headers.CacheControl = "public, max-age=3600";
+        return TypedResults.Ok(DeckSharing.OEmbed(deck, maxWidth, maxHeight, options.Value));
     }
 
     private static async Task<Ok<PublicDeckSocialResponse>> GetSocialAsync(Guid deckId, ClaimsPrincipal user, PublicDeckService service, CancellationToken cancellationToken) =>

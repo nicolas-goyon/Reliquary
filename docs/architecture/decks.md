@@ -165,6 +165,9 @@ When a deck is not a deck of the user, the API changes no deck and gives the sta
 | `GET /public-decks` | Anyone | Searches the public decks. See the parameters below. |
 | `GET /public-decks/favorites` | User | Lists the favorite decks of the user. |
 | `GET /public-decks/following` | User | Lists the public decks of the authors that the user follows. |
+| `GET /public-decks/{id}` | Anyone | Gets one public deck. A private, unlisted or hidden deck gives the status 404. |
+| `GET /public-decks/{id}/preview` | Anyone | Gets the HTML tags of the link preview of a public deck. See [deck sharing](#deck-sharing). |
+| `GET /oembed` | Anyone | Gives the oEmbed response of the link of a public deck. See [deck sharing](#deck-sharing). |
 | `GET /public-decks/{id}/social` | Anyone | Tells whether the deck is public and a favorite of the user, and gives its counts and its author. |
 | `PUT /public-decks/{id}/favorite` | User | Adds a public deck to the favorites. |
 | `DELETE /public-decks/{id}/favorite` | User | Removes a deck from the favorites. |
@@ -186,6 +189,26 @@ The query of `GET /public-decks` accepts these parameters:
 | `sort` | `recent` (default) or `popular`: the number of copies by other users plus the number of favorites |
 
 A visitor with no account opens an unlisted or public deck with its link: `GET /decks/{id}`.
+
+## Deck sharing
+
+[ADR 0046](../decisions/0046-deck-image-and-embed.md) gives the reasons for these rules.
+Only a public deck has an image, a link preview and an embed.
+
+- The web app draws the image of a deck in the browser and gives a PNG file. The API has no image endpoint.
+- `GET /public-decks/{id}/preview` gives `text/html`: the Open Graph tags, the Twitter card and the oEmbed discovery link.
+  The web container puts the tags in the deck page `/decks/{id}`. `og:image` is the image of the first commander.
+- `GET /oembed` accepts these query parameters:
+
+| Parameter | Values |
+| --- | --- |
+| `url` | The link of a deck page or of an embed page, for example `https://reliquary.example.org/decks/{id}`. The host is not checked. |
+| `format` | `json`, or no value. Another value gives the status 501 with the code `oembed_format_not_available`. |
+| `maxwidth`, `maxheight` | The maximum size of the iframe in pixels. The default size is 600 × 700. The minimum is 200. |
+
+The response has the type `rich`. Its `html` is an iframe on the embed page `/embed/decks/{id}`.
+A link that is not the link of a deck gives the status 400. A deck that is not public gives the status 404.
+The API makes the absolute links from the setting `Auth:PublicUrl`.
 
 ## Moderation
 

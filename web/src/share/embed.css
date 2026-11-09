@@ -1,0 +1,74 @@
+/* The embed page of a public deck. It has no application header, so it fits a small iframe. */
+.embed {
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 0.75rem 1rem;
+}
+
+.embed-header {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.embed-header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.embed-commander {
+  width: 5.5rem;
+  border-radius: 0.35rem;
+}
+
+.embed-meta {
+  margin: 0.25rem 0 0;
+  color: var(--color-text-muted);
+}
+
+.embed-groups {
+  columns: 16rem;
+  column-gap: 1.5rem;
+  padding-top: 0.5rem;
+}
+
+.embed-group {
+  break-inside: avoid;
+  margin-bottom: 0.75rem;
+}
+
+.embed-group h2 {
+  margin: 0.5rem 0 0.25rem;
+  font-size: 1rem;
+}
+
+.embed-group ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.embed-group li {
+  display: flex;
+  gap: 0.35rem;
+  align-items: center;
+  line-height: 1.6;
+}
+
+.embed-quantity {
+  min-width: 1.5rem;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.embed-name {
+  flex: 1;
+}
+
+.embed-footer {
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--color-border);
+  font-size: 0.9rem;
+}
