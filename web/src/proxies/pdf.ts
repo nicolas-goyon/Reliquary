@@ -1,4 +1,5 @@
-import type { jsPDF } from 'jspdf'
+import { readJpegInfo } from './jpeg'
+import type { PdfWriter } from './pdfWriter'
 import { cutMarks, layoutCards, pageCount, pageDimensions, type PaperSize } from './layout'
 import { expandItems, type ProxyItem } from './selection'
 
@@ -20,25 +21,23 @@ const parallelRequests = 6
 
 /**
  * Makes the PDF of a proxy list: 9 cards on each page, each card at 63 × 88 mm, with cut marks.
- * The function loads the PDF library only when it runs, so that the main bundle stays small.
+ * The function loads the PDF writer only when it runs, so that the main bundle stays small.
  * A card with no image, or with an image that does not load, gets a frame with its name.
  */
 export async function makeProxyPdf(items: readonly ProxyItem[], { paper, onProgress }: ProxyPdfOptions): Promise<ProxyPdf> {
   const cards = expandItems(items)
   const images = await loadImages(cards.map((card) => card.imageUri), onProgress)
-  const { jsPDF } = await import('jspdf')
+  const { PdfWriter } = await import('./pdfWriter')
   const page = pageDimensions[paper]
-  const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: [page.width, page.height], compress: true })
+  const pdf = new PdfWriter()
   const positions = layoutCards(cards.length, paper)
   const failed = new Set<string>()
   const pages = Math.max(1, pageCount(cards.length))
 
   for (let index = 0; index < pages; index += 1) {
-    if (index > 0) {
-      pdf.addPage([page.width, page.height], 'portrait')
-    }
+    pdf.addPage(page.width, page.height)
     pdf.setLineWidth(0.25)
-    pdf.setDrawColor(0)
+    pdf.setStrokeColor([0, 0, 0])
     for (const mark of cutMarks(paper)) {
       pdf.line(mark.x1, mark.y1, mark.x2, mark.y2)
     }
@@ -49,8 +48,8 @@ export async function makeProxyPdf(items: readonly ProxyItem[], { paper, onProgr
       const card = cards[cardIndex]
       const image = card.imageUri ? images.get(card.imageUri) : undefined
       if (image) {
-        // The address is the alias, so the PDF contains each image once, also for 4 copies of a card.
-        pdf.addImage(image, 'JPEG', position.x, position.y, position.width, position.height, card.imageUri, 'NONE')
+        // The address is the key, so the PDF contains each image once, also for 4 copies of a card.
+        pdf.image(image, position.x, position.y, position.width, position.height, card.imageUri)
         return
       }
       if (card.imageUri) {
@@ -60,18 +59,22 @@ export async function makeProxyPdf(items: readonly ProxyItem[], { paper, onProgr
     })
   }
 
-  return { blob: pdf.output('blob'), pages, failed: [...failed] }
+  return { blob: pdf.toBlob(), pages, failed: [...failed] }
 }
 
 /** Draws a frame with the card name, for a card with no image. */
-function drawPlaceholder(pdf: jsPDF, name: string, position: { x: number; y: number; width: number; height: number }): void {
+function drawPlaceholder(pdf: PdfWriter, name: string, position: { x: number; y: number; width: number; height: number }): void {
   const inset = 6
+  const fontSize = 12
+  const lineHeight = fontSize * 1.15
   pdf.setLineWidth(1)
-  pdf.roundedRect(position.x + inset, position.y + inset, position.width - 2 * inset, position.height - 2 * inset, 8, 8, 'S')
-  pdf.setFont('helvetica', 'bold')
-  pdf.setFontSize(12)
-  const lines = pdf.splitTextToSize(name, position.width - 4 * inset) as string[]
-  pdf.text(lines, position.x + position.width / 2, position.y + position.height / 2, { align: 'center', baseline: 'middle' })
+  pdf.roundedRect(position.x + inset, position.y + inset, position.width - 2 * inset, position.height - 2 * inset, 8)
+  pdf.setFont('Helvetica-Bold', fontSize)
+  const lines = pdf.splitText(name, position.width - 4 * inset)
+  const centerX = position.x + position.width / 2
+  // The lines are in the vertical center of the card, as a block.
+  const firstY = position.y + position.height / 2 - ((lines.length - 1) * lineHeight) / 2
+  lines.forEach((line, index) => pdf.text(line, centerX, firstY + index * lineHeight, { align: 'center', baseline: 'middle' }))
   pdf.setLineWidth(0.25)
 }
 
@@ -101,7 +104,10 @@ async function loadImages(uris: (string | undefined)[], onProgress?: (loaded: nu
   return images
 }
 
-/** Gets an image as JPEG data. The Scryfall images are JPEG files. The function converts an image in a different format. */
+/**
+ * Gets an image as JPEG data that the PDF can contain with no change. The Scryfall images are JPEG files.
+ * The function converts an image in a different format, or a JPEG image that PDF does not accept.
+ */
 export async function loadJpeg(uri: string): Promise<Uint8Array> {
   // The Scryfall image servers allow requests from other origins (CORS). The request sends no cookie.
   const response = await fetch(uri, { mode: 'cors', credentials: 'omit' })
@@ -111,7 +117,12 @@ export async function loadJpeg(uri: string): Promise<Uint8Array> {
   const blob = await response.blob()
   const bytes = new Uint8Array(await blob.arrayBuffer())
   if (bytes[0] === 0xff && bytes[1] === 0xd8) {
-    return bytes
+    try {
+      readJpegInfo(bytes)
+      return bytes
+    } catch {
+      // For example a 12-bit image or an image with arithmetic coding. The browser can decode it, and the canvas makes a baseline JPEG.
+    }
   }
   return convertToJpeg(blob)
 }

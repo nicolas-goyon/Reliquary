@@ -45,7 +45,7 @@ Each record gives the context, the decision and its consequences.
 | [0035](0035-moderation-of-public-content.md) | Moderation of the public content in the Decks component, with the data in the users database | Accepted |
 | [0036](0036-internal-api.md) | Internal API for the modules under `/internal/v1`, with its own OpenAPI document | Accepted |
 | [0037](0037-service-accounts-and-delegation-tokens.md) | Service accounts, delegations from the account page and delegation tokens with scopes | Accepted |
-| [0038](0038-proxy-pdf-in-the-browser.md) | The web app makes the PDF of the proxies, with jsPDF | Accepted |
+| [0038](0038-proxy-pdf-in-the-browser.md) | The web app makes the PDF of the proxies, with its own PDF writer | Accepted |
 | [0039](0039-accounts-without-email-on-development-instances.md) | Accounts without email on development instances | Accepted |
 | [0040](0040-table-engine-in-the-browser.md) | The table engine runs in the browser | Accepted |
 | [0041](0041-deck-import-from-a-link.md) | The API reads a deck from a link of Moxfield or Archidekt | Accepted |
