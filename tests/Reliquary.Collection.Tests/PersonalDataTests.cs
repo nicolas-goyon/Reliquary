@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
 using Reliquary.Accounts.PersonalData;
 using Reliquary.BuildingBlocks.Collection;
+using Reliquary.BuildingBlocks.Jobs;
 using static Reliquary.Collection.Tests.CollectionApi;
 
 namespace Reliquary.Collection.Tests;
@@ -26,8 +27,7 @@ public sealed class PersonalDataTests(CollectionInstance instance)
         await client.AddAsync(box.Id, new { name = "Forest", quantity = 12 });
 
         await client.PostAsync(new Uri("/api/v1/me/exports", UriKind.Relative), null, Cancel);
-        await instance.EnsureWorkerAsync();
-        await instance.Worker.GetRequiredService<PersonalDataService>().ProcessExportsAsync(Cancel);
+        await RunPersonalDataJobAsync();
         var exports = await client.GetFromJsonAsync<List<DataExportResponse>>(new Uri("/api/v1/me/exports", UriKind.Relative), Cancel);
         var download = await client.GetAsync(new Uri(Assert.Single(exports!).DownloadPath!, UriKind.Relative), Cancel);
         await using var stream = await download.Content.ReadAsStreamAsync(Cancel);
@@ -63,10 +63,33 @@ public sealed class PersonalDataTests(CollectionInstance instance)
         }
 
         await client.PostAsJsonAsync("/api/v1/me/deletion", new { password = "correct horse battery" }, Cancel);
-        await instance.EnsureWorkerAsync();
-        await instance.Worker.GetRequiredService<PersonalDataService>().DeleteAccountAsync(ownerId, Cancel);
+        await MakeDeletionDueAsync(ownerId);
+        await RunPersonalDataJobAsync();
 
         Assert.Empty(await FindOwnerAsync(ownerId));
+    }
+
+    /// <summary>
+    /// Runs the personal data job of the worker one time. The job makes the pending exports and deletes the accounts after the delay.
+    /// The test uses the public job, because the tests of a core component do not see the internal types of another core component.
+    /// </summary>
+    private async Task RunPersonalDataJobAsync()
+    {
+        await instance.EnsureWorkerAsync();
+        var job = instance.Worker.GetServices<IScheduledJob>().Single(job => job.Name == "accounts.personal_data");
+        await job.RunAsync(new JobRun(Force: false), Cancel);
+    }
+
+    /// <summary>
+    /// Moves the deletion request of an account to a time before the deletion delay, so that the next job run deletes the account.
+    /// </summary>
+    private async Task MakeDeletionDueAsync(Guid accountId)
+    {
+        await using var connection = new NpgsqlConnection(instance.ConnectionString);
+        var changed = await connection.ExecuteAsync(
+            "update users.accounts set deletion_requested_at = deletion_requested_at - interval '8 days' where id = @accountId and deletion_requested_at is not null",
+            new { accountId });
+        Assert.Equal(1, changed);
     }
 
     /// <summary>

@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
 using Reliquary.Accounts.PersonalData;
 using Reliquary.Accounts.ServiceAccounts;
+using Reliquary.BuildingBlocks.Jobs;
 using Reliquary.Decks.Api;
 
 namespace Reliquary.Decks.Tests;
@@ -32,7 +33,7 @@ public sealed class PersonalDataTests(DecksInstance instance)
         var serviceAccount = await DelegateAsync(client);
 
         var request = await client.PostAsync(new Uri("/api/v1/me/exports", UriKind.Relative), null, Cancel);
-        await (await ServiceAsync()).ProcessExportsAsync(Cancel);
+        await RunPersonalDataJobAsync();
         var exports = await client.GetFromJsonAsync<List<DataExportResponse>>(new Uri("/api/v1/me/exports", UriKind.Relative), Cancel);
         var ready = Assert.Single(exports!);
         var download = await client.GetAsync(new Uri(ready.DownloadPath!, UriKind.Relative), Cancel);
@@ -109,7 +110,8 @@ public sealed class PersonalDataTests(DecksInstance instance)
         var wrong = await client.PostAsJsonAsync("/api/v1/me/deletion", new { password = "wrong password" }, Cancel);
         var requested = await client.PostAsJsonAsync("/api/v1/me/deletion", new { password = "correct horse battery" }, Cancel);
         var deletion = (await requested.Content.ReadFromJsonAsync<DeletionResponse>(Cancel))!;
-        await (await ServiceAsync()).DeleteAccountAsync(accountId, Cancel);
+        await MakeDeletionDueAsync(accountId);
+        await RunPersonalDataJobAsync();
         await instance.PublishEventsAsync();
 
         Assert.Equal(HttpStatusCode.BadRequest, wrong.StatusCode);
@@ -127,11 +129,12 @@ public sealed class PersonalDataTests(DecksInstance instance)
         await client.PostAsJsonAsync("/api/v1/me/deletion", new { password = "correct horse battery" }, Cancel);
         var cancel = await client.DeleteAsync(new Uri("/api/v1/me/deletion", UriKind.Relative), Cancel);
         var state = await client.GetFromJsonAsync<DeletionResponse>(new Uri("/api/v1/me/deletion", UriKind.Relative), Cancel);
-        var deleted = await (await ServiceAsync()).ProcessDeletionsAsync(Cancel);
+        await RunPersonalDataJobAsync();
+        var me = await client.GetAsync(new Uri("/api/v1/me", UriKind.Relative), Cancel);
 
         Assert.Equal(HttpStatusCode.NoContent, cancel.StatusCode);
         Assert.Null(state!.RequestedAt);
-        Assert.Equal(0, deleted);
+        Assert.Equal(HttpStatusCode.OK, me.StatusCode);
     }
 
     /// <summary>
@@ -148,10 +151,27 @@ public sealed class PersonalDataTests(DecksInstance instance)
         return name;
     }
 
-    private async Task<PersonalDataService> ServiceAsync()
+    /// <summary>
+    /// Runs the personal data job of the worker one time. The job makes the pending exports and deletes the accounts after the delay.
+    /// The test uses the public job, because the tests of a core component do not see the internal types of another core component.
+    /// </summary>
+    private async Task RunPersonalDataJobAsync()
     {
         await instance.EnsureWorkerAsync();
-        return instance.Worker.GetRequiredService<PersonalDataService>();
+        var job = instance.Worker.GetServices<IScheduledJob>().Single(job => job.Name == "accounts.personal_data");
+        await job.RunAsync(new JobRun(Force: false), Cancel);
+    }
+
+    /// <summary>
+    /// Moves the deletion request of an account to a time before the deletion delay, so that the next job run deletes the account.
+    /// </summary>
+    private async Task MakeDeletionDueAsync(Guid accountId)
+    {
+        await using var connection = new NpgsqlConnection(instance.ConnectionString);
+        var changed = await connection.ExecuteAsync(
+            "update users.accounts set deletion_requested_at = deletion_requested_at - interval '8 days' where id = @accountId and deletion_requested_at is not null",
+            new { accountId });
+        Assert.Equal(1, changed);
     }
 
     /// <summary>
