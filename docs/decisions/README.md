@@ -47,11 +47,12 @@ Each record gives the context, the decision and its consequences.
 | [0037](0037-service-accounts-and-delegation-tokens.md) | Service accounts, delegations from the account page and delegation tokens with scopes | Accepted |
 | [0038](0038-proxy-pdf-in-the-browser.md) | The web app makes the PDF of the proxies, with jsPDF | Accepted |
 | [0039](0039-accounts-without-email-on-development-instances.md) | Accounts without email on development instances | Accepted |
-| [0040](0040-table-engine-in-the-browser.md) | The table engine runs in the browser | Accepted |
+| [0040](0040-table-engine-in-the-browser.md) | The table engine runs in the browser | Accepted. Amended by 0047 |
 | [0041](0041-deck-import-from-a-link.md) | The API reads a deck from a link of Moxfield or Archidekt | Accepted |
 | [0042](0042-deployed-instances-and-updates.md) | Deployed instances with the published images, the script `reliquary-update`, and the migration rules | Accepted |
 | [0043](0043-releases-with-release-please.md) | Releases with release-please on `main`, and a changelog written by hand | Accepted |
 | [0044](0044-powershell-update-script-for-windows.md) | The script `reliquary-update.ps1` for PowerShell on Windows, with the same commands and files as `reliquary-update` | Accepted |
+| [0047](0047-trusted-server-for-online-games.md) | Online games use a trusted server: the API keeps the full state, and each player gets only their view | Accepted |
 
 ## Open decisions
 
