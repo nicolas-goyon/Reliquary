@@ -1,5 +1,4 @@
 import i18n from 'i18next'
-import LanguageDetector from 'i18next-browser-languagedetector'
 import { initReactI18next } from 'react-i18next'
 import enAccount from '../locales/en/account.json'
 import enAuth from '../locales/en/auth.json'
@@ -21,6 +20,7 @@ import frModeration from '../locales/fr/moderation.json'
 import frPlaytest from '../locales/fr/playtest.json'
 import frPurchases from '../locales/fr/purchases.json'
 import frVersions from '../locales/fr/versions.json'
+import { browserStore, detectLanguage, storeLanguage } from './detectLanguage'
 
 /** The interface languages. English is the source language. */
 export const supportedLanguages = ['en', 'fr'] as const
@@ -41,15 +41,25 @@ export function isSupportedLanguage(language: string | undefined): language is S
   return supportedLanguages.some((supported) => supported === language)
 }
 
+const store = browserStore()
+
 i18n.on('languageChanged', (language) => {
   document.documentElement.lang = language
+  // "cimode" shows the keys. It is not a language of the user.
+  if (language !== 'cimode') storeLanguage(store, languageStorageKey, language)
 })
 
 void i18n
-  .use(LanguageDetector)
   .use(initReactI18next)
   .init({
     resources,
+    lng: detectLanguage({
+      supported: supportedLanguages,
+      fallback: 'en',
+      storageKey: languageStorageKey,
+      store,
+      source: typeof navigator === 'undefined' ? undefined : navigator,
+    }),
     supportedLngs: supportedLanguages,
     fallbackLng: 'en',
     nonExplicitSupportedLngs: true,
@@ -59,11 +69,6 @@ void i18n
     interpolation: {
       // React escapes the values. Escaping them twice shows HTML entities.
       escapeValue: false,
-    },
-    detection: {
-      order: ['localStorage', 'navigator'],
-      caches: ['localStorage'],
-      lookupLocalStorage: languageStorageKey,
     },
   })
 
