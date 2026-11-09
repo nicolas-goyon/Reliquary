@@ -558,5 +558,35 @@
     "error": "The application cannot make the PDF. Examine the network connection, then try again.",
     "submit": "Make the PDF",
     "close": "Close"
+  },
+  "share": {
+    "open": "Share as image or embed",
+    "title": "Share the deck",
+    "imageTitle": "Image",
+    "imageHint": "The application makes a PNG file for Discord and for forums. Your browser makes the file: the server does not get it.",
+    "style": "Style of the image",
+    "styles": {
+      "list": "Commander art and list by card type",
+      "grid": "Card images"
+    },
+    "download": "Download the image",
+    "working": "The application makes the image.",
+    "done": "The image is ready. The browser downloads the file.",
+    "failed_one": "{{count}} card image did not load. The image shows a frame with the card name in its place.",
+    "failed_other": "{{count}} card images did not load. The image shows a frame with the card name in their place.",
+    "error": "The application cannot make the image. Examine the network connection, then try again.",
+    "embedTitle": "Embed",
+    "embedHint": "Put this HTML code on a web page to show the deck. The deck must stay public: a private or unlisted deck does not show.",
+    "embedCode": "HTML code of the embed",
+    "copyCode": "Copy the code",
+    "codeCopied": "The application copied the code.",
+    "close": "Close",
+    "byAuthor": "by {{name}}",
+    "groupTitle": "{{name}} ({{count}})"
+  },
+  "embed": {
+    "missingTitle": "Deck not available",
+    "missing": "This deck is not public, or it does not exist.",
+    "open": "Open the deck on Reliquary"
   }
 }

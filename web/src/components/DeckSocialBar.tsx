@@ -6,15 +6,18 @@ import { useAuth } from '../auth/session'
 import { Link } from '../router/Link'
 import { ErrorAlert } from './Forms'
 import { ReportButton } from './moderation/ReportDialog'
+import { ShareDialog } from '../share/ShareDialog'
 
 /**
  * The social bar of a deck: the author, the favorite button, the counts, and the share link of an unlisted or public deck.
+ * A public deck also gets the image and the embed. An unlisted deck does not, because other sites must not show it.
  */
 export function DeckSocialBar({ deck }: { deck: Deck }) {
   const { t } = useTranslation('decks')
   const { state, request } = useAuth()
   const [social, setSocial] = useState<PublicDeckSocial | null>(null)
   const [copied, setCopied] = useState(false)
+  const [sharing, setSharing] = useState(false)
   const [error, setError] = useState<unknown>(null)
 
   useEffect(() => {
@@ -74,6 +77,12 @@ export function DeckSocialBar({ deck }: { deck: Deck }) {
       <button type="button" onClick={() => void share()}>
         {t('social.share')}
       </button>
+      {social?.public && (
+        <button type="button" onClick={() => setSharing(true)}>
+          {t('share.open')}
+        </button>
+      )}
+      {sharing && social?.public && <ShareDialog deck={deck} author={social.author?.displayName ?? ''} onClose={() => setSharing(false)} />}
       {copied && (
         <span role="status" className="field-hint">
           {t('social.copied')}

@@ -558,5 +558,35 @@
     "error": "L’application ne peut pas générer le PDF. Vérifiez la connexion réseau, puis réessayez.",
     "submit": "Générer le PDF",
     "close": "Fermer"
+  },
+  "share": {
+    "open": "Partager en image ou intégrer",
+    "title": "Partager le deck",
+    "imageTitle": "Image",
+    "imageHint": "L’application crée un fichier PNG pour Discord et les forums. Le navigateur crée le fichier : le serveur ne le reçoit pas.",
+    "style": "Style de l’image",
+    "styles": {
+      "list": "Illustration du commandant et liste par type de carte",
+      "grid": "Images des cartes"
+    },
+    "download": "Télécharger l’image",
+    "working": "Création de l’image en cours…",
+    "done": "L’image est prête. Le navigateur télécharge le fichier.",
+    "failed_one": "{{count}} image de carte n’a pas pu être chargée. L’image affiche un cadre avec le nom de la carte à sa place.",
+    "failed_other": "{{count}} images de cartes n’ont pas pu être chargées. L’image affiche un cadre avec le nom de la carte à leur place.",
+    "error": "Impossible de créer l’image. Vérifiez la connexion réseau, puis réessayez.",
+    "embedTitle": "Intégration",
+    "embedHint": "Collez ce code HTML dans une page web pour afficher le deck. Le deck doit rester public : un deck privé ou non listé ne s’affiche pas.",
+    "embedCode": "Code HTML d’intégration",
+    "copyCode": "Copier le code",
+    "codeCopied": "Code copié.",
+    "close": "Fermer",
+    "byAuthor": "par {{name}}",
+    "groupTitle": "{{name}} ({{count}})"
+  },
+  "embed": {
+    "missingTitle": "Deck indisponible",
+    "missing": "Ce deck n’est pas public, ou il n’existe pas.",
+    "open": "Ouvrir le deck sur Reliquary"
   }
 }

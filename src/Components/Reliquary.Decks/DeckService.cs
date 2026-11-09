@@ -830,4 +830,7 @@ public static class DeckErrorCodes
 
     /// <summary>The other site did not give the deck.</summary>
     public const string LinkSiteFailed = "deck_link_site_failed";
+
+    /// <summary>The oEmbed endpoint does not give this format. Only <c>json</c> is available.</summary>
+    public const string OEmbedFormatNotAvailable = "oembed_format_not_available";
 }

@@ -24,6 +24,33 @@ internal sealed class PublicDeckService(DeckStore store, ICardCatalog catalog, I
     }
 
     /// <summary>
+    /// Gets one public deck from the read model.
+    /// </summary>
+    /// <exception cref="DeckException">The deck is not a public deck. A private, unlisted, hidden or deleted deck is not a public deck.</exception>
+    public async Task<PublicDeckResponse> GetAsync(Guid deckId, CancellationToken cancellationToken) =>
+        (await GetWithDescriptionAsync(deckId, cancellationToken)).Deck;
+
+    /// <summary>
+    /// Gets one public deck from the read model, with its description.
+    /// </summary>
+    /// <exception cref="DeckException">The deck is not a public deck.</exception>
+    public async Task<(PublicDeckResponse Deck, string Description)> GetWithDescriptionAsync(Guid deckId, CancellationToken cancellationToken)
+    {
+        PublicDeckRow? row;
+        await using (var connection = await store.OpenUsersAsync(cancellationToken))
+        {
+            row = await PublicDeckStore.FindAsync(connection, deckId, cancellationToken);
+        }
+
+        if (row is null)
+        {
+            throw DeckException.NotFound();
+        }
+
+        return ((await ToResponsesAsync([row], cancellationToken))[0], row.Description);
+    }
+
+    /// <summary>
     /// Gets the public decks of the authors that a user follows, the most recent change first.
     /// </summary>
     public async Task<IReadOnlyList<PublicDeckResponse>> ListFollowedDecksAsync(Guid userId, int offset, int limit, CancellationToken cancellationToken)

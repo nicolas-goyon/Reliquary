@@ -24,6 +24,7 @@ USER root
 RUN rm -f /etc/nginx/conf.d/default.conf
 USER 101
 COPY nginx.conf.template /etc/nginx/templates/default.conf.template
+COPY nginx-headers.conf /etc/nginx/reliquary-headers.conf
 COPY --chmod=755 nginx-resolver.sh /docker-entrypoint.d/15-reliquary-resolver.sh
 COPY --from=build /web/dist /usr/share/nginx/html
 EXPOSE 8080

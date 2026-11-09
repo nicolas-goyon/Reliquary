@@ -52,6 +52,7 @@ public sealed class DecksInstance : IAsyncDisposable
                     builder.UseSetting("Auth:RequireCheckedEmail", "false");
                     builder.UseSetting("Auth:RequestsPerMinute", "100000");
                     builder.UseSetting("Auth:AdministratorEmails:0", AdministratorEmail);
+                    builder.UseSetting("Auth:PublicUrl", "https://reliquary.test");
                     builder.UseSetting("Moderation:ReportsPerDay", ReportsPerDay.ToString(System.Globalization.CultureInfo.InvariantCulture));
                 });
             }

@@ -27,6 +27,7 @@ import { PlayerWindowPage } from './pages/PlayerWindowPage'
 import { TableWindowPage } from './pages/TableWindowPage'
 import { gameIdPattern } from './playtest/gameId'
 import { TransitionPlanPage } from './pages/TransitionPlanPage'
+import { EmbedDeckPage } from './share/EmbedDeckPage'
 import { AuthProvider } from './auth/AuthProvider'
 import { useAuth } from './auth/session'
 import { LanguageSwitcher } from './components/LanguageSwitcher'
@@ -100,9 +101,19 @@ function createCoreRegistry(): SlotRegistry {
   return registry
 }
 
+/** The embed pages: other sites show them in an iframe. See docs/decisions/0046-deck-image-and-embed.md. */
+const embedPattern = /^\/embed\/decks\/([0-9a-f-]{36})$/
+
 /** The application: the providers, the shell and the pages. */
 export function App({ registry }: { registry?: SlotRegistry }) {
   const [slotRegistry] = useState(() => registry ?? createCoreRegistry())
+  const location = useLocation()
+  const embed = location.pathname.match(embedPattern)
+
+  // An embed page has no shell and no session: it does not ask the refresh cookie, and it shows only public data.
+  if (embed) {
+    return <EmbedDeckPage key={embed[1]} id={embed[1]} />
+  }
 
   return (
     <SlotRegistryContext.Provider value={slotRegistry}>

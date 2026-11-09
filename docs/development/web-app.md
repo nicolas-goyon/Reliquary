@@ -78,6 +78,13 @@ The Nginx configuration of the web image (`web/nginx.conf.template`) applies the
 | `/assets/` | `public, max-age=31536000, immutable` | The file names contain a hash. |
 | Other paths | `no-cache` | `index.html`, the icons and the pages of the router |
 
+The configuration also applies these rules for the deck sharing ([ADR 0046](../decisions/0046-deck-image-and-embed.md)):
+
+- The deck pages `/decks/{id}` use server side includes. Nginx puts the link preview tags of a public deck in the head of `index.html`.
+- The embed pages `/embed/decks/{id}` give the status 404 for a deck that is not public. Nginx asks the API with `auth_request`.
+- The embed pages send `Content-Security-Policy: frame-ancestors *`, so other sites can show them in an iframe.
+  All the other pages send `frame-ancestors 'self'` and `X-Frame-Options: SAMEORIGIN`. The file `web/nginx-headers.conf` gives these headers.
+
 A different reverse proxy must apply the same settings.
 A long cache time on `/sw.js` stops the updates.
 
