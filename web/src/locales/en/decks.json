@@ -161,6 +161,14 @@
       "other": "The deck has a problem."
     }
   },
+  "note": {
+    "label": "Note for {{name}}",
+    "add": "Add a note",
+    "addLabel": "Add a note for {{name}}",
+    "edit": "Edit the note",
+    "editLabel": "Edit the note for {{name}}",
+    "save": "Save the note"
+  },
   "text": {
     "title": "Text mode",
     "help": "One card for each line: quantity, name, optional set and number, #tags and -- note. The sections are Commander, Main, Sideboard, Considering and Tokens.",
@@ -467,7 +475,8 @@
       "manaValue": "Mana value",
       "type": "Type",
       "labels": "Tags and categories",
-      "printing": "Printing"
+      "printing": "Printing",
+      "note": "Note"
     },
     "selectAll": "Select all the lines",
     "select": "Select {{name}}",

@@ -157,6 +157,25 @@ public sealed class DeckEndpointTests(DecksInstance instance)
     }
 
     [Fact]
+    public async Task OwnerSetsChangesAndClearsTheNoteOfALine()
+    {
+        using var client = await instance.NewUserAsync();
+        var deck = await CreateAsync(client, new { name = "Sol Ring" });
+        var lineId = deck.Lines.Single().Id;
+        var path = $"/api/v1/decks/{deck.Id}/lines/{lineId}";
+
+        var set = await SendAsync(client, HttpMethod.Patch, path, new { note = "  Fast mana on turn one " });
+        var other = await SendAsync(client, HttpMethod.Patch, path, new { quantity = 2 });
+        var tooLong = await client.PatchAsJsonAsync(path, new { note = new string('a', 501) }, Cancel);
+        var cleared = await SendAsync(client, HttpMethod.Patch, path, new { note = "" });
+
+        Assert.Equal("Fast mana on turn one", set.Lines.Single().Note);
+        Assert.Equal("Fast mana on turn one", other.Lines.Single().Note);
+        Assert.Equal(HttpStatusCode.BadRequest, tooLong.StatusCode);
+        Assert.Equal(string.Empty, cleared.Lines.Single().Note);
+    }
+
+    [Fact]
     public async Task DeckListHasPagesAndTheMostRecentChangeFirst()
     {
         using var client = await instance.NewUserAsync();
