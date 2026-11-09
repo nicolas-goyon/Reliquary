@@ -84,7 +84,7 @@ internal static class DeckLineEndpoints
                 request.ClearPrinting == true,
                 request.Finish,
                 request.ClearFinish == true,
-                request.Note,
+                request.Note?.Trim(),
                 Clean(request.Tags),
                 Clean(request.GlobalTags),
                 request.Categories,

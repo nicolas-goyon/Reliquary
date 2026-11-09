@@ -16,6 +16,7 @@ import { DeckTable } from '../components/deck-table/DeckTable'
 import { HiddenNotice } from '../components/moderation/HiddenNotice'
 import { ErrorAlert, TextField } from '../components/Forms'
 import { LineErrorList } from '../components/LineErrors'
+import { LineNote } from '../components/LineNote'
 import { ManaCost } from '../components/ManaCost'
 import { PurchasePreferencesDialog } from '../components/purchases/PurchasePreferencesDialog'
 import { RecommendationsPanel } from '../components/recommendations/RecommendationsPanel'
@@ -399,6 +400,11 @@ function LineItem({ deck, line, owner, change, onChange }: LineItemProps) {
           <button type="button" className="button-small button-danger" aria-label={t('editor.remove', { name })} onClick={() => void change(`/lines/${line.id}`, 'DELETE')}>
             ×
           </button>
+        </span>
+      )}
+      {(owner || line.note) && (
+        <span className="deck-line-note">
+          <LineNote deck={deck} line={line} name={name} editable={owner} onChange={onChange} />
         </span>
       )}
       {owner && preferencesOpen && <PurchasePreferencesDialog deck={deck} line={line} onSaved={onChange} onClose={() => setPreferencesOpen(false)} />}

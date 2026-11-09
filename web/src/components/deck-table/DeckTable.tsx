@@ -7,6 +7,7 @@ import { Link } from '../../router/Link'
 import { useSlotContributions } from '../../slots/registry'
 import { SlotItem } from '../../slots/Slot'
 import { ErrorAlert } from '../Forms'
+import { LineNote } from '../LineNote'
 import { GroupActionBar } from './GroupActionBar'
 import { clickLine, emptySelection, lineName, noFilters, visibleLines, type GroupChange, type LineGroupBody, type Selection, type SortKey, type TableFilters, type TableSort } from './deckTable'
 
@@ -147,6 +148,7 @@ export function DeckTable({ deck, onChange }: DeckTableProps) {
               ))}
               <th scope="col">{t('table.columns.labels')}</th>
               <th scope="col">{t('table.columns.printing')}</th>
+              <th scope="col">{t('table.columns.note')}</th>
               {extraColumns.map((contribution) => (
                 <th key={contribution.id} scope="col" data-contribution={contribution.id}>
                   <SlotItem slot="table.columns" contribution={contribution} context={{ deckId: deck.id, part: 'header' }} />
@@ -157,7 +159,7 @@ export function DeckTable({ deck, onChange }: DeckTableProps) {
           <tbody>
             {lines.length === 0 && (
               <tr>
-                <td colSpan={8 + extraColumns.length}>{t('table.empty')}</td>
+                <td colSpan={9 + extraColumns.length}>{t('table.empty')}</td>
               </tr>
             )}
             {lines.map((line) => {
@@ -210,6 +212,9 @@ export function DeckTable({ deck, onChange }: DeckTableProps) {
                   <td>
                     {printing ? `${printing.setCode.toUpperCase()} ${printing.collectorNumber} (${printing.lang})` : t('table.defaultPrintingShort')}
                     {line.finish && <span className="badge">{t(`finishes.${line.finish === 'etched' ? 'etched' : line.finish === 'foil' ? 'foil' : 'nonfoil'}`)}</span>}
+                  </td>
+                  <td className="deck-table-note">
+                    <LineNote deck={deck} line={line} name={name} editable onChange={onChange} />
                   </td>
                   {extraColumns.map((contribution) => (
                     <td key={contribution.id} data-contribution={contribution.id}>

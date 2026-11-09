@@ -161,6 +161,14 @@
       "other": "Le deck a un problème."
     }
   },
+  "note": {
+    "label": "Note pour {{name}}",
+    "add": "Ajouter une note",
+    "addLabel": "Ajouter une note pour {{name}}",
+    "edit": "Modifier la note",
+    "editLabel": "Modifier la note pour {{name}}",
+    "save": "Enregistrer la note"
+  },
   "text": {
     "title": "Mode texte",
     "help": "Une carte par ligne : quantité, nom, puis édition et numéro facultatifs, #tags et -- note. Les sections sont Commander, Main, Sideboard, Considering et Tokens.",
@@ -467,7 +475,8 @@
       "manaValue": "Valeur de mana",
       "type": "Type",
       "labels": "Tags et catégories",
-      "printing": "Impression"
+      "printing": "Impression",
+      "note": "Note"
     },
     "selectAll": "Sélectionner toutes les lignes",
     "select": "Sélectionner {{name}}",
