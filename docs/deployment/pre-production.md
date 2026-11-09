@@ -43,17 +43,17 @@ Use PowerShell and the script `reliquary-update.ps1`. You need only Docker Deskt
 [Install the software](requirements.md#install-the-software) tells how to install it and how to let PowerShell run the script.
 
 1. Start Docker Desktop, and open PowerShell.
-2. Make a folder for the instance, and get the script from the CLI image:
+2. Make a folder for the instance, and download the script [`reliquary-update.ps1`](https://nicolas-goyon.github.io/reliquary/downloads/reliquary-update.ps1):
 
    ```powershell
    New-Item -ItemType Directory -Path "$HOME\reliquary-preprod" | Out-Null
    Set-Location "$HOME\reliquary-preprod"
-   $container = docker create ghcr.io/nicolas-goyon/reliquary-cli:develop
-   docker cp "$($container):/app/deploy/reliquary-update.ps1" .
-   docker rm $container | Out-Null
+   Invoke-WebRequest -Uri https://nicolas-goyon.github.io/reliquary/downloads/reliquary-update.ps1 -OutFile reliquary-update.ps1
+   Unblock-File .\reliquary-update.ps1
    ```
 
-   Get the script from the image `develop` also for a release. This script works with all the versions.
+   The script works with all the versions. After each update, it replaces itself with the script of the new version.
+   When you download the script with the link, put it in the folder of the instance, then run `Unblock-File`. Without this command, PowerShell asks for a signature.
 
 3. Make the `.env` file with new secrets:
 
@@ -101,13 +101,15 @@ Do not use Git Bash: see [Git Bash](requirements.md#git-bash).
 
 ### With no clone
 
-1. Make a folder for the instance, and get the script from the CLI image:
+1. Make a folder for the instance, and download the script [`reliquary-update`](https://nicolas-goyon.github.io/reliquary/downloads/reliquary-update):
 
    ```shell
    mkdir ~/reliquary-preprod && cd ~/reliquary-preprod
-   docker run --rm --entrypoint cat ghcr.io/nicolas-goyon/reliquary-cli:develop /app/deploy/reliquary-update > reliquary-update
+   curl --fail --location --output reliquary-update https://nicolas-goyon.github.io/reliquary/downloads/reliquary-update
    chmod +x reliquary-update
    ```
+
+   The script works with all the versions. After each update, it replaces itself with the script of the new version.
 
 2. Make the `.env` file with new secrets:
 

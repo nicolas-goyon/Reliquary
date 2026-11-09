@@ -63,11 +63,11 @@ ssh your-user@your-server
    sudo usermod --append --groups docker reliquary
    ```
 
-2. As this user, make the folder of the instance and get the script of the release:
+2. As this user, make the folder of the instance, download the script and make the `.env` file:
 
    ```shell
    mkdir ~/reliquary && cd ~/reliquary
-   docker run --rm --entrypoint cat ghcr.io/nicolas-goyon/reliquary-cli:0.2.0 /app/deploy/reliquary-update > reliquary-update
+   curl --fail --location --output reliquary-update https://nicolas-goyon.github.io/reliquary/downloads/reliquary-update
    chmod +x reliquary-update
    ./reliquary-update --init 0.2.0
    ```
