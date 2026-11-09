@@ -1,6 +1,7 @@
 using System.Buffers.Text;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using Reliquary.BuildingBlocks;
@@ -29,7 +30,28 @@ internal sealed record SeatRequest(Guid? AccountId, string Nickname, DeckChoice 
 /// <param name="Seat">The seat of the player.</param>
 /// <param name="Token">The game token.</param>
 /// <param name="TokenExpiresAt">The time when the token stops being valid.</param>
-internal sealed record SeatGrant(OnlineGame Game, int Seat, string Token, DateTimeOffset TokenExpiresAt);
+internal sealed record SeatGrant(OnlineGame Game, int Seat, string Token, DateTimeOffset TokenExpiresAt, long Seq = 0);
+
+/// <summary>
+/// A change of an online game that the players must get: the game after the change, its sequence number, the seat that did it and its public text.
+/// </summary>
+/// <param name="Game">The game after the change.</param>
+/// <param name="Seq">The sequence number of the change.</param>
+/// <param name="ActorSeat">The seat that did the change.</param>
+/// <param name="Log">The public text of the change, for example "Ana drew 2 cards".</param>
+/// <param name="Before">The table before the change, or <see langword="null"/> for a change of the lobby or for the start.</param>
+internal sealed record GameUpdate(OnlineGame Game, long Seq, int ActorSeat, string Log, TableState? Before = null);
+
+/// <summary>
+/// The result of an action of a player.
+/// </summary>
+/// <param name="Seq">The sequence number of the action, when the service accepted it.</param>
+/// <param name="Rejected">The reason code, when the service refused the action. See <see cref="ActionRejections"/>.</param>
+/// <param name="Update">The change to send to the players, or <see langword="null"/> for a refused action or a repeated action.</param>
+internal sealed record ActResult(long? Seq, string? Rejected, GameUpdate? Update)
+{
+    public static ActResult Refuse(string code) => new(null, code, null);
+}
 
 /// <summary>
 /// Creates the online games, gives the seats and the game tokens, and keeps the lobby. See docs/architecture/online-games.md.
@@ -119,7 +141,7 @@ internal sealed class GameService(
         var (deck, _) = await ResolveDeckAsync(player.AccountId, player.Deck, cancellationToken);
 
         SeatGrant? grant = null;
-        await ChangeAsync(gameId, first, game =>
+        var (_, seq) = await ChangeAsync(gameId, first, game =>
         {
             CheckInvite(game, inviteSecret);
             var seat = (player.AccountId is { } accountId ? game.FindAccountSeat(accountId)?.Seat : null)
@@ -130,7 +152,7 @@ internal sealed class GameService(
             grant = new SeatGrant(changed, seat, token, expiresAt);
             return (changed, Change(seat, "join"));
         });
-        return grant!;
+        return grant! with { Seq = seq };
     }
 
     /// <summary>
@@ -149,11 +171,11 @@ internal sealed class GameService(
     /// Makes a new invite secret. The old invite link stops being valid. Only the host can do it, before the start.
     /// </summary>
     /// <returns>The game and the new secret.</returns>
-    public async Task<(OnlineGame Game, string InviteSecret)> NewInviteAsync(Guid gameId, string? token)
+    public async Task<(GameUpdate Update, string InviteSecret)> NewInviteAsync(Guid gameId, string? token)
     {
         var (stored, seat) = await AuthorizeAsync(gameId, token);
         string? secret = null;
-        var game = await ChangeAsync(gameId, stored, game =>
+        var (game, seq) = await ChangeAsync(gameId, stored, game =>
         {
             CheckHost(seat);
             CheckLobby(game);
@@ -162,16 +184,17 @@ internal sealed class GameService(
             var now = time.GetUtcNow();
             return (game with { InviteHash = hash, InviteExpiresAt = Min(now + Settings.InviteLifetime, game.EndsAt) }, Change(seat, "invite"));
         });
-        return (game, secret!);
+        return (new GameUpdate(game, seq, seat, "The host made a new invite link."), secret!);
     }
 
     /// <summary>
     /// Removes a player from a seat. The game token of the seat stops being valid. Only the host can do it, and the host cannot remove the host.
     /// </summary>
-    public async Task<OnlineGame> KickAsync(Guid gameId, string? token, int kickedSeat)
+    public async Task<GameUpdate> KickAsync(Guid gameId, string? token, int kickedSeat)
     {
         var (stored, seat) = await AuthorizeAsync(gameId, token);
-        return await ChangeAsync(gameId, stored, game =>
+        var nickname = string.Empty;
+        var (changed, seq) = await ChangeAsync(gameId, stored, game =>
         {
             CheckHost(seat);
             CheckLobby(game);
@@ -180,18 +203,136 @@ internal sealed class GameService(
                 throw ApiNotFound("The seat has no player, or it is the seat of the host.");
             }
 
+            nickname = game.FindSeat(kickedSeat)!.Nickname;
             return (game with { Seats = [.. game.Seats.Where(item => item.Seat != kickedSeat)] }, Change(seat, "kick"));
         });
+        return new GameUpdate(changed, seq, seat, $"The host removed {nickname} from the game.");
     }
 
     /// <summary>
     /// Closes a game. All its data goes out of Redis. Only the host can do it.
     /// </summary>
-    public async Task CloseAsync(Guid gameId, string? token)
+    public async Task<OnlineGame> CloseAsync(Guid gameId, string? token)
     {
         var (stored, seat) = await AuthorizeAsync(gameId, token);
         CheckHost(seat);
         await DeleteAsync(stored.State);
+        return stored.State;
+    }
+
+    /// <summary>
+    /// Gets the game, its sequence number and the seat of a game token. The hub uses it for the snapshots.
+    /// </summary>
+    /// <returns>The game with its sequence number, and the seat of the token.</returns>
+    public Task<(StoredGame<OnlineGame> Game, int Seat)> ReadForSeatAsync(Guid gameId, string? token) => AuthorizeAsync(gameId, token);
+
+    /// <summary>
+    /// Starts the game: the table engine makes the table with the decks of the seats and a random seed. Only the host can do it,
+    /// with 2 players or more. The seed stays on the server. The invite link stops.
+    /// </summary>
+    public async Task<GameUpdate> StartAsync(Guid gameId, string? token)
+    {
+        var (stored, seat) = await AuthorizeAsync(gameId, token);
+        var (game, seq) = await ChangeAsync(gameId, stored, game =>
+        {
+            CheckHost(seat);
+            CheckLobby(game);
+            if (game.Seats.Count < Settings.MinSeats)
+            {
+                throw new GameException(StatusCodes.Status409Conflict, PlaytestErrorCodes.NotEnoughPlayers, $"The game needs {Settings.MinSeats} players or more to start.");
+            }
+
+            var setups = game.Seats.Select(item => new PlayerSetup(OnlineGame.PlayerId(item.Seat), item.Nickname, item.Deck.Library, item.Deck.Command)).ToList();
+            var commander = game.Format == "commander" || game.Seats.Any(item => item.Deck.Command.Count > 0);
+            var seed = (long)BitConverter.ToUInt32(RandomNumberGenerator.GetBytes(4));
+            var table = TableEngine.CreateTable(setups, seed, game.Format == "commander" ? 40 : 20, commander);
+            var now = time.GetUtcNow();
+            return (game with { Status = GameStatuses.Started, Table = table, InviteExpiresAt = Min(now, game.InviteExpiresAt) }, Change(seat, "start"));
+        });
+        return new GameUpdate(game, seq, seat, "The game started.");
+    }
+
+    /// <summary>
+    /// A player leaves the game. In the lobby, the seat becomes free and the token of the seat stops; when the host leaves, the game closes.
+    /// After the start, the seat and its cards stay, so the player can come back with the same token.
+    /// </summary>
+    /// <returns>The change of the lobby, or <see langword="null"/> when nothing changed. <c>Closed</c> is true when the game closed.</returns>
+    public async Task<(GameUpdate? Update, bool Closed)> LeaveAsync(Guid gameId, string? token)
+    {
+        var (stored, seat) = await AuthorizeAsync(gameId, token);
+        if (stored.State.Status != GameStatuses.Lobby)
+        {
+            return (null, false);
+        }
+
+        if (seat == OnlineGame.HostSeat)
+        {
+            await DeleteAsync(stored.State);
+            return (null, true);
+        }
+
+        var nickname = stored.State.FindSeat(seat)!.Nickname;
+        var (game, seq) = await ChangeAsync(gameId, stored, game =>
+        {
+            CheckLobby(game);
+            return (game with { Seats = [.. game.Seats.Where(item => item.Seat != seat)] }, Change(seat, "leave"));
+        });
+        return (new GameUpdate(game, seq, seat, $"{nickname} left the game."), false);
+    }
+
+    /// <summary>
+    /// Applies an action of a player to the table with a compare-and-set. After a conflict, the service reads the game again,
+    /// checks the action again and applies it again. A repeated client action ID gives the sequence number of the first action.
+    /// </summary>
+    /// <param name="gameId">The game.</param>
+    /// <param name="token">The game token of the player.</param>
+    /// <param name="clientActionId">The ID that the client gave to the action.</param>
+    /// <param name="action">The action.</param>
+    /// <returns>The result.</returns>
+    public async Task<ActResult> ActAsync(Guid gameId, string? token, string clientActionId, TableAction action)
+    {
+        var (current, seat) = await AuthorizeAsync(gameId, token);
+        if (string.IsNullOrEmpty(clientActionId) || clientActionId.Length > GameStore<OnlineGame>.MaxClientActionIdLength)
+        {
+            return ActResult.Refuse(ActionRejections.InvalidAction);
+        }
+
+        var playerId = OnlineGame.PlayerId(seat);
+        for (var attempt = 0; attempt < MaxAttempts; attempt++)
+        {
+            var game = current.State;
+            if (game.Status != GameStatuses.Started || game.Table is null)
+            {
+                return ActResult.Refuse(ActionRejections.NotStarted);
+            }
+
+            if (ActionRules.Check(game.Table, playerId, action) is { } rejection)
+            {
+                return ActResult.Refuse(rejection);
+            }
+
+            var table = TableEngine.Apply(game.Table, action);
+            var entry = new GameChange(seat, clientActionId, JsonSerializer.Serialize(action, TableJson.Options));
+            var result = await store.WriteAsync(GameKeys.Id(gameId), current.Seq, game with { Table = table }, entry);
+            switch (result.Status)
+            {
+                case GameWriteStatus.Written:
+                    var nickname = game.FindSeat(seat)?.Nickname ?? playerId;
+                    return new ActResult(result.Seq, null, new GameUpdate(game with { Table = table }, result.Seq, seat, ActionRules.Describe(nickname, game.Table, action), game.Table));
+                case GameWriteStatus.Duplicate:
+                    return new ActResult(result.Seq, null, null);
+                case GameWriteStatus.NotFound:
+                    return ActResult.Refuse(ActionRejections.GameClosed);
+            }
+
+            current = await ReadAsync(gameId) ?? throw ApiNotFound("The game does not exist or it ended.");
+            if (current.State.FindSeat(seat) is null)
+            {
+                throw GameException.TokenInvalid();
+            }
+        }
+
+        throw new GameException(StatusCodes.Status503ServiceUnavailable, ErrorCodes.ServiceUnavailable, "The game changed too many times during the request. Try again.");
     }
 
     /// <summary>
@@ -235,7 +376,7 @@ internal sealed class GameService(
     /// <summary>
     /// Applies a change to a game with a compare-and-set. After a conflict, the service reads the game again and applies the change again.
     /// </summary>
-    private async Task<OnlineGame> ChangeAsync(Guid gameId, StoredGame<OnlineGame> first, Func<OnlineGame, (OnlineGame Game, GameChange Change)> change)
+    private async Task<(OnlineGame Game, long Seq)> ChangeAsync(Guid gameId, StoredGame<OnlineGame> first, Func<OnlineGame, (OnlineGame Game, GameChange Change)> change)
     {
         var current = first;
         for (var attempt = 0; attempt < MaxAttempts; attempt++)
@@ -245,7 +386,7 @@ internal sealed class GameService(
             switch (result.Status)
             {
                 case GameWriteStatus.Written:
-                    return game;
+                    return (game, result.Seq);
                 case GameWriteStatus.NotFound:
                     throw ApiNotFound("The game does not exist or it ended.");
             }

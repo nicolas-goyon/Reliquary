@@ -24,6 +24,7 @@ public sealed class PlaytestInstance : IAsyncDisposable
     private readonly SemaphoreSlim gate = new(1, 1);
     private TestDatabase? database;
     private WebApplicationFactory<Program>? factory;
+    private WebApplicationFactory<Program>? second;
     private int accounts;
 
     public static string FixturesDirectory { get; } = Path.Combine(AppContext.BaseDirectory, "Fixtures");
@@ -37,17 +38,8 @@ public sealed class PlaytestInstance : IAsyncDisposable
             {
                 database = await TestServers.CreateDatabaseAsync("playtest");
                 await ImportCardsAsync(database.ConnectionString);
-                var connectionString = database.ConnectionString;
-                factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
-                {
-                    builder.UseEnvironment("Testing");
-                    builder.UseSetting("ConnectionStrings:Users", connectionString);
-                    builder.UseSetting("ConnectionStrings:Redis", TestServers.Redis);
-                    builder.UseSetting("Auth:SigningKey", "dGVzdC1zaWduaW5nLWtleS1mb3ItdGhlLXBsYXl0ZXN0LXRlc3RzLW9ubHk=");
-                    builder.UseSetting("Auth:RequireCheckedEmail", "false");
-                    builder.UseSetting("Auth:RequestsPerMinute", "100000");
-                    builder.UseSetting("Playtest:JoinsPerIpPerMinute", JoinsPerIpPerMinute.ToString(System.Globalization.CultureInfo.InvariantCulture));
-                });
+                factory = NewHost();
+                second = NewHost();
             }
 
             return factory;
@@ -56,6 +48,30 @@ public sealed class PlaytestInstance : IAsyncDisposable
         {
             gate.Release();
         }
+    }
+
+    /// <summary>
+    /// Gets a second API host on the same database and the same Redis: a second replica, for the tests of the backplane.
+    /// </summary>
+    public async Task<WebApplicationFactory<Program>> GetSecondAsync()
+    {
+        await GetAsync();
+        return second!;
+    }
+
+    private WebApplicationFactory<Program> NewHost()
+    {
+        var connectionString = database!.ConnectionString;
+        return new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
+        {
+            builder.UseEnvironment("Testing");
+            builder.UseSetting("ConnectionStrings:Users", connectionString);
+            builder.UseSetting("ConnectionStrings:Redis", TestServers.Redis);
+            builder.UseSetting("Auth:SigningKey", "dGVzdC1zaWduaW5nLWtleS1mb3ItdGhlLXBsYXl0ZXN0LXRlc3RzLW9ubHk=");
+            builder.UseSetting("Auth:RequireCheckedEmail", "false");
+            builder.UseSetting("Auth:RequestsPerMinute", "100000");
+            builder.UseSetting("Playtest:JoinsPerIpPerMinute", JoinsPerIpPerMinute.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        });
     }
 
     /// <summary>
@@ -82,6 +98,11 @@ public sealed class PlaytestInstance : IAsyncDisposable
         if (factory is not null)
         {
             await factory.DisposeAsync();
+        }
+
+        if (second is not null)
+        {
+            await second.DisposeAsync();
         }
 
         if (database is not null)

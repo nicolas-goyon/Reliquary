@@ -21,6 +21,9 @@ public static class PlaytestErrorCodes
     /// <summary>The game started. New players cannot join it.</summary>
     public const string GameStarted = "game_started";
 
+    /// <summary>The game has not enough players to start.</summary>
+    public const string NotEnoughPlayers = "game_not_enough_players";
+
     /// <summary>The account has the maximum number of open games.</summary>
     public const string OpenGameLimit = "game_open_limit";
 

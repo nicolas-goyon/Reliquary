@@ -133,6 +133,7 @@ Rules for the error codes:
 | `game_full` | 409 | All the seats of the online game have a player. |
 | `game_started` | 409 | The online game started. New players cannot join it, and the lobby cannot change. |
 | `game_open_limit` | 409 | The account has the maximum number of open online games. Close a game, then try again. |
+| `game_not_enough_players` | 409 | The online game has not enough players to start. |
 
 An endpoint can add a more specific code.
 The OpenAPI document of the endpoint lists its specific codes.

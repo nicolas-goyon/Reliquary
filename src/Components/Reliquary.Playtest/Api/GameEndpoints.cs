@@ -8,6 +8,7 @@ using Microsoft.Extensions.Options;
 using Reliquary.BuildingBlocks.Api;
 using Reliquary.BuildingBlocks.Decks;
 using Reliquary.BuildingBlocks.Security;
+using Reliquary.Playtest.Hub;
 using Reliquary.Playtest.Sessions;
 using StackExchange.Redis;
 
@@ -84,7 +85,15 @@ internal static class GameEndpoints
     }
 
     private static async Task<Results<Ok<GameSeatResponse>, ProblemHttpResult>> JoinAsync(
-        Guid gameId, JoinGameRequest request, ClaimsPrincipal user, HttpContext http, GameService games, GameLimits limits, IOptions<GameOptions> options, CancellationToken cancellationToken)
+        Guid gameId,
+        JoinGameRequest request,
+        ClaimsPrincipal user,
+        HttpContext http,
+        GameService games,
+        GameLimits limits,
+        TableBroadcaster broadcaster,
+        IOptions<GameOptions> options,
+        CancellationToken cancellationToken)
     {
         if (!await limits.TryCountJoinAsync(http.Connection.RemoteIpAddress?.ToString() ?? "unknown"))
         {
@@ -108,6 +117,7 @@ internal static class GameEndpoints
         }
 
         var grant = await games.JoinAsync(gameId, request.InviteSecret!, new SeatRequest(accountId, nickname!, deck!), cancellationToken);
+        await broadcaster.SendChangeAsync(new GameUpdate(grant.Game, grant.Seq, grant.Seat, $"{nickname} joined the game."));
         return TypedResults.Ok(ToResponse(grant, null));
     }
 
@@ -117,21 +127,31 @@ internal static class GameEndpoints
         return TypedResults.Ok(ToLobby(game, seat));
     }
 
-    private static async Task<Ok<GameInviteResponse>> NewInviteAsync(Guid gameId, HttpRequest request, GameService games)
+    private static async Task<Ok<GameInviteResponse>> NewInviteAsync(Guid gameId, HttpRequest request, GameService games, TableBroadcaster broadcaster)
     {
-        var (game, secret) = await games.NewInviteAsync(gameId, Token(request));
-        return TypedResults.Ok(new GameInviteResponse(secret, game.InviteExpiresAt));
+        var (update, secret) = await games.NewInviteAsync(gameId, Token(request));
+        await broadcaster.SendChangeAsync(update);
+        return TypedResults.Ok(new GameInviteResponse(secret, update.Game.InviteExpiresAt));
     }
 
-    private static async Task<Ok<GameLobbyResponse>> KickAsync(Guid gameId, int seat, HttpRequest request, GameService games)
+    private static async Task<Ok<GameLobbyResponse>> KickAsync(Guid gameId, int seat, HttpRequest request, GameService games, TableBroadcaster broadcaster)
     {
-        var game = await games.KickAsync(gameId, Token(request), seat);
-        return TypedResults.Ok(ToLobby(game, OnlineGame.HostSeat));
+        var token = Token(request);
+        var (before, _) = await games.GetAsync(gameId, token);
+        var update = await games.KickAsync(gameId, token, seat);
+        if (before.FindSeat(seat) is { } kicked)
+        {
+            await broadcaster.SendClosedAsync(gameId, kicked, "kicked");
+        }
+
+        await broadcaster.SendChangeAsync(update);
+        return TypedResults.Ok(ToLobby(update.Game, OnlineGame.HostSeat));
     }
 
-    private static async Task<NoContent> CloseAsync(Guid gameId, HttpRequest request, GameService games)
+    private static async Task<NoContent> CloseAsync(Guid gameId, HttpRequest request, GameService games, TableBroadcaster broadcaster)
     {
-        await games.CloseAsync(gameId, Token(request));
+        var game = await games.CloseAsync(gameId, Token(request));
+        await broadcaster.SendClosedAsync(game, "ended");
         return TypedResults.NoContent();
     }
 
@@ -202,7 +222,7 @@ internal static class GameEndpoints
         inviteSecret is null ? null : grant.Game.InviteExpiresAt,
         ToLobby(grant.Game, grant.Seat));
 
-    private static GameLobbyResponse ToLobby(OnlineGame game, int seat) => new(
+    internal static GameLobbyResponse ToLobby(OnlineGame game, int seat) => new(
         [.. game.Seats.Select(item => new GameSeatSummary(
             OnlineGame.PlayerId(item.Seat),
             item.Nickname,
