@@ -57,6 +57,10 @@ export interface PurchaseListLine {
   fromCollection: PurchaseCopy[]
   toBuy: number
   closest: PurchaseCopy[]
+  /** When the line has cards to buy and a maximum price: the lowest market price of a printing that fits the line, or null when no price is known. */
+  lowestPrice: PriceLimit | null
+  /** Whether the lowest market price is more than the maximum price of the line. */
+  aboveMaximumPrice: boolean
 }
 
 /** The response of `GET /decks/{id}/purchase-list`. */

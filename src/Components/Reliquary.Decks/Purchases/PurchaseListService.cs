@@ -1,3 +1,4 @@
+using Reliquary.BuildingBlocks.Cards;
 using Reliquary.BuildingBlocks.Collection;
 using Reliquary.Decks.Data;
 
@@ -6,7 +7,7 @@ namespace Reliquary.Decks.Purchases;
 /// <summary>
 /// The purchase list of a deck: the cards of the deck minus the available cards of the collection. See docs/architecture/purchase-list.md.
 /// </summary>
-internal sealed class PurchaseListService(DeckService decks, ICollectionCatalog collection)
+internal sealed class PurchaseListService(DeckService decks, ICollectionCatalog collection, ICardCatalog catalog)
 {
     /// <summary>The zones of the purchase list. The considering zone is never in the list. The tokens are an option.</summary>
     public static readonly IReadOnlyList<string> Zones = ["commander", "companion", "main", "sideboard"];
@@ -42,6 +43,9 @@ internal sealed class PurchaseListService(DeckService decks, ICollectionCatalog 
             own.Add(mainDeckId);
         }
 
-        return (view.Deck, PurchasePlanner.Plan(needs, copies, own));
+        // Only the lines with a maximum price need the market prices.
+        var priced = needs.Where(need => need.Preferences.MaximumPrice is not null).Select(need => need.OracleId).Distinct().ToList();
+        var prices = priced.Count == 0 ? new Dictionary<Guid, IReadOnlyList<PrintingPrices>>() : await catalog.GetPricesAsync(priced, cancellationToken);
+        return (view.Deck, PurchasePlanner.Plan(needs, copies, own, prices));
     }
 }

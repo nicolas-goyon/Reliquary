@@ -17,7 +17,7 @@ The column `purchase_preferences` (`jsonb`) of `content.deck_lines` contains the
 | `languages` | The languages that the user accepts, for example `fr` and `en`. An empty list accepts each language. |
 | `minimumCondition` | The worst condition that the user accepts: `mint`, `near_mint`, `excellent`, `good`, `light_played`, `played` or `poor`. |
 | `foil` | `any`, `foil` or `nonfoil`. The finish `etched` is a foil finish. |
-| `maximumPrice` | The highest price of a purchase, with an amount and a currency code. Only the exports to the marketplaces use it. |
+| `maximumPrice` | The highest price of a purchase, with an amount and a currency code. The purchase list and the exports use it. |
 
 - `PATCH /api/v1/decks/{id}/lines/{lineId}` sets the preferences with `purchasePreferences`, and removes them with `clearPurchasePreferences`.
   The new object replaces all the preferences of the line.
@@ -44,6 +44,13 @@ The Decks component reads the copies of the collection through `ICollectionCatal
 5. A line takes the copies of the unlocked locations before the copies of the locked locations.
    The user must unlock a locked location before the cards move.
 6. The cards that stay are the cards to buy.
+7. For a line with cards to buy and a maximum price, the planner finds the lowest market price of a printing that fits the line.
+   The wanted, avoided and foil preferences apply. The language and condition preferences do not apply, because the market prices have no language and no condition.
+   The response gives this price in `lowestPrice`. When it is more than the maximum price, `aboveMaximumPrice` is true.
+
+The market prices come from Scryfall through `ICardCatalog.GetPricesAsync`. Scryfall gives prices in US dollars (`USD`) and euros (`EUR`) only.
+For another currency, `lowestPrice` is null and the line is not marked.
+The collection has no market prices, so the maximum price does not apply to the copies of the collection.
 
 When a line has cards to buy, the response gives the **closest copies**, with the reasons.
 The closest copies are the free copies of the card that do not fit the line.
@@ -85,6 +92,7 @@ The table gives the cards in the deck, the cards from the collection and the car
 A copy in a locked location shows a message that tells the user to unlock the location first.
 The page writes each closest copy as a sentence from its reasons and the preferences of the line.
 For example, the page shows "Not in French: 1 English copy in Rack 2".
+A line above its maximum price shows the lowest market price and the maximum price.
 
 The web app makes the exports of the cards to buy, with no request to the API.
 The functions are in `web/src/purchases/exports.ts`.

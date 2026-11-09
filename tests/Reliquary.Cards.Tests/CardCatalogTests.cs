@@ -132,6 +132,21 @@ public sealed class CardCatalogTests(ImportedCardsFixture fixture)
     }
 
     [Fact]
+    public async Task CatalogGivesTheMarketPricesOfThePrintings()
+    {
+        var catalog = await CatalogAsync();
+        var names = await catalog.ResolveNamesAsync(["Sol Ring"], TestContext.Current.CancellationToken);
+        var solRing = names["Sol Ring"].OracleId!.Value;
+
+        var prices = await catalog.GetPricesAsync([solRing], TestContext.Current.CancellationToken);
+
+        var printings = prices[solRing];
+        Assert.Contains(printings, printing => printing.Prices.GetValueOrDefault("eur") == 1.94m && printing.Prices.GetValueOrDefault("usd") == 1.93m);
+        Assert.Contains(printings, printing => printing.Lang == "fr" && printing.Prices.GetValueOrDefault("eur") == 2.39m);
+        Assert.DoesNotContain(printings, printing => printing.Prices.Count == 0);
+    }
+
+    [Fact]
     public async Task NamesResolveFromAllTheKindsOfNames()
     {
         var catalog = await CatalogAsync();
