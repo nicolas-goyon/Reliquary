@@ -3,7 +3,7 @@
 # Nginx also sends the /api requests to the API, so the web app and the API are on the same site.
 
 # The build stage runs on the platform of the builder. The output is the same for each target platform.
-FROM --platform=$BUILDPLATFORM node:24-alpine AS build
+FROM --platform=$BUILDPLATFORM node:26-alpine AS build
 WORKDIR /web
 COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund
