@@ -158,7 +158,7 @@ CI runs the same checks for each pull request.
 | `src/Components/Reliquary.Collection` | Locations, location entries, movements and inventories |
 | `src/Components/Reliquary.Playtest` | Table engine and game sessions |
 | `tests/Reliquary.Api.Tests` | Tests of the API host |
-| `tests/Reliquary.Architecture.Tests` | Tests of the rules between the core components |
+| `tests/Reliquary.Architecture.Tests` | Tests of the rules between the core components and between the layers |
 | `tests/Reliquary.Platform.Tests` | Integration tests of the platform, on PostgreSQL |
 | `tests/Reliquary.Cards.Tests` | Tests of the card import, the card endpoints and the card search, with real card fixtures |
 | `bench/Reliquary.Cards.Benchmark` | The benchmark of the card search |
@@ -178,6 +178,14 @@ CI runs the same checks for each pull request.
 - A core component communicates with other core components through interfaces and domain events.
 - Each core component has one class that implements `ICoreComponent`. `src/Reliquary.Hosting/CoreComponents.cs` lists these classes.
 - A core component declares its SQL scripts as migration sets. The [database](../architecture/database.md) page gives the rules.
+- A core component shows its internal types only to its own test project. The tests of a core component use the public API of the other core components.
+
+The architecture tests also check these rules between the layers:
+
+- `Reliquary.BuildingBlocks` references no other project.
+- `Reliquary.Platform` references `Reliquary.BuildingBlocks` only.
+- The hosts `Reliquary.Api`, `Reliquary.Worker` and `Reliquary.Cli` reference `Reliquary.Hosting` only.
+- The table engine `web/src/playtest/engine.ts` imports only pure modules of `web/src/playtest`. It does not use React, the browser, the network, the clock or `Math.random`. The test is `web/src/playtest/purity.test.ts`.
 
 The [architecture overview](../architecture/overview.md) and [ADR 0007](../decisions/0007-modular-monolith.md) give the reasons.
 
@@ -187,6 +195,6 @@ The [architecture overview](../architecture/overview.md) and [ADR 0007](../decis
 2. Add a class `<Name>Component` that implements `ICoreComponent`.
 3. Add the project to `Reliquary.slnx`, to `src/Reliquary.Hosting/Reliquary.Hosting.csproj` and to `tests/Reliquary.Architecture.Tests/Reliquary.Architecture.Tests.csproj`.
 4. Add the component to `CoreComponents.All` in `src/Reliquary.Hosting/CoreComponents.cs`.
-5. Add the assembly to `ComponentAssemblies` in `CoreComponentTests.cs`.
+5. Add the assembly to `ComponentAssemblies` in `CoreComponentTests.cs` and in `LayerTests.cs`.
 6. Update the expected list of components in `ApiTests.cs`.
 7. Record the new core component in an ADR.
