@@ -96,7 +96,7 @@ internal static class AutoTagEndpoints
 
         var choices = request.Lines!.Select(line => new CategoryChoice(line.LineId!.Value, line.Categories!)).ToList();
         var view = await autoTag.ApplyAsync(user.GetAccountId(), deckId, choices, request.ExpectedVersion, cancellationToken);
-        return TypedResults.Ok(await DeckEndpoints.ToResponseAsync(view, catalog, cancellationToken));
+        return TypedResults.Ok(await DeckResponses.ToResponseAsync(view, catalog, cancellationToken));
     }
 }
 

@@ -139,7 +139,7 @@ internal static class PurchaseListEndpoints
         var plan = await transitions.CalculateAsync(user.GetAccountId(), deckId, cancellationToken);
         var taken = plan.Additions.SelectMany(line => line.FromCollection).ToList();
         var printingIds = taken.Select(copy => copy.Copy.PrintingId).Concat(plan.Additions.SelectMany(line => line.Closest).Select(other => other.Copy.PrintingId));
-        var (cards, printings) = await DeckEndpoints.CardDataAsync(
+        var (cards, printings) = await DeckResponses.CardDataAsync(
             catalog, plan.Removals.Select(removal => removal.OracleId).Concat(plan.Additions.Select(line => line.Need.OracleId)), printingIds, cancellationToken);
         return TypedResults.Ok(new TransitionPlanResponse(
             plan.Target.Id,
@@ -164,7 +164,7 @@ internal static class PurchaseListEndpoints
         var tokens = includeTokens ?? false;
         var (deck, lines) = await purchases.CalculateAsync(user.GetAccountId(), deckId, tokens, cancellationToken);
         var printingIds = lines.SelectMany(line => line.FromDeck.Concat(line.FromCollection).Select(taken => taken.Copy.PrintingId).Concat(line.Closest.Select(other => other.Copy.PrintingId)));
-        var (cards, printings) = await DeckEndpoints.CardDataAsync(catalog, lines.Select(line => line.Need.OracleId), printingIds, cancellationToken);
+        var (cards, printings) = await DeckResponses.CardDataAsync(catalog, lines.Select(line => line.Need.OracleId), printingIds, cancellationToken);
         return TypedResults.Ok(new PurchaseListResponse(
             deck.Id,
             tokens,

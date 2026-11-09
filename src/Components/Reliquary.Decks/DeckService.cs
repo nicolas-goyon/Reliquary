@@ -149,7 +149,7 @@ internal sealed class DeckService(DeckStore store, ICardCatalog catalog, IDomain
         }
 
         await DeckStore.InsertDeckAsync(transaction, deck, cancellationToken);
-        var tags = await ResolveTagsAsync(connection, transaction, ownerId, deck.Id, lines, cancellationToken);
+        var tags = await TagResolver.ResolveAsync(connection, transaction, ownerId, deck.Id, lines, time, cancellationToken);
         var rows = new List<DeckLineRow>();
         Merge(rows, deck.Id, lines, tags, now);
         await WriteLinesAsync(transaction, ownerId, deck.Id, [], rows, cancellationToken);
@@ -175,7 +175,7 @@ internal sealed class DeckService(DeckStore store, ICardCatalog catalog, IDomain
         }
 
         var lines = await DeckStore.ListLinesAsync(connection, deckId, cancellationToken);
-        return new DeckView(deck, lines, isOwner, await TagsOfLinesAsync(connection, lines, cancellationToken), hidden);
+        return new DeckView(deck, lines, isOwner, await TagResolver.TagsOfLinesAsync(connection, lines, cancellationToken), hidden);
     }
 
     /// <summary>
@@ -589,7 +589,7 @@ internal sealed class DeckService(DeckStore store, ICardCatalog catalog, IDomain
 
         var before = await DeckStore.ListLinesAsync(connection, deckId, cancellationToken, transaction);
         var lines = (await DeckStore.ListLinesAsync(connection, deckId, cancellationToken, transaction)).ToList();
-        var tags = await ResolveTagsAsync(connection, transaction, ownerId, deckId, inputs, cancellationToken);
+        var tags = await TagResolver.ResolveAsync(connection, transaction, ownerId, deckId, inputs, time, cancellationToken);
         await change(connection, transaction, deck, lines, tags);
 
         if (lines.Count > DeckRules.MaxLines)
@@ -609,7 +609,7 @@ internal sealed class DeckService(DeckStore store, ICardCatalog catalog, IDomain
         await DeckStore.UpdateDeckAsync(transaction, deck, cancellationToken);
         await events.WriteAsync(DatabaseTarget.Content, transaction, new DeckUpdated(deck.Id, deck.Version, deck.Format, deck.Visibility, deck.VariantOf), ownerId, cancellationToken);
         await transaction.CommitAsync(cancellationToken);
-        return new DeckView(deck, lines, true, await TagsOfLinesAsync(connection, lines, cancellationToken), await IsHiddenAsync(deckId, cancellationToken));
+        return new DeckView(deck, lines, true, await TagResolver.TagsOfLinesAsync(connection, lines, cancellationToken), await IsHiddenAsync(deckId, cancellationToken));
     }
 
     /// <summary>
@@ -645,34 +645,6 @@ internal sealed class DeckService(DeckStore store, ICardCatalog catalog, IDomain
         await DeckStore.DeleteLinesAsync(transaction, deckId, removed.Concat(updated.Select(line => line.Id)), cancellationToken);
         await DeckStore.InsertLinesAsync(transaction, ownerId, updated.Concat(added), cancellationToken);
         await DeckStore.InsertLineTagsAsync(transaction, updated.Concat(added), cancellationToken);
-    }
-
-    /// <summary>
-    /// Finds the tags of the inputs by name, and creates the tags that do not exist.
-    /// </summary>
-    private async Task<TagMap> ResolveTagsAsync(NpgsqlConnection connection, NpgsqlTransaction transaction, Guid ownerId, Guid deckId, IReadOnlyList<LineInput> inputs, CancellationToken cancellationToken)
-    {
-        var existing = await DeckStore.ListTagsAsync(connection, ownerId, deckId, cancellationToken, transaction);
-        var map = new TagMap(existing);
-        var missing = new List<TagRow>();
-        foreach (var (name, global) in inputs.SelectMany(input => input.Tags.Select(tag => (tag, false)).Concat(input.GlobalTags.Select(tag => (tag, true)))))
-        {
-            if (map.Find(name, global) is null)
-            {
-                var tag = new TagRow { Id = Ids.New(), DeckId = global ? null : deckId, Name = name.Trim() };
-                missing.Add(tag);
-                map.Add(tag);
-            }
-        }
-
-        await DeckStore.InsertTagsAsync(transaction, ownerId, missing, time.GetUtcNow().UtcDateTime, cancellationToken);
-        return map;
-    }
-
-    private static async Task<IReadOnlyList<TagRow>> TagsOfLinesAsync(NpgsqlConnection connection, IReadOnlyList<DeckLineRow> lines, CancellationToken cancellationToken)
-    {
-        var ids = lines.SelectMany(line => line.TagIds).Distinct().ToList();
-        return ids.Count == 0 ? [] : await DeckStore.FindTagsAsync(connection, ids, cancellationToken);
     }
 
     /// <summary>
@@ -771,41 +743,6 @@ internal sealed class DeckService(DeckStore store, ICardCatalog catalog, IDomain
             throw DeckException.Validation([.. errors]);
         }
     }
-}
-
-/// <summary>
-/// The tags of an owner and of one deck, by name. The names are case-insensitive.
-/// </summary>
-internal sealed class TagMap
-{
-    private readonly Dictionary<string, TagRow> local = new(StringComparer.OrdinalIgnoreCase);
-    private readonly Dictionary<string, TagRow> global = new(StringComparer.OrdinalIgnoreCase);
-    private readonly HashSet<Guid> localIds = [];
-
-    public TagMap(IEnumerable<TagRow> tags)
-    {
-        foreach (var tag in tags)
-        {
-            Add(tag);
-        }
-    }
-
-    public void Add(TagRow tag)
-    {
-        (tag.IsGlobal ? global : local)[tag.Name] = tag;
-        if (!tag.IsGlobal)
-        {
-            localIds.Add(tag.Id);
-        }
-    }
-
-    public TagRow? Find(string name, bool isGlobal) =>
-        (isGlobal ? global : local).GetValueOrDefault(name.Trim());
-
-    public bool IsLocal(Guid tagId) => localIds.Contains(tagId);
-
-    public IEnumerable<Guid> IdsOf(LineInput input) =>
-        input.Tags.Select(name => Find(name, false)!.Id).Concat(input.GlobalTags.Select(name => Find(name, true)!.Id)).Distinct();
 }
 
 /// <summary>
