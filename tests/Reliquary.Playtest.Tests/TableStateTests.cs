@@ -38,6 +38,7 @@ public sealed class TableStateTests
               }
             }
           ],
+          "commander": true,
           "activePlayerId": "player-1",
           "turn": 4,
           "seed": -1352854234,
@@ -57,6 +58,7 @@ public sealed class TableStateTests
         Assert.Equal(["c-1", "token-1"], player.Zones.Get(TableZone.Battlefield).Select(card => card.Id));
         Assert.Equal(0.5, player.Zones.Command[0].ManaValue);
         Assert.Equal(-1352854234L, state.Seed);
+        Assert.True(state.Commander);
     }
 
     [Fact]
@@ -149,7 +151,7 @@ public sealed class TableStateTests
             0,
             0,
             TableZones.Empty with { Library = [Card($"{id}-1", "Forest")], Hand = [Card($"{id}-2", "Sol Ring")] });
-        return new TableState([Player("player-1"), Player("player-2")], "player-1", 1, 42, 1);
+        return new TableState([Player("player-1"), Player("player-2")], true, "player-1", 1, 42, 1);
     }
 
     internal static string ToJson(TableState state) => JsonSerializer.Serialize(state, TableJson.Options);

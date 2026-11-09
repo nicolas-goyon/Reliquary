@@ -179,6 +179,10 @@ public sealed record TablePlayer(
 /// The state of a table.
 /// </summary>
 /// <param name="Players">The players, in the order of the turns.</param>
+/// <param name="Commander">
+/// Whether the game uses the commander damage. It is true for a game of the Commander format or for a deck with a commander.
+/// When it is false, the engine ignores the commander damage actions.
+/// </param>
 /// <param name="ActivePlayerId">The ID of the active player.</param>
 /// <param name="Turn">The number of the turn. The first turn has the number 1.</param>
 /// <param name="Seed">
@@ -188,6 +192,7 @@ public sealed record TablePlayer(
 /// <param name="NextTokenId">The next number of the IDs of the tokens.</param>
 public sealed record TableState(
     IReadOnlyList<TablePlayer> Players,
+    bool Commander,
     string ActivePlayerId,
     int Turn,
     long Seed,
