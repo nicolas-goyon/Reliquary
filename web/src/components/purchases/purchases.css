@@ -71,3 +71,9 @@
 .purchase-to-buy {
   font-weight: 600;
 }
+
+.purchase-price-warning {
+  margin: 0.25rem 0 0;
+  color: var(--color-warning);
+  font-size: 0.875rem;
+}

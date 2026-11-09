@@ -44,6 +44,8 @@ public sealed record PurchaseCopyResponse(
 /// <param name="FromCollection">The available copies that complete the line.</param>
 /// <param name="ToBuy">The number of copies to buy.</param>
 /// <param name="Closest">When <paramref name="ToBuy"/> is more than zero: the copies of the collection that do not fit the line, with the reasons. The best copies are first.</param>
+/// <param name="LowestPrice">When <paramref name="ToBuy"/> is more than zero and the line has a maximum price: the lowest market price of a printing that fits the line, or <see langword="null"/> when no price is known.</param>
+/// <param name="AboveMaximumPrice">Whether <paramref name="LowestPrice"/> is more than the maximum price of the line.</param>
 public sealed record PurchaseListLineResponse(
     Guid OracleId,
     string Zone,
@@ -52,7 +54,9 @@ public sealed record PurchaseListLineResponse(
     int InDeck,
     IReadOnlyList<PurchaseCopyResponse> FromCollection,
     int ToBuy,
-    IReadOnlyList<PurchaseCopyResponse> Closest);
+    IReadOnlyList<PurchaseCopyResponse> Closest,
+    PriceLimit? LowestPrice,
+    bool AboveMaximumPrice);
 
 /// <summary>The purchase list of a deck or a variant.</summary>
 /// <param name="DeckId">The deck.</param>
@@ -176,7 +180,9 @@ internal static class PurchaseListEndpoints
                 line.FromDeck.Sum(taken => taken.Quantity),
                 [.. line.FromCollection.Select(taken => ToResponse(taken.Copy, taken.Quantity, []))],
                 line.ToBuy,
-                [.. line.Closest.Select(other => ToResponse(other.Copy, other.Quantity, other.Reasons))]))],
+                [.. line.Closest.Select(other => ToResponse(other.Copy, other.Quantity, other.Reasons))],
+                line.LowestPrice,
+                line.AboveMaximumPrice))],
             lines.Sum(line => line.ToBuy),
             cards,
             printings));

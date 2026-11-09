@@ -61,6 +61,7 @@
     "locked": "Verrouillé",
     "lockedHint": "Déverrouillez {{place}} avant de déplacer les cartes.",
     "lockedAlert": "Des cartes sont dans un emplacement verrouillé. Déverrouillez l’emplacement avant de déplacer les cartes.",
+    "aboveMaximumPrice": "Au-dessus du prix maximum : le prix de marché le plus bas est {{lowest}} et le prix maximum est {{maximum}}.",
     "closestTitle": "Exemplaires les plus proches",
     "noClosest": "La collection n’a aucun autre exemplaire de cette carte.",
     "closest": "{{reasons}} : {{copies}} dans {{place}}",

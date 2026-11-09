@@ -27,6 +27,8 @@ function purchaseList(includeTokens = false): PurchaseList {
       fromCollection: [{ ...copy, locationId: binder, locationName: 'Binder 1', locked: true, language: 'en', quantity: 1 }],
       toBuy: 0,
       closest: [],
+      lowestPrice: null,
+      aboveMaximumPrice: false,
     },
     {
       oracleId: solRing,
@@ -37,10 +39,12 @@ function purchaseList(includeTokens = false): PurchaseList {
       fromCollection: [],
       toBuy: 2,
       closest: [{ ...copy, locationId: rack, locationName: 'Rack 2', language: 'en', quantity: 1, reasons: ['language'] }],
+      lowestPrice: null,
+      aboveMaximumPrice: false,
     },
   ]
   if (includeTokens) {
-    lines.push({ oracleId: treasure, zone: 'tokens', quantity: 3, purchasePreferences: null, inDeck: 0, fromCollection: [], toBuy: 3, closest: [] })
+    lines.push({ oracleId: treasure, zone: 'tokens', quantity: 3, purchasePreferences: null, inDeck: 0, fromCollection: [], toBuy: 3, closest: [], lowestPrice: null, aboveMaximumPrice: false })
   }
   return {
     deckId,
@@ -106,6 +110,25 @@ describe('purchase list page', () => {
     expect(within(commander).getByText('Unlock Binder 1 before you move the cards.')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Open the deck' })).toHaveAttribute('href', `/decks/${deckId}`)
     expect(await seriousAccessibilityProblems()).toEqual([])
+  })
+
+  it('marks a card to buy above the maximum price, in the language of the interface', async () => {
+    const list = purchaseList()
+    list.lines[1] = {
+      ...list.lines[1],
+      purchasePreferences: { maximumPrice: { amount: 2.5, currency: 'EUR' } },
+      lowestPrice: { amount: 9.03, currency: 'EUR' },
+      aboveMaximumPrice: true,
+    }
+    await openPurchaseList({ [`GET /decks/${deckId}/purchase-list`]: () => Response.json(list) })
+
+    const row = screen.getByRole('row', { name: /Sol Ring/ })
+    expect(within(row).getByText('Above the maximum price: the lowest market price is €9.03, and the maximum price is €2.50.')).toBeInTheDocument()
+    expect(within(screen.getByRole('row', { name: /Atraxa/ })).queryByText(/maximum price/)).not.toBeInTheDocument()
+
+    await i18n.changeLanguage('fr')
+    // The text matcher changes the no-break spaces into spaces.
+    expect(await within(row).findByText(/^Au-dessus du prix maximum\s: le prix de marché le plus bas est 9,03\s€ et le prix maximum est 2,50\s€\.$/)).toBeInTheDocument()
   })
 
   it('asks for the tokens when the user includes them', async () => {

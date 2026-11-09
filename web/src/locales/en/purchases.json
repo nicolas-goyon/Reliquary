@@ -61,6 +61,7 @@
     "locked": "Locked",
     "lockedHint": "Unlock {{place}} before you move the cards.",
     "lockedAlert": "Some cards are in a locked location. Unlock the location before you move the cards.",
+    "aboveMaximumPrice": "Above the maximum price: the lowest market price is {{lowest}}, and the maximum price is {{maximum}}.",
     "closestTitle": "Closest copies",
     "noClosest": "The collection has no other copy of this card.",
     "closest": "{{reasons}}: {{copies}} in {{place}}",
