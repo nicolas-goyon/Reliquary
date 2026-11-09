@@ -22,6 +22,9 @@ import { MovementsPage } from './pages/MovementsPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { SignInPage } from './pages/SignInPage'
 import { TablePage } from './pages/TablePage'
+import { LocalGamePage } from './pages/LocalGamePage'
+import { PlayerWindowPage } from './pages/PlayerWindowPage'
+import { gameIdPattern } from './playtest/gameId'
 import { TransitionPlanPage } from './pages/TransitionPlanPage'
 import { AuthProvider } from './auth/AuthProvider'
 import { useAuth } from './auth/session'
@@ -45,6 +48,11 @@ const patternRoutes: { pattern: RegExp; render(match: RegExpMatchArray): ReactNo
   { pattern: /^\/cards\/([0-9a-f-]{36})$/, render: (match) => <CardPage key={match[1]} id={match[1]} /> },
   { pattern: /^\/decks\/([0-9a-f-]{36})$/, render: (match) => <DeckPage key={match[1]} id={match[1]} /> },
   { pattern: /^\/decks\/([0-9a-f-]{36})\/test$/, render: (match) => <TablePage key={match[1]} id={match[1]} /> },
+  { pattern: /^\/decks\/([0-9a-f-]{36})\/test\/local$/, render: (match) => <LocalGamePage key={match[1]} id={match[1]} /> },
+  {
+    pattern: new RegExp(`^/test/games/(${gameIdPattern})/players/(player-[1-4])$`),
+    render: (match) => <PlayerWindowPage key={match[0]} gameId={match[1]} playerId={match[2]} />,
+  },
   { pattern: /^\/decks\/([0-9a-f-]{36})\/transition-plan$/, render: (match) => <TransitionPlanPage key={match[1]} id={match[1]} /> },
 
   { pattern: /^\/decks\/([0-9a-f-]{36})\/purchase-list$/, render: (match) => <PurchaseListPage key={match[1]} id={match[1]} /> },

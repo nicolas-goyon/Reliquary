@@ -53,5 +53,55 @@
     "keepable": "Mains avec 2 à 4 terrains",
     "landsInHand_one": "{{count}} terrain en main",
     "landsInHand_other": "{{count}} terrains en main"
+  },
+  "stepper": {
+    "increase": "Ajouter un : {{label}}",
+    "decrease": "Retirer un : {{label}}"
+  },
+  "counters": {
+    "title": "Marqueurs du joueur",
+    "poison": "Poison",
+    "energy": "Énergie",
+    "experience": "Expérience",
+    "commanderDamage": "Blessures de commandant de {{name}}"
+  },
+  "local": {
+    "action": "Multi local",
+    "title": "Multi local : {{name}}",
+    "setup": "Nouvelle partie en multi local",
+    "playerCount": "Nombre de joueurs",
+    "playerCountValue_one": "{{count}} joueur",
+    "playerCountValue_other": "{{count}} joueurs",
+    "firstPlayer": "Le joueur 1 joue {{name}}.",
+    "playerDeck": "Deck du joueur {{number}}",
+    "mode": "Comment jouez-vous les decks ?",
+    "modes": {
+      "turns": "Une seule fenêtre",
+      "turnsHint": "Vous passez le tour au deck suivant. La main de chaque joueur reste cachée jusqu’à ce que vous l’affichiez.",
+      "windows": "Une fenêtre par joueur",
+      "windowsHint": "Cette fenêtre garde la partie. Ouvrez la fenêtre joueur de chaque joueur dans une nouvelle fenêtre ou sur un second écran."
+    },
+    "start": "Lancer la partie",
+    "players": "Joueurs",
+    "active": "Actif",
+    "facts": "{{life}} points de vie, {{hand}} cartes en main, {{library}} cartes en bibliothèque",
+    "nextPlayer": "Joueur suivant",
+    "board": "Plateau de {{name}}",
+    "handHidden": "La main de {{name}} est cachée. Affichez-la seulement quand les autres joueurs ne regardent pas l’écran.",
+    "showHand": "Afficher la main de {{name}}",
+    "hideHand": "Cacher la main de {{name}}",
+    "windowsTitle": "Fenêtres joueur",
+    "windowsHint": "Chaque fenêtre joueur montre le plateau et la main d’un joueur. Gardez cette fenêtre ouverte : si vous la fermez, la partie s’arrête.",
+    "openPlayerWindow": "Ouvrir la fenêtre de {{name}}"
+  },
+  "playerWindow": {
+    "title": "Fenêtre joueur : {{name}}",
+    "titleEmpty": "Fenêtre joueur",
+    "status": {
+      "waiting": "Cette fenêtre attend la fenêtre de partie. Ouvrez la partie dans ce navigateur.",
+      "closed": "La fenêtre de partie est fermée. Lancez une nouvelle partie.",
+      "unsupported": "Ce navigateur ne peut pas relier les fenêtres. Utilisez le mode à une seule fenêtre.",
+      "unknownPlayer": "La partie n’a pas de joueur avec cet identifiant."
+    }
   }
 }

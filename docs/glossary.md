@@ -77,6 +77,7 @@ The French column gives the term for the French interface.
 | Shared screen | A test mode with a table window and a player window, for screen sharing, a second screen or a stream. | Affichage partagé |
 | Table window | The window that shows the table. It masks hidden information. | Fenêtre table |
 | Player window | The private window that shows the hand of one player. | Fenêtre joueur |
+| Game window | The window that keeps the state of a game on one computer. The other windows of the game get the state from it. | Fenêtre de partie |
 
 ## Accounts
 
