@@ -282,6 +282,11 @@ internal static class DeckEndpoints
         }
 
         ValidateDeckFields(errors, request.Name?.Trim(), request.Format, request.Visibility, request.Description);
+        if (request.Archetype is { Length: > 0 } archetype && !DeckRules.Archetypes.Contains(archetype))
+        {
+            errors.Add(new FieldError("archetype", FieldErrorCodes.NotAllowed, $"The archetype is not known. Use one of these archetypes: {string.Join(", ", DeckRules.Archetypes)}."));
+        }
+
         if (request.Tags is { } deckTags)
         {
             if (DeckRules.NormalizeDeckTags(deckTags).Length > DeckRules.MaxDeckTags)
@@ -306,7 +311,7 @@ internal static class DeckEndpoints
         var view = await decks.UpdateAsync(
             user.GetAccountId(),
             deckId,
-            new DeckChanges(request.Name, request.Format, request.Visibility, request.FolderId, request.ClearFolder == true, request.Description, request.Pinned, request.Archived, request.ExpectedVersion, request.Tags),
+            new DeckChanges(request.Name, request.Format, request.Visibility, request.FolderId, request.ClearFolder == true, request.Description, request.Pinned, request.Archived, request.ExpectedVersion, request.Tags, request.Archetype),
             cancellationToken);
         if (request.Name is not null)
         {

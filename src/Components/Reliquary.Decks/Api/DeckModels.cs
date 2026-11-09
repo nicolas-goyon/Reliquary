@@ -20,7 +20,8 @@ public sealed record CreateDeckRequest(string? Name, string? Format, string? Vis
 /// <param name="Archived">Whether the deck is archived.</param>
 /// <param name="ExpectedVersion">The version that the client read. The API refuses the change when the deck has another version.</param>
 /// <param name="Tags">The deck tags. The list replaces the current deck tags.</param>
-public sealed record UpdateDeckRequest(string? Name, string? Format, string? Visibility, Guid? FolderId, bool? ClearFolder, string? Description, bool? Pinned, bool? Archived, int? ExpectedVersion, IReadOnlyList<string>? Tags = null);
+/// <param name="Archetype">The archetype, for example <c>control</c>. An empty text removes the archetype.</param>
+public sealed record UpdateDeckRequest(string? Name, string? Format, string? Visibility, Guid? FolderId, bool? ClearFolder, string? Description, bool? Pinned, bool? Archived, int? ExpectedVersion, IReadOnlyList<string>? Tags = null, string? Archetype = null);
 
 /// <summary>A line to add or to set.</summary>
 /// <param name="OracleId">The Oracle card. Give the card or its name.</param>
@@ -131,6 +132,7 @@ public sealed record LineGroupRequest(
 /// <param name="HeadVersionId">The most recent version of the deck, or <see langword="null"/>.</param>
 /// <param name="AssembledVersionId">The assembled version, or <see langword="null"/> when the deck is not assembled.</param>
 /// <param name="Hidden">Whether an administrator hid the deck. Only the owner sees a hidden deck.</param>
+/// <param name="Archetype">The archetype, or <see langword="null"/> when the owner did not choose one.</param>
 public sealed record DeckResponse(
     Guid Id,
     Guid OwnerId,
@@ -157,7 +159,8 @@ public sealed record DeckResponse(
     Guid? BaseVersionId = null,
     Guid? HeadVersionId = null,
     Guid? AssembledVersionId = null,
-    bool Hidden = false);
+    bool Hidden = false,
+    string? Archetype = null);
 
 /// <summary>A tag of a deck line.</summary>
 /// <param name="Name">The name of the tag.</param>

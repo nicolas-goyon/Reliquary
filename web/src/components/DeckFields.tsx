@@ -1,6 +1,6 @@
 import { useId } from 'react'
 import { useTranslation } from 'react-i18next'
-import { deckFormats, visibilities, type Visibility } from '../api/decks'
+import { deckArchetypes, deckFormats, isArchetype, visibilities, type Visibility } from '../api/decks'
 
 /** The format field of a deck. */
 export function FormatSelect({ value, onChange, disabled }: { value: string; onChange(value: string): void; disabled?: boolean }) {
@@ -13,6 +13,25 @@ export function FormatSelect({ value, onChange, disabled }: { value: string; onC
         {deckFormats.map((format) => (
           <option key={format} value={format}>
             {t(`formats.${format}`)}
+          </option>
+        ))}
+      </select>
+    </div>
+  )
+}
+
+/** The archetype field of a deck. The empty value removes the archetype. */
+export function ArchetypeSelect({ value, onChange, disabled }: { value: string | null | undefined; onChange(value: string): void; disabled?: boolean }) {
+  const { t } = useTranslation('decks')
+  const id = useId()
+  return (
+    <div className="field">
+      <label htmlFor={id}>{t('fields.archetype')}</label>
+      <select id={id} value={isArchetype(value) ? value : ''} disabled={disabled} onChange={(event) => onChange(event.target.value)}>
+        <option value="">{t('archetypes.none')}</option>
+        {deckArchetypes.map((archetype) => (
+          <option key={archetype} value={archetype}>
+            {t(`archetypes.${archetype}`)}
           </option>
         ))}
       </select>

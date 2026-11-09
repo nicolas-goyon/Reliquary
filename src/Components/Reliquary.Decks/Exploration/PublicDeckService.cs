@@ -175,7 +175,8 @@ internal sealed class PublicDeckService(DeckStore store, ICardCatalog catalog, I
             row.CardCount,
             row.CopyCount,
             row.FavoriteCount,
-            new DateTimeOffset(DateTime.SpecifyKind(row.UpdatedAt, DateTimeKind.Utc))))];
+            new DateTimeOffset(DateTime.SpecifyKind(row.UpdatedAt, DateTimeKind.Utc)),
+            row.Archetype))];
     }
 
     private static AuthorSummaryResponse Author(Guid ownerId, IReadOnlyDictionary<Guid, AccountProfile> profiles) =>

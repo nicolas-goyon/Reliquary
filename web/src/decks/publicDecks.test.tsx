@@ -129,10 +129,33 @@ describe('public decks', () => {
 
   it('writes and reads the filters of the address', () => {
     const filters = filtersFromSearch('?q=goblins&colors=r&sort=popular&unknown=1')
-    expect(filters).toEqual({ q: 'goblins', format: '', commander: '', card: '', colors: 'r', updatedFrom: '', updatedTo: '', sort: 'popular' })
+    expect(filters).toEqual({ q: 'goblins', format: '', commander: '', card: '', colors: 'r', updatedFrom: '', updatedTo: '', archetype: '', sort: 'popular' })
     expect(publicDeckQuery(filters, authorId)).toBe(`limit=50&q=goblins&colors=r&sort=popular&author=${authorId}`)
     const dates = filtersFromSearch('?updatedFrom=2026-11-01&updatedTo=2026-11-03')
     expect(publicDeckQuery(dates)).toBe('limit=50&updatedFrom=2026-11-01&updatedTo=2026-11-03')
+  })
+
+  it('searches the public decks by archetype and shows the archetype of a deck', async () => {
+    window.history.replaceState(null, '', '/explore')
+    const urls: string[] = []
+    mockApi({
+      'POST /auth/refresh': () => problem(401, 'session_expired'),
+      'GET /public-decks': ({ url }) => {
+        urls.push(url.search)
+        return Response.json({ items: url.searchParams.get('archetype') === 'control' ? [{ ...publicDeck, archetype: 'control' }] : [], nextCursor: null })
+      },
+    })
+    const user = userEvent.setup()
+    render(<App />)
+
+    expect(await screen.findByText('No deck agrees with the search.')).toBeInTheDocument()
+    await user.selectOptions(screen.getByLabelText('Archetype'), 'control')
+    await user.click(screen.getByRole('button', { name: 'Search' }))
+
+    const item = (await screen.findByRole('link', { name: 'Atraxa superfriends' })).closest('li')!
+    expect(within(item).getByText('Control')).toBeInTheDocument()
+    expect(urls.at(-1)).toBe('?limit=50&archetype=control')
+    expect(window.location.search).toBe('?archetype=control')
   })
 
   it('searches the public decks by a range of dates of the last change', async () => {

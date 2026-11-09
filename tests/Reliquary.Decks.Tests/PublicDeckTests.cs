@@ -86,6 +86,41 @@ public sealed class PublicDeckTests(DecksInstance instance)
     }
 
     [Fact]
+    public async Task OwnerChoosesAnArchetypeAndTheSearchFiltersByArchetype()
+    {
+        using var author = await instance.NewUserAsync();
+        using var reader = await instance.NewUserAsync();
+        using var visitor = (await instance.GetAsync()).CreateClient();
+        var tag = Guid.NewGuid().ToString("N");
+        var control = await CreateDeckAsync(author, $"Control {tag}", "public", new { name = "Sol Ring" });
+        var combo = await CreateDeckAsync(author, $"Combo {tag}", "public", new { name = "Sol Ring" });
+        await CreateDeckAsync(author, $"None {tag}", "public", new { name = "Sol Ring" });
+
+        var changed = await author.PatchAsJsonAsync($"/api/v1/decks/{control.Id}", new { archetype = "control" }, Cancel);
+        await author.PatchAsJsonAsync($"/api/v1/decks/{combo.Id}", new { archetype = "combo" }, Cancel);
+        var unknown = await author.PatchAsJsonAsync($"/api/v1/decks/{combo.Id}", new { archetype = "burn" }, Cancel);
+        await instance.PublishEventsAsync();
+        var controlDecks = await SearchAsync(visitor, $"q={tag}&archetype=control");
+        var unknownSearch = await visitor.GetAsync(new Uri("/api/v1/public-decks?archetype=burn", UriKind.Relative), Cancel);
+        var copy = await reader.PostAsJsonAsync($"/api/v1/decks/{control.Id}/copy", new { }, Cancel);
+
+        Assert.Equal("control", (await changed.Content.ReadFromJsonAsync<DeckResponse>(Cancel))!.Archetype);
+        Assert.Equal(HttpStatusCode.BadRequest, unknown.StatusCode);
+        Assert.Contains("\"field\":\"archetype\"", await unknown.Content.ReadAsStringAsync(Cancel), StringComparison.Ordinal);
+        var found = Assert.Single(controlDecks);
+        Assert.Equal((control.Id, "control"), (found.Id, found.Archetype));
+        Assert.Equal(3, (await SearchAsync(visitor, $"q={tag}")).Count);
+        Assert.Equal(HttpStatusCode.BadRequest, unknownSearch.StatusCode);
+        Assert.Equal("control", (await copy.Content.ReadFromJsonAsync<DeckResponse>(Cancel))!.Archetype);
+
+        var cleared = await author.PatchAsJsonAsync($"/api/v1/decks/{control.Id}", new { archetype = "" }, Cancel);
+        await instance.PublishEventsAsync();
+
+        Assert.Null((await cleared.Content.ReadFromJsonAsync<DeckResponse>(Cancel))!.Archetype);
+        Assert.Empty(await SearchAsync(visitor, $"q={tag}&archetype=control"));
+    }
+
+    [Fact]
     public async Task FavoritesCopiesAndFollowsChangeThePopularity()
     {
         using var author = await instance.NewUserAsync();

@@ -2,14 +2,14 @@ import { useCallback, useEffect, useState, type CSSProperties, type DragEvent, t
 import { useTranslation } from 'react-i18next'
 import type { AutocompleteItem } from '../api/cards'
 import { ApiError, apiRequest } from '../api/client'
-import { formatKey, lineImage, zones, type Deck, type DeckLegality, type DeckLine, type DeckTextLineError, type Visibility, type Zone } from '../api/decks'
+import { formatKey, isArchetype, lineImage, zones, type Deck, type DeckLegality, type DeckLine, type DeckTextLineError, type Visibility, type Zone } from '../api/decks'
 import { hasPreferences, purchaseListPath } from '../api/purchases'
 import { useAuth } from '../auth/session'
 import { AnalysisSection } from '../components/analysis/AnalysisSection'
 import { AutoTagDialog } from '../components/auto-tag/AutoTagDialog'
 import { CardImage } from '../components/CardImage'
 import { Combobox, type Suggestion } from '../components/Combobox'
-import { FormatSelect, VisibilitySelect } from '../components/DeckFields'
+import { ArchetypeSelect, FormatSelect, VisibilitySelect } from '../components/DeckFields'
 import { DeckExportDialog } from '../components/DeckExportDialog'
 import { DeckSocialBar } from '../components/DeckSocialBar'
 import { DeckTable } from '../components/deck-table/DeckTable'
@@ -163,7 +163,7 @@ function DeckEditor({ deck, onChange }: EditorProps) {
 }
 
 /** The name, the format and the visibility of the deck. The owner can change them. */
-function DeckHeader({ deck, onSave }: { deck: Deck; onSave(fields: { name?: string; format?: string; visibility?: Visibility }): void }) {
+function DeckHeader({ deck, onSave }: { deck: Deck; onSave(fields: { name?: string; format?: string; visibility?: Visibility; archetype?: string }): void }) {
   const { t } = useTranslation('decks')
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState(deck.name)
@@ -199,7 +199,8 @@ function DeckHeader({ deck, onSave }: { deck: Deck; onSave(fields: { name?: stri
         </h1>
       )}
       <p className="deck-meta">
-        {t(`formats.${formatKey(deck.format)}`)} · {t('editor.cardCount', { count: total })} · {t(`visibility.${deck.visibility}`)}
+        {t(`formats.${formatKey(deck.format)}`)}
+        {isArchetype(deck.archetype) && ` · ${t(`archetypes.${deck.archetype}`)}`} · {t('editor.cardCount', { count: total })} · {t(`visibility.${deck.visibility}`)}
         {deck.sourceDeckId && (
           <>
             {' · '}
@@ -211,6 +212,7 @@ function DeckHeader({ deck, onSave }: { deck: Deck; onSave(fields: { name?: stri
         <div className="deck-settings">
           <FormatSelect value={deck.format} onChange={(format) => onSave({ format })} />
           <VisibilitySelect value={deck.visibility} onChange={(visibility) => onSave({ visibility })} />
+          <ArchetypeSelect value={deck.archetype} onChange={(archetype) => onSave({ archetype })} />
         </div>
       )}
     </header>

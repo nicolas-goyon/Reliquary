@@ -102,6 +102,29 @@ describe('decks', () => {
     expect(calls.find((call) => call.key === `PATCH /decks/${deckId}/lines/l2`)?.body).toEqual({ quantity: 2 })
   })
 
+  it('changes the archetype of the deck and shows it', async () => {
+    window.history.replaceState(null, '', `/decks/${deckId}`)
+    const calls = mockApi({
+      'POST /auth/refresh': () => session(),
+      [`GET /decks/${deckId}`]: () => Response.json(deck()),
+      [`GET /decks/${deckId}/legality`]: () => Response.json(notLegal),
+      [`PATCH /decks/${deckId}`]: ({ body }) => Response.json(deck({ version: 4, archetype: (body as { archetype: string }).archetype || null })),
+    })
+    const user = userEvent.setup()
+    render(<App />)
+
+    const field = await screen.findByLabelText('Archetype')
+    expect(field).toHaveValue('')
+    await user.selectOptions(field, 'control')
+
+    await waitFor(() => expect(screen.getByLabelText('Archetype')).toHaveValue('control'))
+    expect(screen.getByText(/Commander · Control · 2 cards/)).toBeInTheDocument()
+    await user.selectOptions(screen.getByLabelText('Archetype'), '')
+
+    await waitFor(() => expect(screen.getByLabelText('Archetype')).toHaveValue(''))
+    expect(calls.filter((call) => call.key === `PATCH /decks/${deckId}`).map((call) => call.body)).toEqual([{ archetype: 'control' }, { archetype: '' }])
+  })
+
   it('adds a card with the autocomplete', async () => {
     window.history.replaceState(null, '', `/decks/${deckId}`)
     const calls = mockApi({
