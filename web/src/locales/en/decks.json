@@ -103,6 +103,7 @@
     "tags": "Deck tags",
     "pinned": "Pinned",
     "archived": "Archived",
+    "assembled": "Assembled deck",
     "colorless": "Colorless"
   },
   "editor": {
@@ -413,6 +414,15 @@
     "archivedExclude": "Hide",
     "archivedInclude": "Show",
     "archivedOnly": "Show only",
+    "assembled": "Assembled decks",
+    "assembledAll": "All the decks",
+    "assembledOnly": "Only the assembled decks",
+    "assembledNot": "Only the decks that are not assembled",
+    "complete": "Completeness",
+    "completeAll": "All the decks",
+    "completeYes": "All the cards are available",
+    "completeNo": "Some cards are missing",
+    "completeHint": "Compares the deck with the available cards of the collection, as the purchase list does.",
     "sort": "Sort",
     "sorts": {
       "updated": "Last change",

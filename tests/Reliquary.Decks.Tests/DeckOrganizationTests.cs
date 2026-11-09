@@ -76,6 +76,50 @@ public sealed class DeckOrganizationTests(DecksInstance instance)
     }
 
     [Fact]
+    public async Task ListFiltersByAssembledDeckAndByCompleteness()
+    {
+        using var client = await instance.NewUserAsync();
+        var rack = await client.PostAsJsonAsync("/api/v1/collection/locations", new { name = "Rack", kind = "rack" }, Cancel);
+        var rackId = (await rack.Content.ReadFromJsonAsync<JsonElement>(Cancel)).GetProperty("id").GetGuid();
+        var entries = await client.PostAsJsonAsync($"/api/v1/collection/locations/{rackId}/entries", new { entries = new object[] { new { name = "Sol Ring" }, new { name = "Forest", quantity = 2 } } }, Cancel);
+        Assert.Equal(HttpStatusCode.OK, entries.StatusCode);
+
+        // Complete from the rack. The considering zone does not count.
+        await CreateDeckAsync(client, "Ready", "commander", new { name = "Sol Ring" }, new { name = "Counterspell", zone = "considering" });
+        await CreateDeckAsync(client, "Missing", "commander", new { name = "Forest", quantity = 3 });
+        await CreateDeckAsync(client, "Empty", "commander");
+
+        // The assembled deck takes its own cards into its location, so it is complete. The rack keeps 2 Forests.
+        var assembled = await CreateDeckAsync(client, "Assembled", "commander", new { name = "Counterspell" });
+        var assemble = await client.PutAsJsonAsync($"/api/v1/decks/{assembled.Id}/assembled", new { }, Cancel);
+        Assert.Equal(HttpStatusCode.OK, assemble.StatusCode);
+
+        var onlyAssembled = await ListAsync(client, "assembled=true");
+        var notAssembled = await ListAsync(client, "assembled=false&sort=name");
+        var complete = await ListAsync(client, "complete=true&sort=name");
+        var incomplete = await ListAsync(client, "complete=false");
+        var completeNotAssembled = await ListAsync(client, "complete=true&assembled=false&sort=name");
+        var page = await client.GetFromJsonAsync<Page<DeckSummaryResponse>>(new Uri("/api/v1/decks?complete=true&sort=name&limit=2", UriKind.Relative), Cancel);
+        var next = await client.GetFromJsonAsync<Page<DeckSummaryResponse>>(new Uri($"/api/v1/decks?complete=true&sort=name&limit=2&cursor={page!.NextCursor}", UriKind.Relative), Cancel);
+        var invalid = await client.GetAsync(new Uri("/api/v1/decks?assembled=yes&complete=maybe", UriKind.Relative), Cancel);
+
+        Assert.Equal(["Assembled"], onlyAssembled.Select(deck => deck.Name));
+        Assert.True(onlyAssembled.Single().Assembled);
+        Assert.Equal(["Empty", "Missing", "Ready"], notAssembled.Select(deck => deck.Name));
+        Assert.All(notAssembled, deck => Assert.False(deck.Assembled));
+        Assert.Equal(["Assembled", "Empty", "Ready"], complete.Select(deck => deck.Name));
+        Assert.Equal(["Missing"], incomplete.Select(deck => deck.Name));
+        Assert.Equal(["Empty", "Ready"], completeNotAssembled.Select(deck => deck.Name));
+        Assert.Equal(["Assembled", "Empty"], page.Items.Select(deck => deck.Name));
+        Assert.Equal(["Ready"], next!.Items.Select(deck => deck.Name));
+        Assert.Null(next.NextCursor);
+        Assert.Equal(HttpStatusCode.BadRequest, invalid.StatusCode);
+        var body = await invalid.Content.ReadAsStringAsync(Cancel);
+        Assert.Contains("\"assembled\"", body, StringComparison.Ordinal);
+        Assert.Contains("\"complete\"", body, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task ListPagesWithTheCursor()
     {
         using var client = await instance.NewUserAsync();
