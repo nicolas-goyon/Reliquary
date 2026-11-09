@@ -99,7 +99,7 @@ internal static class VersionEndpoints
         Guid deckId, Guid versionId, ClaimsPrincipal user, DeckVersionService versions, ICardCatalog catalog, CancellationToken cancellationToken)
     {
         var (version, lines, deck) = await versions.GetAsync(user.FindAccountId(), deckId, versionId, cancellationToken);
-        var (cards, printings) = await DeckEndpoints.CardDataAsync(catalog, lines.Select(line => line.OracleId), lines.Select(line => line.PrintingId), cancellationToken);
+        var (cards, printings) = await DeckResponses.CardDataAsync(catalog, lines.Select(line => line.OracleId), lines.Select(line => line.PrintingId), cancellationToken);
         return TypedResults.Ok(new DeckVersionDetailResponse(
             ToResponse(version, deck),
             [.. lines.Select(line => new DeckVersionLineResponse(line.OracleId, line.PrintingId, line.Finish, line.Quantity, line.Zone, line.Note, line.Categories, line.Tags, line.GlobalTags, Purchases.PurchasePreferences.ReadOrNull(line.PurchasePreferences)))],
@@ -191,7 +191,7 @@ internal static class VersionEndpoints
             .Concat(comparison.Printings.Select(change => change.OracleId))
             .Concat(comparison.Notes.Select(change => change.OracleId));
         var printingIds = comparison.Printings.SelectMany(change => change.Before.Concat(change.After)).Select(copies => copies.PrintingId);
-        var (cards, printings) = await DeckEndpoints.CardDataAsync(catalog, oracleIds, printingIds, cancellationToken);
+        var (cards, printings) = await DeckResponses.CardDataAsync(catalog, oracleIds, printingIds, cancellationToken);
         return new ListChangesResponse(
             [.. comparison.Quantities.Select(change => new QuantityChangeResponse(change.OracleId, change.Zone, change.Before, change.After))],
             [.. comparison.Printings.Select(change => new PrintingChangeResponse(
@@ -217,8 +217,8 @@ internal static class VersionEndpoints
     }
 
     private static DeckVersionResponse ToResponse(VersionRow row, DeckRow? deck) =>
-        new(row.Id, row.Number, row.Kind, row.Message, row.ParentIds, DeckEndpoints.Utc(row.CreatedAt), row.CardCount, deck?.AssembledVersionId == row.Id);
+        new(row.Id, row.Number, row.Kind, row.Message, row.ParentIds, DeckResponses.Utc(row.CreatedAt), row.CardCount, deck?.AssembledVersionId == row.Id);
 
     private static DeckVariantResponse ToVariant(DeckRow row) =>
-        new(row.Id, row.Name, row.BaseVersionId, row.HeadVersionId, DeckEndpoints.Utc(row.UpdatedAt));
+        new(row.Id, row.Name, row.BaseVersionId, row.HeadVersionId, DeckResponses.Utc(row.UpdatedAt));
 }

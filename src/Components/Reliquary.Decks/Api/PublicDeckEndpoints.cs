@@ -104,7 +104,7 @@ internal static class PublicDeckEndpoints
         }
 
         var errors = new List<FieldError>();
-        var colorIdentity = colors is null ? null : DeckEndpoints.ReadColors(colors);
+        var colorIdentity = colors is null ? null : DeckRequestRules.ReadColors(colors);
         if (colors is not null && colorIdentity is null)
         {
             errors.Add(new FieldError("colors", FieldErrorCodes.InvalidFormat, "Give the letters W, U, B, R and G, or C for colorless."));
