@@ -28,6 +28,17 @@ map $request_uri $reliquary_frame_options {
     "~^/embed/" "";
 }
 
+# The table hub of the online games gets the game token in the query string, because a browser cannot set a header on a WebSocket.
+# This log format writes the path with no query string, so the access log never contains a game token.
+log_format reliquary_no_query '$remote_addr - $remote_user [$time_local] "$request_method $uri $server_protocol" '
+                              '$status $body_bytes_sent "$http_referer" "$http_user_agent"';
+
+# The value of the Connection header for the API: "upgrade" for a WebSocket, else "close" as the default of proxy_pass.
+map $http_upgrade $reliquary_connection_upgrade {
+    default upgrade;
+    "" close;
+}
+
 server {
     listen 8080;
     server_name _;
@@ -44,6 +55,24 @@ server {
         proxy_set_header X-Forwarded-Proto $reliquary_forwarded_proto;
         proxy_set_header X-Forwarded-Host $reliquary_forwarded_host;
         client_max_body_size 10m;
+    }
+
+    # The table hub of the online games: a WebSocket that stays open for the length of a game.
+    # The client sends a ping each 15 seconds, so 1 hour with no message means that the client is gone.
+    # See docs/architecture/online-games.md.
+    location = /api/v1/playtest/hub {
+        proxy_pass $api;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $reliquary_connection_upgrade;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $reliquary_forwarded_proto;
+        proxy_set_header X-Forwarded-Host $reliquary_forwarded_host;
+        proxy_read_timeout 1h;
+        proxy_send_timeout 1h;
+        proxy_buffering off;
+        access_log /var/log/nginx/access.log reliquary_no_query;
     }
 
     # The files of the build have a hash in their names, so the browser can keep them.

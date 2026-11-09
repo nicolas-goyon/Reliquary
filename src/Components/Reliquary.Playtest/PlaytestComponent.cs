@@ -1,10 +1,14 @@
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Reliquary.BuildingBlocks;
 using Reliquary.Playtest.Api;
+using Reliquary.Playtest.Hub;
 using Reliquary.Playtest.Sessions;
+using StackExchange.Redis;
 
 namespace Reliquary.Playtest;
 
@@ -30,5 +34,42 @@ public sealed class PlaytestComponent : ICoreComponent
     }
 
     /// <inheritdoc />
-    public void MapEndpoints(IEndpointRouteBuilder api) => GameEndpoints.Map(api);
+    public void AddApiServices(IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddSingleton<TableBroadcaster>();
+        var signalR = services.AddSignalR(options =>
+        {
+            // An action is small. The largest message is a deck of the lobby, which goes through the REST endpoints.
+            options.MaximumReceiveMessageSize = 16 * 1024;
+            options.EnableDetailedErrors = false;
+        });
+
+        // The Redis backplane sends the group messages to the connections on all the API replicas.
+        // Without a connection string (some tests of the host), the hub works on one replica only.
+        if (configuration.GetConnectionString("Redis") is { Length: > 0 } redis)
+        {
+            signalR.AddStackExchangeRedis(options =>
+            {
+                options.Configuration = ConfigurationOptions.Parse(redis);
+                options.Configuration.AbortOnConnectFail = false;
+                options.Configuration.ChannelPrefix = RedisChannel.Literal(HubChannelPrefix);
+            });
+        }
+    }
+
+    /// <summary>The start of the Redis channels of the backplane of the table hub.</summary>
+    public const string HubChannelPrefix = "reliquary:playtest:hub";
+
+    /// <inheritdoc />
+    public void MapEndpoints(IEndpointRouteBuilder api)
+    {
+        GameEndpoints.Map(api);
+
+        // WebSockets only: with no other transport and no negotiation, a client can connect to any replica, with no sticky session.
+        api.MapHub<TableHub>(TableHub.Path, options =>
+        {
+            options.Transports = HttpTransportType.WebSockets;
+            options.AllowStatefulReconnects = false;
+        });
+    }
 }

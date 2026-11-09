@@ -50,7 +50,69 @@ The lobby gives the nickname, the number of cards and the "ready" flag of each s
 It gives the name of the deck only to the seat of the deck, and it never gives the cards of a deck.
 A player gets a seat only with a deck, so each occupied seat is ready.
 
-The actions on the table and the start of the game use the hub. Issue [#233](https://github.com/nicolas-goyon/reliquary/issues/233) adds the hub.
+The actions on the table and the start of the game use the table hub.
+A change of the lobby through these endpoints also goes to the connected players through the hub.
+
+## Table hub
+
+The table hub is at `/api/v1/playtest/hub`. It uses SignalR with the JSON hub protocol, and WebSockets only.
+The client connects with no negotiation (`SkipNegotiation`), so it can connect to any API replica with no sticky session.
+The client sends the game token in the query parameter `access_token`.
+The web client is `web/src/playtest/online/hubClient.ts`.
+
+Methods that the client calls:
+
+| Method | Arguments | Result |
+| --- | --- | --- |
+| `Join` | `lastSeq` or `null` | The snapshot `{ seq, view, hash }`. Before the start, `view` is `null` and `hash` is empty. |
+| `Resync` | None | The snapshot. |
+| `Act` | `clientActionId`, `action` (the `TableAction` of engine.ts) | `{ accepted: seq }` or `{ rejected: code }` |
+| `Start` | None | The sequence number of the start. Only the host, with 2 players or more. |
+| `Kick` | `seat`, for example `"1"` | None. Only the host, before the start. |
+| `NewInvite` | None | `{ inviteSecret, inviteExpiresAt }`. Only the host, before the start. |
+| `Leave` | None | None. In the lobby, the seat becomes free. When the host leaves the lobby, the game ends. After the start, the seat stays. |
+| `Close` | None | None. Only the host. |
+
+Messages that the server sends:
+
+| Message | Content |
+| --- | --- |
+| `Lobby` | The lobby of the seat. It has the same shape as the response of `GET /playtest/games/{id}`. The hub sends it after the connection and after each change of the lobby. |
+| `Patch` | `{ seq, actorSeat, log, changes, hash }`: the changes of the view of the seat and the hash of the new view. A change of the lobby and the start give a patch with no change, so the sequence numbers have no gap. |
+| `Closed` | `{ reason }`: `ended` or `kicked`. The client does not connect again. |
+
+A method that fails gives a completion with an error. The text of the error contains `HubException: <code>: <message>`, for example `HubException: forbidden: Only the host of the game can do this operation.`
+
+Rules:
+
+- The order of the changes is the sequence number of the game store, not the order of the messages. The client keeps a reorder buffer.
+- The start makes the table with the decks of the seats and a random seed. The seed never leaves the server. The commander damage applies when the format is `commander` or when a deck has a command zone.
+- Each player changes only their own objects. Only the active player can end the turn. A draw has 20 cards at most. A token name has 64 characters at most.
+- A retry of `Act` with the same `clientActionId` gives the sequence number of the first action and applies nothing.
+- One connection sends 10 actions per second on average, and 30 in a burst. An action over the limit gets `{ rejected: "rate_limited" }`.
+- The log text of an action never gives the name of a card in a hidden zone.
+- Each connection is in the group of its seat and of its game token. A kick or a new join gives a new token, so the old connection gets no more messages.
+- The Redis backplane sends the group messages to the connections on all the API replicas. Its channels start with `reliquary:playtest:hub`.
+  When Redis is not available, the backplane loses the messages. The client then finds a gap in the sequence numbers and asks for a full view.
+
+Reason codes of `{ rejected: code }`:
+
+| Code | Meaning |
+| --- | --- |
+| `invalid_action` | The action is not valid: unknown type, missing field, or a value out of range. |
+| `not_your_object` | The action changes the objects of another player. |
+| `not_your_turn` | Only the active player can end the turn. |
+| `unknown_card` | The card is not a card of the player. |
+| `not_started` | The game did not start. |
+| `game_closed` | The game ended. |
+| `rate_limited` | The connection sent too many actions in a short time. |
+
+### Reverse proxy
+
+The table hub needs a WebSocket location in the reverse proxy. `web/nginx.conf.template` has it:
+`proxy_http_version 1.1`, the headers `Upgrade` and `Connection`, and a read timeout of 1 hour.
+The access log of this location does not contain the query string, so it never contains a game token.
+A reverse proxy in front of the web container must also let WebSockets through.
 
 ## Error codes
 
@@ -61,6 +123,7 @@ The actions on the table and the start of the game use the hub. Issue [#233](htt
 | `game_full` | 409 | All the seats of the game have a player. |
 | `game_started` | 409 | The game started. New players cannot join it, and the lobby cannot change. |
 | `game_open_limit` | 409 | The account has the maximum number of open games. |
+| `game_not_enough_players` | 409 | The game has not enough players to start. The hub gives this code. |
 | `deck_text_invalid` | 400 | The deck text has lines that the API cannot use. The member `lineErrors` gives each line. |
 | `rate_limited` | 429 | The account created the maximum number of games today, or the IP address sent too many join requests. |
 | `service_unavailable` | 503 | Redis is not available. |
