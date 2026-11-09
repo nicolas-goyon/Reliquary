@@ -1,0 +1,22 @@
+{
+"description": "Canonical JSON and 64-bit FNV-1a hash of single values. See web/src/playtest/views.ts.",
+"items": [
+{"value":null,"canonicalJson":"null","hash":"5b9bc4ba528108e4"},
+{"value":true,"canonicalJson":"true","hash":"5b5c98ef514dbfa5"},
+{"value":false,"canonicalJson":"false","hash":"b5fae2c14238b978"},
+{"value":0,"canonicalJson":"0","hash":"af63ad4c86019caf"},
+{"value":0,"canonicalJson":"0","hash":"af63ad4c86019caf"},
+{"value":-42,"canonicalJson":"-42","hash":"de5e4d17de016a82"},
+{"value":9007199254740991,"canonicalJson":"9007199254740991","hash":"b28c3ee58db1a18b"},
+{"value":-9007199254740991,"canonicalJson":"-9007199254740991","hash":"ca1fc2ffda8a5d0e"},
+{"value":"","canonicalJson":"\"\"","hash":"07cc7607b4949e25"},
+{"value":"plain","canonicalJson":"\"plain\"","hash":"9ea3bf33eb1d861f"},
+{"value":"\"\\/","canonicalJson":"\"\\\"\\\\/\"","hash":"418d0b8957197c9a"},
+{"value":"\b\f\n\r\t\u0000\u001f","canonicalJson":"\"\\b\\f\\n\\r\\t\\u0000\\u001f\"","hash":"10461db10154990b"},
+{"value":"é🐉  ","canonicalJson":"\"é🐉  \"","hash":"d9e68397504e76ba"},
+{"value":"\udc00 lone","canonicalJson":"\"\\udc00 lone\"","hash":"9fae3e6c9b8a7c0d"},
+{"value":[],"canonicalJson":"[]","hash":"09612b07b5ecb5a5"},
+{"value":{},"canonicalJson":"{}","hash":"08f44b07b5901a25"},
+{"value":{"b":[1,{"d":"x","c":null}],"a":"y","é":1,"Z":2,"🐉":3},"canonicalJson":"{\"Z\":2,\"a\":\"y\",\"b\":[1,{\"c\":null,\"d\":\"x\"}],\"é\":1,\"🐉\":3}","hash":"47bcd9783fc1e792"}
+]
+}
