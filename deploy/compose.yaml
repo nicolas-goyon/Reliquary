@@ -64,7 +64,7 @@ services:
   # A test email server. It keeps all the emails and sends none. Read the emails at http://localhost:18035.
   # To send real emails, set RELIQUARY_SMTP_HOST and the other SMTP settings.
   mailpit:
-    image: axllent/mailpit:v1.32.0
+    image: axllent/mailpit:v1.33.0
     restart: unless-stopped
     ports:
       - "${RELIQUARY_BIND_ADDRESS:-127.0.0.1}:${RELIQUARY_MAILPIT_PORT:-18035}:8025"

@@ -12,6 +12,8 @@ updates:
     groups:
       dotnet:
         update-types: [minor, patch]
+      dotnet-major:
+        update-types: [major]
 
   - package-ecosystem: npm
     directory: /web
@@ -24,6 +26,8 @@ updates:
     groups:
       web:
         update-types: [minor, patch]
+      web-major:
+        update-types: [major]
 
   - package-ecosystem: github-actions
     directory: /
@@ -33,14 +37,33 @@ updates:
     commit-message:
       prefix: ci
 
-  - package-ecosystem: docker-compose
-    directory: /
+  - package-ecosystem: docker
+    directories: [/, /web]
     target-branch: develop
     schedule:
       interval: weekly
     commit-message:
       prefix: chore
       include: scope
+    groups:
+      docker:
+        update-types: [minor, patch]
+      docker-major:
+        update-types: [major]
+
+  - package-ecosystem: docker-compose
+    directories: [/, /deploy]
+    target-branch: develop
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      compose:
+        update-types: [minor, patch]
+      compose-major:
+        update-types: [major]
 
   - package-ecosystem: pip
     directory: /tools/docs-site
