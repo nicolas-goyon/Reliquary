@@ -131,7 +131,7 @@ services:
   # Optional: Grafana with Prometheus, Tempo and Loki, and an OpenTelemetry collector.
   # Start it with "just observability". See docs/development/observability.md.
   observability:
-    image: grafana/otel-lgtm:0.39.0
+    image: grafana/otel-lgtm:0.40.0
     profiles: ["observability"]
     ports:
       - "127.0.0.1:${RELIQUARY_GRAFANA_PORT:-3000}:3000"
