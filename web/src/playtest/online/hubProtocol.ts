@@ -78,3 +78,13 @@ export function parseMessage(record: string): HubMessage | null {
       return null
   }
 }
+
+/**
+ * Reads the error code of a hub method error. SignalR sends the text
+ * "An unexpected error occurred invoking 'X' on the server. HubException: <code>: <message>".
+ * The code is the text after "HubException: " and before the next ":". It gives "internal_error" when the text has no code.
+ */
+export function hubErrorCode(text: string): string {
+  const match = /HubException: ([a-z0-9_]+)(?::|$)/.exec(text)
+  return match ? match[1] : 'internal_error'
+}

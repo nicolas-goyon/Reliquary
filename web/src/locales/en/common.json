@@ -108,7 +108,13 @@
     "deck_not_assembled": "The deck is not an assembled deck. Mark a version as the assembled version first.",
     "deck_link_site_unavailable": "This instance cannot read the decks of this site. On the site, export the deck as text and paste the text below.",
     "deck_link_not_found": "The site has no public deck at this link. Make sure that the deck is public or unlisted.",
-    "deck_link_site_failed": "The other site did not give the deck. Try again later, or export the deck as text and paste the text."
+    "deck_link_site_failed": "The other site did not give the deck. Try again later, or export the deck as text and paste the text.",
+    "game_invite_invalid": "The invite link is not valid. It expired, or the host made a new link. Ask the host for the current link.",
+    "game_token_invalid": "Your place in the game is not valid. Open the invite link again to join the game.",
+    "game_full": "The game has no free place. Ask the host to remove a player or to make a new game.",
+    "game_started": "The game started. A new player cannot join it.",
+    "game_open_limit": "You have 3 open games. Close a game, then create a new game.",
+    "game_not_enough_players": "The game needs 2 players or more. Send the invite link to another player."
   },
   "fieldErrors": {
     "required": "This field is necessary.",

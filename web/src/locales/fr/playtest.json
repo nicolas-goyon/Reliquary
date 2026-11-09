@@ -113,5 +113,97 @@
     "life_one": "{{count}} point de vie",
     "life_other": "{{count}} points de vie",
     "counterValue": "{{label}} : {{value}}"
+  },
+  "online": {
+    "action": "Partie en ligne",
+    "title": "Partie en ligne",
+    "create": {
+      "pageTitle": "Nouvelle partie en ligne : {{name}}",
+      "title": "Nouvelle partie en ligne",
+      "hint": "Vous jouez ce deck. Envoyez le lien d’invitation aux autres joueurs. Ils rejoignent avec un compte ou en invité.",
+      "submit": "Créer la partie"
+    },
+    "join": {
+      "title": "Rejoindre la partie",
+      "accountHint": "Choisissez le deck que vous jouez.",
+      "guestHint": "Vous rejoignez en invité. Saisissez un pseudo et le deck que vous jouez.",
+      "nickname": "Pseudo",
+      "deckSource": "Deck",
+      "sources": {
+        "deck": "Un lien de deck",
+        "text": "Une liste de deck"
+      },
+      "deckLink": "Lien du deck",
+      "deckLinkHint": "Collez le lien d’un de vos decks ou d’un deck public.",
+      "deckLinkGuestHint": "Collez le lien d’un deck public.",
+      "deckText": "Liste du deck",
+      "deckTextHint": "Une carte par ligne, par exemple « 1 Sol Ring ». 250 lignes au maximum.",
+      "submit": "Rejoindre la partie",
+      "deckLinkInvalid": "Le lien du deck n’est pas valide. Collez le lien d’une page de deck.",
+      "deckTextEmpty": "La liste du deck est vide. Collez une liste de deck.",
+      "nicknameEmpty": "Saisissez un pseudo.",
+      "noInvite": "Ce lien ne contient pas d’invitation. Demandez le lien d’invitation à l’hôte.",
+      "nicknameOptional": "Nom dans la partie (facultatif)",
+      "nicknameHint": "Sans nom, la partie utilise le nom affiché de votre compte.",
+      "lineErrors": "Le serveur ne peut pas lire ces lignes de la liste. Corrigez-les, puis rejoignez à nouveau."
+    },
+    "lobby": {
+      "title": "Joueurs",
+      "loading": "Connexion à la partie.",
+      "invite": "Lien d’invitation",
+      "inviteHint": "Envoyez ce lien aux autres joueurs. Toute personne qui a le lien peut rejoindre jusqu’au début de la partie.",
+      "copy": "Copier le lien",
+      "copied": "Le lien est dans le presse-papiers.",
+      "newInvite": "Créer un nouveau lien",
+      "count": "{{count}} joueurs sur {{size}}",
+      "host": "Hôte",
+      "you": "Vous",
+      "kick": "Retirer {{name}}",
+      "start": "Lancer la partie",
+      "waitHost": "L’hôte lance la partie.",
+      "leave": "Quitter la partie",
+      "guest": "Invité",
+      "account": "Compte",
+      "cards_one": "{{count}} carte",
+      "cards_other": "{{count}} cartes"
+    },
+    "table": {
+      "active": "Joueur actif : {{name}}",
+      "noSeat": "Votre place n’est pas dans la partie.",
+      "others": "Autres joueurs",
+      "log": "Journal de la partie",
+      "logEmpty": "Aucune action pour l’instant.",
+      "leave": "Quitter la table"
+    },
+    "status": {
+      "connecting": "Connexion à la partie.",
+      "reconnecting": "La connexion s’est arrêtée. Nouvelle connexion en cours.",
+      "closed": "La connexion s’est arrêtée.",
+      "connected": "Connecté."
+    },
+    "closed": {
+      "ended": "La partie est terminée.",
+      "kicked": "L’hôte vous a retiré de la partie.",
+      "expired": "La partie a expiré, car personne n’a joué depuis longtemps.",
+      "other": "La partie est fermée."
+    },
+    "desyncs_one": "La page a rechargé la table complète {{count}} fois, car une modification n’a pas pu s’appliquer.",
+    "desyncs_other": "La page a rechargé la table complète {{count}} fois, car une modification n’a pas pu s’appliquer.",
+    "end": "Terminer la partie",
+    "endWarning": "La partie se termine pour tous les joueurs.",
+    "endConfirm": "Terminer pour tous",
+    "cancel": "Annuler",
+    "away": "Vous avez quitté la table. Votre place reste dans la partie.",
+    "comeBack": "Revenir à la table",
+    "rejected": {
+      "invalid_action": "Le serveur a refusé l’action, car elle n’est pas valide.",
+      "not_your_object": "Vous pouvez modifier seulement vos cartes et vos marqueurs.",
+      "not_your_turn": "Seul le joueur actif peut passer le tour.",
+      "unknown_card": "La carte n’est plus sur la table. La table montre le dernier état du serveur.",
+      "not_started": "La partie n’a pas commencé.",
+      "game_closed": "La partie est terminée.",
+      "rate_limited": "Vous avez envoyé trop d’actions. Attendez quelques secondes.",
+      "other": "Le serveur a refusé l’action. La table montre le dernier état du serveur."
+    }
   }
 }

@@ -113,5 +113,97 @@
     "life_one": "{{count}} life point",
     "life_other": "{{count}} life points",
     "counterValue": "{{label}}: {{value}}"
+  },
+  "online": {
+    "action": "Online game",
+    "title": "Online game",
+    "create": {
+      "pageTitle": "New online game: {{name}}",
+      "title": "New online game",
+      "hint": "You play this deck. Send the invite link to the other players. They join with an account or as a guest.",
+      "submit": "Create the game"
+    },
+    "join": {
+      "title": "Join the game",
+      "accountHint": "Select the deck that you play.",
+      "guestHint": "You join as a guest. Enter a nickname and the deck that you play.",
+      "nickname": "Nickname",
+      "deckSource": "Deck",
+      "sources": {
+        "deck": "A deck link",
+        "text": "A deck list"
+      },
+      "deckLink": "Deck link",
+      "deckLinkHint": "Paste the link of one of your decks or of a public deck.",
+      "deckLinkGuestHint": "Paste the link of a public deck.",
+      "deckText": "Deck list",
+      "deckTextHint": "One card on each line, for example \"1 Sol Ring\". 250 lines at most.",
+      "submit": "Join the game",
+      "deckLinkInvalid": "The deck link is not correct. Paste the link of a deck page.",
+      "deckTextEmpty": "The deck list is empty. Paste a deck list.",
+      "nicknameEmpty": "Enter a nickname.",
+      "noInvite": "This link has no invitation. Ask the host for the invite link.",
+      "nicknameOptional": "Name in the game (optional)",
+      "nicknameHint": "With no name, the game uses the public name of your account.",
+      "lineErrors": "The server cannot read these lines of the deck list. Correct them, then join again."
+    },
+    "lobby": {
+      "title": "Players",
+      "loading": "The page connects to the game.",
+      "invite": "Invite link",
+      "inviteHint": "Send this link to the other players. Each person with the link can join until the game starts.",
+      "copy": "Copy the link",
+      "copied": "The link is in the clipboard.",
+      "newInvite": "Make a new link",
+      "count": "{{count}} of {{size}} players",
+      "host": "Host",
+      "you": "You",
+      "kick": "Remove {{name}}",
+      "start": "Start the game",
+      "waitHost": "The host starts the game.",
+      "leave": "Leave the game",
+      "guest": "Guest",
+      "account": "Account",
+      "cards_one": "{{count}} card",
+      "cards_other": "{{count}} cards"
+    },
+    "table": {
+      "active": "Active player: {{name}}",
+      "noSeat": "Your seat is not in the game.",
+      "others": "Other players",
+      "log": "Game log",
+      "logEmpty": "No action yet.",
+      "leave": "Leave the table"
+    },
+    "status": {
+      "connecting": "The page connects to the game.",
+      "reconnecting": "The connection stopped. The page connects again.",
+      "closed": "The connection stopped.",
+      "connected": "Connected."
+    },
+    "closed": {
+      "ended": "The game ended.",
+      "kicked": "The host removed you from the game.",
+      "expired": "The game expired, because nobody played for a long time.",
+      "other": "The game closed."
+    },
+    "desyncs_one": "The page got the full table again {{count}} time, because a change did not apply.",
+    "desyncs_other": "The page got the full table again {{count}} times, because a change did not apply.",
+    "end": "End the game",
+    "endWarning": "The game ends for all the players.",
+    "endConfirm": "End the game for all",
+    "cancel": "Cancel",
+    "away": "You left the table. Your place stays in the game.",
+    "comeBack": "Go back to the table",
+    "rejected": {
+      "invalid_action": "The server refused the action, because the action is not valid.",
+      "not_your_object": "You can change only your own cards and counters.",
+      "not_your_turn": "Only the active player can give the turn.",
+      "unknown_card": "The card is not on the table any more. The table shows the last state of the server.",
+      "not_started": "The game did not start.",
+      "game_closed": "The game ended.",
+      "rate_limited": "You sent too many actions. Wait a few seconds.",
+      "other": "The server refused the action. The table shows the last state of the server."
+    }
   }
 }

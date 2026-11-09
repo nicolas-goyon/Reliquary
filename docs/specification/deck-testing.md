@@ -82,6 +82,32 @@ It removes the identity of each hidden card: the name, the Oracle ID, the image 
 It also removes the seed of the random number generator, because the seed gives the order of the libraries.
 Online games can use the same function. [ADR 0045](../decisions/0045-window-sync-with-broadcastchannel.md) gives the design.
 
+## Online games
+
+[ADR 0047](../decisions/0047-trusted-server-for-online-games.md) gives the server design.
+The [online games architecture](../architecture/online-games.md) gives the endpoints and the limits.
+The goldfish page has a link "Online game".
+
+1. A user with an account selects the number of players, 2 to 4, and creates the game with the deck that they test. The user can change their name in the game. The default name is the public name of the account.
+2. The host gets the invite link `/play/{game}#{secret}` in the lobby. The host can copy the link and make a new link.
+3. A person with the link opens the join page.
+   A user with an account gives a link of one of their decks or of a public deck.
+   That user can also change their name in the game.
+   A guest gives a nickname and a link of a public deck or a deck list.
+4. The lobby shows the players. The host can remove a player and start the game when 2 players or more are in the lobby.
+5. The online table shows the board and the hand of the player, and the boards of the other players.
+   The hands and the libraries of the other players are counts.
+
+- The server applies each action. The table shows only the view that the server sends.
+- When the server refuses an action, the table shows a message.
+- The table shows the public text of the last actions in the game log.
+- The page keeps the seat in the browser tab. A reload of the page connects to the same seat.
+- The page connects again after a network problem.
+- In the lobby, a player can leave the game. The seat becomes free.
+- The host can end the game for all the players, in the lobby and at the table. When the host leaves the lobby, the game ends.
+- At the table, a player can leave the table. The seat stays, and the player can go back to the table.
+- The online table is also a game window: the user can open a table window for the shared screen.
+
 ## Milestones
 
 The project delivers the features of this file in this [milestone](../roadmap.md).

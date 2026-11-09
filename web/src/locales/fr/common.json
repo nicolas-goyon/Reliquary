@@ -108,7 +108,13 @@
     "deck_not_assembled": "Le deck n’est pas un deck assemblé. Marquez d’abord une version comme version assemblée.",
     "deck_link_site_unavailable": "Cette instance ne peut pas lire les decks de ce site. Sur le site, exportez le deck en texte et collez le texte ci-dessous.",
     "deck_link_not_found": "Le site n’a aucun deck public à ce lien. Vérifiez que le deck est public ou non répertorié.",
-    "deck_link_site_failed": "L’autre site n’a pas donné le deck. Réessayez plus tard, ou exportez le deck en texte et collez le texte."
+    "deck_link_site_failed": "L’autre site n’a pas donné le deck. Réessayez plus tard, ou exportez le deck en texte et collez le texte.",
+    "game_invite_invalid": "Le lien d’invitation n’est pas valide. Il a expiré, ou l’hôte a créé un nouveau lien. Demandez le lien actuel à l’hôte.",
+    "game_token_invalid": "Votre place dans la partie n’est pas valide. Ouvrez à nouveau le lien d’invitation pour rejoindre la partie.",
+    "game_full": "La partie n’a plus de place libre. Demandez à l’hôte de retirer un joueur ou de créer une nouvelle partie.",
+    "game_started": "La partie a commencé. Un nouveau joueur ne peut plus la rejoindre.",
+    "game_open_limit": "Vous avez 3 parties ouvertes. Fermez une partie, puis créez une nouvelle partie.",
+    "game_not_enough_players": "La partie a besoin d’au moins 2 joueurs. Envoyez le lien d’invitation à un autre joueur."
   },
   "fieldErrors": {
     "required": "Ce champ est obligatoire.",

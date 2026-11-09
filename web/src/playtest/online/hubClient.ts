@@ -1,5 +1,6 @@
 import type { TableAction } from '../engine'
-import { formatMessage, handshakeRequest, messageTypes, parseHandshakeResponse, parseMessage, splitRecords, type HubMessage } from './hubProtocol'
+import { ApiError } from '../../api/client'
+import { formatMessage, handshakeRequest, hubErrorCode, messageTypes, parseHandshakeResponse, parseMessage, splitRecords, type HubMessage } from './hubProtocol'
 import { ReorderBuffer } from './reorderBuffer'
 
 /*
@@ -250,7 +251,8 @@ export class HubClient {
           this.unansweredActs.delete(pending.args[0] as string)
         }
         if (message.error !== undefined) {
-          pending.reject(new Error(message.error))
+          // The error has the code of the hub, so the interface shows the translated message.
+          pending.reject(new ApiError(0, hubErrorCode(message.error), message.error))
         } else {
           pending.resolve(message.result)
         }
