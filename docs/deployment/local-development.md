@@ -27,6 +27,8 @@ To use Reliquary every day with your own data, use a [pre-production instance](p
    The commands put the repository in the Linux file system, in `~/reliquary`.
    Do not clone it in `/mnt/c`: the build is much slower there.
 
+   With Git Bash, add `export MSYS_NO_PATHCONV=1` to `~/.bashrc` first. [Git Bash](requirements.md#git-bash) tells why.
+
    ///
 
 2. Clone the repository and open its folder:

@@ -19,6 +19,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - The script `reliquary-update`: it installs, updates, checks, backs up and rolls back a deployed instance with Docker Compose.
 - The releases with release-please (ADR 0043).
 - The tabs for Linux and Windows in the guides of the documentation site.
+- The script `reliquary-update.ps1`: the commands of `reliquary-update` for PowerShell on Windows, with no WSL and no Git Bash (ADR 0044).
 - The deck import from a link of Moxfield or Archidekt. Moxfield needs a user agent that Moxfield support allows.
 - The recipe `just full-cards`: it imports all the cards into a local instance with Docker Compose.
 - The table engine and the goldfish mode: opening hand, London mulligan, draw, zones, tokens, counters, flip, life points and hand statistics.

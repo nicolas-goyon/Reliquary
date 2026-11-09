@@ -8,12 +8,12 @@ Terms follow the [glossary](../glossary.md).
 | Mode | Use | Images | Data | Tool |
 | --- | --- | --- | --- | --- |
 | [Local instance](local-development.md) | Development and the tests of a branch | Built from the source code | Demo accounts and 342 demo cards. `just reset` deletes the data. | `just` |
-| [Pre-production instance](pre-production.md) | Daily use on your computer, and the test of the next release with real data | Published images of the channel `develop` | Your accounts and all the cards. Each update keeps the data. | `reliquary-update` |
+| [Pre-production instance](pre-production.md) | Daily use on your computer, and the test of the next release with real data | Published images of the channel `develop` | Your accounts and all the cards. Each update keeps the data. | `reliquary-update`, or `reliquary-update.ps1` on Windows |
 | [Production instance](production.md) | A server that other people use | Published images of a release | Your accounts and all the cards, with backups on a different computer | `reliquary-update`, or Kubernetes in a later version |
 
 The three modes use the same code. A local instance and a pre-production instance can run on the same computer at the same time.
 
-The three modes work on Linux and on Windows with WSL 2. The pages have a tab for each system. [Install the software](requirements.md#install-the-software) tells how to prepare the computer.
+The three modes work on Linux and on Windows. The pages have a tab for each system. [Install the software](requirements.md#install-the-software) tells how to prepare the computer.
 
 ```mermaid
 flowchart LR

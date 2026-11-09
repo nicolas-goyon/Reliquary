@@ -12,6 +12,7 @@ docker compose --project-name reliquary-preprod logs --tail 200 api worker web
 ```
 
 Replace `reliquary-preprod` with the value of `RELIQUARY_PROJECT` in `.env`.
+The same command works in PowerShell.
 On Windows, Docker Desktop also shows the logs: open **Containers**, then select a container.
 
 ## Docker does not respond
@@ -37,8 +38,8 @@ When a command gives `Cannot connect to the Docker daemon` or `docker: command n
 /// tab | Windows
 
 1. Start Docker Desktop, and wait until it shows **Engine running**.
-2. In Docker Desktop, open **Settings → Resources → WSL integration**, and enable **Ubuntu**.
-3. Close the Ubuntu terminal, and open it again.
+2. In the Ubuntu terminal of WSL 2 only: in Docker Desktop, open **Settings → Resources → WSL integration**, and enable **Ubuntu**.
+3. Close the terminal, and open it again.
 4. When the problem stays, run `wsl --shutdown` in PowerShell, then start Docker Desktop again.
 
 ///
@@ -55,8 +56,11 @@ When a command gives `Cannot connect to the Docker daemon` or `docker: command n
 | `Bind for 127.0.0.1:8090 failed: port is already allocated` | A different program uses the port. | Change `RELIQUARY_APP_PORT` (and `RELIQUARY_PUBLIC_URL`) in `.env`. |
 | The card search gives few results after the installation. | The worker imports the cards after its first start. The import takes some minutes. | Wait. To start the import again, run `./reliquary-update --import-cards`. |
 | All the users must sign in again after an update. | The Redis volume or the signing key changed. | Do not change `RELIQUARY_SIGNING_KEY`, and do not delete the volume `<project>_redis-data`. |
-| On Windows, `Permission denied` on the folder `backups` | The instance is in the Windows file system (`/mnt/c`). | Install the instance in the Linux file system, for example in `~/reliquary-preprod`. Move the backups there. |
-| On Windows, `bash: ./reliquary-update: /bin/sh^M: bad interpreter` | A Windows program saved the script with Windows line endings. | Get the script again from the CLI image. Edit `.env` and the script in WSL or in an editor that keeps the line endings. |
+| In Git Bash, `cat: 'C:/Program Files/Git/app/deploy/...': No such file or directory` | Git Bash changes the paths of the container to Windows paths. | Use `reliquary-update.ps1` in PowerShell. See [Git Bash](requirements.md#git-bash). |
+| In PowerShell, `reliquary-update.ps1 cannot be loaded because running scripts is disabled on this system` | Windows blocks the scripts by default. | Run `Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned`, then try again. |
+| In PowerShell, `docker: The term 'docker' is not recognized` | Docker Desktop is not installed, or PowerShell started before the installation. | Install Docker Desktop, then open a new PowerShell window. |
+| In WSL 2, `Permission denied` on the folder `backups` | The instance is in the Windows file system (`/mnt/c`). | Install the instance in the Linux file system, for example in `~/reliquary-preprod`, and move the backups there. Or use `reliquary-update.ps1` in PowerShell. |
+| In WSL 2, `bash: ./reliquary-update: /bin/sh^M: bad interpreter` | A Windows program saved the script with Windows line endings. | Get the script again from the CLI image. Edit `.env` and the script in WSL or in an editor that keeps the line endings. |
 | The Google sign-in fails behind the reverse proxy. | The redirect URI or the public URL is not correct. | Set `RELIQUARY_PUBLIC_URL` to the HTTPS address, and register `https://your-domain/api/v1/auth/external/google/callback` at Google. |
 
 ## Start again from a backup

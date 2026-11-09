@@ -27,6 +27,8 @@ Run the commands of this guide in the Ubuntu terminal of WSL 2, and install the 
 Keep the repository in the Linux file system, for example in `~/reliquary`, and not in `/mnt/c`.
 [Develop with hot reload](../deployment/local-development.md#develop-with-hot-reload) gives the commands and the editor settings.
 
+Git Bash also runs the recipes of `just`, with the setting `MSYS_NO_PATHCONV=1`. [Git Bash](../deployment/requirements.md#git-bash) tells why.
+
 ///
 
 ## Try a full local instance
