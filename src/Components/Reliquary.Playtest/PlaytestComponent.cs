@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Reliquary.BuildingBlocks;
+using Reliquary.Playtest.Engine;
+using Reliquary.Playtest.Sessions;
 
 namespace Reliquary.Playtest;
 
@@ -16,6 +18,8 @@ public sealed class PlaytestComponent : ICoreComponent
     /// <inheritdoc />
     public void AddServices(IServiceCollection services, IConfiguration configuration)
     {
+        services.Configure<GameStoreOptions>(configuration.GetSection(GameStoreOptions.Section));
+        services.AddSingleton<GameStore<TableState>>();
     }
 
     /// <inheritdoc />
