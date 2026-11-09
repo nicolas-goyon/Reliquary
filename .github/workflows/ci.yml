@@ -57,11 +57,16 @@ jobs:
       - name: Build
         run: dotnet build --no-restore --configuration Release
 
-      - name: Install the PostgreSQL 18 client for the backup tests
+      # The backup tests run pg_dump and pg_restore of the PostgreSQL service container.
+      # The client tools then have the version of the server, and the runner installs no package.
+      - name: Use the PostgreSQL client of the service container for the backup tests
         run: |
-          sudo apt-get install --yes --no-install-recommends postgresql-common
-          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
-          sudo apt-get install --yes --no-install-recommends postgresql-client-18
+          mkdir -p "$RUNNER_TEMP/pg-tools"
+          for tool in pg_dump pg_restore; do
+            ln -s "$GITHUB_WORKSPACE/tools/ci/pg-tool-in-container.sh" "$RUNNER_TEMP/pg-tools/$tool"
+          done
+          echo "$RUNNER_TEMP/pg-tools" >> "$GITHUB_PATH"
+          echo "PG_CONTAINER=${{ job.services.postgres.id }}" >> "$GITHUB_ENV"
 
       - name: Test
         run: dotnet test --no-build --configuration Release
