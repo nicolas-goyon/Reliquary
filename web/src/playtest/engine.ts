@@ -2,6 +2,8 @@
  * The table engine of the deck testing modes: zones, draw, shuffle, tokens, counters and flip.
  * The engine has no game rules. It is a pure function: the same state and the same action always give the same new state.
  * ADR 0040 gives the reasons.
+ * The API has a C# port of this engine for online games (ADR 0047): src/Components/Reliquary.Playtest/Engine/TableEngine.cs.
+ * After a change here, run "npm run vectors" and make the same change in the C# engine. The conformance vectors in tests/vectors/table-engine keep the two engines equal.
  */
 
 export const tableZones = ['library', 'hand', 'battlefield', 'graveyard', 'exile', 'command'] as const

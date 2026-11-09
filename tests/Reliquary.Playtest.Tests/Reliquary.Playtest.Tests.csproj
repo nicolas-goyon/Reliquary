@@ -18,6 +18,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- The conformance vectors of the table engine. The web tests write them from engine.ts. -->
+    <None Include="..\vectors\table-engine\*.json" LinkBase="vectors\table-engine" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Using Include="Xunit" />
   </ItemGroup>
 </Project>
