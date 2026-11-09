@@ -90,7 +90,7 @@ Else the API returns the status 403 with the code `scope_missing`.
 
 | Scope | Endpoints |
 | --- | --- |
-| `decks:read` | `GET /decks`, `GET /decks/tags`, `POST /decks/export`, `GET /decks/{id}`, `GET /decks/{id}/legality`, `GET /decks/{id}/export`, `GET /decks/{id}/analysis`, `GET /decks/{id}/text`, `GET /decks/{id}/auto-tag`, `GET /decks/{id}/recommendations`, `GET /deck-folders`, `GET /tags`, the `GET` endpoints of the versions and the variants, `POST /lists/compare` |
+| `decks:read` | `GET /decks`, `GET /decks/tags`, `POST /decks/export`, `GET /decks/{id}`, `GET /decks/{id}/legality`, `GET /decks/{id}/export`, `GET /decks/{id}/analysis`, `GET /decks/{id}/text`, `GET /decks/{id}/auto-tag`, `GET /decks/{id}/recommendations`, `GET /deck-folders`, `GET /tags`, the `GET` endpoints of the versions and the variants, `POST /lists/compare`, `POST /playtest/games`, `POST /playtest/games/{id}/join` |
 | `decks:write` | `POST /decks`, `POST /decks/group`, `POST /decks/import`, `POST /decks/import-link`, `PATCH /decks/{id}`, `DELETE /decks/{id}`, the endpoints of the deck lines, `POST /decks/{id}/copy`, `PUT /decks/{id}/text`, `POST /decks/{id}/auto-tag` |
 | `decks:write` | `POST`, `PATCH` and `DELETE` on `/deck-folders`, `PATCH` and `DELETE` on `/tags` |
 | `decks:write` | The `POST` endpoints of the versions and the variants, `POST /decks/{id}/merge`, and `PUT` and `DELETE` on `/decks/{id}/assembled` |
