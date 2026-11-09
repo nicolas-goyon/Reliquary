@@ -5,6 +5,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## Unreleased
 
+## [0.2.0] - 2026-11-09
+
 ### Fixed
 
 - The deck import finds a card with two faces when the name has one slash, as in the text of Moxfield: `Front / Back`.
