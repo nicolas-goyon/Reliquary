@@ -22,6 +22,7 @@ public sealed record PublicDeckCommanderResponse(Guid OracleId, string Name, str
 /// <param name="CopyCount">The number of copies by other users.</param>
 /// <param name="FavoriteCount">The number of users with the deck in their favorites.</param>
 /// <param name="UpdatedAt">The time of the last change.</param>
+/// <param name="Archetype">The archetype, or <see langword="null"/> when the owner did not choose one.</param>
 public sealed record PublicDeckResponse(
     Guid Id,
     string Name,
@@ -32,7 +33,8 @@ public sealed record PublicDeckResponse(
     int CardCount,
     int CopyCount,
     int FavoriteCount,
-    DateTimeOffset UpdatedAt);
+    DateTimeOffset UpdatedAt,
+    string? Archetype = null);
 
 /// <summary>The profile of an author.</summary>
 /// <param name="Id">The account ID of the author.</param>

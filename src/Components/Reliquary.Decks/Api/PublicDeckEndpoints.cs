@@ -27,7 +27,7 @@ internal static class PublicDeckEndpoints
 
         decks.MapGet(string.Empty, SearchAsync)
             .WithName("SearchPublicDecks")
-            .WithSummary("Searches the public decks of all the users by name, format, commander, color identity, card, author and date of the last change. A visitor with no account can search.");
+            .WithSummary("Searches the public decks of all the users by name, format, commander, color identity, card, author, archetype and date of the last change. A visitor with no account can search.");
 
         user.MapGet("/favorites", ListFavoritesAsync)
             .WithName("ListFavoriteDecks")
@@ -98,6 +98,7 @@ internal static class PublicDeckEndpoints
         string? sort,
         string? updatedFrom,
         string? updatedTo,
+        string? archetype,
         CancellationToken cancellationToken)
     {
         if (!TryReadPage(limit, cursor, out var page, out var offset, out var pageError))
@@ -124,6 +125,11 @@ internal static class PublicDeckEndpoints
             errors.Add(new FieldError("updatedTo", FieldErrorCodes.OutOfRange, "The end date must be on or after the start date."));
         }
 
+        if (archetype is not null && !DeckRules.Archetypes.Contains(archetype))
+        {
+            errors.Add(new FieldError("archetype", FieldErrorCodes.NotAllowed, $"Use one of these values: {string.Join(", ", DeckRules.Archetypes)}."));
+        }
+
         var commanderId = await ResolveCardAsync(catalog, errors, "commander", commander, cancellationToken);
         var cardId = await ResolveCardAsync(catalog, errors, "card", card, cancellationToken);
         if (errors.Count > 0)
@@ -143,7 +149,8 @@ internal static class PublicDeckEndpoints
             offset,
             page.Limit + 1,
             from?.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc),
-            to is { } end && end < DateOnly.MaxValue ? end.AddDays(1).ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc) : null);
+            to is { } end && end < DateOnly.MaxValue ? end.AddDays(1).ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc) : null,
+            archetype);
         return TypedResults.Ok(ToPage(await service.SearchAsync(query, cancellationToken), page.Limit, offset));
     }
 

@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { formatKey } from '../api/decks'
+import { formatKey, isArchetype } from '../api/decks'
 import type { PublicDeck } from '../api/publicDecks'
 import { Link } from '../router/Link'
 import { CardImage } from './CardImage'
@@ -27,6 +27,7 @@ export function PublicDeckList({ decks, showAuthor = true, headingLevel = 3 }: {
             </Heading>
             <p className="public-deck-meta">
               <span>{t(`formats.${formatKey(deck.format)}`)}</span>
+              {isArchetype(deck.archetype) && <span>{t(`archetypes.${deck.archetype}`)}</span>}
               {deck.colorIdentity ? (
                 <ManaCost cost={deck.colorIdentity.split('').map((color) => `{${color}}`).join('')} />
               ) : (

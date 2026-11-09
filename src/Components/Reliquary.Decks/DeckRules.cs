@@ -24,6 +24,16 @@ public static class DeckRules
         "historic", "timeless", "alchemy", "gladiator", "explorer", "future", "penny", "freeform",
     ];
 
+    /// <summary>
+    /// The archetypes that the owner can give to a deck. The search of public decks filters by archetype.
+    /// The list is fixed, so that the same archetype has the same value in all the decks.
+    /// </summary>
+    public static readonly IReadOnlyList<string> Archetypes =
+    [
+        "aggro", "midrange", "control", "combo", "tempo", "ramp", "stax", "voltron", "tokens",
+        "aristocrats", "spellslinger", "reanimator", "typal", "lands", "group_hug",
+    ];
+
     /// <summary>The predefined categories of the analysis.</summary>
     public static readonly IReadOnlyList<string> Categories =
         ["ramp", "card_draw", "targeted_interaction", "board_wipe", "synergy", "land", "win_condition", "protection"];

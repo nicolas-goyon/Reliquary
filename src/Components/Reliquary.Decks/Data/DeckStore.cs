@@ -52,6 +52,9 @@ internal sealed class DeckRow
 
     /// <summary>Gets or sets the assembled version, or <see langword="null"/> when the deck is not assembled.</summary>
     public Guid? AssembledVersionId { get; set; }
+
+    /// <summary>Gets or sets the archetype (a value of <see cref="DeckRules.Archetypes"/>), or <see langword="null"/>.</summary>
+    public string? Archetype { get; set; }
 }
 
 /// <summary>
@@ -193,7 +196,8 @@ internal sealed class DeckStore(IDatabase database)
     private const string DeckColumns = """
         id, owner_id as OwnerId, name, format, visibility, folder_id as FolderId, description, source_deck_id as SourceDeckId,
         pinned, archived_at as ArchivedAt, version, created_at as CreatedAt, updated_at as UpdatedAt, tags, color_identity as ColorIdentity,
-        variant_of as VariantOf, base_version_id as BaseVersionId, head_version_id as HeadVersionId, assembled_version_id as AssembledVersionId
+        variant_of as VariantOf, base_version_id as BaseVersionId, head_version_id as HeadVersionId, assembled_version_id as AssembledVersionId,
+        archetype
         """;
 
     private const string LineColumns = """
@@ -368,9 +372,9 @@ internal sealed class DeckStore(IDatabase database)
         transaction.Connection!.ExecuteAsync(new CommandDefinition(
             """
             insert into content.decks (id, owner_id, name, format, visibility, folder_id, description, source_deck_id, pinned, archived_at, version, created_at, updated_at, tags, color_identity,
-                variant_of, base_version_id, head_version_id, assembled_version_id)
+                variant_of, base_version_id, head_version_id, assembled_version_id, archetype)
             values (@Id, @OwnerId, @Name, @Format, @Visibility, @FolderId, @Description, @SourceDeckId, @Pinned, @ArchivedAt, @Version, @CreatedAt, @UpdatedAt, @Tags, @ColorIdentity,
-                @VariantOf, @BaseVersionId, @HeadVersionId, @AssembledVersionId)
+                @VariantOf, @BaseVersionId, @HeadVersionId, @AssembledVersionId, @Archetype)
             """,
             deck,
             transaction,
@@ -385,7 +389,8 @@ internal sealed class DeckStore(IDatabase database)
             update content.decks
             set name = @Name, format = @Format, visibility = @Visibility, folder_id = @FolderId, description = @Description,
                 pinned = @Pinned, archived_at = @ArchivedAt, version = @Version, updated_at = @UpdatedAt,
-                tags = @Tags, color_identity = @ColorIdentity, head_version_id = @HeadVersionId, assembled_version_id = @AssembledVersionId
+                tags = @Tags, color_identity = @ColorIdentity, head_version_id = @HeadVersionId, assembled_version_id = @AssembledVersionId,
+                archetype = @Archetype
             where id = @Id and owner_id = @OwnerId
             """,
             deck,

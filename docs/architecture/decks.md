@@ -17,7 +17,7 @@ The OpenAPI document gives the bodies and the responses.
 | `POST /decks/export` | Owner | Gives several decks in one ZIP file, with one file for each deck. |
 | `POST /decks` | User | Creates a deck, with its first lines. |
 | `GET /decks/{id}` | Owner, or anyone for an unlisted or public deck | Gets a deck with its lines, cards, printings and tags. |
-| `PATCH /decks/{id}` | Owner | Changes the name, the format, the visibility, the folder, the description, the pin, the archive or the deck tags. |
+| `PATCH /decks/{id}` | Owner | Changes the name, the format, the visibility, the folder, the description, the archetype, the pin, the archive or the deck tags. An empty `archetype` removes the archetype. |
 | `DELETE /decks/{id}` | Owner | Deletes a deck. |
 | `POST /decks/{id}/lines` | Owner | Adds cards. |
 | `PUT /decks/{id}/lines` | Owner | Replaces all the lines. |
@@ -195,6 +195,7 @@ The query of `GET /public-decks` accepts these parameters:
 | `card` | The Oracle ID or the name of a card of the main zones, in any language |
 | `colors` | The exact color identity, like the deck list |
 | `author` | The account ID of the author |
+| `archetype` | An archetype: `aggro`, `midrange`, `control`, `combo`, `tempo`, `ramp`, `stax`, `voltron`, `tokens`, `aristocrats`, `spellslinger`, `reanimator`, `typal`, `lands` or `group_hug` |
 | `updatedFrom` | The first day of the last change of the deck, in the format `yyyy-MM-dd`. The day is a UTC day. |
 | `updatedTo` | The last day of the last change of the deck, in the format `yyyy-MM-dd`. It must be on or after `updatedFrom`. |
 | `sort` | `recent` (default) or `popular`: the number of copies by other users plus the number of favorites |

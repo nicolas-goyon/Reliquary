@@ -31,12 +31,12 @@ internal sealed class DeckException(int status, string code, string message, IRe
 /// <summary>
 /// The fields of a new deck.
 /// </summary>
-internal sealed record NewDeck(string Name, string Format, string Visibility, Guid? FolderId, string Description, Guid? SourceDeckId, IReadOnlyList<string>? Tags = null, Guid? VariantOf = null, Guid? BaseVersionId = null);
+internal sealed record NewDeck(string Name, string Format, string Visibility, Guid? FolderId, string Description, Guid? SourceDeckId, IReadOnlyList<string>? Tags = null, Guid? VariantOf = null, Guid? BaseVersionId = null, string? Archetype = null);
 
 /// <summary>
 /// The changes of a deck. A <see langword="null"/> field does not change.
 /// </summary>
-internal sealed record DeckChanges(string? Name, string? Format, string? Visibility, Guid? FolderId, bool ClearFolder, string? Description, bool? Pinned, bool? Archived, int? ExpectedVersion, IReadOnlyList<string>? Tags = null);
+internal sealed record DeckChanges(string? Name, string? Format, string? Visibility, Guid? FolderId, bool ClearFolder, string? Description, bool? Pinned, bool? Archived, int? ExpectedVersion, IReadOnlyList<string>? Tags = null, string? Archetype = null);
 
 /// <summary>
 /// A group action on several decks of a user.
@@ -135,6 +135,7 @@ internal sealed class DeckService(DeckStore store, ICardCatalog catalog, IDomain
             Tags = [.. input.Tags ?? []],
             VariantOf = input.VariantOf,
             BaseVersionId = input.BaseVersionId,
+            Archetype = input.Archetype,
         };
         await ValidateLinesAsync(lines, cancellationToken);
         deck.ColorIdentity = await ColorIdentityAsync(lines.Select(line => (line.Zone, line.OracleId)), cancellationToken);
@@ -215,7 +216,7 @@ internal sealed class DeckService(DeckStore store, ICardCatalog catalog, IDomain
         var deck = source.Deck;
         return await CreateAsync(
             userId,
-            new NewDeck(name ?? deck.Name, deck.Format, visibility, folderId, deck.Description, source.IsOwner ? null : deck.Id),
+            new NewDeck(name ?? deck.Name, deck.Format, visibility, folderId, deck.Description, source.IsOwner ? null : deck.Id, Archetype: deck.Archetype),
             lines,
             cancellationToken);
     }
@@ -318,6 +319,11 @@ internal sealed class DeckService(DeckStore store, ICardCatalog catalog, IDomain
             deck.FolderId = changes.ClearFolder ? null : changes.FolderId ?? deck.FolderId;
             deck.Description = changes.Description ?? deck.Description;
             deck.Pinned = changes.Pinned ?? deck.Pinned;
+            if (changes.Archetype is { } archetype)
+            {
+                deck.Archetype = archetype.Length == 0 ? null : archetype;
+            }
+
             if (changes.Tags is { } deckTags)
             {
                 deck.Tags = DeckRules.NormalizeDeckTags(deckTags);

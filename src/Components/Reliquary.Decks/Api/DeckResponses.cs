@@ -42,7 +42,8 @@ internal static class DeckResponses
             deck.BaseVersionId,
             deck.HeadVersionId,
             deck.AssembledVersionId,
-            view.Hidden);
+            view.Hidden,
+            deck.Archetype);
     }
 
     /// <summary>

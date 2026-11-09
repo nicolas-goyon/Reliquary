@@ -23,6 +23,7 @@ The French column gives the term for the French interface.
 | Zone | A part of a deck: commanders, companion, main deck, sideboard, considering or tokens. | Zone |
 | Considering | The zone for cards that the user thinks about for the deck. Other tools call it the maybeboard. | À l'étude |
 | Deck line | One line of a deck version: an Oracle card, a quantity, a zone, tags, a note and purchase preferences. | Ligne |
+| Archetype | The play style of a deck, for example control or combo. The owner chooses it from the list of archetypes of Reliquary. The search of public decks filters by archetype. | Archétype |
 | Deck tag | A label on a deck, for example "Casual". The user filters the deck list with deck tags. A tag is on a deck line, not on a deck. | Étiquette de deck |
 | Deck version | A frozen copy of a deck list, with a message, a date and parent versions. A deck version never changes, like a Git commit. | Version |
 | Working list | The current list of a deck or of a variant. The user changes it. A commit copies it into a new deck version. | Liste de travail |

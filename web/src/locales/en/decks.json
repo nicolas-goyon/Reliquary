@@ -2,7 +2,26 @@
   "fields": {
     "name": "Name",
     "format": "Format",
-    "visibility": "Visibility"
+    "visibility": "Visibility",
+    "archetype": "Archetype"
+  },
+  "archetypes": {
+    "none": "No archetype",
+    "aggro": "Aggro",
+    "midrange": "Midrange",
+    "control": "Control",
+    "combo": "Combo",
+    "tempo": "Tempo",
+    "ramp": "Ramp",
+    "stax": "Stax",
+    "voltron": "Voltron",
+    "tokens": "Tokens",
+    "aristocrats": "Aristocrats",
+    "spellslinger": "Spellslinger",
+    "reanimator": "Reanimator",
+    "typal": "Typal",
+    "lands": "Lands",
+    "group_hug": "Group hug"
   },
   "formats": {
     "commander": "Commander",
@@ -408,6 +427,7 @@
   },
   "filters": {
     "allFormats": "All the formats",
+    "allArchetypes": "All the archetypes",
     "colors": "Color identity",
     "color": {
       "W": "White",

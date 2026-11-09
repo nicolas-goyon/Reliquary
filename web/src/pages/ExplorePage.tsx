@@ -1,7 +1,7 @@
 import { useEffect, useId, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Page } from '../api/cards'
-import { deckFormats } from '../api/decks'
+import { deckArchetypes, deckFormats } from '../api/decks'
 import { emptyPublicDeckFilters, filtersFromSearch, publicDeckQuery, publicDeckSorts, type PublicDeck, type PublicDeckFilters, type PublicDeckSort } from '../api/publicDecks'
 import { useAuth } from '../auth/session'
 import { ErrorAlert } from '../components/Forms'
@@ -83,6 +83,17 @@ export function ExplorePage() {
           <div className="field">
             <label htmlFor={`${id}-colors`}>{t('filters.colors')}</label>
             <input id={`${id}-colors`} placeholder="WUBRG" maxLength={5} value={form.colors} onChange={(event) => setForm({ ...form, colors: event.target.value })} />
+          </div>
+          <div className="field">
+            <label htmlFor={`${id}-archetype`}>{t('fields.archetype')}</label>
+            <select id={`${id}-archetype`} value={form.archetype} onChange={(event) => setForm({ ...form, archetype: event.target.value })}>
+              <option value="">{t('filters.allArchetypes')}</option>
+              {deckArchetypes.map((archetype) => (
+                <option key={archetype} value={archetype}>
+                  {t(`archetypes.${archetype}`)}
+                </option>
+              ))}
+            </select>
           </div>
           <div className="field">
             <label htmlFor={`${id}-updated-from`}>{t('explore.updatedFrom')}</label>

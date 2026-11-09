@@ -35,6 +35,8 @@ internal sealed class PublicDeckRow
     public int CopyCount { get; set; }
 
     public int FavoriteCount { get; set; }
+
+    public string? Archetype { get; set; }
 }
 
 /// <summary>
@@ -52,6 +54,7 @@ internal sealed class PublicDeckRow
 /// <param name="Limit">The maximum number of decks.</param>
 /// <param name="UpdatedFrom">Only the decks with a last change at this time or after it, or <see langword="null"/>.</param>
 /// <param name="UpdatedBefore">Only the decks with a last change before this time, or <see langword="null"/>.</param>
+/// <param name="Archetype">The archetype, or <see langword="null"/>.</param>
 internal sealed record PublicDeckQuery(
     string? Text,
     string? Format,
@@ -64,7 +67,8 @@ internal sealed record PublicDeckQuery(
     int Offset,
     int Limit,
     DateTime? UpdatedFrom = null,
-    DateTime? UpdatedBefore = null);
+    DateTime? UpdatedBefore = null,
+    string? Archetype = null);
 
 /// <summary>
 /// The SQL of the read model of the public decks, in the users database.
@@ -74,7 +78,7 @@ internal static class PublicDeckStore
     private const string Columns = """
         p.deck_id as DeckId, p.owner_id as OwnerId, p.name, p.format, p.description, p.color_identity as ColorIdentity,
         p.commander_ids as CommanderIds, p.card_ids as CardIds, p.card_count as CardCount, p.deck_version as DeckVersion,
-        p.created_at as CreatedAt, p.updated_at as UpdatedAt,
+        p.created_at as CreatedAt, p.updated_at as UpdatedAt, p.archetype,
         (select count(*) from users.public_deck_copies c where c.source_deck_id = p.deck_id)::int as CopyCount,
         (select count(*) from users.deck_favorites f where f.deck_id = p.deck_id)::int as FavoriteCount
         """;
@@ -86,14 +90,14 @@ internal static class PublicDeckStore
     public static Task UpsertAsync(NpgsqlConnection connection, PublicDeckRow row, CancellationToken cancellationToken) =>
         connection.ExecuteAsync(new CommandDefinition(
             """
-            insert into users.public_decks (deck_id, owner_id, name, format, description, color_identity, commander_ids, card_ids, card_count, deck_version, created_at, updated_at)
-            select @DeckId, @OwnerId, @Name, @Format, @Description, @ColorIdentity, @CommanderIds, @CardIds, @CardCount, @DeckVersion, @CreatedAt, @UpdatedAt
+            insert into users.public_decks (deck_id, owner_id, name, format, description, color_identity, commander_ids, card_ids, card_count, deck_version, created_at, updated_at, archetype)
+            select @DeckId, @OwnerId, @Name, @Format, @Description, @ColorIdentity, @CommanderIds, @CardIds, @CardCount, @DeckVersion, @CreatedAt, @UpdatedAt, @Archetype
             where not exists (select 1 from users.moderation_hidden h
                 where (h.item_type = 'deck' and h.item_id = @DeckId) or (h.item_type = 'author' and h.item_id = @OwnerId))
             on conflict (deck_id) do update set
                 name = excluded.name, format = excluded.format, description = excluded.description, color_identity = excluded.color_identity,
                 commander_ids = excluded.commander_ids, card_ids = excluded.card_ids, card_count = excluded.card_count,
-                deck_version = excluded.deck_version, updated_at = excluded.updated_at
+                deck_version = excluded.deck_version, updated_at = excluded.updated_at, archetype = excluded.archetype
             where users.public_decks.deck_version <= excluded.deck_version
             """,
             row,
@@ -139,6 +143,7 @@ internal static class PublicDeckStore
                 and (@favoriteOf::uuid is null or exists (select 1 from users.deck_favorites f where f.deck_id = p.deck_id and f.account_id = @favoriteOf))
                 and (@updatedFrom::timestamptz is null or p.updated_at >= @updatedFrom)
                 and (@updatedBefore::timestamptz is null or p.updated_at < @updatedBefore)
+                and (@archetype::text is null or p.archetype = @archetype)
             order by {order}, p.deck_id
             offset @offset
             limit @limit
@@ -155,6 +160,7 @@ internal static class PublicDeckStore
                 favoriteOf = query.FavoriteOf,
                 updatedFrom = query.UpdatedFrom,
                 updatedBefore = query.UpdatedBefore,
+                archetype = query.Archetype,
                 offset = query.Offset,
                 limit = query.Limit,
             },
