@@ -20,6 +20,8 @@
   <ItemGroup>
     <!-- The conformance vectors of the table engine. The web tests write them from engine.ts. -->
     <None Include="..\vectors\table-engine\*.json" LinkBase="vectors\table-engine" CopyToOutputDirectory="PreserveNewest" />
+    <!-- The shared vectors of the player views. The web tests write them from views.ts. -->
+    <None Include="..\vectors\views\*.json" LinkBase="vectors\views" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>
