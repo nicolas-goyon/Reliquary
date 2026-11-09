@@ -1,6 +1,6 @@
 # 0040. The table engine runs in the browser
 
-- Status: Accepted
+- Status: Accepted. Amended by [0047](0047-trusted-server-for-online-games.md).
 - Date: 2026-11-04
 - Deciders: @nicolas-goyon
 
@@ -22,3 +22,4 @@ In an online game, the other players must not get the hand and the library of a 
 - The deck testing modes that use one computer also work with a slow API.
 - The API cannot check a game.
 - Each online player keeps their private zones in their own browser. The online game design must send only public actions. The issue of online games records this design.
+  [ADR 0047](0047-trusted-server-for-online-games.md) replaces this consequence: the API keeps the online games.
