@@ -16,6 +16,20 @@ public sealed class GameServiceTests(RedisFixture redis)
     private static CancellationToken Cancel => TestContext.Current.CancellationToken;
 
     [Fact]
+    public void RetryDelayGrowsWithTheAttemptAndStaysShort()
+    {
+        for (var attempt = 0; attempt < 16; attempt++)
+        {
+            var delays = Enumerable.Range(0, 200).Select(_ => GameService.RetryDelay(attempt).TotalMilliseconds).ToList();
+
+            Assert.All(delays, delay => Assert.InRange(delay, 1, Math.Min(attempt + 1, GameService.MaxRetryDelayMilliseconds)));
+        }
+
+        // The longest attempts have different waits, so the players that conflict do not write again at the same time.
+        Assert.True(Enumerable.Range(0, 200).Select(_ => GameService.RetryDelay(15)).Distinct().Count() > 1);
+    }
+
+    [Fact]
     public async Task GameClosesAtItsHardLimitAlsoWithActivity()
     {
         // The fake clock does not move the clock of Redis, so the game stays in Redis. The hard limit counts from the creation time in the state.

@@ -57,7 +57,9 @@ internal sealed record ActResult(long? Seq, string? Rejected, GameUpdate? Update
 /// Creates the online games, gives the seats and the game tokens, and keeps the lobby. See docs/architecture/online-games.md.
 /// </summary>
 /// <remarks>
-/// Each change reads the game, changes it and writes it with a compare-and-set on the sequence number. After a conflict, the service reads the game again.
+/// Each change reads the game, changes it and writes it with a compare-and-set on the sequence number. After a conflict, the service waits
+/// for a short random time and reads the game again. On one replica, only one change of a game runs at a time (<see cref="GameWriteGate"/>),
+/// so a conflict comes only from another replica.
 /// </remarks>
 internal sealed class GameService(
     GameStore<OnlineGame> store,
@@ -71,7 +73,12 @@ internal sealed class GameService(
     public const int MaxNicknameLength = 24;
 
     /// <summary>The number of attempts of a change after conflicts.</summary>
-    private const int MaxAttempts = 8;
+    private const int MaxAttempts = 16;
+
+    /// <summary>The longest wait between two attempts of a change after a conflict, in milliseconds.</summary>
+    public const int MaxRetryDelayMilliseconds = 5;
+
+    private readonly GameWriteGate writes = new();
 
     private GameOptions Settings => options.Value;
 
@@ -292,6 +299,8 @@ internal sealed class GameService(
     /// <returns>The result.</returns>
     public async Task<ActResult> ActAsync(Guid gameId, string? token, string clientActionId, TableAction action)
     {
+        // The read is in the gate, so the first attempt usually has the last state and does not conflict.
+        using var turn = await writes.EnterAsync(gameId);
         var (current, seat) = await AuthorizeAsync(gameId, token);
         if (string.IsNullOrEmpty(clientActionId) || clientActionId.Length > GameStore<OnlineGame>.MaxClientActionIdLength)
         {
@@ -330,6 +339,7 @@ internal sealed class GameService(
                     return ActResult.Refuse(ActionRejections.GameClosed);
             }
 
+            await Task.Delay(RetryDelay(attempt));
             current = await ReadAsync(gameId) ?? throw ApiNotFound("The game does not exist or it ended.");
             if (current.State.FindSeat(seat) is null)
             {
@@ -383,6 +393,7 @@ internal sealed class GameService(
     /// </summary>
     private async Task<(OnlineGame Game, long Seq)> ChangeAsync(Guid gameId, StoredGame<OnlineGame> first, Func<OnlineGame, (OnlineGame Game, GameChange Change)> change)
     {
+        using var turn = await writes.EnterAsync(gameId);
         var current = first;
         for (var attempt = 0; attempt < MaxAttempts; attempt++)
         {
@@ -396,6 +407,7 @@ internal sealed class GameService(
                     throw ApiNotFound("The game does not exist or it ended.");
             }
 
+            await Task.Delay(RetryDelay(attempt));
             current = await ReadAsync(gameId) ?? throw ApiNotFound("The game does not exist or it ended.");
         }
 
@@ -491,6 +503,16 @@ internal sealed class GameService(
     }
 
     private static string Hash(string secret) => Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(secret)));
+
+    /// <summary>
+    /// Gives a random wait after a conflict: from 1 ms to a limit that grows with each attempt, up to <see cref="MaxRetryDelayMilliseconds"/>.
+    /// Without a wait, the players that conflict read and write again at the same time, and conflict again.
+    /// All the waits of one change are 70 ms at most, so the wait does not make an action slow for the players.
+    /// </summary>
+    /// <param name="attempt">The number of the attempt that failed, from 0.</param>
+    /// <returns>The wait.</returns>
+    internal static TimeSpan RetryDelay(int attempt) =>
+        TimeSpan.FromMilliseconds(Random.Shared.Next(1, Math.Min(attempt + 1, MaxRetryDelayMilliseconds) + 1));
 
     private static GameChange Change(int seat, string type) => new(seat, null, $$"""{"type":"{{type}}"}""");
 
