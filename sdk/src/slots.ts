@@ -15,7 +15,7 @@ export interface SlotContexts {
   /** A tab of the deck analysis: a panel. */
   'analysis.tabs': { deckId: string }
   /** The columns of the table mode. The core asks a value for each row. */
-  'table.columns': { deckId: string; lineId: string; oracleId: string | null }
+  'table.columns': { deckId: string; lineId: string; oracleId: string; quantity: number; zone: string }
   /** A part of the page of a card: a panel. */
   'card.page': { oracleId: string }
   /** A page of the plugin at /plugins/<plugin ID>/<panel ID>: a panel. */
@@ -53,13 +53,31 @@ export interface ActionContribution<Slot extends SlotName> {
   onAction?(context: SlotContexts[Slot]): void | Promise<void>
 }
 
-/** A column of the table mode. The core calls `cell` for each row that it shows. */
+/** The tones of a cell. The core gives each tone a color of its theme. */
+export const cellTones = ['neutral', 'positive', 'warning', 'negative'] as const
+export type CellTone = (typeof cellTones)[number]
+
+/** The value of a cell of a plugin column. The core renders the text: a cell has no iframe. */
+export interface CellValue {
+  /** 100 characters at most. */
+  text: string
+  tone?: CellTone
+  /** A longer text that the core shows on hover and gives to screen readers. 200 characters at most. */
+  tooltip?: string
+}
+
+/**
+ * A column of the table mode. A plugin can add 2 columns at most.
+ * The core asks the cells of many rows in one call, and keeps the result until the deck changes.
+ */
 export interface ColumnContribution {
+  /** 1 to 32 lowercase letters, digits and hyphens. The first character is a letter. */
   id: string
+  /** The header of the column: 1 to 40 characters in each language. */
   title: LocalizedText
   order?: number
-  /** Gives the text of a cell. Return null for an empty cell. */
-  cell(context: SlotContexts['table.columns']): string | null | Promise<string | null>
+  /** Gives the cells of the rows, in the same order. Return null for an empty cell. */
+  cells(rows: SlotContexts['table.columns'][]): (CellValue | null)[] | Promise<(CellValue | null)[]>
 }
 
 /** The contributions that a plugin sends as data to a slot. */

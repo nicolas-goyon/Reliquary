@@ -222,4 +222,40 @@ describe('definePlugin', () => {
     await assert.rejects(handle.ready, /no code for the panel "missing"/)
     host.close()
   })
+
+  it('gives the cells of a column for many rows in one call', async () => {
+    const frame = new FakeFrame()
+    const handle = definePlugin(
+      {
+        async activate(sdk) {
+          await sdk.ui.contribute('table.columns', {
+            id: 'price',
+            title: { en: 'Price', fr: 'Prix' },
+            cells: (rows) => rows.map((row) => (row.quantity > 1 ? { text: `${row.quantity} x 1 €`, tone: 'warning' } : null)),
+          })
+          await sdk.ui.contribute('table.columns', { id: 'broken', title: 'Broken', cells: () => [] })
+        },
+      },
+      { environment: frame },
+    )
+    const host = frame.connect()
+    const contributions: unknown[] = []
+    host.handle('ui.contribute', (params) => {
+      contributions.push(params)
+      return null
+    })
+    await handle.ready
+    const rows = [
+      { deckId: 'deck-1', lineId: 'line-1', oracleId: 'oracle-1', quantity: 2, zone: 'main' },
+      { deckId: 'deck-1', lineId: 'line-2', oracleId: 'oracle-2', quantity: 1, zone: 'main' },
+    ]
+
+    const result = await host.call('ui.cells', { id: 'price', rows })
+
+    assert.deepEqual(contributions[0], { slot: 'table.columns', contribution: { id: 'price', title: { en: 'Price', fr: 'Prix' } } })
+    assert.deepEqual(result, { cells: [{ text: '2 x 1 €', tone: 'warning' }, null] })
+    await assert.rejects(host.call('ui.cells', { id: 'broken', rows }), (error: RpcError) => error.code === errorCodes.internalError)
+    await assert.rejects(host.call('ui.cells', { id: 'missing', rows }), (error: RpcError) => error.code === errorCodes.invalidParams)
+    host.close()
+  })
 })

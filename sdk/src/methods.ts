@@ -3,7 +3,7 @@
  * A change to this file follows the core API version.
  */
 
-import type { ContributionData, SlotContexts, SlotName } from './slots.ts'
+import type { CellValue, ContributionData, SlotContexts, SlotName } from './slots.ts'
 
 /** A request to the public API. The core sends it with a plugin token. */
 export interface ApiFetchParams {
@@ -80,6 +80,6 @@ export interface PluginMethods {
   'ui.action': { params: { slot: SlotName; id: string; context: SlotContexts[SlotName] }; result: null }
   /** Only in a panel frame: the context of the slot changed, for example after a change of the deck. */
   'panel.update': { params: { context: unknown }; result: null }
-  /** The core asks the value of a cell of a column of the table mode. */
-  'ui.cell': { params: { id: string; context: SlotContexts['table.columns'] }; result: { text: string | null } }
+  /** The core asks the cells of many rows of a column of the table mode. The answer has one cell for each row, in the same order. */
+  'ui.cells': { params: { id: string; rows: SlotContexts['table.columns'][] }; result: { cells: (CellValue | null)[] } }
 }

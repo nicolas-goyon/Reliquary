@@ -218,7 +218,7 @@ export function DeckTable({ deck, onChange }: DeckTableProps) {
                   </td>
                   {extraColumns.map((contribution) => (
                     <td key={contribution.id} data-contribution={contribution.id}>
-                      <SlotItem slot="table.columns" contribution={contribution} context={{ deckId: deck.id, part: 'cell', line, card }} />
+                      <SlotItem slot="table.columns" contribution={contribution} context={{ deckId: deck.id, part: 'cell', line, card, deckVersion: deck.version }} />
                     </td>
                   ))}
                 </tr>

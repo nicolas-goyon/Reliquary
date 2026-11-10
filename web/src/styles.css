@@ -456,6 +456,23 @@ button:disabled {
   border: 0;
 }
 
+.plugin-cell-loading::after {
+  content: "…";
+  color: var(--color-text-muted);
+}
+
+.plugin-cell-positive {
+  color: var(--color-success);
+}
+
+.plugin-cell-warning {
+  color: var(--color-warning);
+}
+
+.plugin-cell-negative {
+  color: var(--color-danger);
+}
+
 .plugin-panel > summary {
   cursor: pointer;
   font-weight: 600;

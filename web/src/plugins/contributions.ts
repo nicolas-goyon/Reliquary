@@ -1,4 +1,5 @@
 import { pluginActionSlots, pluginIcons, type PluginActionSlot, type PluginIcon, type PluginText, type SlotRegistry } from '../slots/registry'
+import { createCellLoader, maxColumnsPerPlugin } from './columns'
 import type { HostPeer } from './connection'
 import { errorCodes } from './protocol'
 import { RpcError } from './rpc'
@@ -39,20 +40,20 @@ function invalid(message: string): RpcError {
   return new RpcError(errorCodes.invalidParams, message)
 }
 
-function readLabel(value: unknown): PluginText {
+function readLabel(value: unknown, field: 'label' | 'title' = 'label'): PluginText {
   if (typeof value === 'string') {
     value = { en: value }
   }
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {
-    throw invalid('The label must be a text, or an object with a text for each language.')
+    throw invalid(`The ${field} must be a text, or an object with a text for each language.`)
   }
   const entries = Object.entries(value)
   if (typeof (value as { en?: unknown }).en !== 'string') {
-    throw invalid('The label must have an English text in the key "en".')
+    throw invalid(`The ${field} must have an English text in the key "en".`)
   }
   for (const [language, text] of entries) {
     if (!languagePattern.test(language) || typeof text !== 'string' || text.trim().length === 0 || text.length > maxLabelLength) {
-      throw invalid(`Each label must have 1 to ${maxLabelLength} characters, with a language code such as "en" or "fr-CA".`)
+      throw invalid(`Each text of the ${field} must have 1 to ${maxLabelLength} characters, with a language code such as "en" or "fr-CA".`)
     }
   }
   return Object.fromEntries(entries) as PluginText
@@ -69,6 +70,9 @@ export function registerContributionMethods(peer: HostPeer, plugin: Contributing
 
   peer.handle('ui.contribute', (params) => {
     const { slot, contribution } = (params ?? {}) as { slot?: unknown; contribution?: Record<string, unknown> }
+    if (slot === 'table.columns') {
+      return contributeColumn(contribution)
+    }
     if (typeof slot !== 'string' || !pluginActionSlots.includes(slot as PluginActionSlot)) {
       throw invalid(`The slot "${String(slot)}" does not accept buttons or menu items from plugins.`)
     }
@@ -111,6 +115,42 @@ export function registerContributionMethods(peer: HostPeer, plugin: Contributing
     removers.set(itemKey, remove)
     return null
   })
+
+  /** Adds a column of the table mode. The core asks the cells later, in batches, with `ui.cells`. */
+  function contributeColumn(contribution: Record<string, unknown> | undefined): null {
+    if (!plugin.slots.includes('table.columns')) {
+      throw new RpcError(errorCodes.permissionDenied, 'The plugin manifest does not declare the slot "table.columns". Add the slot to the field "slots".')
+    }
+    if (typeof contribution !== 'object' || contribution === null) {
+      throw invalid('The contribution must be an object.')
+    }
+    const { id, order } = contribution
+    if (typeof id !== 'string' || !itemIdPattern.test(id)) {
+      throw invalid('The ID must have 1 to 32 lowercase letters, digits and hyphens, and start with a letter.')
+    }
+    const title = readLabel(contribution.title, 'title')
+    if (order !== undefined && (typeof order !== 'number' || !Number.isFinite(order))) {
+      throw invalid('The order must be a number.')
+    }
+    const itemKey = key('table.columns', id)
+    const columns = [...removers.keys()].filter((existing) => existing.startsWith('table.columns ') && existing !== itemKey)
+    if (columns.length >= maxColumnsPerPlugin) {
+      throw invalid(`A plugin can add ${maxColumnsPerPlugin} columns at most.`)
+    }
+    removers.get(itemKey)?.()
+    removers.set(
+      itemKey,
+      registry.register('table.columns', {
+        kind: 'plugin-column',
+        id: `plugin.${plugin.id}.${id}`,
+        order: pluginOrderBase + Math.min(Math.max(Math.round((order as number | undefined) ?? 0), 0), 999),
+        plugin: { id: plugin.id, name: plugin.name, development: plugin.development },
+        title,
+        cell: createCellLoader(peer, id),
+      }),
+    )
+    return null
+  }
 
   peer.handle('ui.withdraw', (params) => {
     const { slot, id } = (params ?? {}) as { slot?: unknown; id?: unknown }

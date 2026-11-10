@@ -2,7 +2,7 @@ import type { ApiFetchParams, ApiFetchResult, HostMethods, LinkedAccount, Plugin
 import { connectMessageType, coreApiVersion, errorCodes, readyMessageType, type ConnectMessage } from './protocol.ts'
 import { RpcError, RpcPeer, type PeerOptions } from './rpc.ts'
 import type { PanelSlot } from './manifest.ts'
-import type { ContributionData, SlotContexts, SlotContributions, SlotName } from './slots.ts'
+import type { CellValue, ContributionData, SlotContexts, SlotContributions, SlotName } from './slots.ts'
 
 /** The functions that the SDK gives to a plugin. */
 export interface PluginSdk {
@@ -198,7 +198,7 @@ function isConnectMessage(data: unknown): data is ConnectMessage {
 
 function createSdk(peer: RpcPeer<PluginMethods, HostMethods>, message: ConnectMessage): PluginSdk {
   const actions = new Map<string, (context: SlotContexts[SlotName]) => void | Promise<void>>()
-  const cells = new Map<string, (context: SlotContexts['table.columns']) => string | null | Promise<string | null>>()
+  const columns = new Map<string, (rows: SlotContexts['table.columns'][]) => (CellValue | null)[] | Promise<(CellValue | null)[]>>()
   const key = (slot: SlotName, id: string): string => `${slot}\u0000${id}`
 
   peer.handle('plugin.ping', () => null)
@@ -210,12 +210,16 @@ function createSdk(peer: RpcPeer<PluginMethods, HostMethods>, message: ConnectMe
     await action(context)
     return null
   })
-  peer.handle('ui.cell', async ({ id, context }) => {
-    const cell = cells.get(id)
-    if (!cell) {
+  peer.handle('ui.cells', async ({ id, rows }) => {
+    const column = columns.get(id)
+    if (!column) {
       throw new RpcError(errorCodes.invalidParams, `The plugin has no column "${id}".`)
     }
-    return { text: await cell(context) }
+    const cells = await column(rows)
+    if (!Array.isArray(cells) || cells.length !== rows.length) {
+      throw new RpcError(errorCodes.internalError, `The column "${id}" must give one cell for each row: ${rows.length} cells.`)
+    }
+    return { cells }
   })
 
   return {
@@ -256,14 +260,14 @@ function createSdk(peer: RpcPeer<PluginMethods, HostMethods>, message: ConnectMe
         if ('onAction' in contribution && contribution.onAction) {
           actions.set(key(slot, contribution.id), contribution.onAction as (context: SlotContexts[SlotName]) => void | Promise<void>)
         }
-        if ('cell' in contribution) {
-          cells.set(contribution.id, contribution.cell)
+        if ('cells' in contribution) {
+          columns.set(contribution.id, contribution.cells)
         }
         await peer.call('ui.contribute', { slot, contribution: data })
         return async () => {
           actions.delete(key(slot, contribution.id))
           if (slot === 'table.columns') {
-            cells.delete(contribution.id)
+            columns.delete(contribution.id)
           }
           await peer.call('ui.withdraw', { slot, id: contribution.id })
         }
