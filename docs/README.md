@@ -40,7 +40,8 @@ The [documentation site](https://nicolas-goyon.github.io/reliquary/) shows these
 | [Local instance](deployment/local-development.md) | Install from the source code for development, and update to a new commit |
 | [Pre-production instance](deployment/pre-production.md) | Install the published images on your computer, update, roll back and back up |
 | [Production instance](deployment/production.md) | Install on a server with HTTPS, a real email server and backups on a different computer |
-| [Kubernetes](deployment/kubernetes.md) | The requirements of the images on Kubernetes |
+| [Production on Kubernetes](deployment/production-kubernetes.md) | Install and update a production instance with the Helm chart |
+| [Kubernetes](deployment/kubernetes.md) | The requirements of the images on Kubernetes, and the reference of the Helm chart |
 | [Versions and updates](deployment/versions-and-updates.md) | The channels, the release numbers, the steps of an update and the migration rules |
 | [Troubleshooting](deployment/troubleshooting.md) | The usual problems and their solutions |
 

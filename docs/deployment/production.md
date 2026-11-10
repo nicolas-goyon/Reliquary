@@ -4,8 +4,7 @@ A production instance is a server that other people use.
 Reliquary gives two ways to run it:
 
 - **Docker Compose on one server**, with the script `reliquary-update`. This page describes it.
-- **Kubernetes.** The Helm chart comes with the milestone M4 ([#64](https://github.com/nicolas-goyon/reliquary/issues/64)).
-  [Requirements for Kubernetes](kubernetes.md) gives what a deployment must give to the images.
+- **Kubernetes**, with the Helm chart. [Production instance on Kubernetes](production-kubernetes.md) describes it.
 
 Terms follow the [glossary](../glossary.md).
 
