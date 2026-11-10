@@ -57,6 +57,42 @@ public sealed class ExtensionRegistryTests
         Assert.Equal(HttpStatusCode.NoContent, activate.StatusCode);
         Assert.True(Assert.Single(afterActivate.Items).Active);
         Assert.False(Assert.Single(anonymous.Items).Active);
+        Assert.Equal(new PluginRuntimeResponse(8, null), afterActivate.Plugins);
+    }
+
+    [Fact]
+    public async Task UserCannotActivateMorePluginsThanTheLimit()
+    {
+        await using var instance = await Instance.CreateAsync(new Dictionary<string, string>
+        {
+            ["Plugins:MaxActivePlugins"] = "1",
+            ["Plugins:FrameOrigin"] = "https://plugins.example.org/",
+        });
+        using var admin = await instance.SignInAsync("admin@example.org");
+        using var user = await instance.SignInAsync("user@example.org");
+        foreach (var id in new[] { "first", "second" })
+        {
+            var manifest = new { id, kind = "plugin", name = id, version = "1.0.0", coreApi = "^1.0", entry = "index.js" };
+            (await admin.PutAsJsonAsync($"/api/v1/admin/extensions/{id}", manifest, TestContext.Current.CancellationToken)).EnsureSuccessStatusCode();
+            (await admin.PatchAsJsonAsync($"/api/v1/admin/extensions/{id}", new { enabled = true }, TestContext.Current.CancellationToken)).EnsureSuccessStatusCode();
+        }
+
+        var first = await user.PutAsJsonAsync("/api/v1/me/extensions/first", new { enabled = true }, TestContext.Current.CancellationToken);
+        var firstAgain = await user.PutAsJsonAsync("/api/v1/me/extensions/first", new { enabled = true }, TestContext.Current.CancellationToken);
+        var second = await user.PutAsJsonAsync("/api/v1/me/extensions/second", new { enabled = true }, TestContext.Current.CancellationToken);
+        var problem = await second.Content.ReadFromJsonAsync<JsonElement>(TestContext.Current.CancellationToken);
+        var deactivate = await user.PutAsJsonAsync("/api/v1/me/extensions/first", new { enabled = false }, TestContext.Current.CancellationToken);
+        var secondAfterDeactivate = await user.PutAsJsonAsync("/api/v1/me/extensions/second", new { enabled = true }, TestContext.Current.CancellationToken);
+        var list = await ListAsync(user);
+
+        Assert.Equal(HttpStatusCode.NoContent, first.StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent, firstAgain.StatusCode);
+        Assert.Equal(HttpStatusCode.Conflict, second.StatusCode);
+        Assert.Equal(ExtensionEndpoints.TooManyActivePlugins, problem.GetProperty("code").GetString());
+        Assert.Equal(HttpStatusCode.NoContent, deactivate.StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent, secondAfterDeactivate.StatusCode);
+        Assert.Equal(["second"], list.Items.Where(item => item.Active).Select(item => item.Id));
+        Assert.Equal(new PluginRuntimeResponse(1, "https://plugins.example.org"), list.Plugins);
     }
 
     [Fact]
@@ -204,7 +240,7 @@ public sealed class ExtensionRegistryTests
 
         public WebApplicationFactory<Program> Factory { get; }
 
-        public static async Task<Instance> CreateAsync()
+        public static async Task<Instance> CreateAsync(IReadOnlyDictionary<string, string>? settings = null)
         {
             var database = await TestServers.CreateDatabaseAsync("extensions");
             var factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
@@ -216,6 +252,10 @@ public sealed class ExtensionRegistryTests
                 builder.UseSetting("Auth:RequireCheckedEmail", "false");
                 builder.UseSetting("Auth:RequestsPerMinute", "1000");
                 builder.UseSetting("Auth:AdministratorEmails:0", "admin@example.org");
+                foreach (var (key, value) in settings ?? new Dictionary<string, string>())
+                {
+                    builder.UseSetting(key, value);
+                }
             });
             await factory.Services.GetRequiredService<MigrationRunner>().MigrateAsync(TestContext.Current.CancellationToken);
             return new Instance(database, factory);

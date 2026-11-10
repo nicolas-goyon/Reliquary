@@ -38,6 +38,7 @@ public static class PlatformServiceCollectionExtensions
         services.Configure<OutboxOptions>(configuration.GetSection(OutboxOptions.Section));
         services.Configure<JobOptions>(configuration.GetSection(JobOptions.Section));
         services.Configure<EmailOptions>(configuration.GetSection(EmailOptions.Section));
+        services.Configure<PluginOptions>(configuration.GetSection(PluginOptions.Section));
 
         services.AddMemoryCache();
         services.TryAddSingleton(TimeProvider.System);

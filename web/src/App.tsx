@@ -44,6 +44,7 @@ import { SlotRegistry, SlotRegistryContext } from './slots/registry'
 import { Slot } from './slots/Slot'
 import { registerCoreContributions } from './slots/coreContributions'
 import { webVersion } from './version'
+import { PluginRuntime } from './plugins/PluginRuntime'
 
 const repositoryUrl = 'https://github.com/nicolas-goyon/reliquary'
 
@@ -184,6 +185,7 @@ function Shell() {
         </button>
       </footer>
       {helpOpen && <ShortcutHelp onClose={() => setHelpOpen(false)} />}
+      <PluginRuntime />
     </div>
   )
 }
