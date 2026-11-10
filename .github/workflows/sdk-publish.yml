@@ -1,0 +1,86 @@
+name: SDK publication
+
+# Publishes the plugin SDK "reliquary-plugin-sdk" to npm, with provenance.
+# See docs/decisions/0048-plugin-sdk-license-and-packaging.md.
+# The workflow runs only for a tag sdk-vX.Y.Z. It never runs for a pull request.
+# - A person who pushes a tag sdk-vX.Y.Z starts the workflow.
+# - Release-please creates the tag with the token of a workflow, and such a tag does not start other workflows.
+#   The release workflow then calls this workflow with the tag.
+# The repository secret NPM_TOKEN must contain an npm token that can publish the package.
+
+on:
+  push:
+    tags: ["sdk-v*"]
+  workflow_call:
+    inputs:
+      tag:
+        description: The tag of the SDK release, for example sdk-v0.1.0.
+        required: true
+        type: string
+    secrets:
+      NPM_TOKEN:
+        required: true
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: sdk-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish the SDK
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sdk
+    steps:
+      - name: Check the tag
+        id: tag
+        working-directory: .
+        env:
+          TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          set -euo pipefail
+          if ! printf '%s' "$TAG" | grep --quiet --extended-regexp '^sdk-v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$'; then
+            echo "The tag \"$TAG\" is not an SDK tag. Use the format sdk-vX.Y.Z."
+            exit 1
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=${TAG#sdk-v}" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v7
+        with:
+          ref: refs/tags/${{ steps.tag.outputs.tag }}
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: web/.nvmrc
+          registry-url: https://registry.npmjs.org
+
+      - name: Check the version of the package
+        env:
+          VERSION: ${{ steps.tag.outputs.version }}
+        run: |
+          set -euo pipefail
+          package_version=$(node --print "require('./package.json').version")
+          if [ "$package_version" != "$VERSION" ]; then
+            echo "The tag gives the version $VERSION, but sdk/package.json gives $package_version."
+            exit 1
+          fi
+
+      - name: Install
+        run: npm ci
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      - name: Publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --provenance --access public

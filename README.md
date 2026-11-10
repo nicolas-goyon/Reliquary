@@ -67,6 +67,8 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) before you start.
 ## License
 
 Reliquary is free software under the [GNU Affero General Public License v3.0](LICENSE).
+The plugin SDK in the folder `sdk/` uses the [Apache License 2.0](sdk/LICENSE).
+[LICENSING.md](LICENSING.md) gives the details.
 Card data comes from [Scryfall](https://scryfall.com) and [MTGJSON](https://mtgjson.com), under their terms.
 Card images stay on the Scryfall servers.
 

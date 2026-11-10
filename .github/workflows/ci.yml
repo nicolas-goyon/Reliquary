@@ -104,6 +104,47 @@ jobs:
       - name: Build
         run: npm run build
 
+  sdk:
+    name: Plugin SDK
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sdk
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: web/.nvmrc
+          cache: npm
+          cache-dependency-path: sdk/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      # The package must contain the built files and the license, and no test file.
+      - name: Pack
+        run: |
+          set -euo pipefail
+          npm pack --dry-run --json > "$RUNNER_TEMP/pack.json"
+          files=$(jq -r '.[0].files[].path' "$RUNNER_TEMP/pack.json")
+          printf '%s\n' "$files"
+          printf '%s\n' "$files" | grep --quiet --line-regexp 'dist/index.js'
+          printf '%s\n' "$files" | grep --quiet --line-regexp 'LICENSE'
+          if printf '%s\n' "$files" | grep --quiet '\.test\.'; then
+            echo "The package contains test files."
+            exit 1
+          fi
+
   docs:
     name: Documentation
     runs-on: ubuntu-latest

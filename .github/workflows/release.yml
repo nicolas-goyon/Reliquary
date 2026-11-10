@@ -7,6 +7,8 @@ name: Release
 # 3. When the release pull request merges, release-please creates the tag vX.Y.Z and the GitHub release.
 #    The job "images" publishes the images X.Y.Z, X.Y and latest.
 #    The job "back-merge" opens a pull request that merges main into develop.
+# The plugin SDK in sdk/ has its own release pull request "chore(release): release sdk X.Y.Z" (ADR 0048).
+# When it merges, release-please creates the tag sdk-vX.Y.Z, and the job "sdk" publishes the package to npm.
 
 on:
   push:
@@ -29,7 +31,9 @@ jobs:
       release_created: ${{ steps.release.outputs.release_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
       prs_created: ${{ steps.release.outputs.prs_created }}
-      pr: ${{ steps.release.outputs.pr }}
+      prs: ${{ steps.release.outputs.prs }}
+      sdk_release_created: ${{ steps.release.outputs['sdk--release_created'] }}
+      sdk_tag_name: ${{ steps.release.outputs['sdk--tag_name'] }}
     steps:
       - id: release
         uses: googleapis/release-please-action@v5
@@ -44,26 +48,32 @@ jobs:
     if: needs.release-please.outputs.prs_created == 'true'
     runs-on: ubuntu-latest
     steps:
+      # The release pull request of the SDK has the title "chore(release): release sdk X.Y.Z". It does not change CHANGELOG.md.
       - name: Read the release pull request
         id: pr
         env:
-          PR: ${{ needs.release-please.outputs.pr }}
+          PRS: ${{ needs.release-please.outputs.prs }}
         run: |
           set -euo pipefail
-          branch=$(printf '%s' "$PR" | jq -r '.headBranchName')
-          version=$(printf '%s' "$PR" | jq -r '.title' | sed -n 's/.*release \([0-9][^ ]*\)$/\1/p')
-          if [ -z "$version" ]; then
-            echo "The title of the release pull request has no version."
-            exit 1
+          pr=$(printf '%s' "$PRS" | jq -c '[.[] | select(.title | test("release [0-9][^ ]*$"))] | first // empty')
+          if [ -z "$pr" ]; then
+            echo "No release pull request of the application. CHANGELOG.md does not change."
+            echo "found=false" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
+          branch=$(printf '%s' "$pr" | jq -r '.headBranchName')
+          version=$(printf '%s' "$pr" | jq -r '.title' | sed -n 's/.*release \([0-9][^ ]*\)$/\1/p')
+          echo "found=true" >> "$GITHUB_OUTPUT"
           echo "branch=$branch" >> "$GITHUB_OUTPUT"
           echo "version=$version" >> "$GITHUB_OUTPUT"
 
       - uses: actions/checkout@v7
+        if: steps.pr.outputs.found == 'true'
         with:
           ref: ${{ steps.pr.outputs.branch }}
 
       - name: Move the section "Unreleased" to the release
+        if: steps.pr.outputs.found == 'true'
         env:
           VERSION: ${{ steps.pr.outputs.version }}
         run: |
@@ -89,16 +99,29 @@ jobs:
     with:
       release-tag: ${{ needs.release-please.outputs.tag_name }}
 
+  sdk:
+    name: Publish the SDK
+    needs: release-please
+    if: needs.release-please.outputs.sdk_release_created == 'true'
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/sdk-publish.yml
+    with:
+      tag: ${{ needs.release-please.outputs.sdk_tag_name }}
+    secrets:
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
   back-merge:
     name: Merge main into develop
     needs: release-please
-    if: needs.release-please.outputs.release_created == 'true'
+    if: needs.release-please.outputs.release_created == 'true' || needs.release-please.outputs.sdk_release_created == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Open the pull request
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ needs.release-please.outputs.tag_name }}
+          TAG: ${{ needs.release-please.outputs.tag_name || needs.release-please.outputs.sdk_tag_name }}
         run: |
           set -euo pipefail
           gh pr create --repo "$GITHUB_REPOSITORY" --base develop --head main \

@@ -124,6 +124,7 @@ The French column gives the term for the French interface.
 | Extension registry | The list of the extensions that the administrator installed on the instance, with an activation flag for each extension. | Registre des extensions |
 | Plugin frame | The sandboxed iframe with an opaque origin where the code of one plugin runs. | — |
 | Plugin token | A short signed token that the core gets for one plugin. It has only the scopes that the user accepted for the plugin. | — |
+| Plugin SDK | The npm package `reliquary-plugin-sdk` in the folder `sdk/`. A plugin uses it to talk to the core in its plugin frame. It uses the Apache License 2.0. | — |
 | Vault | The encrypted store of the core for the secrets of linked accounts. Each secret belongs to one user, one plugin and one site. | — |
 | Catalog index | The signed JSON file of the plugin catalog. It lists the plugin versions, the hash of each file and the revoked versions. | — |
 | Network relay | An endpoint of the core that sends the requests of a plugin to a site that refuses calls from a browser. | — |

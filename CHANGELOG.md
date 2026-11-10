@@ -5,6 +5,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## Unreleased
 
+### Added
+
+- The plugin SDK `reliquary-plugin-sdk` in the folder `sdk/`, under the Apache License 2.0 (ADR 0048).
+  It contains `definePlugin`, the RPC client of the plugin frame and the types of the plugin manifest.
+
 ## [0.2.0] - 2026-11-09
 
 ### Fixed
