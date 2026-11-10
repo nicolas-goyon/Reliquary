@@ -1,0 +1,9 @@
+{
+  "result_code": "error_invalid_cards",
+  "data": null,
+  "error": {
+    "messages": [
+      "This deck contains one or more commanders we don't recognize. If it contains any newly-revealed cards, we might need some time to learn about them. Please check the deck list and try again."
+    ]
+  }
+}

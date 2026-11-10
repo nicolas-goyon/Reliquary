@@ -1,0 +1,98 @@
+{
+  "result_code": "success",
+  "data": {
+    "recommendations": [
+      {
+        "oracle_id": "abbcb153-0763-44c6-964f-b4ff0eb64257",
+        "name": "Atraxa, Grand Unifier",
+        "score": 0.18205661516509739
+      },
+      {
+        "oracle_id": "93d0e129-e3b5-4aff-9e50-f34771ed00ff",
+        "name": "Fathom Mage",
+        "score": 0.061053199994015143
+      },
+      {
+        "oracle_id": "0895c9b7-ae7d-4bb3-af17-3b75deb50a25",
+        "name": "Command Tower",
+        "score": 0.06029035893657052
+      },
+      {
+        "oracle_id": "cf4a3b1a-4b87-473e-be1f-3aa3da45c28e",
+        "name": "Scheming Aspirant",
+        "score": 0.05945769596507649
+      },
+      {
+        "oracle_id": "7e52f151-d1f6-4fcb-9b21-1baecae27da6",
+        "name": "Loyal Tutor",
+        "score": 0.0590281933109106
+      },
+      {
+        "oracle_id": "bad76170-c773-4be5-9457-20dc9f745cb4",
+        "name": "Odric, Lunarch Marshal",
+        "score": 0.057281924178944496
+      },
+      {
+        "oracle_id": "f2f165b6-ef0a-42ad-9352-ba68be8248b0",
+        "name": "Teferi, Hero of Dominaria",
+        "score": 0.055865126924478994
+      },
+      {
+        "oracle_id": "e828b189-0e8f-43b8-b909-4c23e742e028",
+        "name": "Ghostly Prison",
+        "score": 0.05563165675845325
+      },
+      {
+        "oracle_id": "bc483bab-14fb-498d-9310-9c070766c7ae",
+        "name": "Darksteel Reactor",
+        "score": 0.054164187788807446
+      },
+      {
+        "oracle_id": "92eed395-62ca-4293-882b-8565c40daab5",
+        "name": "Sylvan Library",
+        "score": 0.05378595498578904
+      },
+      {
+        "oracle_id": "c0b1fba1-4338-4671-934b-098689ad2085",
+        "name": "Fynn, the Fangbearer",
+        "score": 0.0526619204413139
+      },
+      {
+        "oracle_id": "9fb8cd81-403a-4988-8f1c-b8eccf8abd9c",
+        "name": "Karn's Bastion",
+        "score": 0.05178876095823095
+      },
+      {
+        "oracle_id": "a1f3da21-af6d-450e-bf0b-985d158418e6",
+        "name": "Hardened Scales",
+        "score": 0.051445186145216926
+      },
+      {
+        "oracle_id": "9575d7ce-f26d-4b90-87a3-6329e9799572",
+        "name": "Abandoned Air Temple",
+        "score": 0.05121453940788766
+      },
+      {
+        "oracle_id": "b2c6aa39-2d2a-459c-a555-fb48ba993373",
+        "name": "Island",
+        "score": 0.05116271829651567
+      },
+      {
+        "oracle_id": "d57a8f0b-7989-4db5-8756-6f2690097252",
+        "name": "Damnation",
+        "score": 0.051083794051139136
+      },
+      {
+        "oracle_id": "56719f6a-1a6c-4c0a-8d21-18f7d7350b68",
+        "name": "Swamp",
+        "score": 0.05105667280764648
+      },
+      {
+        "oracle_id": "1ff00f5b-4bf9-4724-8bb5-6b9a9eb0ec7f",
+        "name": "Replicating Ring",
+        "score": 0.050922564376233714
+      }
+    ]
+  },
+  "error": null
+}
