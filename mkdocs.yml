@@ -88,6 +88,7 @@ nav:
       - Card data: development/card-data.md
       - Web app: development/web-app.md
       - Observability: development/observability.md
+      - End-to-end test: development/end-to-end-test.md
       - Translations: development/translations.md
       - Writing style: contributing/writing-style.md
   - Architecture:
