@@ -37,7 +37,7 @@ export function mockApi(handlers: Record<string, Handler>) {
       // The shell asks the extensions after each sign-in, to start the plugin runtime.
       // A test with no handler for this request gets an instance with no extension, and the request is not in the list.
       if (key === 'GET /extensions' && !handlers[key]) {
-        return Response.json({ coreApi: '1.1.0', items: [], plugins: { maxActive: 8, frameOrigin: null } })
+        return Response.json({ coreApi: '1.1.0', items: [], plugins: { maxActive: 8, frameOrigin: null, developmentPlugins: false } })
       }
       const body = typeof init.body === 'string' ? JSON.parse(init.body) : undefined
       const headers = (init.headers ?? {}) as Record<string, string>

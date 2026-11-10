@@ -1,20 +1,25 @@
 import { activePlugins, type ExtensionList } from '../api/extensions'
-import { PluginHost, PluginLimitError, type PluginHostOptions } from './host'
+import { developmentFrameUrl, loadDevelopmentManifest } from './development'
+import { PluginHost, PluginLimitError, type PluginHostOptions, type StartOptions } from './host'
+import type { PluginVersion } from './frame'
 
 /**
- * The entry point of the plugin runtime. The web app loads this module only when the user has an active plugin,
- * so the main bundle does not contain the runtime.
+ * The entry point of the plugin runtime. The web app loads this module only when the user has an active plugin
+ * or a development plugin, so the main bundle does not contain the runtime.
  */
 
-export interface StartOptions extends Partial<Omit<PluginHostOptions, 'settings' | 'coreApi' | 'container'>> {
+export interface RuntimeOptions extends Partial<Omit<PluginHostOptions, 'settings' | 'coreApi' | 'container'>> {
   document?: Document
+  /** The manifest URLs of the development plugins. The runtime uses them only when the instance allows development plugins. */
+  developmentUrls?: string[]
+  fetcher?: typeof fetch
 }
 
 /**
- * Creates the container of the plugin frames and starts the active plugins of the user.
+ * Creates the container of the plugin frames and starts the active plugins of the user, then the development plugins.
  * @returns The host. Call `stopAll` to remove the frames.
  */
-export function startPluginRuntime(list: ExtensionList, options: StartOptions = {}): PluginHost {
+export function startPluginRuntime(list: ExtensionList, options: RuntimeOptions = {}): PluginHost {
   const document = options.document ?? window.document
   const container = document.createElement('div')
   container.className = 'plugin-frames'
@@ -34,14 +39,32 @@ export function startPluginRuntime(list: ExtensionList, options: StartOptions = 
     container.remove()
   }
 
-  for (const plugin of activePlugins(list)) {
-    host.start({ id: plugin.id, version: plugin.version }).catch((error: unknown) => {
+  const start = (plugin: PluginVersion, startOptions?: StartOptions): void => {
+    host.start(plugin, startOptions).catch((error: unknown) => {
       if (error instanceof PluginLimitError) {
         console.warn(`The core did not start the plugin "${plugin.id}". ${error.message}`)
       } else {
         console.error(`The plugin "${plugin.id}" did not start.`, error)
       }
     })
+  }
+
+  for (const plugin of activePlugins(list)) {
+    start({ id: plugin.id, version: plugin.version })
+  }
+
+  if (list.plugins.developmentPlugins) {
+    for (const url of options.developmentUrls ?? []) {
+      loadDevelopmentManifest(url, options.fetcher)
+        .then((plugin) => {
+          if (host.running.includes(plugin.id)) {
+            console.warn(`The development plugin "${plugin.id}" has the ID of a running plugin. The core did not start it.`)
+            return
+          }
+          start({ id: plugin.id, version: plugin.version }, { src: developmentFrameUrl(plugin, list.plugins.frameOrigin), development: true })
+        })
+        .catch((error: unknown) => console.warn(`The development plugin at ${url} did not start.`, error))
+    }
   }
   return host
 }

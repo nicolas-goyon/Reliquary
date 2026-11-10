@@ -123,5 +123,9 @@
     "invalid_format": "Cette valeur n’a pas le bon format.",
     "not_allowed": "Cette valeur n’est pas autorisée.",
     "unknown": "Cette valeur est incorrecte."
+  },
+  "plugins": {
+    "notChecked": "Non vérifié.",
+    "notCheckedDescription": "Le plugin {{name}} vient d’une URL de développement. Reliquary ne l’a pas examiné. Utilisez-le uniquement pour développer un plugin."
   }
 }

@@ -43,7 +43,8 @@ public sealed record ExtensionListResponse(string CoreApi, IReadOnlyList<Extensi
 /// <summary>The settings of the plugin runtime of the web app.</summary>
 /// <param name="MaxActive">The maximum number of active plugins for each user.</param>
 /// <param name="FrameOrigin">The origin of the plugin frames, or null for the host of the instance.</param>
-public sealed record PluginRuntimeResponse(int MaxActive, string? FrameOrigin);
+/// <param name="DevelopmentPlugins">Whether a user can load a plugin from a URL. See <see cref="PluginOptions.AllowDevelopmentPlugins"/>.</param>
+public sealed record PluginRuntimeResponse(int MaxActive, string? FrameOrigin, bool DevelopmentPlugins);
 
 /// <summary>An installed extension, with its manifest and its settings, for the administrator.</summary>
 /// <param name="Extension">The extension.</param>
@@ -90,6 +91,8 @@ public static class ExtensionEndpoints
             .WithSummary("Activates or deactivates a plugin for the user.")
             .RequireAuthorization(AuthPolicies.Session);
 
+        api.MapDevelopmentPluginEndpoints();
+
         var admin = api.MapGroup("/admin/extensions").WithTags("Administration").RequireAuthorization(AuthPolicies.Administrator);
 
         admin.MapGet(string.Empty, ListAllAsync)
@@ -119,7 +122,10 @@ public static class ExtensionEndpoints
         return TypedResults.Ok(new ExtensionListResponse(
             CoreApi.Version.ToString(),
             rows.Select(row => ToResponse(row, activations)).ToList(),
-            new PluginRuntimeResponse(options.Value.MaxActivePlugins, string.IsNullOrWhiteSpace(options.Value.FrameOrigin) ? null : options.Value.FrameOrigin.TrimEnd('/'))));
+            new PluginRuntimeResponse(
+                options.Value.MaxActivePlugins,
+                string.IsNullOrWhiteSpace(options.Value.FrameOrigin) ? null : options.Value.FrameOrigin.TrimEnd('/'),
+                options.Value.AllowDevelopmentPlugins)));
     }
 
     private static async Task<Results<NoContent, ProblemHttpResult>> SetPluginActivationAsync(

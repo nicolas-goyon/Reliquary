@@ -9,8 +9,15 @@ export type StopReason = 'stopped' | 'unresponsive' | 'connect-failed'
 
 /** An event of the plugin host, for the interface and for the automatic deactivation of plugins (issue #278). */
 export type PluginHostEvent =
-  | { type: 'started'; plugin: PluginVersion }
+  | { type: 'started'; plugin: PluginVersion; development: boolean }
   | { type: 'stopped'; plugin: PluginVersion; reason: StopReason }
+
+export interface StartOptions {
+  /** The address of the frame. The default is the frame endpoint of the plugin version. */
+  src?: string
+  /** True for a plugin from a URL in the development mode. The core does not check it. */
+  development?: boolean
+}
 
 /** The user has the maximum number of active plugins. */
 export class PluginLimitError extends Error {
@@ -44,6 +51,7 @@ export interface PluginHostOptions extends PeerOptions, HeartbeatOptions {
 
 interface RunningPlugin {
   plugin: PluginVersion
+  development: boolean
   frame: HTMLIFrameElement
   abort: AbortController
   peer?: HostPeer
@@ -69,11 +77,16 @@ export class PluginHost {
     return [...this.plugins.keys()]
   }
 
+  /** Tells whether a running plugin comes from a URL in the development mode. The interface shows a "Not checked" banner for it. */
+  isDevelopment(id: string): boolean {
+    return this.plugins.get(id)?.development ?? false
+  }
+
   /**
    * Creates the frame of a plugin and connects it. A plugin that has a frame does not get a second frame.
    * @throws PluginLimitError when the user has the maximum number of active plugins.
    */
-  async start(plugin: PluginVersion): Promise<void> {
+  async start(plugin: PluginVersion, options: StartOptions = {}): Promise<void> {
     if (this.plugins.has(plugin.id)) {
       return
     }
@@ -81,8 +94,9 @@ export class PluginHost {
       throw new PluginLimitError(this.options.settings.maxActive)
     }
     const { container } = this.options
-    const frame = createPluginFrame(container.ownerDocument, plugin, frameUrl(plugin, this.options.settings.frameOrigin))
-    const running: RunningPlugin = { plugin, frame, abort: new AbortController() }
+    const development = options.development ?? false
+    const frame = createPluginFrame(container.ownerDocument, plugin, options.src ?? frameUrl(plugin, this.options.settings.frameOrigin))
+    const running: RunningPlugin = { plugin, development, frame, abort: new AbortController() }
     this.plugins.set(plugin.id, running)
     container.append(frame)
 
@@ -97,7 +111,7 @@ export class PluginHost {
         ...this.options,
         hostWindow: this.options.hostWindow ?? container.ownerDocument.defaultView ?? window,
         frameWindow,
-        connect: { coreApi: this.options.coreApi, plugin: { id: plugin.id, version: plugin.version }, language: this.options.language(), development: false },
+        connect: { coreApi: this.options.coreApi, plugin: { id: plugin.id, version: plugin.version }, language: this.options.language(), development },
         signal: running.abort.signal,
       })
     } catch (error) {
@@ -121,7 +135,7 @@ export class PluginHost {
       },
       this.options,
     )
-    this.options.onEvent?.({ type: 'started', plugin })
+    this.options.onEvent?.({ type: 'started', plugin, development })
   }
 
   /** Asks the plugin to stop, then removes its frame. */

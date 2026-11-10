@@ -57,7 +57,7 @@ public sealed class ExtensionRegistryTests
         Assert.Equal(HttpStatusCode.NoContent, activate.StatusCode);
         Assert.True(Assert.Single(afterActivate.Items).Active);
         Assert.False(Assert.Single(anonymous.Items).Active);
-        Assert.Equal(new PluginRuntimeResponse(8, null), afterActivate.Plugins);
+        Assert.Equal(new PluginRuntimeResponse(8, null, false), afterActivate.Plugins);
     }
 
     [Fact]
@@ -92,7 +92,7 @@ public sealed class ExtensionRegistryTests
         Assert.Equal(HttpStatusCode.NoContent, deactivate.StatusCode);
         Assert.Equal(HttpStatusCode.NoContent, secondAfterDeactivate.StatusCode);
         Assert.Equal(["second"], list.Items.Where(item => item.Active).Select(item => item.Id));
-        Assert.Equal(new PluginRuntimeResponse(1, "https://plugins.example.org"), list.Plugins);
+        Assert.Equal(new PluginRuntimeResponse(1, "https://plugins.example.org", false), list.Plugins);
     }
 
     [Fact]
@@ -223,6 +223,58 @@ public sealed class ExtensionRegistryTests
         Assert.Equal(HttpStatusCode.OK, update.StatusCode);
         Assert.Equal(HttpStatusCode.NoContent, delete.StatusCode);
         Assert.Empty(all!);
+    }
+
+    [Fact]
+    public async Task DevelopmentPluginFrameNeedsTheSetting()
+    {
+        await using var instance = await Instance.CreateAsync();
+        using var client = instance.Factory.CreateClient();
+
+        var response = await client.GetAsync(new Uri("/api/v1/plugins/development/frame?entry=http://localhost:5173/src/main.ts", UriKind.Relative), TestContext.Current.CancellationToken);
+        var list = await ListAsync(client);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.False(list.Plugins.DevelopmentPlugins);
+    }
+
+    [Fact]
+    public async Task DevelopmentPluginFrameAllowsTheOriginOfThePlugin()
+    {
+        await using var instance = await Instance.CreateAsync(new Dictionary<string, string> { ["Plugins:AllowDevelopmentPlugins"] = "true" });
+        using var client = instance.Factory.CreateClient();
+
+        var response = await client.GetAsync(
+            new Uri("/api/v1/plugins/development/frame?entry=http://localhost:5173/src/main.ts&network=https://api.moxfield.com/v2", UriKind.Relative),
+            TestContext.Current.CancellationToken);
+        var html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var list = await ListAsync(client);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("text/html", response.Content.Headers.ContentType?.MediaType);
+        Assert.Equal(
+            "default-src 'none'; script-src http://localhost:5173; style-src http://localhost:5173 'unsafe-inline'; font-src http://localhost:5173; "
+            + "img-src http://localhost:5173 https://api.moxfield.com data: blob:; connect-src http://localhost:5173 ws://localhost:5173 https://api.moxfield.com; "
+            + "worker-src blob:; base-uri 'none'; form-action 'none'",
+            string.Join(";", response.Headers.GetValues("Content-Security-Policy")));
+        Assert.Contains("<script type=\"module\" src=\"http://localhost:5173/src/main.ts\"></script>", html, StringComparison.Ordinal);
+        Assert.True(list.Plugins.DevelopmentPlugins);
+    }
+
+    [Theory]
+    [InlineData("entry=javascript:alert(1)")]
+    [InlineData("entry=/src/main.ts")]
+    [InlineData("entry=http://user:secret@localhost:5173/main.ts")]
+    [InlineData("entry=http://localhost:5173/main.ts&network=ftp://example.org")]
+    [InlineData("entry=http://localhost:5173/main.ts&network=https://a.example.org%20%27unsafe-eval%27")]
+    public async Task DevelopmentPluginFrameRefusesAnIncorrectAddress(string query)
+    {
+        await using var instance = await Instance.CreateAsync(new Dictionary<string, string> { ["Plugins:AllowDevelopmentPlugins"] = "true" });
+        using var client = instance.Factory.CreateClient();
+
+        var response = await client.GetAsync(new Uri($"/api/v1/plugins/development/frame?{query}", UriKind.Relative), TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     private static async Task<ExtensionListResponse> ListAsync(HttpClient client) =>

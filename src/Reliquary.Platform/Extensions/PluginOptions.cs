@@ -21,4 +21,10 @@ public sealed class PluginOptions
     /// Without a value, the frames use the host of the instance, with an opaque origin.
     /// </summary>
     public string? FrameOrigin { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether a user can load a plugin from a URL, for the development of plugins.
+    /// The default is off. Only a development instance must turn it on, because the core does not check these plugins.
+    /// </summary>
+    public bool AllowDevelopmentPlugins { get; set; }
 }
