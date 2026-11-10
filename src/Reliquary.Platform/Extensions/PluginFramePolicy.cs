@@ -76,6 +76,43 @@ public static partial class PluginFramePolicy
     }
 
     /// <summary>
+    /// The browser features that the Permissions-Policy header of a plugin frame turns off.
+    /// The header turns off all these features, except the features of the devices that the user accepted.
+    /// </summary>
+    public static readonly IReadOnlyList<string> RestrictedFeatures =
+    [
+        "accelerometer", "ambient-light-sensor", "autoplay", "bluetooth", "browsing-topics", "camera", "clipboard-read", "clipboard-write",
+        "display-capture", "encrypted-media", "fullscreen", "gamepad", "geolocation", "gyroscope", "hid", "identity-credentials-get",
+        "idle-detection", "local-fonts", "local-network", "local-network-access", "loopback-network", "magnetometer", "microphone", "midi",
+        "otp-credentials", "payment", "picture-in-picture", "publickey-credentials-create", "publickey-credentials-get", "screen-wake-lock",
+        "serial", "speaker-selection", "storage-access", "usb", "web-share", "window-management", "xr-spatial-tracking",
+    ];
+
+    /// <summary>
+    /// The browser features of each device of the plugin manifest.
+    /// Chrome first called the access to <c>localhost</c> <c>local-network-access</c>, then <c>loopback-network</c>.
+    /// </summary>
+    public static readonly IReadOnlyDictionary<string, IReadOnlyList<string>> DeviceFeatures = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal)
+    {
+        ["camera"] = ["camera"],
+        ["loopback-network"] = ["loopback-network", "local-network-access"],
+    };
+
+    /// <summary>
+    /// Makes the Permissions-Policy header of a plugin frame.
+    /// The header turns off each feature of <see cref="RestrictedFeatures"/>, except the features of the accepted devices.
+    /// A header can only remove a permission. The attribute <c>allow</c> of the iframe gives the accepted devices to the frame.
+    /// </summary>
+    /// <param name="devices">The devices that the user accepted, for example <c>camera</c>. The method ignores an unknown device.</param>
+    /// <returns>The value of the header <c>Permissions-Policy</c>.</returns>
+    public static string PermissionsPolicy(IEnumerable<string> devices)
+    {
+        ArgumentNullException.ThrowIfNull(devices);
+        var allowed = devices.SelectMany(device => DeviceFeatures.GetValueOrDefault(device) ?? []).ToHashSet(StringComparer.Ordinal);
+        return string.Join(", ", RestrictedFeatures.Where(feature => !allowed.Contains(feature)).Select(feature => $"{feature}=()"));
+    }
+
+    /// <summary>
     /// Gets the network origins that a CSP can contain: the origins that follow <see cref="PluginManifestRules.NetworkPattern"/>, with no duplicates.
     /// </summary>
     /// <param name="network">The origins.</param>

@@ -77,4 +77,35 @@ public sealed class PluginFramePolicyTests
 
         Assert.Contains("connect-src https://dev.example.org:8443 wss://dev.example.org:8443;", policy, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void PermissionsPolicyTurnsOffAllTheFeaturesWithNoAcceptedDevice()
+    {
+        var policy = PluginFramePolicy.PermissionsPolicy([]);
+
+        Assert.Equal(PluginFramePolicy.RestrictedFeatures.Select(feature => $"{feature}=()"), policy.Split(", "));
+    }
+
+    [Fact]
+    public void PermissionsPolicyKeepsTheFeaturesOfTheAcceptedDevices()
+    {
+        var camera = PluginFramePolicy.PermissionsPolicy(["camera", "teleporter"]).Split(", ");
+        var loopback = PluginFramePolicy.PermissionsPolicy(["loopback-network"]).Split(", ");
+
+        Assert.DoesNotContain("camera=()", camera);
+        Assert.Contains("microphone=()", camera);
+        Assert.Contains("loopback-network=()", camera);
+        Assert.Equal(PluginFramePolicy.RestrictedFeatures.Count - 1, camera.Length);
+        Assert.DoesNotContain("loopback-network=()", loopback);
+        Assert.DoesNotContain("local-network-access=()", loopback);
+        Assert.Contains("local-network=()", loopback);
+        Assert.Contains("camera=()", loopback);
+    }
+
+    [Fact]
+    public void EachDeviceOfTheManifestHasItsFeatures()
+    {
+        Assert.Equal(PluginManifestRules.Devices.Order(StringComparer.Ordinal), PluginFramePolicy.DeviceFeatures.Keys.Order(StringComparer.Ordinal));
+        Assert.All(PluginFramePolicy.DeviceFeatures.Values.SelectMany(features => features), feature => Assert.Contains(feature, PluginFramePolicy.RestrictedFeatures));
+    }
 }

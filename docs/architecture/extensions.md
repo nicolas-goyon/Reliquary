@@ -220,6 +220,7 @@ A `MessagePort` can go to such a Worker.
 - A plugin can reach only the domains that its plugin manifest declares.
   These domains can include `localhost`, for example for a scan application or a local tool.
 - The CSP of the plugin frame contains only the domains of the plugin manifest that the user accepted.
+  The section [Plugin frame and plugin files](#plugin-frame-and-plugin-files) gives the rules.
 - Some sites refuse calls from a browser (CORS).
   For these sites, the core offers a network relay.
   The relay accepts only the domains of the plugin manifest, and it has quotas.
@@ -296,16 +297,42 @@ Two endpoints send a plugin version to the browser:
 The two endpoints accept requests with no credential, because the browser sends no credential when it opens the frame.
 They send only the installed version of a plugin that the instance enables, so a disabled plugin stops at the next start of its frame.
 
+The frame request has no credential, so the API does not know the user.
+Thus the runtime of the web app puts the values that the user accepted in the query of the frame address:
+
+```text
+/api/v1/plugins/{id}/{version}/frame?network=https%3A%2F%2Fapi.example.com&devices=camera
+```
+
+- Each `network` value must be an origin of the `network` list of the manifest, with the same text.
+  Each `devices` value must be a device of the manifest.
+  The API refuses another value with the status 400 and the code `not_allowed`.
+  Thus the query can only remove values of the manifest, and a wildcard is possible only when the manifest declares it.
+- Without `network`, the frame can reach no network origin.
+  Without `devices`, the frame gets no device.
+
 The frame response has these headers:
 
 - `Content-Security-Policy`. `PluginFramePolicy` makes the policy for all the plugin frames:
   - `default-src 'none'`
   - `script-src`, `style-src` and `font-src`: the folder of the files of the plugin version. `style-src` also has `'unsafe-inline'`.
-  - `img-src`: the folder of the files, the `network` list, `data:` and `blob:`
-  - `connect-src`: the folder of the files and the `network` list
+  - `img-src`: the folder of the files, the accepted `network` origins, `data:` and `blob:`
+  - `connect-src`: the folder of the files and the accepted `network` origins
   - `worker-src blob:`. In a frame with an opaque origin, only a classic Worker from a `blob:` URL works.
   - `base-uri 'none'` and `form-action 'none'`
+- `Permissions-Policy`. The header turns off the powerful features of the browser, for example `camera`, `microphone`, `geolocation` and `usb`.
+  It does not turn off the features of the accepted devices: `camera` for the device `camera`, and `loopback-network` and `local-network-access` for the device `loopback-network`.
+  A header can only remove a permission.
+  The `allow` attribute of the iframe gives the accepted devices to the frame, for example `allow="camera"`.
 - `Cache-Control: no-store`, `X-Content-Type-Options: nosniff` and `Referrer-Policy: no-referrer`
+
+Known limit: a sandboxed frame can open a new address in its own frame.
+Thus a plugin can open its frame address again with all the `network` origins of its manifest, also the origins that the user did not accept.
+The new document has no RPC port, so it cannot get more data from the core.
+But the plugin can put data that it already has in the new address, and then send this data to an origin of its manifest.
+Thus the limit of the accepted list is strong only for the origins that are not in the manifest.
+The review of the plugin catalog checks each origin of the manifest.
+A signed frame address from the API can remove this limit later.
 
 A file response has these headers:
 

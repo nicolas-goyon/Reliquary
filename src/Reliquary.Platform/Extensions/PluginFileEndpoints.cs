@@ -29,7 +29,7 @@ public static class PluginFileEndpoints
         api.MapGet("/plugins/{id}/{version}/frame", FrameAsync)
             .WithTags("Extensions")
             .WithName("PluginFrame")
-            .WithSummary("Sends the HTML of the frame of a plugin version, with the Content Security Policy of this plugin.");
+            .WithSummary("Sends the HTML of the frame of a plugin version. The query gives the network origins and the devices that the user accepted. The CSP and the Permissions-Policy contain only these values.");
 
         api.MapGet("/plugins/{id}/{version}/files/{**path}", FileAsync)
             .WithTags("Extensions")
@@ -55,12 +55,40 @@ public static class PluginFileEndpoints
         return builder.Uri;
     }
 
+    /// <summary>
+    /// Sends the frame of a plugin version.
+    /// </summary>
+    /// <param name="id">The ID of the plugin.</param>
+    /// <param name="version">The version of the plugin.</param>
+    /// <param name="network">The network origins that the user accepted. Each origin must be in the manifest. Without this parameter, the frame can reach no network origin.</param>
+    /// <param name="devices">The devices that the user accepted. Each device must be in the manifest. Without this parameter, the frame gets no device.</param>
+    /// <param name="context">The HTTP context.</param>
+    /// <param name="registry">The extension registry.</param>
+    /// <param name="files">The store of the plugin files.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The HTML of the frame.</returns>
     private static async Task<Results<ContentHttpResult, ProblemHttpResult>> FrameAsync(
-        string id, string version, HttpContext context, ExtensionRegistry registry, PluginFileStore files, CancellationToken cancellationToken)
+        string id,
+        string version,
+        string[]? network,
+        string[]? devices,
+        HttpContext context,
+        ExtensionRegistry registry,
+        PluginFileStore files,
+        CancellationToken cancellationToken)
     {
         if (await FindVersionAsync(id, version, registry, cancellationToken) is not { } plugin)
         {
             return NoVersion();
+        }
+
+        // The query can only remove values of the manifest. A value that is not in the manifest is an error of the caller.
+        var errors = Accepted("network", network, plugin.Network, "The network origin is not in the manifest of this plugin version.", out var acceptedNetwork)
+            .Concat(Accepted("devices", devices, plugin.Devices, "The device is not in the manifest of this plugin version.", out var acceptedDevices))
+            .ToList();
+        if (errors.Count > 0)
+        {
+            return ApiProblems.Validation(errors);
         }
 
         if (await files.IntegrityAsync(id, version, plugin.Entry, cancellationToken) is not { } integrity)
@@ -69,7 +97,8 @@ public static class PluginFileEndpoints
         }
 
         var headers = context.Response.Headers;
-        headers.ContentSecurityPolicy = PluginFramePolicy.ForPlugin(FilesUrl(context.Request, id, version), plugin.Network);
+        headers.ContentSecurityPolicy = PluginFramePolicy.ForPlugin(FilesUrl(context.Request, id, version), acceptedNetwork);
+        headers["Permissions-Policy"] = PluginFramePolicy.PermissionsPolicy(acceptedDevices);
         headers.CacheControl = "no-store";
         headers.XContentTypeOptions = "nosniff";
         headers["Referrer-Policy"] = "no-referrer";
@@ -131,14 +160,38 @@ public static class PluginFileEndpoints
             return null;
         }
 
-        var network = root.TryGetProperty("network", out var list) && list.ValueKind == JsonValueKind.Array
+        return new FramePlugin(row.Name, entry!, Texts(root, "network"), Texts(root, "devices"));
+    }
+
+    private static List<string> Texts(JsonElement manifest, string field) =>
+        manifest.TryGetProperty(field, out var list) && list.ValueKind == JsonValueKind.Array
             ? list.EnumerateArray().Where(item => item.ValueKind == JsonValueKind.String).Select(item => item.GetString()!).ToList()
             : [];
-        return new FramePlugin(row.Name, entry!, network);
+
+    /// <summary>Keeps the values of the query that are also in the manifest.</summary>
+    /// <returns>An error for each value that is not in the manifest.</returns>
+    private static List<FieldError> Accepted(string field, string[]? requested, IReadOnlyList<string> manifest, string message, out List<string> accepted)
+    {
+        accepted = [];
+        var errors = new List<FieldError>();
+        var values = requested ?? [];
+        for (var index = 0; index < values.Length; index++)
+        {
+            if (!manifest.Contains(values[index], StringComparer.Ordinal))
+            {
+                errors.Add(new FieldError($"{field}[{index}]", FieldErrorCodes.NotAllowed, message));
+            }
+            else if (!accepted.Contains(values[index], StringComparer.Ordinal))
+            {
+                accepted.Add(values[index]);
+            }
+        }
+
+        return errors;
     }
 
     private static ProblemHttpResult NoVersion() =>
         ApiProblems.NotFound("The instance has no enabled plugin with this ID and this version.");
 
-    private sealed record FramePlugin(string Name, string Entry, IReadOnlyList<string> Network);
+    private sealed record FramePlugin(string Name, string Entry, IReadOnlyList<string> Network, IReadOnlyList<string> Devices);
 }
