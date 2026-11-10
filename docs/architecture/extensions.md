@@ -134,6 +134,32 @@ This example shows the plugin manifest of a plugin that synchronizes decks with 
 }
 ```
 
+The JSON Schema `sdk/schema/manifest.schema.json` gives the rules of the plugin manifest.
+The SDK, the plugin catalog and the API use this file.
+The API applies the same rules with `PluginManifestCheck` in the platform, and a test compares the two.
+When you change a rule, change the schema and `PluginManifestRules` in the same pull request.
+
+| Field | Content |
+| --- | --- |
+| `id` | 2 to 64 lowercase letters, digits and hyphens. Necessary. |
+| `kind` | The value must be `plugin`. The schema accepts a manifest without `kind`, but `PUT /api/v1/admin/extensions/{id}` needs it, because this endpoint also installs modules. |
+| `name`, `description` | The texts in English. `name` is necessary. |
+| `version` | `major.minor.patch` with an optional pre-release part. The version cannot have build metadata, because the version is part of the URLs of the plugin files. |
+| `coreApi` | The range of core API versions, in the syntax of npm. Necessary. |
+| `entry` | The relative path of the JavaScript module of the plugin. A path segment cannot start with a dot. Necessary. |
+| `permissions` | The scopes of the public API. |
+| `slots` | The slots that the plugin uses. |
+| `network` | HTTPS origins, `http://localhost` and `http://127.0.0.1`, with an optional port. An origin can have a wildcard for one level only, for example `https://*.example.com`. |
+| `devices` | `camera` and `loopback-network`. |
+| `accounts` | The linked account sites: the host name, the authentication method and the sync. The interval of a periodic sync is 15 to 1440 minutes. |
+| `panels` | The panels: an ID, a slot (`analysis.tabs`, `card.page`, `plugin.page` or `plugin.dialog`) and a title. The slot must also be in `slots`. |
+| `formats` | The import formats and the export formats: an ID, the direction, the data (`deck` or `collection`), a title and the file name extensions. |
+| `i18n` | The translated texts for each language. The keys `name`, `description`, `panels.<id>.title` and `formats.<id>.title` translate the texts of the manifest. |
+| `settings` | The default settings of the instance, as a JSON object. |
+
+The API refuses a plugin manifest with an unknown field.
+The registry keeps all the fields of the plugin manifest.
+
 ### Life cycle and security
 
 1. **Development mode**: on a development instance, a user can load a plugin from a URL.

@@ -28,6 +28,10 @@ public sealed class ExtensionRegistryTests
 
     private static readonly string[] BadSlots = ["Deck Actions"];
 
+    private static readonly string[] WideNetwork = ["https://*.com"];
+
+    private static readonly int[] NotAnObject = [1, 2];
+
     [Fact]
     public async Task AdministratorInstallsAndEnablesAnExtension()
     {
@@ -88,6 +92,72 @@ public sealed class ExtensionRegistryTests
         {
             Assert.Contains($"\"field\":\"{field}\"", body, StringComparison.Ordinal);
         }
+    }
+
+    [Fact]
+    public async Task RegistryKeepsAllTheFieldsOfAPluginManifest()
+    {
+        await using var instance = await Instance.CreateAsync();
+        using var admin = await instance.SignInAsync("admin@example.org");
+        var manifest = new
+        {
+            id = "card-scan",
+            kind = "plugin",
+            name = "Card scan",
+            version = "1.0.0",
+            coreApi = "^1.0",
+            entry = "dist/index.js",
+            slots = new[] { "analysis.tabs" },
+            devices = new[] { "camera" },
+            panels = new[] { new { id = "stats", slot = "analysis.tabs", title = "Scan statistics" } },
+            i18n = new { fr = new { name = "Scan de cartes" } },
+        };
+
+        var install = await admin.PutAsJsonAsync("/api/v1/admin/extensions/card-scan", manifest, TestContext.Current.CancellationToken);
+        var body = await install.Content.ReadFromJsonAsync<AdminExtensionResponse>(TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.Created, install.StatusCode);
+        Assert.Equal("stats", body!.Manifest.GetProperty("panels")[0].GetProperty("id").GetString());
+        Assert.Equal("camera", body.Manifest.GetProperty("devices")[0].GetString());
+        Assert.Equal("Scan de cartes", body.Manifest.GetProperty("i18n").GetProperty("fr").GetProperty("name").GetString());
+    }
+
+    [Fact]
+    public async Task IncorrectPluginManifestGivesTheFieldErrors()
+    {
+        await using var instance = await Instance.CreateAsync();
+        using var admin = await instance.SignInAsync("admin@example.org");
+
+        var response = await admin.PutAsJsonAsync(
+            "/api/v1/admin/extensions/card-scan",
+            new
+            {
+                id = "card-scan",
+                kind = "plugin",
+                name = "Card scan",
+                version = "1.0.0",
+                coreApi = "^1.0",
+                entry = "../index.js",
+                network = WideNetwork,
+                author = "Somebody",
+            },
+            TestContext.Current.CancellationToken);
+        var problem = await response.Content.ReadFromJsonAsync<JsonElement>(TestContext.Current.CancellationToken);
+        var fields = problem.GetProperty("errors").EnumerateArray().Select(error => error.GetProperty("field").GetString()).ToList();
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal(["author", "entry", "network[0]"], fields.Order(StringComparer.Ordinal));
+    }
+
+    [Fact]
+    public async Task ManifestMustBeAnObject()
+    {
+        await using var instance = await Instance.CreateAsync();
+        using var admin = await instance.SignInAsync("admin@example.org");
+
+        var response = await admin.PutAsJsonAsync("/api/v1/admin/extensions/card-scan", NotAnObject, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     [Fact]
