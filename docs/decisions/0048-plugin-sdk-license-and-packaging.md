@@ -30,6 +30,9 @@ A separate repository makes a difference between these three parts likely.
 - A contribution to `sdk/` uses the Apache 2.0 license.
 - The CI of the main repository publishes the SDK to npm as `reliquary-plugin-sdk`.
   release-please gives its version ([ADR 0043](0043-releases-with-release-please.md)).
+- Update 2026-11-10: the maintainer does not publish the SDK yet.
+  The SDK is not a package of release-please, and the publication workflow runs only when the repository variable `SDK_PUBLISH` is `true`.
+  To start the publication, add the package `sdk` to the configuration of release-please again, and give npm access to the workflow.
 - The SDK has no runtime dependency.
 
 Rejected alternatives:
