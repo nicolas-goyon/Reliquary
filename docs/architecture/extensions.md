@@ -97,6 +97,55 @@ Plugins have two purposes:
   - The user can change the order of the contributions and hide them.
   - The core disables a plugin automatically if the plugin crashes or slows the interface.
 
+### Plugin runtime
+
+The folder `web/src/plugins` contains the plugin runtime of the web app.
+[ADR 0049](../decisions/0049-plugin-sandbox.md) gives the design.
+
+- The web app gets `GET /api/v1/extensions` after the sign-in.
+  It loads the runtime module only when the user has an active plugin, so the main bundle does not contain the runtime.
+- For each active plugin, the runtime creates a hidden plugin frame with `sandbox="allow-scripts"`, an empty `allow` attribute and no referrer.
+  The address of the frame is `/api/v1/plugins/{id}/{version}/frame`.
+- The connection has two window messages:
+  1. The plugin frame sends `reliquary:ready` to its parent window.
+  2. The runtime checks that `event.source` is the window of the frame.
+     Then it sends `reliquary:connect` one time, with the port of a new `MessageChannel`.
+- After the connection, the core and the plugin send JSON-RPC 2.0 messages on the port.
+  Each message is one JSON string, with a size limit of 1 MB.
+  Each call has a time limit of 5 seconds by default.
+- The runtime sends the heartbeat `plugin.ping` each 2 seconds, with a time limit of 2 seconds.
+  After 3 missed heartbeats in a row, the runtime removes the frame.
+- The runtime removes a frame that does not send `reliquary:ready` in 10 seconds.
+- The plugin SDK has the same protocol in `sdk/src`.
+  The container build of the web app sees only the folder `web/`, so `web/src/plugins` keeps a copy of `protocol.ts` and `rpc.ts`.
+  The test `web/src/plugins/sdkCopies.test.ts` fails when a copy is different from the file in `sdk/src`.
+- After a change of the plugins of the user, for example an activation, the web app calls `notifyPluginsChanged()`.
+  The runtime then gets `GET /api/v1/extensions` again, removes all the plugin frames, and starts the active plugins again.
+
+The instance settings of the section `Plugins` are:
+
+| Setting | Default | Effect |
+| --- | --- | --- |
+| `Plugins:MaxActivePlugins` | 8 | The maximum number of active plugins for each user. `PUT /api/v1/me/extensions/{id}` refuses one more plugin with the error `too_many_active_plugins`. |
+| `Plugins:FrameOrigin` | none | A second host name for the plugin frames, for example `https://plugins.example.org`. Without a value, the frames use the host of the instance, with an opaque origin. |
+
+`GET /api/v1/extensions` gives these settings to the web app in the field `plugins`.
+
+#### Workers in a plugin frame
+
+A plugin can move long tasks to a Worker, so the main thread of the frame answers the heartbeats.
+A test with Chromium 158 and Firefox 159 gave these results in a frame with an opaque origin and `default-src 'none'`:
+
+| Worker | `worker-src blob:` | No `worker-src` |
+| --- | --- | --- |
+| Classic Worker from a `blob:` URL | Runs in Chromium and Firefox | Blocked |
+| Module Worker from a `blob:` URL | Runs in Firefox, fails in Chromium | Blocked |
+| Worker from a file of the plugin | Fails: the file does not have the opaque origin of the frame | Fails |
+| Worker from a `data:` URL | Blocked | Blocked |
+
+Thus the CSP of the plugin frame must contain `worker-src blob:`, and a plugin must use a classic Worker from a `blob:` URL.
+A `MessagePort` can go to such a Worker.
+
 ### Network
 
 - A plugin can reach only the domains that its plugin manifest declares.

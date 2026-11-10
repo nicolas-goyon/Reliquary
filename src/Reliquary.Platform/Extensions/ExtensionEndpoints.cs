@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.Options;
 using Reliquary.BuildingBlocks.Api;
 using Reliquary.BuildingBlocks.Security;
 using Reliquary.BuildingBlocks.Versioning;
@@ -36,7 +37,13 @@ public sealed record ExtensionResponse(
 /// <summary>The extensions of the instance and the version of the core API.</summary>
 /// <param name="CoreApi">The current version of the core API.</param>
 /// <param name="Items">The extensions.</param>
-public sealed record ExtensionListResponse(string CoreApi, IReadOnlyList<ExtensionResponse> Items);
+/// <param name="Plugins">The settings of the plugin runtime of the web app.</param>
+public sealed record ExtensionListResponse(string CoreApi, IReadOnlyList<ExtensionResponse> Items, PluginRuntimeResponse Plugins);
+
+/// <summary>The settings of the plugin runtime of the web app.</summary>
+/// <param name="MaxActive">The maximum number of active plugins for each user.</param>
+/// <param name="FrameOrigin">The origin of the plugin frames, or null for the host of the instance.</param>
+public sealed record PluginRuntimeResponse(int MaxActive, string? FrameOrigin);
 
 /// <summary>An installed extension, with its manifest and its settings, for the administrator.</summary>
 /// <param name="Extension">The extension.</param>
@@ -62,6 +69,9 @@ public static class ExtensionEndpoints
 {
     /// <summary>The extension does not support the current core API.</summary>
     public const string CoreVersionNotSupported = "core_version_not_supported";
+
+    /// <summary>The user has the maximum number of active plugins.</summary>
+    public const string TooManyActivePlugins = "too_many_active_plugins";
 
     /// <summary>
     /// Adds the endpoints of the extension registry to the public API.
@@ -99,7 +109,8 @@ public static class ExtensionEndpoints
             .WithSummary("Uninstalls an extension.");
     }
 
-    private static async Task<Ok<ExtensionListResponse>> ListAsync(ClaimsPrincipal user, ExtensionRegistry registry, CancellationToken cancellationToken)
+    private static async Task<Ok<ExtensionListResponse>> ListAsync(
+        ClaimsPrincipal user, ExtensionRegistry registry, IOptions<PluginOptions> options, CancellationToken cancellationToken)
     {
         var rows = await registry.ListAsync(enabledOnly: true, cancellationToken);
         var activations = user.FindAccountId() is { } ownerId && rows.Any(row => row.Kind == "plugin")
@@ -107,11 +118,12 @@ public static class ExtensionEndpoints
             : new Dictionary<string, bool>();
         return TypedResults.Ok(new ExtensionListResponse(
             CoreApi.Version.ToString(),
-            rows.Select(row => ToResponse(row, activations)).ToList()));
+            rows.Select(row => ToResponse(row, activations)).ToList(),
+            new PluginRuntimeResponse(options.Value.MaxActivePlugins, string.IsNullOrWhiteSpace(options.Value.FrameOrigin) ? null : options.Value.FrameOrigin.TrimEnd('/'))));
     }
 
     private static async Task<Results<NoContent, ProblemHttpResult>> SetPluginActivationAsync(
-        string id, PluginActivationRequest request, ClaimsPrincipal user, ExtensionRegistry registry, CancellationToken cancellationToken)
+        string id, PluginActivationRequest request, ClaimsPrincipal user, ExtensionRegistry registry, IOptions<PluginOptions> options, CancellationToken cancellationToken)
     {
         if (request.Enabled is not { } enabled)
         {
@@ -124,8 +136,32 @@ public static class ExtensionEndpoints
             return ApiProblems.NotFound("The instance has no enabled plugin with this ID.");
         }
 
-        await registry.SetPluginActivationAsync(user.GetAccountId(), id, enabled, cancellationToken);
+        var ownerId = user.GetAccountId();
+        if (enabled)
+        {
+            var activePlugins = await ActivePluginIdsAsync(ownerId, registry, cancellationToken);
+            var maxActive = options.Value.MaxActivePlugins;
+            if (!activePlugins.Contains(id) && activePlugins.Count >= maxActive)
+            {
+                return ApiProblems.Conflict(
+                    TooManyActivePlugins,
+                    $"You have {activePlugins.Count} active plugins, and the instance allows {maxActive}. Deactivate a plugin before you activate a different plugin.");
+            }
+        }
+
+        await registry.SetPluginActivationAsync(ownerId, id, enabled, cancellationToken);
         return TypedResults.NoContent();
+    }
+
+    /// <summary>Gets the IDs of the plugins that run for the user: the instance enables them, and the user activated them.</summary>
+    private static async Task<HashSet<string>> ActivePluginIdsAsync(Guid ownerId, ExtensionRegistry registry, CancellationToken cancellationToken)
+    {
+        var activations = await registry.PluginActivationsAsync(ownerId, cancellationToken);
+        var rows = await registry.ListAsync(enabledOnly: true, cancellationToken);
+        return rows
+            .Where(row => row.Kind == "plugin" && row.Compatible && activations.GetValueOrDefault(row.Id))
+            .Select(row => row.Id)
+            .ToHashSet(StringComparer.Ordinal);
     }
 
     private static async Task<Ok<IReadOnlyList<AdminExtensionResponse>>> ListAllAsync(ExtensionRegistry registry, CancellationToken cancellationToken)

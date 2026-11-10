@@ -9,6 +9,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - The plugin SDK `reliquary-plugin-sdk` in the folder `sdk/`, under the Apache License 2.0 (ADR 0048).
   It contains `definePlugin`, the RPC client of the plugin frame and the types of the plugin manifest.
+- The plugin runtime of the web app (ADR 0049): a sandboxed plugin frame for each active plugin, the RPC channel and the watchdog.
+  The web app loads the runtime only when the user has an active plugin.
+- The settings `Plugins:MaxActivePlugins` (8 by default) and `Plugins:FrameOrigin`.
 
 ## [0.2.0] - 2026-11-09
 

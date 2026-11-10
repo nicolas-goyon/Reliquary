@@ -3,6 +3,9 @@
  *
  * The core and the plugin send JSON-RPC 2.0 messages on a MessageChannel.
  * Each message is one JSON string. The protocol version is the core API version.
+ *
+ * The web app keeps a copy of this file in web/src/plugins, because the container build of the web app sees only the folder web/.
+ * The test web/src/plugins/sdkCopies.test.ts fails when the two copies are different. Change the file in sdk/src, then copy it.
  */
 
 /** The version of the core API that this SDK uses. */
