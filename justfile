@@ -90,16 +90,19 @@ preprod-status:
 restore:
     dotnet restore
     npm --prefix web ci
+    npm --prefix sdk ci
 
 # Build the backend and the web app.
 build:
     dotnet build
     npm --prefix web run build
+    npm --prefix sdk run build
 
 # Run all the tests.
 test:
     dotnet test
     npm --prefix web test
+    npm --prefix sdk test
 
 # Start the API with hot reload on http://localhost:5080.
 api:
@@ -133,6 +136,7 @@ lint-code:
     dotnet format --verify-no-changes
     npm --prefix web run lint
     npm --prefix web run typecheck
+    npm --prefix sdk run typecheck
 
 # Check the documentation against the ASD-STE100 rules and the Markdown rules.
 lint-docs:

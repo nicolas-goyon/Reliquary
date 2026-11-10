@@ -103,5 +103,6 @@ All contributors follow the [code of conduct](CODE_OF_CONDUCT.md).
 
 ## License of contributions
 
-Reliquary uses the AGPL-3.0 license.
-When you contribute, you agree that your contribution uses the same license.
+Reliquary uses the AGPL-3.0 license, except the folder `sdk/`, which uses the Apache License 2.0.
+When you contribute, you agree that your contribution uses the license of its folder.
+[LICENSING.md](LICENSING.md) gives the license of each folder.

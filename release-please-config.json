@@ -23,6 +23,16 @@
           "jsonpath": "$.version"
         }
       ]
+    },
+    "sdk": {
+      "package-name": "reliquary-plugin-sdk",
+      "release-type": "node",
+      "component": "sdk",
+      "include-component-in-tag": true,
+      "pull-request-title-pattern": "chore(release): release sdk ${version}",
+      "pull-request-header": "This pull request makes a release of the plugin SDK. Merge it to create the tag sdk-vX.Y.Z and to publish the package reliquary-plugin-sdk to npm.",
+      "skip-changelog": true
     }
-  }
+  },
+  "separate-pull-requests": true
 }

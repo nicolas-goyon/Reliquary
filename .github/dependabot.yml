@@ -29,6 +29,20 @@ updates:
       web-major:
         update-types: [major]
 
+  - package-ecosystem: npm
+    directory: /sdk
+    target-branch: develop
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      sdk:
+        update-types: [minor, patch]
+      sdk-major:
+        update-types: [major]
+
   - package-ecosystem: github-actions
     directory: /
     target-branch: develop

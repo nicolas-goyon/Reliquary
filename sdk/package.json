@@ -1,0 +1,43 @@
+{
+  "name": "reliquary-plugin-sdk",
+  "version": "0.0.0",
+  "description": "SDK of Reliquary plugins: the RPC client of the plugin frame, the manifest types and definePlugin",
+  "license": "Apache-2.0",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nicolas-goyon/reliquary.git",
+    "directory": "sdk"
+  },
+  "homepage": "https://github.com/nicolas-goyon/reliquary/tree/main/sdk#readme",
+  "bugs": "https://github.com/nicolas-goyon/reliquary/issues",
+  "keywords": [
+    "reliquary",
+    "plugin",
+    "sdk"
+  ],
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "schema",
+    "LICENSE",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "node --test \"src/**/*.test.ts\"",
+    "prepack": "npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "typescript": "~7.0.2"
+  }
+}
