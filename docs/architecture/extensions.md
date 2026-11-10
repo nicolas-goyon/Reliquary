@@ -144,6 +144,7 @@ On a development instance, a user loads a plugin from the URL of its plugin mani
    The CSP of this frame allows the origin of the entry point for scripts, styles, fonts, images and connections.
    It also allows the WebSocket of this origin, so the server of the plugin can reload the plugin.
    The `network` origins of the plugin manifest get `connect-src` and `img-src`.
+   `PluginFramePolicy.ForDevelopment` makes this CSP. The same class makes the CSP of the installed plugins, so the two policies have the same common rules.
 5. The connect message has `development: true`, and the interface shows a "Not checked" banner for the plugin.
    Each contribution of a development plugin must show this banner.
 
@@ -244,6 +245,41 @@ When you change a rule, change the schema and `PluginManifestRules` in the same 
 
 The API refuses a plugin manifest with an unknown field.
 The registry keeps all the fields of the plugin manifest.
+
+### Plugin frame and plugin files
+
+The table `users.extension_files` keeps the files of each plugin version: the path, the content, the media type and the SHA-384 hash.
+The files of a version do not change.
+The catalog sync adds the files of a new version with `PluginFileStore`.
+The store accepts 200 files and 5 MB at most for each version.
+It accepts only these file name extensions: `.js`, `.mjs`, `.css`, `.json`, `.map`, `.txt`, `.wasm`, `.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`, `.svg`, `.woff` and `.woff2`.
+A plugin has no HTML file, because the API makes the HTML of the plugin frames.
+
+Two endpoints send a plugin version to the browser:
+
+- `GET /api/v1/plugins/{id}/{version}/frame` sends the HTML of the plugin frame.
+  The HTML loads the entry of the manifest as a module, with its SHA-384 integrity hash.
+- `GET /api/v1/plugins/{id}/{version}/files/{path}` sends a file of the plugin.
+
+The two endpoints accept requests with no credential, because the browser sends no credential when it opens the frame.
+They send only the installed version of a plugin that the instance enables, so a disabled plugin stops at the next start of its frame.
+
+The frame response has these headers:
+
+- `Content-Security-Policy`. `PluginFramePolicy` makes the policy for all the plugin frames:
+  - `default-src 'none'`
+  - `script-src`, `style-src` and `font-src`: the folder of the files of the plugin version. `style-src` also has `'unsafe-inline'`.
+  - `img-src`: the folder of the files, the `network` list, `data:` and `blob:`
+  - `connect-src`: the folder of the files and the `network` list
+  - `worker-src blob:`. In a frame with an opaque origin, only a classic Worker from a `blob:` URL works.
+  - `base-uri 'none'` and `form-action 'none'`
+- `Cache-Control: no-store`, `X-Content-Type-Options: nosniff` and `Referrer-Policy: no-referrer`
+
+A file response has these headers:
+
+- `Access-Control-Allow-Origin: *`. The frame has an opaque origin, so its requests have the header `Origin: null`. A script with an integrity hash needs this header.
+- `Content-Security-Policy: sandbox; default-src 'none'`. A browser that opens a file directly gives it an opaque origin, so a plugin file cannot run on the origin of the instance.
+- `X-Content-Type-Options: nosniff`, the media type of the file, and an `ETag` with the SHA-384 hash
 
 ### Life cycle and security
 
