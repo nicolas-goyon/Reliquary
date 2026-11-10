@@ -1,0 +1,228 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/nicolas-goyon/reliquary/blob/develop/sdk/schema/manifest.schema.json",
+  "title": "Reliquary plugin manifest",
+  "description": "The manifest of a Reliquary plugin. The API applies the same rules when the administrator installs a plugin. See docs/architecture/extensions.md.",
+  "type": "object",
+  "required": ["id", "name", "version", "coreApi", "entry"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "description": "The URL of this schema, for the editors.",
+      "type": "string"
+    },
+    "id": {
+      "description": "The ID of the plugin: 2 to 64 lowercase letters, digits and hyphens. The first character is a letter or a digit.",
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{1,63}$"
+    },
+    "kind": {
+      "description": "The kind of extension. A plugin manifest can omit it.",
+      "enum": ["plugin"]
+    },
+    "name": {
+      "description": "The name of the plugin, in English.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "description": {
+      "description": "A short description of the plugin, in English.",
+      "type": "string",
+      "maxLength": 500
+    },
+    "version": {
+      "description": "The version of the plugin: major.minor.patch, with an optional pre-release part, for example 1.0.0 or 1.0.0-beta.1. Build metadata is not permitted.",
+      "type": "string",
+      "maxLength": 64,
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(-[0-9A-Za-z-]+(\\.[0-9A-Za-z-]+)*)?$"
+    },
+    "coreApi": {
+      "description": "The versions of the core API that the plugin supports, in the range syntax of npm, for example ^1.0. The API also checks the syntax of the range.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "entry": {
+      "description": "The path of the JavaScript module of the plugin, relative to the root of the plugin files, for example dist/index.js. A path segment cannot start with a dot.",
+      "type": "string",
+      "maxLength": 200,
+      "pattern": "^[A-Za-z0-9_-][A-Za-z0-9._-]*(/[A-Za-z0-9_-][A-Za-z0-9._-]*)*\\.m?js$"
+    },
+    "permissions": {
+      "description": "The scopes of the public API that the plugin asks for. The user accepts them.",
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "enum": ["decks:read", "decks:write", "collection:read", "collection:write", "profile:read"]
+      }
+    },
+    "slots": {
+      "description": "The interface slots that the plugin uses, for example deck.actions.",
+      "type": "array",
+      "maxItems": 20,
+      "uniqueItems": true,
+      "items": {
+        "description": "A slot name: two or more parts with a dot between them. Each part has lowercase letters, digits and hyphens, and starts with a letter.",
+        "type": "string",
+        "maxLength": 64,
+        "pattern": "^[a-z][a-z0-9-]*(\\.[a-z][a-z0-9-]*)+$"
+      }
+    },
+    "network": {
+      "description": "The origins that the plugin can reach. The user accepts them. The CSP of the plugin frame contains only these origins.",
+      "type": "array",
+      "maxItems": 20,
+      "uniqueItems": true,
+      "items": {
+        "description": "An HTTPS origin, for example https://api.example.com, or a local origin: http://localhost or http://127.0.0.1. An origin can have a port. A wildcard is permitted only for one level, for example https://*.example.com.",
+        "type": "string",
+        "maxLength": 260,
+        "pattern": "^(https://(\\*\\.)?([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z]{2,63}|https?://(localhost|127\\.0\\.0\\.1))(:[0-9]{1,5})?$"
+      }
+    },
+    "devices": {
+      "description": "The devices that the plugin uses. The user accepts them.",
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "enum": ["camera", "loopback-network"]
+      }
+    },
+    "accounts": {
+      "description": "The external sites where the user links an account for the plugin.",
+      "type": "array",
+      "maxItems": 10,
+      "items": {
+        "type": "object",
+        "required": ["site", "auth"],
+        "additionalProperties": false,
+        "properties": {
+          "site": {
+            "description": "The host name of the site, for example moxfield.com. Each site can occur only one time.",
+            "type": "string",
+            "maxLength": 253,
+            "pattern": "^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z]{2,63}$"
+          },
+          "auth": {
+            "description": "The authentication method on the site.",
+            "enum": ["public-username", "api-key", "oauth2-pkce"]
+          },
+          "sync": {
+            "description": "When the core starts a sync of the linked account. Without this field, the sync is manual.",
+            "type": "object",
+            "required": ["mode"],
+            "additionalProperties": false,
+            "properties": {
+              "mode": {
+                "description": "manual: on a click of the user. on-open: when the web app opens. periodic: periodically while the web app is open.",
+                "enum": ["manual", "on-open", "periodic"]
+              },
+              "intervalMinutes": {
+                "description": "The interval of a periodic sync, in minutes.",
+                "type": "integer",
+                "minimum": 15,
+                "maximum": 1440
+              }
+            }
+          }
+        }
+      }
+    },
+    "panels": {
+      "description": "The panels of the plugin. Each panel renders in its own sandboxed iframe. The slot of each panel must also be in the field slots.",
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "type": "object",
+        "required": ["id", "slot", "title"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "description": "The ID of the panel in the plugin: 1 to 32 lowercase letters, digits and hyphens. The first character is a letter. Each ID can occur only one time.",
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]{0,31}$"
+          },
+          "slot": {
+            "description": "The slot of the panel.",
+            "enum": ["analysis.tabs", "card.page", "plugin.page", "plugin.dialog"]
+          },
+          "title": {
+            "description": "The title of the panel, in English. The field i18n gives the translations.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          }
+        }
+      }
+    },
+    "formats": {
+      "description": "The import formats and the export formats of the plugin. The plugin converts the file, and the core imports or exports the data.",
+      "type": "array",
+      "maxItems": 10,
+      "items": {
+        "type": "object",
+        "required": ["id", "direction", "target", "title"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "description": "The ID of the format in the plugin: 1 to 32 lowercase letters, digits and hyphens. The first character is a letter. Each ID can occur only one time.",
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]{0,31}$"
+          },
+          "direction": {
+            "description": "import: the plugin converts a file into the text of a deck or a collection CSV. export: the plugin converts a deck or a collection into a file.",
+            "enum": ["import", "export"]
+          },
+          "target": {
+            "description": "The data of the format.",
+            "enum": ["deck", "collection"]
+          },
+          "title": {
+            "description": "The name of the format, in English. The field i18n gives the translations.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "extensions": {
+            "description": "The file name extensions of the format, for example .dek.",
+            "type": "array",
+            "maxItems": 5,
+            "uniqueItems": true,
+            "items": {
+              "description": "A dot, then 1 to 10 lowercase letters and digits.",
+              "type": "string",
+              "pattern": "^\\.[a-z0-9]{1,10}$"
+            }
+          }
+        }
+      }
+    },
+    "i18n": {
+      "description": "The translations of the texts of the plugin, for each language. The keys name, description, panels.<id>.title and formats.<id>.title translate the texts of the manifest. The plugin can add its own keys.",
+      "type": "object",
+      "maxProperties": 10,
+      "propertyNames": {
+        "description": "A language code: two lowercase letters, with an optional region, for example fr or fr-CA.",
+        "pattern": "^[a-z]{2}(-[A-Z]{2})?$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "maxProperties": 200,
+        "propertyNames": {
+          "description": "A text key: parts with a dot between them, for example panels.stats.title. The first part starts with a lowercase letter.",
+          "maxLength": 100,
+          "pattern": "^[a-z][A-Za-z0-9]*(\\.[A-Za-z0-9-]+)*$"
+        },
+        "additionalProperties": {
+          "type": "string",
+          "maxLength": 200
+        }
+      }
+    },
+    "settings": {
+      "description": "The default settings of the plugin for the instance.",
+      "type": "object"
+    }
+  }
+}

@@ -135,9 +135,16 @@ public static class ExtensionEndpoints
     }
 
     private static async Task<Results<Created<AdminExtensionResponse>, Ok<AdminExtensionResponse>, ProblemHttpResult>> InstallAsync(
-        string id, ExtensionManifest manifest, ExtensionRegistry registry, CancellationToken cancellationToken)
+        string id, JsonElement body, ExtensionRegistry registry, CancellationToken cancellationToken)
     {
-        var errors = manifest.Validate().ToList();
+        if (!TryReadManifest(body, out var manifest, out var manifestJson, out var readErrors))
+        {
+            return readErrors.Count > 0
+                ? ApiProblems.Validation(readErrors)
+                : ApiProblems.Problem(StatusCodes.Status400BadRequest, ErrorCodes.BadRequest, "The manifest must be a JSON object with the fields of an extension manifest.");
+        }
+
+        var errors = readErrors.ToList();
         if (manifest.Id is not null && manifest.Id != id)
         {
             errors.Add(new FieldError("id", FieldErrorCodes.NotAllowed, "The ID of the manifest must be the same as the ID in the path."));
@@ -161,7 +168,7 @@ public static class ExtensionEndpoints
             return ApiProblems.Conflict(ErrorCodes.Conflict, $"The extension {id} is installed as a {existing.Kind}. Uninstall it before you install it as a {manifest.Kind}.");
         }
 
-        var (row, created) = await registry.InstallAsync(manifest, cancellationToken);
+        var (row, created) = await registry.InstallAsync(manifest, manifestJson, cancellationToken);
         var response = ToAdminResponse(row);
         return created
             ? TypedResults.Created($"{ApiRoutes.Base}/admin/extensions/{row.Id}", response)
@@ -196,6 +203,54 @@ public static class ExtensionEndpoints
 
     private static async Task<Results<NoContent, ProblemHttpResult>> UninstallAsync(string id, ExtensionRegistry registry, CancellationToken cancellationToken) =>
         await registry.UninstallAsync(id, cancellationToken) ? TypedResults.NoContent() : NotInstalled();
+
+    /// <summary>
+    /// Reads and checks the manifest of an extension.
+    /// A plugin manifest must follow the rules of <see cref="PluginManifestRules"/>, and the registry keeps all its fields.
+    /// </summary>
+    /// <returns>
+    /// <see langword="true"/> when the API can read the manifest. The errors then give the incorrect fields of a module manifest.
+    /// <see langword="false"/> for an incorrect plugin manifest, with its errors, or for a body that the API cannot read, with no errors.
+    /// </returns>
+    private static bool TryReadManifest(JsonElement body, out ExtensionManifest manifest, out string manifestJson, out IReadOnlyList<FieldError> errors)
+    {
+        manifest = null!;
+        manifestJson = "{}";
+        errors = [];
+        if (body.ValueKind != JsonValueKind.Object)
+        {
+            return false;
+        }
+
+        var isPlugin = body.TryGetProperty("kind", out var kind) && kind.ValueKind == JsonValueKind.String && kind.GetString() == "plugin";
+        if (isPlugin)
+        {
+            errors = PluginManifestCheck.Check(body);
+            if (errors.Count > 0)
+            {
+                return false;
+            }
+        }
+
+        try
+        {
+            manifest = body.Deserialize<ExtensionManifest>(JsonSerializerOptions.Web)!;
+        }
+        catch (JsonException)
+        {
+            return false;
+        }
+
+        if (!isPlugin)
+        {
+            errors = manifest.Validate();
+            manifestJson = JsonSerializer.Serialize(manifest, JsonSerializerOptions.Web);
+            return true;
+        }
+
+        manifestJson = body.GetRawText();
+        return true;
+    }
 
     private static ExtensionResponse ToResponse(ExtensionRow row, IReadOnlyDictionary<string, bool>? activations)
     {
