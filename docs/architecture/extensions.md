@@ -50,10 +50,15 @@ Plugins have two purposes:
   Reliquary builds this panel from the installed plugins.
   For each site, the panel shows the site, the plugin that uses the site, the connection state and the last synchronization.
   The panel also has buttons to link and unlink the account.
-- The core encrypts the access tokens and keeps them in its vault.
-  Each access token belongs to one user and one plugin.
-  Only this plugin can read the access token again.
-  When the user unlinks the account, the core deletes the access tokens.
+- The core encrypts the secrets of linked accounts and keeps them in its vault.
+  Each secret belongs to one user, one plugin and one site.
+  Only this plugin can read the secret again, with a plugin token.
+  When the user unlinks the account, the core deletes the secret.
+- M4 delivers the public user name and the API key first.
+  OAuth 2 with PKCE comes at the end of M4 only if a real plugin needs it.
+- The core runs the sync. The minimum interval of a periodic sync is 15 minutes.
+
+[ADR 0051](../decisions/0051-linked-accounts.md) gives the reasons for these rules.
 
 ### Interface slots
 
@@ -62,9 +67,16 @@ Plugins have two purposes:
   They also include the card page, the account page and the navigation items.
 - A plugin declares in its plugin manifest the slots that it uses.
   In these slots, it adds buttons, charts, interface elements or a new group of menu items.
-- The core isolates each contribution of a plugin.
-  It renders the contribution in a sandboxed iframe, or in an interface component that the SDK loads.
+- The core isolates each plugin.
+  Each active plugin runs in one plugin frame: a sandboxed iframe with an opaque origin and a CSP for this plugin.
+  The plugin and the core communicate with JSON-RPC 2.0 on a `MessageChannel`.
   A plugin cannot access the DOM of the core or the DOM of other plugins.
+- For buttons, menu items, navigation items, table columns, import formats and export formats, the plugin sends data.
+  The core renders this data with its own components.
+- Panels (analysis tabs, the card page, plugin pages and dialogs) render in their own sandboxed iframe.
+- The plugin frame contains no credential of the user.
+  The core calls the public API for the plugin with a plugin token, which has only the scopes that the user accepted.
+- [ADR 0049](../decisions/0049-plugin-sandbox.md) gives the reasons for the sandbox.
 - The web app has the slots from milestone M0, and the core uses them for its own panels.
   `web/src/slots/registry.ts` gives the names of the slots and the context of each slot.
   `web/src/slots/coreContributions.tsx` registers the panels of the core, for example the panels of the account page.
@@ -89,12 +101,14 @@ Plugins have two purposes:
 
 - A plugin can reach only the domains that its plugin manifest declares.
   These domains can include `localhost`, for example for a scan application or a local tool.
+- The CSP of the plugin frame contains only the domains of the plugin manifest that the user accepted.
 - Some sites refuse calls from a browser (CORS).
   For these sites, the core offers a network relay.
   The relay accepts only the domains of the plugin manifest, and it has quotas.
   The relay does not log the content of the requests.
+  The relay is off by default, and the administrator enables it for the instance.
 
-[ADR 0011](../decisions/0011-plugin-network-allowlist.md) gives the reasons for these rules.
+[ADR 0011](../decisions/0011-plugin-network-allowlist.md) and [ADR 0050](../decisions/0050-no-plugin-code-on-the-server.md) give the reasons for these rules.
 
 ### Plugin manifest
 
@@ -122,18 +136,22 @@ This example shows the plugin manifest of a plugin that synchronizes decks with 
 
 ### Life cycle and security
 
-1. **Development mode**: anyone can load a plugin from a local folder or from a URL.
+1. **Development mode**: on a development instance, a user can load a plugin from a URL.
    The interface then shows a "not checked" banner.
+   Deployed instances disable the development mode by default.
 2. **Plugin catalog**: each plugin of the catalog has a public Git repository and a reproducible build.
    An automatic analysis rejects a plugin that contains hard-coded keys or access tokens.
    It also rejects a plugin that uses domains that its plugin manifest does not declare.
-3. **Review and signature**: the project reviews each plugin, then signs it.
-   By default, Reliquary offers only signed plugins.
-   The other plugins need an explicit approval from the user.
+3. **Review and signature**: the project reviews each plugin, then signs the catalog index.
+   The catalog index contains the SHA-384 hash of each plugin file.
+   By default, Reliquary offers only the signed plugins that the administrator enabled for the instance.
 4. **Permissions**: each permission has a scope, for example `decks:read` or `collection:write`.
    The user accepts the permissions when they install the plugin.
    Each new permission or new domain needs a new approval from the user.
 5. **Revocation**: the project can revoke a compromised plugin version remotely.
+   The worker gets the catalog index each hour and disables the revoked versions.
+
+[ADR 0052](../decisions/0052-plugin-catalog-signature-and-revocation.md) gives the reasons for the catalog rules.
 
 ## Modules
 
@@ -215,10 +233,15 @@ The extension registry is ready from milestone M0, before any extension can run.
 
 ## Related decisions
 
-- [ADR 0002](../decisions/0002-license-agpl-3.0.md): the license of the core, and the open question about the license of the plugin SDK
+- [ADR 0002](../decisions/0002-license-agpl-3.0.md): the license of the core
 - [ADR 0007](../decisions/0007-modular-monolith.md): modular monolith for the core
 - [ADR 0010](../decisions/0010-plugins-and-modules.md): two extension levels, plugins and modules
 - [ADR 0011](../decisions/0011-plugin-network-allowlist.md): plugin network access through a declared list of domains
 - [ADR 0023](../decisions/0023-extension-registry.md): the extension registry and the version of the core API
 - [ADR 0036](../decisions/0036-internal-api.md): the internal API for the modules
 - [ADR 0037](../decisions/0037-service-accounts-and-delegation-tokens.md): the service accounts and the delegation tokens
+- [ADR 0048](../decisions/0048-plugin-sdk-license-and-packaging.md): the license and the place of the plugin SDK
+- [ADR 0049](../decisions/0049-plugin-sandbox.md): the plugin sandbox and the plugin token
+- [ADR 0050](../decisions/0050-no-plugin-code-on-the-server.md): no plugin code on the server, the vault and the network relay
+- [ADR 0051](../decisions/0051-linked-accounts.md): linked accounts
+- [ADR 0052](../decisions/0052-plugin-catalog-signature-and-revocation.md): the plugin catalog, its signature and the revocation
