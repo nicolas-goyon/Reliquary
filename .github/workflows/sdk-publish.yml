@@ -32,6 +32,9 @@ concurrency:
 jobs:
   publish:
     name: Publish the SDK
+    # The maintainer does not publish the SDK yet (2026-11-10).
+    # To start the publication, set the repository variable SDK_PUBLISH to true and give npm access to the workflow.
+    if: vars.SDK_PUBLISH == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
