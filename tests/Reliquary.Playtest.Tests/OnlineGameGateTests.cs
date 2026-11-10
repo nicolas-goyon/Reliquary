@@ -32,6 +32,12 @@ public sealed class OnlineGameGateTests(PlaytestInstance instance)
     /// <summary>The number of actions: one hour of a 4-player game, with a margin.</summary>
     private const int Actions = 4000;
 
+    /// <summary>The number of actions of each player in the test with no pause between the actions.</summary>
+    private const int ContinuousActionsPerPlayer = 100;
+
+    /// <summary>The number of connections of each player in the test with no pause.</summary>
+    private const int TabsPerPlayer = 3;
+
     /// <summary>The number of actions between two reconnects to the other host.</summary>
     private const int ReconnectEvery = 300;
 
@@ -137,6 +143,57 @@ public sealed class OnlineGameGateTests(PlaytestInstance instance)
             }
 
             truth?.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// The 4 players send actions with no pause, each from 3 connections, as a player with the game open in 3 browser tabs.
+    /// SignalR runs one call at a time for each connection, so the test has 12 writers on one game, on two API hosts:
+    /// many more conflicts of the compare-and-set than a real table. Each action must get a sequence number, not
+    /// <c>service_unavailable</c>: the random wait between the attempts lets the conflicting writes go one after the other.
+    /// </summary>
+    [Fact]
+    public async Task FourPlayersThatActWithNoPauseGetNoRefusal()
+    {
+        WebApplicationFactory<Program>[] hosts = [await instance.GetAsync(), await instance.GetSecondAsync()];
+        var (_, tokens) = await NewGameAsync();
+        var clients = new List<(HubTestClient Client, int Seat, int Tab)>();
+        try
+        {
+            for (var tab = 0; tab < TabsPerPlayer; tab++)
+            {
+                for (var seat = 0; seat < tokens.Count; seat++)
+                {
+                    var client = await HubTestClient.ConnectAsync(hosts[(seat + tab) % 2], tokens[seat], Cancel);
+                    clients.Add((client, seat, tab));
+                    await client.NextAsync("Lobby");
+                }
+            }
+
+            await clients[0].Client.InvokeAsync("Start");
+
+            // Life changes are always legal, so a connection does not need a view to send the next action.
+            async Task PlayAsync(HubTestClient client, int seat, int tab)
+            {
+                for (var index = tab; index < ContinuousActionsPerPlayer; index += TabsPerPlayer)
+                {
+                    var answer = await client.InvokeAsync("Act", $"run-{index}", new { type = "life", playerId = SeatId(seat), change = -1 });
+                    Assert.True(answer["result"]?["accepted"] is not null, $"Seat {seat}, action {index}: {answer.ToJsonString()}");
+                }
+            }
+
+            await Task.WhenAll(clients.Select(item => Task.Run(() => PlayAsync(item.Client, item.Seat, item.Tab))));
+            var view = (await clients[0].Client.InvokeAsync("Resync", "view"))["result"]!["view"]!;
+
+            // Each action applied one time: each player lost one life point for each action.
+            Assert.All(view["players"]!.AsArray(), player => Assert.Equal(40 - ContinuousActionsPerPlayer, player!["life"]!.GetValue<int>()));
+        }
+        finally
+        {
+            foreach (var (client, _, _) in clients)
+            {
+                await client.DisposeAsync();
+            }
         }
     }
 

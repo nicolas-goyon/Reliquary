@@ -86,6 +86,8 @@ A method that fails gives a completion with an error. The text of the error cont
 Rules:
 
 - The order of the changes is the sequence number of the game store, not the order of the messages. The client keeps a reorder buffer.
+- Each change of a game is a compare-and-set in Redis. On one API replica, only one change of a game runs at a time. The other changes wait.
+  After a conflict with another replica, the API waits from 1 ms to 5 ms. Then it reads the game again and tries again, 16 times at most.
 - The start makes the table with the decks of the seats and a random seed. The seed never leaves the server. The commander damage applies when the format is `commander` or when a deck has a command zone.
 - Each player changes only their own objects. Only the active player can end the turn. A draw has 20 cards at most. A token name has 64 characters at most.
 - A retry of `Act` with the same `clientActionId` gives the sequence number of the first action and applies nothing.
@@ -176,6 +178,10 @@ The test checks these conditions:
 - The 95th percentile of the time from the send of `Act` to the receipt of the patch of the player is less than 200 ms.
 
 The output of the test gives the latency, the server time and the duration.
+
+The test `FourPlayersThatActWithNoPauseGetNoRefusal` sends 400 life changes from 12 connections (3 for each player, on the two hosts) with no pause.
+Each action must get a sequence number, not `service_unavailable`.
+
 A scheduled test with 2 API replicas behind nginx and 60 minutes of real time is the subject of issue [#237](https://github.com/nicolas-goyon/reliquary/issues/237).
 
 ## Error codes
