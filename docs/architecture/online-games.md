@@ -182,7 +182,8 @@ The output of the test gives the latency, the server time and the duration.
 The test `FourPlayersThatActWithNoPauseGetNoRefusal` sends 400 life changes from 12 connections (3 for each player, on the two hosts) with no pause.
 Each action must get a sequence number, not `service_unavailable`.
 
-A scheduled test with 2 API replicas behind nginx and 60 minutes of real time is the subject of issue [#237](https://github.com/nicolas-goyon/reliquary/issues/237).
+The [end-to-end test](../development/end-to-end-test.md) adds a check in real browsers.
+It runs on a schedule: 4 players with accounts and guests, 2 API replicas behind Nginx, 10 minutes each night and 60 minutes each week.
 
 ## Error codes
 

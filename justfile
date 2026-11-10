@@ -128,6 +128,34 @@ migrate:
 demo-local:
     Cards__Import__Directory={{ justfile_directory() }}/data/demo dotnet run --project src/Reliquary.Cli -- demo load
 
+# The instance of the end-to-end test: compose.yaml and the overlay e2e/compose.yaml, with two API replicas.
+e2e_compose := "docker compose --project-name reliquary-e2e --file compose.yaml --file e2e/compose.yaml"
+
+# Create the instance of the end-to-end test on http://localhost:8080: two API replicas behind the web container. See docs/development/end-to-end-test.md.
+e2e-up:
+    {{ e2e_compose }} --profile app build
+    {{ e2e_compose }} up --detach --wait postgres redis mailpit
+    {{ e2e_compose }} --profile app run --rm migrate migrate
+    {{ e2e_compose }} --profile app run --rm migrate demo load
+    {{ e2e_compose }} --profile app up --detach --wait api worker web
+    for _ in $(seq 60); do curl --fail --silent "http://localhost:${RELIQUARY_APP_PORT:-8080}/api/v1/cards/named?name=Sol%20Ring" > /dev/null && exit 0; sleep 5; done; echo "The worker did not import the demo cards in 5 minutes."; exit 1
+
+# Run the end-to-end test of the online games for MINUTES minutes on the instance of "just e2e-up". Install Chromium first: "cd e2e && npm ci && npx playwright install chromium".
+e2e minutes="10":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    urls=""
+    for index in 1 2; do
+        urls="$urls${urls:+,}http://$({{ e2e_compose }} port --index "$index" api 8080)/metrics"
+    done
+    npm --prefix e2e ci
+    cd e2e
+    E2E_BASE_URL="http://localhost:${RELIQUARY_APP_PORT:-8080}" E2E_MINUTES={{ minutes }} E2E_METRICS_URLS="$urls" npx playwright test
+
+# Destroy the instance of the end-to-end test and its data.
+e2e-down:
+    {{ e2e_compose }} --profile app down --volumes --remove-orphans
+
 # Check the code and the documentation.
 lint: lint-code lint-docs
 

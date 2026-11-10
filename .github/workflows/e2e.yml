@@ -1,0 +1,132 @@
+name: End-to-end test
+
+# The end-to-end test of the online games: 4 browsers play random legal actions on 2 API replicas behind the web container.
+# It is not on the path of the pull requests. See docs/development/end-to-end-test.md.
+# - Each night from Monday to Saturday: 10 minutes.
+# - Each Sunday: 60 minutes.
+# - On request: the duration of the input "minutes".
+
+on:
+  schedule:
+    - cron: "17 2 * * 1-6"
+    - cron: "43 3 * * 0"
+  workflow_dispatch:
+    inputs:
+      minutes:
+        description: The duration of the random game, in minutes
+        type: number
+        default: 10
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  COMPOSE: docker compose --project-name reliquary-e2e --file compose.yaml --file e2e/compose.yaml
+  # The scheduled runs use the schedule. A manual run uses its input.
+  MINUTES: ${{ inputs.minutes || (github.event.schedule == '43 3 * * 0' && '60') || '10' }}
+
+jobs:
+  online-games:
+    name: Online games
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: web/.nvmrc
+          cache: npm
+          cache-dependency-path: e2e/package-lock.json
+
+      - name: Install Playwright and Chromium
+        working-directory: e2e
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Create the instance with two API replicas
+        run: |
+          set -euo pipefail
+          $COMPOSE --profile app build
+          $COMPOSE up --detach --wait postgres redis mailpit
+          $COMPOSE --profile app run --rm migrate migrate
+          $COMPOSE --profile app run --rm migrate demo load
+          $COMPOSE --profile app up --detach --wait api worker web
+          urls=""
+          for index in 1 2; do
+            urls="$urls${urls:+,}http://$($COMPOSE port --index "$index" api 8080)/metrics"
+          done
+          echo "E2E_METRICS_URLS=$urls" >> "$GITHUB_ENV"
+          # The worker imports the demo cards after its start. The decks of the test need them.
+          for _ in $(seq 60); do
+            if curl --fail --silent "http://localhost:8080/api/v1/cards/named?name=Sol%20Ring" > /dev/null; then exit 0; fi
+            sleep 5
+          done
+          echo "The worker did not import the demo cards in 5 minutes."
+          exit 1
+
+      - name: Run the test for ${{ env.MINUTES }} minutes
+        working-directory: e2e
+        env:
+          E2E_BASE_URL: http://localhost:8080
+          E2E_MINUTES: ${{ env.MINUTES }}
+          E2E_SUMMARY: ${{ runner.temp }}/e2e-summary.md
+        run: npx playwright test
+
+      - name: Write the summary
+        if: always()
+        run: |
+          if [ -f "$RUNNER_TEMP/e2e-summary.md" ]; then
+            { echo "## Online games, $MINUTES minutes"; echo; cat "$RUNNER_TEMP/e2e-summary.md"; } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Save the logs of the instance
+        if: failure()
+        run: |
+          mkdir -p e2e/test-results
+          $COMPOSE --profile app logs --no-color --timestamps > e2e/test-results/instance.log 2>&1 || true
+
+      - name: Upload the traces, the screenshots and the logs
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: e2e-online-games
+          path: |
+            e2e/test-results/
+            e2e/playwright-report/
+          retention-days: 14
+
+      - name: Destroy the instance
+        if: always()
+        run: $COMPOSE --profile app down --volumes --remove-orphans
+
+  report:
+    name: Report the failure
+    needs: online-games
+    # Only a scheduled run opens an issue. A manual run shows its result to the person who started it.
+    if: failure() && github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      TITLE: The scheduled end-to-end test of the online games failed
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - name: Open an issue or add a comment to the open issue
+        run: |
+          set -euo pipefail
+          body="The run $RUN_URL failed on the commit $GITHUB_SHA. The artifact e2e-online-games of the run contains the traces, the screenshots and the logs."
+          number=$(gh issue list --state open --label "type: bug" --search "\"$TITLE\" in:title" --json number,title \
+            --jq "map(select(.title == \"$TITLE\")) | .[0].number // empty")
+          if [ -n "$number" ]; then
+            gh issue comment "$number" --body "$body"
+          else
+            gh issue create --title "$TITLE" --label "type: bug" --body "$body"
+          fi

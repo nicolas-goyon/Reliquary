@@ -54,6 +54,7 @@ The [documentation site](https://nicolas-goyon.github.io/reliquary/) shows these
 | [Observability](development/observability.md) | Traces, metrics, logs, health endpoints and Grafana |
 | [Backup and restore](development/backup-and-restore.md) | The backup of all the databases of an instance, and its restore |
 | [Card data](development/card-data.md) | Import of the card data from Scryfall and MTGJSON, and small datasets |
+| [End-to-end test](development/end-to-end-test.md) | The scheduled test of the online games in 4 browsers, with 2 API replicas behind Nginx |
 | [Search benchmark](development/search-benchmark.md) | The measure of the response time of the card search, with the hardware and the results |
 | [Writing style](contributing/writing-style.md) | The ASD-STE100 rules for all English text |
 | [Contributing guide](../CONTRIBUTING.md) | Branches, pull requests and checks |

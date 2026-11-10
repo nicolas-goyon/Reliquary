@@ -43,6 +43,21 @@ updates:
       sdk-major:
         update-types: [major]
 
+  # The scheduled end-to-end test (.github/workflows/e2e.yml). Only Playwright.
+  - package-ecosystem: npm
+    directory: /e2e
+    target-branch: develop
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      e2e:
+        update-types: [minor, patch]
+      e2e-major:
+        update-types: [major]
+
   - package-ecosystem: github-actions
     directory: /
     target-branch: develop

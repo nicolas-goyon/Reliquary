@@ -1,0 +1,12 @@
+{
+  "name": "reliquary-e2e",
+  "private": true,
+  "description": "The scheduled end-to-end test of the online games. Only the workflow e2e.yml uses it. See docs/development/end-to-end-test.md.",
+  "type": "module",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.1"
+  }
+}

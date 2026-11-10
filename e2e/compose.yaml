@@ -1,0 +1,11 @@
+# The overlay of compose.yaml for the scheduled end-to-end test of the online games (.github/workflows/e2e.yml).
+# Use it after compose.yaml: docker compose --file compose.yaml --file e2e/compose.yaml ...
+# - Two API replicas behind the web container. Nginx sends each request to one of the addresses of the service "api".
+#   The replicas share the games in Redis, so they need no sticky sessions.
+# - Each replica gives /metrics on a random port of 127.0.0.1. "docker compose port --index N api 8080" gives the port.
+services:
+  api:
+    deploy:
+      replicas: 2
+    ports:
+      - "127.0.0.1::8080"
