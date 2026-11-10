@@ -175,6 +175,10 @@ lint-docs:
 helm-check:
     tools/deploy-tests/check-chart.sh
 
+# Install the Helm chart on a kind cluster with the images OLD, upgrade to the images NEW, and check the instance. Needs kind, kubectl and helm.
+helm-smoke old="latest" new="develop":
+    tools/deploy-tests/helm-smoke-test.sh {{ old }} {{ new }}
+
 # Open the pull request that merges develop into main. Then release-please prepares the release. See docs/decisions/0043-releases-with-release-please.md.
 release-start:
     gh pr create --base main --head develop --title "chore(release): merge develop into main" --body "Merge with \"Create a merge commit\". Then release-please opens the release pull request on main."

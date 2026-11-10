@@ -1,0 +1,60 @@
+name: Helm smoke test
+
+# Installs the Helm chart on a kind cluster, checks the health endpoints and the status, then upgrades the chart.
+# It installs the images "latest" (the last release) and upgrades to the images "develop".
+# It runs each night, by hand, and on the pull requests that change the chart or the test.
+# See tools/deploy-tests/helm-smoke-test.sh and docs/deployment/kubernetes.md.
+
+on:
+  schedule:
+    - cron: "37 3 * * *"
+  workflow_dispatch:
+    inputs:
+      old_tag:
+        description: Tag of the images to install
+        default: latest
+      new_tag:
+        description: Tag of the images of the upgrade
+        default: develop
+  pull_request:
+    branches: [develop]
+    paths:
+      - "deploy/helm/**"
+      - "tools/deploy-tests/helm-smoke-test.sh"
+      - "tools/deploy-tests/helm-smoke/**"
+      - ".github/workflows/helm-smoke.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: helm-smoke-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    name: Install and upgrade on kind
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install kind
+        env:
+          KIND_VERSION: v0.30.0
+          KIND_SHA256: 517ab7fc89ddeed5fa65abf71530d90648d9638ef0c4cde22c2c11f8097b8889
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location --output "$RUNNER_TEMP/kind" \
+            "https://github.com/kubernetes-sigs/kind/releases/download/$KIND_VERSION/kind-linux-amd64"
+          echo "$KIND_SHA256  $RUNNER_TEMP/kind" | sha256sum --check --strict
+          sudo install "$RUNNER_TEMP/kind" /usr/local/bin/kind
+          kind version
+          kubectl version --client
+          helm version --short
+
+      - name: Install, check, upgrade and check again
+        env:
+          OLD_TAG: ${{ inputs.old_tag || 'latest' }}
+          NEW_TAG: ${{ inputs.new_tag || 'develop' }}
+        run: tools/deploy-tests/helm-smoke-test.sh "$OLD_TAG" "$NEW_TAG"

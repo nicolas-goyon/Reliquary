@@ -108,6 +108,9 @@ These values are necessary:
   The containers read all the keys of the Secret as environment variables.
 
 To check a change of the chart, run `just helm-check`.
+To test the chart on a [kind](https://kind.sigs.k8s.io/) cluster, run `just helm-smoke`.
+The test installs the images `latest`, upgrades to the images `develop`, and checks the health endpoints and `/api/v1/status` after each step.
+The workflow `helm-smoke.yml` runs the same test each night.
 
 ## Route of the site
 
