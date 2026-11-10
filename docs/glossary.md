@@ -146,11 +146,12 @@ The French column gives the term for the French interface.
 | Milestone | A group of features with a gate at the end: M0 to M4, then Later. | Jalon |
 | Gate | A criterion that a test can prove at the end of a milestone. Work on the next milestone starts after the gate passes. | Porte |
 | Local instance | An instance on the computer of a developer, built from the source code with the demo data. `just up` creates it. | — |
-| Deployed instance | An instance that uses the published images and keeps its data. The script `reliquary-update` installs and updates it. | — |
+| Deployed instance | An instance that uses the published images and keeps its data. The script `reliquary-update` or the Helm chart installs and updates it. | — |
 | Pre-production instance | The deployed instance of the maintainer, on the channel `develop`. It shows the next release with real data. | — |
 | Channel | A tag of the images that moves to each new build: `develop` for the last build of the branch `develop`, `latest` for the last release. | — |
 | Release | A version with a number, a tag `vX.Y.Z`, a GitHub release and its images. | Version publiée |
 | Restore point | The images and the Compose file of the version before an update, with the name of the backup before the update. A rollback uses it. | — |
+| Helm chart | The package that installs an instance on Kubernetes. It is in `deploy/helm/reliquary`. | — |
 
 ## Web app
 

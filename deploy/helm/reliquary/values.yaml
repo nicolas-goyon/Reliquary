@@ -1,0 +1,175 @@
+# Values of the Reliquary chart.
+# The guide docs/deployment/kubernetes.md tells how to use them.
+# The images and the settings are the same as for Docker Compose. See deploy/compose.yaml.
+
+# The images. Each component uses "<registry>/<prefix>-<component>:<tag>", for example ghcr.io/nicolas-goyon/reliquary-api:0.2.0.
+image:
+  registry: ghcr.io/nicolas-goyon
+  prefix: reliquary
+  # Empty: the appVersion of the chart. Use a release number in production, not "latest" or "develop".
+  tag: ""
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+# Overrides the name of the chart in the names of the resources.
+nameOverride: ""
+fullnameOverride: ""
+
+# The DNS domain of the cluster. The web app uses it to make the full address of the API Service.
+clusterDomain: cluster.local
+
+# The settings of the API, the worker and the migration Job that are not secret.
+config:
+  # Required. The public address of the site, for example https://reliquary.example.org.
+  publicUrl: ""
+  # The email addresses of the administrators.
+  administratorEmails: []
+  # true: a user can make an account with no email address. Use it only on a development instance.
+  accountsWithoutEmail: false
+  # true: a user must open the link of the email before the first sign-in.
+  requireCheckedEmail: true
+  email:
+    from: ""
+    smtp:
+      host: ""
+      port: 587
+      # None, StartTls or SslOnConnect.
+      security: StartTls
+      userName: ""
+  google:
+    # The client secret goes in the Secret.
+    clientId: ""
+  cards:
+    # false: the worker does not import the card data from Scryfall.
+    importEnabled: true
+    # default_cards (about 80 MB) or all_cards (all the languages, about 400 MB).
+    bulkType: default_cards
+  moxfieldUserAgent: ""
+  recommendations: false
+
+# More environment variables for the API, the worker and the migration Job, for example Logging__LogLevel__Default.
+extraEnv: []
+
+# The secret settings. The containers read all the keys of the Secret as environment variables.
+secrets:
+  # The name of a Secret that you make. With a name, the chart makes no Secret and ignores the other values of this section.
+  # The Secret must contain Auth__SigningKey, ConnectionStrings__Users and ConnectionStrings__Redis.
+  # It can contain the other keys below, for example Email__Smtp__Password.
+  existingSecret: ""
+  # The values for a Secret that the chart makes. Use it for a test instance.
+  # Auth__SigningKey: a key of 32 bytes or more in Base64. Make it with "openssl rand -base64 32".
+  signingKey: ""
+  connectionStrings:
+    # Required. For example Host=postgres;Port=5432;Database=reliquary;Username=reliquary;Password=...
+    users: ""
+    # Optional. Without a value, the reference data uses the users database.
+    reference: ""
+    # Required, except when redis.enabled is true. For example redis:6379,password=...
+    redis: ""
+  smtpPassword: ""
+  googleClientSecret: ""
+  # The keys of the vault of the linked accounts (Plugins:VaultKeys), by key ID. See docs/decisions/0050-no-plugin-code-on-the-server.md.
+  vaultKeys: {}
+  # More keys for the Secret, as environment variables.
+  extra: {}
+
+# The security settings of all the pods. The images run as users that are not root.
+podSecurityContext:
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
+
+# The security settings of all the containers. The root file system is read-only, like with Docker Compose.
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+
+api:
+  replicas: 2
+  # Optional. A repository or a digest for this component only.
+  image:
+    repository: ""
+    tag: ""
+    digest: ""
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      memory: 512Mi
+  podDisruptionBudget:
+    enabled: true
+    maxUnavailable: 1
+  podAnnotations: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  topologySpreadConstraints: []
+  extraEnv: []
+
+# The worker runs the outbox publisher and the scheduled jobs. It has always 1 replica.
+worker:
+  image:
+    repository: ""
+    tag: ""
+    digest: ""
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      memory: 1Gi
+  podAnnotations: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  extraEnv: []
+
+# The web app. Its Nginx server sends /api to the API Service.
+web:
+  replicas: 2
+  image:
+    repository: ""
+    tag: ""
+    digest: ""
+  # Optional. The DNS server of Nginx. Empty: the first name server of /etc/resolv.conf.
+  dnsResolver: ""
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      memory: 128Mi
+  podDisruptionBudget:
+    enabled: true
+    maxUnavailable: 1
+  service:
+    type: ClusterIP
+    port: 8080
+  podAnnotations: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  topologySpreadConstraints: []
+
+# An optional Redis server with 1 replica, for a small cluster. Redis keeps the keys that protect the cookies, so it needs a persistent volume.
+# For a production instance, use a Redis server with a backup. See docs/deployment/kubernetes.md.
+redis:
+  enabled: false
+  image:
+    repository: docker.io/library/redis
+    tag: 8-alpine
+  persistence:
+    size: 1Gi
+    # Empty: the default StorageClass of the cluster.
+    storageClass: ""
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      memory: 256Mi
