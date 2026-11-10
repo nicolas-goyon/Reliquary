@@ -4,10 +4,12 @@
  * The core and the plugin send JSON-RPC 2.0 messages on a MessageChannel.
  * Each message is one JSON string. The protocol version is the core API version.
  *
- * The plugin SDK has the same protocol in sdk/src/protocol.ts and sdk/src/rpc.ts.
- * The container build of the web app sees only the folder web/, so the web app keeps a copy.
- * Change the two copies together.
+ * The web app keeps a copy of this file in web/src/plugins, because the container build of the web app sees only the folder web/.
+ * The test web/src/plugins/sdkCopies.test.ts fails when the two copies are different. Change the file in sdk/src, then copy it.
  */
+
+/** The version of the core API that this SDK uses. */
+export const coreApiVersion = '1.0.0'
 
 /** The time limit of a call, in milliseconds, when the caller gives no other limit. */
 export const defaultTimeoutMs = 5000

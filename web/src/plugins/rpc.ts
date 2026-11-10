@@ -6,9 +6,14 @@ import {
   type RpcErrorObject,
   type RpcMessage,
   type RpcRequest,
-} from './protocol'
+} from './protocol.ts'
 
-// The plugin SDK has the same file: sdk/src/rpc.ts. Change the two copies together.
+/*
+ * The JSON-RPC 2.0 peer of the core and of the plugin frame.
+ *
+ * The web app keeps a copy of this file in web/src/plugins, because the container build of the web app sees only the folder web/.
+ * The test web/src/plugins/sdkCopies.test.ts fails when the two copies are different. Change the file in sdk/src, then copy it.
+ */
 
 /** The methods of one side: the type of the parameters and of the result of each method. */
 export type MethodMap = { [method: string]: { params: unknown; result: unknown } }

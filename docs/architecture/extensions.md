@@ -118,6 +118,9 @@ The folder `web/src/plugins` contains the plugin runtime of the web app.
 - The runtime removes a frame that does not send `reliquary:ready` in 10 seconds.
 - The plugin SDK has the same protocol in `sdk/src`.
   The container build of the web app sees only the folder `web/`, so `web/src/plugins` keeps a copy of `protocol.ts` and `rpc.ts`.
+  The test `web/src/plugins/sdkCopies.test.ts` fails when a copy is different from the file in `sdk/src`.
+- After a change of the plugins of the user, for example an activation, the web app calls `notifyPluginsChanged()`.
+  The runtime then gets `GET /api/v1/extensions` again, removes all the plugin frames, and starts the active plugins again.
 
 The instance settings of the section `Plugins` are:
 

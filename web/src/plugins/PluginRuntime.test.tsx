@@ -1,8 +1,9 @@
-import { render, waitFor } from '@testing-library/react'
+import { act, render, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { ExtensionList } from '../api/extensions'
 import { AuthContext, type AuthContextValue, type AuthState } from '../auth/session'
 import { testAccount } from '../test/mockApi'
+import { notifyPluginsChanged } from './events'
 import { PluginRuntime } from './PluginRuntime'
 
 const runtime = vi.hoisted(() => ({
@@ -21,8 +22,8 @@ function list(active: boolean): ExtensionList {
   }
 }
 
-function renderRuntime(state: AuthState, response: ExtensionList) {
-  const request = vi.fn<(path: string) => Promise<ExtensionList>>(async () => response)
+function renderRuntime(state: AuthState, response: ExtensionList | (() => ExtensionList)) {
+  const request = vi.fn<(path: string) => Promise<ExtensionList>>(async () => (typeof response === 'function' ? response() : response))
   const value = { state, request } as unknown as AuthContextValue
   const view = render(
     <AuthContext.Provider value={value}>
@@ -64,5 +65,28 @@ describe('PluginRuntime', () => {
     view.unmount()
 
     expect(host.stopAll).toHaveBeenCalledTimes(1)
+  })
+
+  it('starts the runtime after the activation of a plugin in the same session', async () => {
+    let response = list(false)
+    const { request } = renderRuntime({ status: 'authenticated', account: testAccount }, () => response)
+    await waitFor(() => expect(request).toHaveBeenCalledTimes(1))
+
+    response = list(true)
+    act(() => notifyPluginsChanged())
+
+    await waitFor(() => expect(runtime.startPluginRuntime).toHaveBeenCalledWith(response))
+    expect(request).toHaveBeenCalledTimes(2)
+  })
+
+  it('stops the running plugins before it starts them again', async () => {
+    renderRuntime({ status: 'authenticated', account: testAccount }, list(true))
+    await waitFor(() => expect(runtime.startPluginRuntime).toHaveBeenCalledTimes(1))
+    const first = runtime.startPluginRuntime.mock.results[0].value
+
+    act(() => notifyPluginsChanged())
+
+    await waitFor(() => expect(runtime.startPluginRuntime).toHaveBeenCalledTimes(2))
+    expect(first.stopAll).toHaveBeenCalledTimes(1)
   })
 })
