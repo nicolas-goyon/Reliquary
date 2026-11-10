@@ -117,6 +117,23 @@ The table hub needs a WebSocket location in the reverse proxy. `web/nginx.conf.t
 `proxy_http_version 1.1`, the headers `Upgrade` and `Connection`, and a read timeout of 1 hour.
 The access log of this location does not contain the query string, so it never contains a game token.
 A reverse proxy in front of the web container must also let WebSockets through.
+The [production guide](../deployment/production.md#websockets-for-the-online-games) gives the settings.
+
+## Web pages
+
+| Path | Page |
+| --- | --- |
+| `/decks/{id}/test/online` | Creates a game with the deck. Only a user with an account can create a game. The goldfish page has a link to this page. |
+| `/play/{gameId}#{inviteSecret}` | The join page, then the lobby and the online table of the game |
+
+- The page keeps the seat access of the player in the `sessionStorage` of the browser tab, with the key `reliquary.onlineGame.{gameId}`.
+  The seat access contains the game ID, the seat and the game token.
+  A reload of the tab thus connects to the same seat. A different tab or browser has no seat.
+- The page deletes the seat access when the game ends, when the host removes the player, and when the player leaves the lobby.
+- The table is a game window: the player can open a table window on the same computer. See [Shared screen](../specification/deck-testing.md#shared-screen).
+- The client code is in `web/src/playtest/online`. The pages are in `web/src/pages/OnlineGamePage.tsx` and `web/src/components/online`.
+- The API applies the actions with `src/Components/Reliquary.Playtest/Engine/TableEngine.cs`, a C# port of the table engine `web/src/playtest/engine.ts`.
+  The shared test vectors in `tests/vectors/table-engine` keep the two engines equal. The page applies only the patches of its view.
 
 ## Metrics
 
@@ -217,12 +234,16 @@ Each change of a game sets the lifetime of its keys again to 1 hour.
 Thus a game with no change for 1 hour goes out of Redis.
 A game also closes 8 hours after its creation: the API compares the current time with the end time in the state.
 
-### Personal data of the guests
+### Personal data
 
 A guest has no account. The API keeps these data of a guest in the state of the game:
 
 - The nickname.
 - The deck: the card names and the image addresses, from the deck text or from the public deck.
+
+For a player with an account, the state of the game also contains the account ID and the name of the deck.
+The limits of a host also contain the account ID.
+The list of the open games of a host stays for 8 hours at most. The number of games of one day stays for 2 days.
 
 These data are only in Redis. They go out with the game:
 
@@ -232,7 +253,15 @@ These data are only in Redis. They go out with the game:
 
 The API does not write them in PostgreSQL or in the logs.
 The IP address of a guest is in a join counter for 2 minutes.
-Issue [#238](https://github.com/nicolas-goyon/reliquary/issues/238) adds these data to the personal data page.
+The action stream contains the public texts of the actions, with the names in the game. It goes out with the game.
+In the browser, the game token stays in the `sessionStorage` of the tab until the end of the game or the end of the tab.
+
+The export and the deletion of the personal data ([ADR 0032](../decisions/0032-personal-data.md)) do not include the online games:
+
+- The export archive does not contain the online games, because a game exists for 8 hours at most.
+- The Playtest component has no `IPersonalDataProvider`. A deletion of an account starts 7 days after the request.
+  Thus the games and the limits of the account are not in Redis any more when the deletion starts.
+- A guest has no account, so a guest cannot ask for an export or a deletion. The data of a guest go out of Redis with the game.
 
 ## Settings
 

@@ -98,7 +98,12 @@ The goldfish page has a link "Online game".
 5. The online table shows the board and the hand of the player, and the boards of the other players.
    The hands and the libraries of the other players are counts.
 
+- A game has 2 to 4 players. Only a user with an account can create a game. A guest needs no account.
+- The invite link is valid for 24 hours, and only until the start of the game. A new link stops the old link.
 - The server applies each action. The table shows only the view that the server sends.
+- The server never sends the identity of a hidden card to another player.
+  A hidden card is a card in a hand or a library, or a face-down card.
+- Each player changes only their own cards and counters. Only the active player can give the turn.
 - When the server refuses an action, the table shows a message.
 - The table shows the public text of the last actions in the game log.
 - The page keeps the seat in the browser tab. A reload of the page connects to the same seat.
@@ -107,6 +112,36 @@ The goldfish page has a link "Online game".
 - The host can end the game for all the players, in the lobby and at the table. When the host leaves the lobby, the game ends.
 - At the table, a player can leave the table. The seat stays, and the player can go back to the table.
 - The online table is also a game window: the user can open a table window for the shared screen.
+- When a change does not apply to the table of the page, the page gets the full table again from the server. The page shows the number of times.
+- A game ends after 1 hour with no action, and 8 hours after its creation at most. When a game ends, each page shows a message.
+
+### Limits
+
+| Limit | Value |
+| --- | --- |
+| Open games of one account | 3 |
+| New games of one account in one day | 20 |
+| Join requests from one IP address in one minute | 20 |
+| Cards in a deck of the game | 250 |
+| Actions of one player in one second | 10 on average, 30 in a burst |
+
+The administrator can change these values. The [settings](../architecture/online-games.md#settings) give the names.
+
+### Data of the players
+
+Reliquary keeps the data of an online game only while the game is open, and only in Redis:
+
+- The nickname of each player, and the deck of each player.
+- The account ID of each player with an account.
+
+A guest has no account, so Reliquary keeps no data of a guest after the game.
+The export of the personal data does not contain the online games.
+The [online games architecture](../architecture/online-games.md#personal-data) gives the details.
+
+### Automatic test
+
+The [gate test](../architecture/online-games.md#gate-test) of the milestone M3 runs in each pull request.
+It sends the actions of one hour of a game with 4 players to 2 API replicas.
 
 ## Milestones
 
