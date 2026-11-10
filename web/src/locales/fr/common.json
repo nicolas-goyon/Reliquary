@@ -127,6 +127,11 @@
   "plugins": {
     "notChecked": "Non vérifié.",
     "notCheckedDescription": "Le plugin {{name}} vient d’une URL de développement. Reliquary ne l’a pas examiné. Utilisez-le uniquement pour développer un plugin.",
-    "actionFailed": "Le plugin {{name}} n’a pas terminé l’action."
+    "actionFailed": "Le plugin {{name}} n’a pas terminé l’action.",
+    "panelLoading": "Le plugin {{name}} charge son panneau.",
+    "panelFailed": "Le panneau du plugin {{name}} ne répond pas. Fermez le panneau et rouvrez-le.",
+    "pageUnavailable": "Cette page de plugin n’est pas disponible. Vérifiez que le plugin est actif pour votre compte.",
+    "pageTitle": "Page de plugin",
+    "closeDialog": "Fermer"
   }
 }
