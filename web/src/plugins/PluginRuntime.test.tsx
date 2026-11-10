@@ -61,7 +61,7 @@ describe('PluginRuntime', () => {
     const response = list(true)
     const { view } = renderRuntime({ status: 'authenticated', account: testAccount }, response)
 
-    await waitFor(() => expect(runtime.startPluginRuntime).toHaveBeenCalledWith(response, { developmentUrls: [] }))
+    await waitFor(() => expect(runtime.startPluginRuntime).toHaveBeenCalledWith(response, { developmentUrls: [], registry: undefined }))
     const host = runtime.startPluginRuntime.mock.results[0].value
     view.unmount()
 
@@ -76,7 +76,7 @@ describe('PluginRuntime', () => {
     response = list(true)
     act(() => notifyPluginsChanged())
 
-    await waitFor(() => expect(runtime.startPluginRuntime).toHaveBeenCalledWith(response, { developmentUrls: [] }))
+    await waitFor(() => expect(runtime.startPluginRuntime).toHaveBeenCalledWith(response, { developmentUrls: [], registry: undefined }))
     expect(request).toHaveBeenCalledTimes(2)
   })
 
@@ -97,7 +97,7 @@ describe('PluginRuntime', () => {
 
     renderRuntime({ status: 'authenticated', account: testAccount }, response)
 
-    await waitFor(() => expect(runtime.startPluginRuntime).toHaveBeenCalledWith(response, { developmentUrls: ['http://localhost:5173/manifest.json'] }))
+    await waitFor(() => expect(runtime.startPluginRuntime).toHaveBeenCalledWith(response, { developmentUrls: ['http://localhost:5173/manifest.json'], registry: undefined }))
   })
 
   it('does not start the runtime for a development plugin when the instance does not allow them', async () => {

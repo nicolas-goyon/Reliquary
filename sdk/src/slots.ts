@@ -29,10 +29,20 @@ export type SlotName = keyof SlotContexts
 /** A text in the language of the interface. Give an object to give a text for each language, for example `{ en: "Sync", fr: "Synchroniser" }`. */
 export type LocalizedText = string | { en: string; [language: string]: string }
 
-/** A button or a menu item. The core renders it with its own components. */
+/** The icons that a button or a menu item can have. The core draws them. */
+export const pluginIcons = ['sync', 'download', 'upload', 'link', 'external', 'chart', 'star', 'tag', 'search', 'settings', 'info', 'camera'] as const
+export type PluginIcon = (typeof pluginIcons)[number]
+
+/**
+ * A button or a menu item. The core renders it with its own components, after the items of the core.
+ * A plugin can add 3 items at most to each slot.
+ */
 export interface ActionContribution<Slot extends SlotName> {
+  /** 1 to 32 lowercase letters, digits and hyphens. The first character is a letter. */
   id: string
+  /** 1 to 40 characters in each language. The English text is necessary. */
   label: LocalizedText
+  icon?: PluginIcon
   /** The position in the slot. A small number comes first. */
   order?: number
   /** Runs when the user selects the button or the menu item. */
@@ -70,4 +80,4 @@ export interface SlotContributions {
 }
 
 /** The data of a contribution that the plugin sends to the core: the contribution without its functions. */
-export type ContributionData = { id: string; order?: number; label?: LocalizedText; title?: LocalizedText; panel?: string }
+export type ContributionData = { id: string; order?: number; label?: LocalizedText; icon?: PluginIcon; title?: LocalizedText; panel?: string }

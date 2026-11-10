@@ -59,7 +59,45 @@ export interface SlotContribution<Name extends SlotName> {
   render(context: SlotContexts[Name]): ReactNode
 }
 
-type AnyContribution = SlotContribution<SlotName>
+/** The slots where a plugin adds a button or a menu item as data. See docs/architecture/extensions.md. */
+export const pluginActionSlots = ['deck.actions', 'app.menu', 'navigation'] as const
+export type PluginActionSlot = (typeof pluginActionSlots)[number]
+
+/** The icons that a plugin can give to a button or a menu item. */
+export const pluginIcons = ['sync', 'download', 'upload', 'link', 'external', 'chart', 'star', 'tag', 'search', 'settings', 'info', 'camera'] as const
+export type PluginIcon = (typeof pluginIcons)[number]
+
+/** A text of a plugin in English, with optional translations, for example `{ en: "Sync", fr: "Synchroniser" }`. */
+export type PluginText = { en: string } & Record<string, string>
+
+/**
+ * A button or a menu item of a plugin. The plugin sends data, and the core renders it with its own components.
+ * This contribution has no render function, so the plugin cannot add elements to the page of the core.
+ */
+export interface PluginActionContribution {
+  kind: 'plugin'
+  /** A unique ID in the slot: "plugin.<plugin ID>.<item ID>". */
+  id: string
+  order?: number
+  plugin: { id: string; name: string; development: boolean }
+  label: PluginText
+  icon?: PluginIcon
+  /** Sends the action to the plugin. The promise rejects when the plugin fails or does not answer. */
+  run(context: unknown): Promise<void>
+}
+
+/** The plugin contributions that each slot accepts. */
+type PluginContributionOf<Name extends SlotName> = Name extends PluginActionSlot ? PluginActionContribution : never
+
+/** A contribution of the core, or a contribution of a plugin in a slot that accepts plugin data. */
+export type AnySlotContribution<Name extends SlotName> = SlotContribution<Name> | PluginContributionOf<Name>
+
+/** Tells whether a contribution is data from a plugin. */
+export function isPluginContribution<Name extends SlotName>(contribution: AnySlotContribution<Name>): contribution is PluginContributionOf<Name> {
+  return 'kind' in contribution && contribution.kind === 'plugin'
+}
+
+type AnyContribution = AnySlotContribution<SlotName>
 
 /** The contributions of each slot. The core registers its own panels here, and the extensions use the same registry later. */
 export class SlotRegistry {
@@ -71,7 +109,7 @@ export class SlotRegistry {
    * Adds a contribution to a slot.
    * @returns A function that removes the contribution.
    */
-  register<Name extends SlotName>(slot: Name, contribution: SlotContribution<Name>): () => void {
+  register<Name extends SlotName>(slot: Name, contribution: AnySlotContribution<Name>): () => void {
     const list = this.contributions.get(slot) ?? []
     if (list.some((existing) => existing.id === contribution.id)) {
       throw new Error(`The slot "${slot}" already has a contribution with the ID "${contribution.id}".`)
@@ -85,10 +123,10 @@ export class SlotRegistry {
   }
 
   /** Gets the contributions of a slot, in their order. */
-  list<Name extends SlotName>(slot: Name): SlotContribution<Name>[] {
+  list<Name extends SlotName>(slot: Name): AnySlotContribution<Name>[] {
     return [...(this.contributions.get(slot) ?? [])]
       .sort((left, right) => (left.order ?? 100) - (right.order ?? 100) || left.id.localeCompare(right.id))
-      .map((contribution) => contribution as unknown as SlotContribution<Name>)
+      .map((contribution) => contribution as unknown as AnySlotContribution<Name>)
   }
 
   subscribe = (listener: () => void): (() => void) => {
@@ -109,7 +147,7 @@ export class SlotRegistry {
 export const SlotRegistryContext = createContext<SlotRegistry | null>(null)
 
 /** Gets the contributions of a slot, and renders again when they change. */
-export function useSlotContributions<Name extends SlotName>(slot: Name): SlotContribution<Name>[] {
+export function useSlotContributions<Name extends SlotName>(slot: Name): AnySlotContribution<Name>[] {
   const registry = useContext(SlotRegistryContext)
   if (!registry) {
     throw new Error('A slot needs a SlotRegistryContext above the component.')

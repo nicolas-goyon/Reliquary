@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import { activePlugins, type ExtensionList } from '../api/extensions'
 import { useAuth } from '../auth/session'
+import { SlotRegistryContext } from '../slots/registry'
 import { developmentPluginUrls } from './development'
 import { pluginsChangedEvent } from './events'
 
@@ -11,6 +12,7 @@ import { pluginsChangedEvent } from './events'
  */
 export function PluginRuntime() {
   const { state, request } = useAuth()
+  const registry = useContext(SlotRegistryContext) ?? undefined
   const accountId = state.status === 'authenticated' ? state.account.id : null
   const [revision, setRevision] = useState(0)
 
@@ -37,7 +39,7 @@ export function PluginRuntime() {
         }
         const { startPluginRuntime } = await import('./runtime')
         if (!cancelled) {
-          const host = startPluginRuntime(list, { developmentUrls })
+          const host = startPluginRuntime(list, { developmentUrls, registry })
           stop = () => host.stopAll()
         }
       })
@@ -46,7 +48,7 @@ export function PluginRuntime() {
       cancelled = true
       void stop?.()
     }
-  }, [accountId, request, revision])
+  }, [accountId, request, revision, registry])
 
   return null
 }

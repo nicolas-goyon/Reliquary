@@ -428,6 +428,28 @@ button:disabled {
   margin-bottom: 0.5rem;
 }
 
+.badge-warning {
+  border-color: var(--color-warning);
+  color: var(--color-warning);
+}
+
+.plugin-action {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.plugin-action button {
+  display: inline-flex;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.plugin-icon {
+  flex: none;
+}
+
 .secret {
   display: block;
   padding: 0.5rem;
