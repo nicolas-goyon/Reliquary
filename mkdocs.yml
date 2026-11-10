@@ -75,7 +75,8 @@ nav:
       - Local instance: deployment/local-development.md
       - Pre-production instance: deployment/pre-production.md
       - Production instance: deployment/production.md
-      - Kubernetes: deployment/kubernetes.md
+      - Production on Kubernetes: deployment/production-kubernetes.md
+      - Kubernetes reference: deployment/kubernetes.md
       - Versions and updates: deployment/versions-and-updates.md
       - Troubleshooting: deployment/troubleshooting.md
   - Product:

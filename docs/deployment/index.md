@@ -9,7 +9,7 @@ Terms follow the [glossary](../glossary.md).
 | --- | --- | --- | --- | --- |
 | [Local instance](local-development.md) | Development and the tests of a branch | Built from the source code | Demo accounts and 342 demo cards. `just reset` deletes the data. | `just` |
 | [Pre-production instance](pre-production.md) | Daily use on your computer, and the test of the next release with real data | Published images of the channel `develop` | Your accounts and all the cards. Each update keeps the data. | `reliquary-update`, or `reliquary-update.ps1` on Windows |
-| [Production instance](production.md) | A server that other people use | Published images of a release | Your accounts and all the cards, with backups on a different computer | `reliquary-update`, or Kubernetes in a later version |
+| [Production instance](production.md) | A server that other people use | Published images of a release | Your accounts and all the cards, with backups on a different computer | `reliquary-update`, or the Helm chart on Kubernetes |
 
 The three modes use the same code. A local instance and a pre-production instance can run on the same computer at the same time.
 
@@ -32,6 +32,7 @@ flowchart LR
 | [Local instance from the source code](local-development.md) | Install the development tools, start an instance, update it to a new commit |
 | [Pre-production instance](pre-production.md) | Install the published images on your computer, update, roll back, back up |
 | [Production instance](production.md) | Install on a server with HTTPS, a real email server and backups on a different computer |
-| [Requirements for Kubernetes](kubernetes.md) | What a Kubernetes deployment must give to the images |
+| [Production instance on Kubernetes](production-kubernetes.md) | Install, update and roll back with the Helm chart, CloudNativePG and Redis |
+| [Requirements for Kubernetes](kubernetes.md) | What a Kubernetes deployment must give to the images, and the reference of the Helm chart |
 | [Versions and updates](versions-and-updates.md) | The channels, the release numbers, the steps of an update and the migration rules |
 | [Troubleshooting](troubleshooting.md) | The usual problems and their solutions |

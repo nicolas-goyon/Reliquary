@@ -3,6 +3,7 @@
 This page lists what the images of Reliquary need on Kubernetes.
 The Helm chart in `deploy/helm/reliquary` applies these rules.
 [ADR 0053](../decisions/0053-helm-chart-scope.md) gives the scope of the chart.
+[Production instance on Kubernetes](production-kubernetes.md) tells how to install and update an instance with the chart.
 Terms follow the [glossary](../glossary.md).
 [ADR 0042](../decisions/0042-deployed-instances-and-updates.md) gives the reasons.
 
