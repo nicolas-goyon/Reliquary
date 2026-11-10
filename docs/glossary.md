@@ -76,7 +76,12 @@ The French column gives the term for the French interface.
 | Table engine | The engine that all deck testing modes share: zones, draw, shuffle, tokens, counters and flip. It has no automated game rules. | Moteur de table |
 | Goldfish | A test mode for one player with no opponent. | Goldfish |
 | Local multiplayer | A test mode where one person plays 3 or 4 decks. | Multi local |
-| Online game | A test mode for several people on different computers. | Partie en ligne |
+| Online game | A test mode for 2 to 4 people on different computers. The API keeps the state of the game and applies the actions. | Partie en ligne |
+| Host | The player who creates an online game. The host has the seat 0, starts the game and can end it. | Hôte |
+| Seat | The place of one player in an online game. A seat has a number from 0 to 3, a nickname and a deck. | Place |
+| Invite link | The link that lets a person join an online game. It contains a secret in its fragment. It stops at the start of the game. | Lien d’invitation |
+| Guest | A person who joins an online game with an invite link and no account. A guest gives a nickname and a deck. | Invité |
+| Game token | A signed token that gives access to one seat of one online game. The player gets it at the join. | — |
 | Game session | The real-time connection group of one online game. | Salon |
 | Shared screen | A test mode with a table window and a player window, for screen sharing, a second screen or a stream. | Affichage partagé |
 | Table window | The window that shows the table. It masks hidden information. | Fenêtre table |

@@ -113,6 +113,26 @@ ssh your-user@your-server
 
 The port 18035 of Mailpit stays on `127.0.0.1`. With a real email server, Mailpit receives no email.
 
+## WebSockets for the online games
+
+The online games use a WebSocket on the path `/api/v1/playtest/hub`.
+The reverse proxy must let WebSockets through on this path.
+A game can stay open for hours, so the connection must stay open for a long time.
+
+- The reverse proxy must send the headers `Upgrade` and `Connection` to the web container.
+- The read timeout and the idle timeout of this path must be 60 seconds or more. Use 1 hour, as the web container does.
+  The browser and the API send a ping each 15 seconds, so a connection with no message for 30 seconds is lost.
+- The reverse proxy must not keep the query string of this path in its access log.
+  The query string contains the game token of the player.
+
+With its default settings, Caddy lets WebSockets through and keeps them open.
+The access log of Caddy is off by default. When you enable it, it contains the query string.
+With Nginx, use the settings of the location `/api/v1/playtest/hub` in `web/nginx.conf.template`.
+
+Two API replicas or more need no sticky sessions.
+The browser connects to the hub with no negotiation, and the replicas share the games and the hub messages in Redis.
+The [online games architecture](../architecture/online-games.md#table-hub) gives the details.
+
 ## Back up to a different computer
 
 The script makes a backup before each update. Make a backup each day too, and copy the backups to a different computer.

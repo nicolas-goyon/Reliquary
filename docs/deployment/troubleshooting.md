@@ -63,6 +63,7 @@ When a command gives `Cannot connect to the Docker daemon` or `docker: command n
 | In WSL 2, `Permission denied` on the folder `backups` | The instance is in the Windows file system (`/mnt/c`). | Install the instance in the Linux file system, for example in `~/reliquary-preprod`, and move the backups there. Or use `reliquary-update.ps1` in PowerShell. |
 | In WSL 2, `bash: ./reliquary-update: /bin/sh^M: bad interpreter` | A Windows program saved the script with Windows line endings. | Get the script again from the CLI image. Edit `.env` and the script in WSL or in an editor that keeps the line endings. |
 | The Google sign-in fails behind the reverse proxy. | The redirect URI or the public URL is not correct. | Set `RELIQUARY_PUBLIC_URL` to the HTTPS address, and register `https://your-domain/api/v1/auth/external/google/callback` at Google. |
+| An online game shows "The connection stopped. The page connects again." again and again. | The reverse proxy does not let WebSockets through on `/api/v1/playtest/hub`, or its timeout is too short. | Configure the reverse proxy. See [WebSockets for the online games](production.md#websockets-for-the-online-games). |
 
 ## Start again from a backup
 

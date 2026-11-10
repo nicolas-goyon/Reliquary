@@ -53,6 +53,16 @@ Send all the requests of the site to the web service, or send `/api` to the API 
 | Worker | `GET /health/live` | `GET /health/ready` |
 | Web | `GET /` | `GET /` |
 
+## Ingress and online games
+
+The chart has no Ingress. Give the Service `web` your own Ingress or Gateway.
+
+- The online games use a WebSocket on the path `/api/v1/playtest/hub`. The Ingress controller must let WebSockets through on this path.
+- Set the read timeout and the send timeout of this path to 1 hour. For example, with the Ingress NGINX controller, use the annotations `nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"` and `nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"`.
+- The API replicas need no sticky sessions. The replicas share the games and the hub messages in Redis.
+
+The [production guide](production.md#websockets-for-the-online-games) gives the other requirements of the reverse proxy.
+
 ## Migrations
 
 Run `reliquary migrate` with the CLI image of the new version before the new API and the new worker start.
@@ -62,6 +72,7 @@ Do the backup before the migrations, with `reliquary backup` and a persistent vo
 ## Redis
 
 Redis keeps the keys that protect the cookies. Give Redis a persistent volume, or the users must sign in again after a restart of Redis.
+Redis also keeps the online games. A restart of Redis ends the games in progress.
 
 ## Helm chart
 
