@@ -4,7 +4,7 @@
 #
 # Usage: tools/deploy-tests/check-chart.sh
 #
-# The script renders the chart with each file of deploy/helm/reliquary/ci, and checks the manifests against
+# The script renders the chart for an install and for an upgrade with each file of deploy/helm/reliquary/ci, and checks the manifests against
 # the schemas of KUBERNETES_VERSION (default 1.31.0). kubeconform downloads the schemas.
 # Behind a proxy, set HTTPS_PROXY. Set SSL_CERT_FILE to give the certificate bundle of the proxy.
 
@@ -36,7 +36,9 @@ for values in "$repository/$chart"/ci/*.yaml; do
     name=$(basename "$values" .yaml)
     echo "check-chart: lint and render with $name.yaml."
     helm lint --strict "$chart" --values "$chart/ci/$name.yaml"
-    helm template reliquary "$chart" --namespace reliquary --values "$chart/ci/$name.yaml" > "$output/$name.yaml"
+    helm template reliquary "$chart" --namespace reliquary --values "$chart/ci/$name.yaml" > "$output/$name-install.yaml"
+    # Some resources are different for an upgrade, for example the backup before the migrations.
+    helm template reliquary "$chart" --namespace reliquary --values "$chart/ci/$name.yaml" --is-upgrade > "$output/$name-upgrade.yaml"
 done
 
 echo "check-chart: check the manifests against the schemas of Kubernetes $kubernetes_version."

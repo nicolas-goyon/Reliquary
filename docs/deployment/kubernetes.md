@@ -56,8 +56,18 @@ Send all the requests of the site to the web service, or send `/api` to the API 
 ## Migrations
 
 Run `reliquary migrate` with the CLI image of the new version before the new API and the new worker start.
-For example, use a Job as a Helm `pre-install` and `pre-upgrade` hook.
 Do the backup before the migrations, with `reliquary backup` and a persistent volume.
+
+The Helm chart has a Job `migrate` for this step:
+
+- Helm runs the Job before each install and each upgrade, as a `pre-install` and `pre-upgrade` hook.
+- The Job does not try again (`backoffLimit: 0`). When it fails, the upgrade stops and the old version continues to run.
+- With `migrate.backup.enabled: true`, the Job runs `reliquary backup` before the migrations of an upgrade.
+  The backup goes to the PersistentVolumeClaim of `migrate.backup.existingClaim`, in a folder `<UTC date>-before-revision-<revision>`.
+- `helm rollback` does not revert the migrations. To go back to the old version, restore the backup.
+
+The old pods continue to run during the migrations.
+The [migration rules](versions-and-updates.md#migration-rules) make this possible: a migration only adds, and a deletion comes one release after the code change.
 
 ## Redis
 
@@ -72,6 +82,7 @@ The chart in `deploy/helm/reliquary` contains these resources:
 | Deployment and Service `api` | The public API, with 2 replicas by default (`api.replicas`) and a PodDisruptionBudget |
 | Deployment and Service `worker` | The worker, with 1 replica. An update stops the old pod before the new pod starts. |
 | Deployment and Service `web` | The web app, with 2 replicas by default (`web.replicas`) and a PodDisruptionBudget |
+| Job `migrate` | The migrations with the CLI image, before each install and each upgrade. See [Migrations](#migrations). |
 | Secret | The secret settings, when `secrets.existingSecret` is empty |
 | StatefulSet and Service `redis` | An optional Redis server with a persistent volume, when `redis.enabled` is `true` |
 
