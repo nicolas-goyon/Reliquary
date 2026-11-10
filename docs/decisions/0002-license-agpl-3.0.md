@@ -1,6 +1,6 @@
 # 0002. License: AGPL-3.0 for the core
 
-- Status: Accepted
+- Status: Accepted. Completed by [0048](0048-plugin-sdk-license-and-packaging.md).
 - Date: 2026-10-26
 - Deciders: @nicolas-goyon
 

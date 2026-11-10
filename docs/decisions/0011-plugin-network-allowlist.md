@@ -1,6 +1,6 @@
 # 0011. Plugin network access through a declared list of domains
 
-- Status: Accepted
+- Status: Accepted. Amended by [0050](0050-no-plugin-code-on-the-server.md).
 - Date: 2026-10-26
 - Deciders: @nicolas-goyon
 

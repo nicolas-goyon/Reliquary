@@ -2,6 +2,7 @@
 
 This page lists what the images of Reliquary need on Kubernetes.
 The Helm chart of milestone M4 ([#64](https://github.com/nicolas-goyon/reliquary/issues/64)) will use these rules.
+[ADR 0053](../decisions/0053-helm-chart-scope.md) gives the scope of the chart.
 Terms follow the [glossary](../glossary.md).
 [ADR 0042](../decisions/0042-deployed-instances-and-updates.md) gives the reasons.
 

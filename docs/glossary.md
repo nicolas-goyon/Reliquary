@@ -122,6 +122,11 @@ The French column gives the term for the French interface.
 | Linked account | A connection between a Reliquary account and an account on an external site. Plugins and modules use linked accounts. | Compte lié |
 | Plugin catalog | The public list of plugins that the project reviewed and signed. | Catalogue de plugins |
 | Extension registry | The list of the extensions that the administrator installed on the instance, with an activation flag for each extension. | Registre des extensions |
+| Plugin frame | The sandboxed iframe with an opaque origin where the code of one plugin runs. | — |
+| Plugin token | A short signed token that the core gets for one plugin. It has only the scopes that the user accepted for the plugin. | — |
+| Vault | The encrypted store of the core for the secrets of linked accounts. Each secret belongs to one user, one plugin and one site. | — |
+| Catalog index | The signed JSON file of the plugin catalog. It lists the plugin versions, the hash of each file and the revoked versions. | — |
+| Network relay | An endpoint of the core that sends the requests of a plugin to a site that refuses calls from a browser. | — |
 | Core API version | The version of the API that the core gives to extensions. A manifest gives the versions that the extension supports, for example `^1.0`. | Version de l'API du cœur |
 
 ## Platform

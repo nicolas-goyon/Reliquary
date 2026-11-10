@@ -28,7 +28,8 @@ flowchart TB
     m3["M3 · Deck testing<br/>Goldfish, local multiplayer, shared screen, simplified online games"]
     g3{{"Gate: an online game with 4 players runs for one hour with no desynchronization."}}
     m4["M4 · Plugins<br/>Plugin SDK, slots, linked accounts, plugin catalog, card scan plugin, Helm chart"]
-    m0 --> g0 --> m1 --> g1 --> m2 --> g2 --> m25 --> g25 --> m3 --> g3 --> m4
+    g4{{"Gate: a signed plugin of the catalog works only with the scopes and domains that the user accepted. A revoked version stops after one sync."}}
+    m0 --> g0 --> m1 --> g1 --> m2 --> g2 --> m25 --> g25 --> m3 --> g3 --> m4 --> g4
 ```
 
 The [specification](./specification/README.md) gives the milestone of each feature.
@@ -98,12 +99,25 @@ See [Gate test](architecture/online-games.md#gate-test).
 - A card scan plugin
 - A Helm chart for Kubernetes
 
-Server modules come after M4.
+The move of users to another database while the instance runs comes after M4.
+Server modules also come after M4.
+
+**Gate**: the test `SignedPluginStaysInItsLimits` installs a signed plugin from a test catalog.
+The test checks these steps:
+
+1. The user accepts the scopes and the domains of the plugin.
+2. The plugin adds a deck action and an analysis panel, and it reads a deck.
+3. The API refuses a request of the plugin with a scope that the user did not accept.
+4. The browser refuses a request of the plugin to a domain that the user did not accept.
+5. The test catalog revokes the version. After one sync, the plugin does not run.
+
+The decision records [0048](decisions/0048-plugin-sdk-license-and-packaging.md) to [0053](decisions/0053-helm-chart-scope.md) give the design of M4.
 
 ## [Later](https://github.com/nicolas-goyon/reliquary/milestone/6)
 
 - Server modules
 - Collection sharing
+- The move of users to another database while the instance runs
 - The features with the priority v2 or later:
   - comments under a deck
   - deck co-editing
