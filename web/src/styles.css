@@ -450,6 +450,17 @@ button:disabled {
   flex: none;
 }
 
+.plugin-panel-frame {
+  display: block;
+  width: 100%;
+  border: 0;
+}
+
+.plugin-panel > summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
 .secret {
   display: block;
   padding: 0.5rem;

@@ -1,4 +1,6 @@
-import type { SlotContexts, SlotContribution } from '../slots/registry'
+import i18n from '../i18n'
+import { pluginText } from '../slots/pluginText'
+import { isPluginPanel, type AnySlotContribution, type SlotContexts } from '../slots/registry'
 
 /**
  * The analysis of a deck: the response of `GET /api/v1/decks/{id}/analysis`.
@@ -197,7 +199,10 @@ export function statusTone(status: string): 'good' | 'bad' | 'warn' | 'none' {
  * A title that fails gives the ID, so a broken extension does not stop the page.
  * @returns The name, or null when the contribution hides its tab for this deck.
  */
-export function tabTitle(contribution: SlotContribution<'analysis.tabs'>, context: SlotContexts['analysis.tabs']): string | null {
+export function tabTitle(contribution: AnySlotContribution<'analysis.tabs'>, context: SlotContexts['analysis.tabs']): string | null {
+  if (isPluginPanel(contribution)) {
+    return pluginText(contribution.title, i18n.resolvedLanguage)
+  }
   if (!contribution.title) {
     return contribution.id
   }

@@ -45,6 +45,28 @@ definePlugin({
 })
 ```
 
+### Panels
+
+A panel is an analysis tab, a part of the card page, a plugin page or a plugin dialog.
+The core shows each open panel in its own frame.
+Declare the panel in the field `panels` of the plugin manifest, then give its code to `definePlugin`:
+
+```ts
+definePlugin({
+  activate() {},
+  panels: {
+    stats: {
+      mount(element, context) {
+        element.textContent = `Deck ${'deckId' in context ? context.deckId : ''}`
+      },
+    },
+  },
+})
+```
+
+In a panel frame, the SDK calls `mount` and not `activate`.
+The SDK gives the height of the content to the core when it changes.
+
 The plugin manifest must declare each slot, each permission and each network domain that the plugin uses.
 The type `PluginManifest` gives the fields of the plugin manifest.
 
@@ -57,8 +79,12 @@ The type `PluginManifest` gives the fields of the plugin manifest.
 | `sdk.net.relay(request)` | Send a request through the network relay of the core, for a site that refuses requests from a browser. |
 | `sdk.storage` | Keep small values for the user: `get`, `set`, `remove` and `keys`. |
 | `sdk.accounts.list()` | Get the linked accounts of the user for this plugin. |
-| `sdk.ui.contribute(slot, contribution)` | Add a button, a menu item, a column or a panel to a slot. |
+| `sdk.ui.contribute(slot, contribution)` | Add a button, a menu item or a column to a slot. |
 | `sdk.ui.notify(message, tone)` | Show a short message to the user. |
+| `sdk.ui.openDialog(panel, data)` | Open a panel of the slot `plugin.dialog` in a dialog. |
+| `sdk.ui.closeDialog()` | Close the dialog of the plugin. |
+| `sdk.ui.openPage(page)` | Open a panel of the slot `plugin.page`. |
+| `sdk.ui.resize(height)` | Give the height of the panel. The SDK calls it for you. |
 
 The core gives these functions in milestone M4.
 Until the core has a function, a call to it fails with the error code `-32601` (method not found).
