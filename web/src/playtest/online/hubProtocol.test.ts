@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatMessage, handshakeRequest, parseHandshakeResponse, parseMessage, splitRecords } from './hubProtocol'
+import { formatMessage, handshakeRequest, hubErrorCode, parseHandshakeResponse, parseMessage, splitRecords } from './hubProtocol'
 
 describe('hub protocol', () => {
   it('writes the handshake and the messages with the record separator', () => {
@@ -28,5 +28,11 @@ describe('hub protocol', () => {
     expect(parseMessage('{"type":2,"invocationId":"1","item":1}')).toBeNull()
     expect(parseMessage('{"type":1,"target":5,"arguments":[]}')).toBeNull()
     expect(parseMessage('{')).toBeNull()
+  })
+
+  it('reads the error code of a hub method error', () => {
+    expect(hubErrorCode("An unexpected error occurred invoking 'Start' on the server. HubException: game_not_enough_players: The game needs 2 players.")).toBe('game_not_enough_players')
+    expect(hubErrorCode("An unexpected error occurred invoking 'Kick' on the server. HubException: forbidden")).toBe('forbidden')
+    expect(hubErrorCode('Failed')).toBe('internal_error')
   })
 })

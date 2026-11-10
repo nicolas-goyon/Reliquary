@@ -38,6 +38,12 @@ export const translatedErrorCodes = [
   'deck_link_site_unavailable',
   'deck_link_not_found',
   'deck_link_site_failed',
+  'game_invite_invalid',
+  'game_token_invalid',
+  'game_full',
+  'game_started',
+  'game_open_limit',
+  'game_not_enough_players',
 ] as const
 
 export type TranslatedErrorCode = (typeof translatedErrorCodes)[number]

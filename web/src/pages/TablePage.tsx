@@ -44,6 +44,9 @@ function Game({ deck }: { deck: Deck }) {
         <Link to={`/decks/${deck.id}/test/local`} className="button">
           {t('local.action')}
         </Link>
+        <Link to={`/decks/${deck.id}/test/online`} className="button">
+          {t('online.action')}
+        </Link>
       </div>
       <PlayerTable player={player} dispatch={dispatch} />
       <HandStatisticsPanel player={player} seed={seed} />

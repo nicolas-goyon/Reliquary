@@ -2317,6 +2317,55 @@ fieldset.field legend {
   width: 5.5rem;
 }
 
+/* Online games. */
+.online-invite-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.online-invite-row input {
+  flex: 1 1 16rem;
+  min-width: 0;
+}
+
+.online-lobby .table-player {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.online-lobby .table-player-facts {
+  grid-column: 1;
+}
+
+.online-lobby .table-player .button-small {
+  grid-row: 1 / span 2;
+  grid-column: 2;
+}
+
+.online-log {
+  margin-top: 1rem;
+}
+
+.online-exit {
+  margin-top: 1rem;
+}
+
+.online-confirm {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.online-log-list {
+  max-height: 12rem;
+  margin: 0;
+  padding-left: 1.25rem;
+  overflow-y: auto;
+  font-size: 0.875rem;
+}
+
 @media (max-width: 60rem) {
   .table-layout {
     grid-template-columns: minmax(0, 1fr);
