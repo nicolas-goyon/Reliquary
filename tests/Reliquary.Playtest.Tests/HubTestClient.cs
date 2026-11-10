@@ -34,6 +34,15 @@ public sealed class HubTestClient : IAsyncDisposable
     /// <summary>Gets all the raw text frames that the server sent, for the checks of the hidden information.</summary>
     public List<string> Frames { get; } = [];
 
+    /// <summary>Gives a copy of the frames. The reader can add a frame at any time, so do not enumerate <see cref="Frames"/> during a test.</summary>
+    public IReadOnlyList<string> CopyFrames()
+    {
+        lock (gate)
+        {
+            return [.. Frames];
+        }
+    }
+
     /// <summary>
     /// Connects to the hub of an API host with a game token, as the web app: WebSockets only, no negotiation.
     /// </summary>

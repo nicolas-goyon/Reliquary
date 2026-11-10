@@ -74,36 +74,40 @@ public static class PlayerViews
             throw new ArgumentException("The two views do not have the same players. Send a full view.", nameof(after));
         }
 
-        var old = ToJson(before);
-        var next = ToJson(after);
+        // The comparison uses the values, not the JSON: it is the hot path of each action, for each seat.
+        // Two values are equal when their canonical JSON is equal. Only the changed values go to JSON.
         var changes = new List<ViewChange>();
         foreach (var field in TableFields)
         {
-            if (!Same(old[field], next[field]))
+            var value = TableField(after, field);
+            if (!Equals(TableField(before, field), value))
             {
-                changes.Add(new TableFieldChange(field, next[field]?.DeepClone()));
+                changes.Add(new TableFieldChange(field, JsonSerializer.SerializeToNode(value, TableJson.Options)));
             }
         }
 
-        var oldPlayers = old["players"]!.AsArray();
-        var nextPlayers = next["players"]!.AsArray();
         for (var index = 0; index < after.Players.Count; index++)
         {
-            var seat = after.Players[index].Id;
-            var oldPlayer = oldPlayers[index]!.AsObject();
-            var nextPlayer = nextPlayers[index]!.AsObject();
+            var oldPlayer = before.Players[index];
+            var nextPlayer = after.Players[index];
+            var seat = nextPlayer.Id;
             foreach (var field in PlayerFields)
             {
-                if (!Same(oldPlayer[field], nextPlayer[field]))
+                var value = PlayerField(nextPlayer, field);
+                var same = field == "commanderDamage"
+                    ? SameDamage(oldPlayer.CommanderDamage, nextPlayer.CommanderDamage)
+                    : Equals(PlayerField(oldPlayer, field), value);
+                if (!same)
                 {
-                    changes.Add(new PlayerFieldChange(seat, field, nextPlayer[field]?.DeepClone()));
+                    changes.Add(new PlayerFieldChange(seat, field, JsonSerializer.SerializeToNode(value, TableJson.Options)));
                 }
             }
 
             foreach (var zone in Zones)
             {
-                var cards = after.Players[index].Zones.Get(zone);
-                if (!Same(ZoneJson(before.Players[index], zone), ZoneJson(after.Players[index], zone)))
+                var cards = nextPlayer.Zones.Get(zone);
+                // TableCard has only values, so its record equality is the equality of its JSON.
+                if (!oldPlayer.Zones.Get(zone).SequenceEqual(cards))
                 {
                     changes.Add(new ZoneChange(seat, zone, cards));
                 }
@@ -177,9 +181,30 @@ public static class PlayerViews
 
     private static string ZoneName(TableZone zone) => JsonSerializer.Serialize(zone, TableJson.Options).Trim('"');
 
-    private static JsonNode? ZoneJson(TablePlayer player, TableZone zone) => JsonSerializer.SerializeToNode(player.Zones.Get(zone), TableJson.Options);
+    private static object? TableField(TableState state, string field) => field switch
+    {
+        "activePlayerId" => state.ActivePlayerId,
+        "turn" => state.Turn,
+        "commander" => state.Commander,
+        "seed" => state.Seed,
+        "nextTokenId" => state.NextTokenId,
+        _ => throw new ArgumentOutOfRangeException(nameof(field), field, "The field is not a table field."),
+    };
 
-    private static bool Same(JsonNode? left, JsonNode? right) => CanonicalJson.Write(left) == CanonicalJson.Write(right);
+    private static object? PlayerField(TablePlayer player, string field) => field switch
+    {
+        "name" => player.Name,
+        "life" => player.Life,
+        "commanderDamage" => player.CommanderDamage,
+        "counters" => player.Counters,
+        "mulligans" => player.Mulligans,
+        "cardsToBottom" => player.CardsToBottom,
+        _ => throw new ArgumentOutOfRangeException(nameof(field), field, "The field is not a player field."),
+    };
+
+    /// <summary>The canonical JSON sorts the keys, so the order of the keys does not change the equality.</summary>
+    private static bool SameDamage(IReadOnlyDictionary<string, int> left, IReadOnlyDictionary<string, int> right) =>
+        left.Count == right.Count && left.All(pair => right.TryGetValue(pair.Key, out var value) && value == pair.Value);
 
     private static JsonObject Seat(JsonArray players, string seat) =>
         players.Select(player => player!.AsObject()).FirstOrDefault(player => player["id"]!.GetValue<string>() == seat)

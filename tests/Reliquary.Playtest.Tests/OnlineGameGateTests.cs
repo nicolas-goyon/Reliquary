@@ -91,7 +91,7 @@ public sealed class OnlineGameGateTests(PlaytestInstance instance)
             var messages = 0;
             foreach (var player in players)
             {
-                var scan = await HiddenCardScan.ScanAsync(player.Seat, player.Connections.SelectMany(connection => connection.Frames), truth);
+                var scan = await HiddenCardScan.ScanAsync(player.Seat, player.Connections.SelectMany(connection => connection.CopyFrames()), truth);
                 leaks.AddRange(scan.Leaks);
                 messages += scan.Messages;
             }
