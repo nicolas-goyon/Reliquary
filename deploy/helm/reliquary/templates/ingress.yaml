@@ -1,0 +1,34 @@
+{{- if .Values.ingress.enabled }}
+# Sends all the paths of the site to the web Service. The web app sends /api to the API.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "reliquary.fullname" . }}
+  labels:
+    {{- include "reliquary.componentLabels" (dict "context" . "component" "web") | nindent 4 }}
+  {{- with .Values.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- with .Values.ingress.className }}
+  ingressClassName: {{ . | quote }}
+  {{- end }}
+  {{- with .Values.ingress.tls }}
+  tls:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  rules:
+    {{- range (required "Set ingress.hosts, the host names of the site." .Values.ingress.hosts) }}
+    - host: {{ . | quote }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "reliquary.fullname" $ }}-web
+                port:
+                  number: {{ $.Values.web.service.port }}
+    {{- end }}
+{{- end }}

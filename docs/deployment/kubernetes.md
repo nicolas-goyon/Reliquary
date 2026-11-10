@@ -84,6 +84,7 @@ The chart in `deploy/helm/reliquary` contains these resources:
 | Deployment and Service `web` | The web app, with 2 replicas by default (`web.replicas`) and a PodDisruptionBudget |
 | Job `migrate` | The migrations with the CLI image, before each install and each upgrade. See [Migrations](#migrations). |
 | Secret | The secret settings, when `secrets.existingSecret` is empty |
+| HTTPRoute or Ingress | The optional route of the site to the `web` Service. See [Route of the site](#route-of-the-site). |
 | StatefulSet and Service `redis` | An optional Redis server with a persistent volume, when `redis.enabled` is `true` |
 
 The chart has no subcharts. PostgreSQL is always external.
@@ -96,3 +97,32 @@ These values are necessary:
   The containers read all the keys of the Secret as environment variables.
 
 To check a change of the chart, run `just helm-check`.
+
+## Route of the site
+
+The chart sends all the paths of the site to the `web` Service.
+The web app sends `/api` to the API, so the web app and the API stay on the same site.
+The chart has two options:
+
+| Option | Values | Use |
+| --- | --- | --- |
+| HTTPRoute of the Gateway API | `httpRoute.enabled`, `httpRoute.parentRefs`, `httpRoute.hostnames` | The first choice. The cluster needs a Gateway API implementation and a Gateway. |
+| Ingress | `ingress.enabled`, `ingress.className`, `ingress.hosts`, `ingress.tls` | A cluster with an Ingress controller and no Gateway API |
+
+The chart adds no annotation of one controller.
+Put the annotations of your controller in `httpRoute.annotations` or `ingress.annotations`.
+
+### WebSockets
+
+The table hub of the online games uses a WebSocket on `/api/v1/playtest/hub`.
+A WebSocket stays open for the length of a game.
+Check these items on your Gateway or your Ingress controller:
+
+- The WebSocket upgrade must pass. Most Gateway API implementations and Ingress controllers let it pass with no setting.
+- The idle timeout must be 60 seconds or more. The client sends a ping each 15 seconds.
+- A timeout on the full duration of a request must be off, or longer than a game.
+  For an HTTPRoute, set `httpRoute.timeouts.request` to `"0s"` when your Gateway supports this field.
+  For an Ingress, use the annotation of your controller.
+- The web container keeps a WebSocket open for 1 hour with no message, so a longer timeout has no effect.
+
+The hub needs no sticky sessions. The API replicas share the messages of the games through Redis.

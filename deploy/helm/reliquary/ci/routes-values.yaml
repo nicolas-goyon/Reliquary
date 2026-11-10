@@ -1,0 +1,25 @@
+# Values with the HTTPRoute of the Gateway API and the Ingress.
+# tools/deploy-tests/check-chart.sh uses this file.
+config:
+  publicUrl: https://reliquary.example.org
+secrets:
+  existingSecret: reliquary-secrets
+httpRoute:
+  enabled: true
+  parentRefs:
+    - name: public
+      namespace: gateway
+      sectionName: https
+  hostnames:
+    - reliquary.example.org
+  timeouts:
+    request: "0s"
+ingress:
+  enabled: true
+  className: traefik
+  hosts:
+    - reliquary.example.org
+  tls:
+    - secretName: reliquary-tls
+      hosts:
+        - reliquary.example.org

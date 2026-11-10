@@ -183,6 +183,38 @@ migrate:
   tolerations: []
   affinity: {}
 
+# The route of the site, with the Gateway API. It sends all the paths to the web Service.
+# The web app sends /api to the API, so the web app and the API stay on the same site.
+# The table hub of the online games uses a WebSocket. The Gateway must let WebSockets through, and must not end a request after a short time.
+# See docs/deployment/kubernetes.md.
+httpRoute:
+  enabled: false
+  annotations: {}
+  # Required when httpRoute.enabled is true. The Gateway of the route, for example:
+  # - name: public
+  #   namespace: gateway
+  #   sectionName: https
+  parentRefs: []
+  # The host names of the site, for example reliquary.example.org.
+  hostnames: []
+  # Optional. The timeouts of the rule, for example request: "0s". "0s" disables the timeout. Your Gateway must support this field.
+  timeouts: {}
+
+# The route of the site, with an Ingress. Use it when the cluster has no Gateway API.
+# The chart adds no annotation of one controller. Add the annotations of your controller in ingress.annotations,
+# for example for the WebSocket timeout.
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  # The host names of the site, for example reliquary.example.org.
+  hosts: []
+  # For example:
+  # - secretName: reliquary-tls
+  #   hosts:
+  #     - reliquary.example.org
+  tls: []
+
 # An optional Redis server with 1 replica, for a small cluster. Redis keeps the keys that protect the cookies, so it needs a persistent volume.
 # For a production instance, use a Redis server with a backup. See docs/deployment/kubernetes.md.
 redis:
