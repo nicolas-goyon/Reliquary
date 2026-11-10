@@ -65,7 +65,7 @@ Methods that the client calls:
 | Method | Arguments | Result |
 | --- | --- | --- |
 | `Join` | `lastSeq` or `null` | The snapshot `{ seq, view, hash }`. Before the start, `view` is `null` and `hash` is empty. |
-| `Resync` | None | The snapshot. |
+| `Resync` | `reason`: `hash`, `gap`, `patch` or `view` | The snapshot. See [Metrics](#metrics) for the reasons. |
 | `Act` | `clientActionId`, `action` (the `TableAction` of engine.ts) | `{ accepted: seq }` or `{ rejected: code }` |
 | `Start` | None | The sequence number of the start. Only the host, with 2 players or more. |
 | `Kick` | `seat`, for example `"1"` | None. Only the host, before the start. |
@@ -89,7 +89,9 @@ Rules:
 - The start makes the table with the decks of the seats and a random seed. The seed never leaves the server. The commander damage applies when the format is `commander` or when a deck has a command zone.
 - Each player changes only their own objects. Only the active player can end the turn. A draw has 20 cards at most. A token name has 64 characters at most.
 - A retry of `Act` with the same `clientActionId` gives the sequence number of the first action and applies nothing.
+  This is also true when the action is not valid now, for example a retry of `nextTurn`.
 - One connection sends 10 actions per second on average, and 30 in a burst. An action over the limit gets `{ rejected: "rate_limited" }`.
+  The settings `Playtest:ActionsPerSecond` and `Playtest:ActionBurst` change these limits.
 - The log text of an action never gives the name of a card in a hidden zone.
 - Each connection is in the group of its seat and of its game token. A kick or a new join gives a new token, so the old connection gets no more messages.
 - The Redis backplane sends the group messages to the connections on all the API replicas. Its channels start with `reliquary:playtest:hub`.
@@ -113,6 +115,68 @@ The table hub needs a WebSocket location in the reverse proxy. `web/nginx.conf.t
 `proxy_http_version 1.1`, the headers `Upgrade` and `Connection`, and a read timeout of 1 hour.
 The access log of this location does not contain the query string, so it never contains a game token.
 A reverse proxy in front of the web container must also let WebSockets through.
+
+## Metrics
+
+The API gives these metrics on the meter `Reliquary`.
+The guide [Observability](../development/observability.md) tells how to read them.
+
+| Metric | Type | Unit | Meaning |
+| --- | --- | --- | --- |
+| `reliquary.playtest.action.duration` | Histogram | `s` | The time from the receipt of `Act` to the send of the patches to all the seats. The attribute `result` is `accepted`, `duplicate` or `rejected`. |
+| `reliquary.playtest.desyncs` | Counter | `{desync}` | The calls of `Resync` because the view of a client was not correct. The attribute `reason` gives the cause. |
+| `reliquary.playtest.games.active` | Gauge | `{game}` | The open games: in the lobby or started, with a change in the last hour. |
+| `reliquary.playtest.patches` | Counter | `{patch}` | The patches that the API sent to the seats. |
+
+The client gives a reason to each call of `Resync`:
+
+| Reason | Cause | Counted |
+| --- | --- | --- |
+| `hash` | The hash of the view after a patch is not the hash of the patch. | Yes |
+| `gap` | A gap in the sequence numbers stayed open for 1 second. | Yes |
+| `patch` | The client cannot apply a patch. | Yes |
+| `view` | The client has no view, for example after the start. This is not a desynchronization. | No |
+
+The API records another reason, or no reason, as `other`.
+On a healthy instance, `reliquary.playtest.desyncs` stays at 0.
+
+All the API replicas share the games in Redis.
+Thus each replica gives the number of all the open games in `reliquary.playtest.games.active`.
+Use the maximum of the replicas, not the sum.
+The API counts the games again every 15 seconds at most.
+
+## Gate test
+
+The gate of the milestone M3 is the test `OnlineGameWithFourPlayersHasNoDesync` in `tests/Reliquary.Playtest.Tests`.
+It runs in CI for each pull request.
+
+The test starts two API hosts on one Redis: two replicas with the real backplane.
+Two players connect to each host with the JSON hub protocol over a raw WebSocket, as the web app.
+One hour of a 4-player game has about 2,400 actions, so the test sends 4,000 actions.
+Each player makes random actions from its own view, so each action is legal for this player.
+The actions include all the types of `TableAction`.
+
+The test adds these faults:
+
+- Every 300 actions, a player sends an action and loses its connection before the answer.
+  The player connects to the other host, gets a snapshot, and sends the action again with the same ID.
+- 20% of the rounds send the actions of two or four players at the same time. These actions cause conflicts of the compare-and-set.
+- 3% of the actions go a second time with the same ID.
+
+The test checks these conditions:
+
+- Each player applies each patch with `PlayerViews.Apply`, the C# side of the web code. The hash of the new view is the hash of the patch.
+- After each change, the view of each player is equal to the view of the server, field by field.
+  The view of the server comes from the state in Redis at the start and the actions of the action stream.
+- The action stream has each action one time. The replay of the stream gives the state in Redis.
+- No message to a player contains the card ID of a hidden card of another player.
+  A hidden card is a card in a hand or a library, or a face-down card.
+  No message contains the Oracle ID of a hidden card, unless the player sees a copy of the same card.
+- No player calls `Resync`, and the metric `reliquary.playtest.desyncs` does not change.
+- The 95th percentile of the time from the send of `Act` to the receipt of the patch of the player is less than 200 ms.
+
+The output of the test gives the latency, the server time and the duration.
+A scheduled test with 2 API replicas behind nginx and 60 minutes of real time is the subject of issue [#237](https://github.com/nicolas-goyon/reliquary/issues/237).
 
 ## Error codes
 
@@ -138,6 +202,7 @@ The online games are only in Redis. A restart of Redis ends the games in progres
 | `reliquary:playtest:game:{id}:seq` | The sequence number of the last change |
 | `reliquary:playtest:game:{id}:log` | The action stream, about 10,000 entries at most |
 | `reliquary:playtest:game:{id}:actions` | The last client action IDs of each seat |
+| `reliquary:playtest:games:active` | The open games, with the time of their last change. Only the gauge `reliquary.playtest.games.active` uses it. |
 | `reliquary:playtest:limits:open:{account}` | The open games of a host |
 | `reliquary:playtest:limits:created:{day}:{account}` | The number of games of a host on one day (UTC). It expires after 2 days. |
 | `reliquary:playtest:limits:join:{minute}:{address}` | The number of join requests of an IP address in one minute. It expires after 2 minutes. |
@@ -180,6 +245,8 @@ All the API replicas must have the same values.
 | `Playtest:GameLifetime` | `08:00:00` | The hard limit of the lifetime of a game, from its creation. |
 | `Playtest:InviteLifetime` | `1.00:00:00` | The lifetime of an invite link. |
 | `Playtest:TokenLifetime` | `08:00:00` | The lifetime of a game token. |
+| `Playtest:ActionsPerSecond` | `10` | The number of actions that one connection to the table hub sends in one second, on average. |
+| `Playtest:ActionBurst` | `30` | The number of actions that one connection to the table hub sends in a burst. |
 | `Playtest:Store:IdleLifetime` | `01:00:00` | The time with no change after which Redis deletes a game. |
 | `Playtest:Store:ActionStreamLength` | `10000` | The approximate maximum number of entries of the action stream of a game. |
 | `Playtest:Store:ClientActionIdsPerSeat` | `64` | The number of client action IDs that the store keeps for each seat. |

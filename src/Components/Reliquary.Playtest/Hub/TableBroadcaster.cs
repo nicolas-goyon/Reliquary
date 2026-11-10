@@ -1,4 +1,3 @@
-using System.Diagnostics.Metrics;
 using Microsoft.AspNetCore.SignalR;
 using Reliquary.Playtest.Api;
 using Reliquary.Playtest.Engine;
@@ -17,10 +16,6 @@ namespace Reliquary.Playtest.Hub;
 /// </remarks>
 internal sealed class TableBroadcaster(IHubContext<TableHub> hub)
 {
-    private static readonly Meter Meter = new("Reliquary.Playtest");
-
-    private static readonly Counter<long> Patches = Meter.CreateCounter<long>("reliquary.playtest.patches", description: "The number of patches that the API sent to the seats of the online games.");
-
     /// <summary>
     /// Gets the group of the connections of a seat with one game token.
     /// </summary>
@@ -95,7 +90,7 @@ internal sealed class TableBroadcaster(IHubContext<TableHub> hub)
 
             await hub.Clients.Group(SeatGroup(game.Id, seat.Seat, seat.TokenId))
                 .SendAsync("Patch", new HubPatch(update.Seq, OnlineGame.PlayerId(update.ActorSeat), update.Log, changes, hash));
-            Patches.Add(1);
+            PlaytestMetrics.RecordPatch();
         }
     }
 

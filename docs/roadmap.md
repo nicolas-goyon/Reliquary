@@ -88,6 +88,9 @@ The Kubernetes deployment stays in M4. It uses the same images.
 - Simplified online games: linked boards, hidden information and no automated rules
 
 **Gate**: an online game with 4 players runs for one hour with no desynchronization.
+The test `OnlineGameWithFourPlayersHasNoDesync` sends the 4,000 actions of one hour to two API replicas, with reconnects and conflicts.
+After each action, the view of each player must be equal to the view of the server.
+See [Gate test](architecture/online-games.md#gate-test).
 
 ## [M4: Plugins](https://github.com/nicolas-goyon/reliquary/milestone/5)
 

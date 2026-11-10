@@ -37,6 +37,8 @@ public sealed class PlaytestComponent : ICoreComponent
     public void AddApiServices(IServiceCollection services, IConfiguration configuration)
     {
         services.AddSingleton<TableBroadcaster>();
+        services.AddSingleton<ActiveGames>();
+        services.AddHostedService(provider => provider.GetRequiredService<ActiveGames>());
         var signalR = services.AddSignalR(options =>
         {
             // An action is small. The largest message is a deck of the lobby, which goes through the REST endpoints.

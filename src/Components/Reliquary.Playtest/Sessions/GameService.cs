@@ -282,7 +282,8 @@ internal sealed class GameService(
 
     /// <summary>
     /// Applies an action of a player to the table with a compare-and-set. After a conflict, the service reads the game again,
-    /// checks the action again and applies it again. A repeated client action ID gives the sequence number of the first action.
+    /// checks the action again and applies it again. A repeated client action ID gives the sequence number of the first action,
+    /// also when the action is not valid any more.
     /// </summary>
     /// <param name="gameId">The game.</param>
     /// <param name="token">The game token of the player.</param>
@@ -308,7 +309,11 @@ internal sealed class GameService(
 
             if (ActionRules.Check(game.Table, playerId, action) is { } rejection)
             {
-                return ActResult.Refuse(rejection);
+                // A retry of an applied action can be not valid now, for example "nextTurn" or a move of a token.
+                // The retry must give the sequence number of the first action, not a refusal.
+                return await store.FindActionAsync(GameKeys.Id(gameId), seat, clientActionId) is { } applied
+                    ? new ActResult(applied, null, null)
+                    : ActResult.Refuse(rejection);
             }
 
             var table = TableEngine.Apply(game.Table, action);

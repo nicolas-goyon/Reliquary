@@ -38,6 +38,12 @@ public sealed class GameOptions
     /// <summary>Gets or sets the lifetime of an invite link. The game start and the end of the game also stop the link. The default is 24 hours.</summary>
     public TimeSpan InviteLifetime { get; set; } = TimeSpan.FromHours(24);
 
+    /// <summary>Gets or sets the number of actions that one connection to the table hub can send in one second, on average. The default is 10.</summary>
+    public double ActionsPerSecond { get; set; } = 10;
+
+    /// <summary>Gets or sets the number of actions that one connection to the table hub can send in a burst. The default is 30.</summary>
+    public double ActionBurst { get; set; } = 30;
+
     /// <summary>Gets or sets the lifetime of a game token. The end of the game also stops the token. The default is 8 hours.</summary>
     public TimeSpan TokenLifetime { get; set; } = TimeSpan.FromHours(8);
 }
