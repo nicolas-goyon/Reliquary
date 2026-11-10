@@ -141,12 +141,11 @@ async function compareViews(players: Player[]): Promise<string[]> {
       if (JSON.stringify(state) !== JSON.stringify(own)) {
         problems.push(`${observer.label} sees ${subject.name} as ${JSON.stringify(state)}, the page of ${subject.label} shows ${JSON.stringify(own)}.`)
       }
-      // The board of another player does not show the commander damage from the observer, so the comparison ignores it.
+      // All the observers must see the same counters and the same commander damage on the board of the subject.
       const first = players.findIndex((_, index) => index !== subjectIndex)
       if (observerIndex === first) return
-      const other = (list: string[]) => list.filter((line) => !line.includes(`from ${observer.name}:`) && !line.includes(`from ${players[first].name}:`))
       const reference = tables[first].others[subject.name]?.counters ?? []
-      if (JSON.stringify(other(counters)) !== JSON.stringify(other(reference))) {
+      if (JSON.stringify(counters) !== JSON.stringify(reference)) {
         problems.push(`${observer.label} sees the counters of ${subject.name} as ${JSON.stringify(counters)}, ${players[first].label} sees ${JSON.stringify(reference)}.`)
       }
     })

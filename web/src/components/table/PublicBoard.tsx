@@ -56,15 +56,17 @@ function HiddenCounts({ player }: { player: TablePlayer }) {
 /**
  * The board of each player as the table window shows it. The state must come from projectPublicState:
  * this component does not hide cards itself, it shows only what the projection gives.
+ * The commander damage on a board comes from the players of `sources`. The default is the players of the table.
+ * The online table shows only the other players, but the commander damage can also come from the own player.
  */
-export function PublicBoard({ table }: { table: TableState }) {
+export function PublicBoard({ table, sources = table.players }: { table: TableState; sources?: TablePlayer[] }) {
   const { t } = useTranslation('playtest')
   return (
     <div className="table-public">
       {table.players.map((player) => {
         const active = player.id === table.activePlayerId
         const counters = playerCounters.filter((counter) => player.counters[counter] > 0)
-        const damage = table.players.filter((other) => (player.commanderDamage[other.id] ?? 0) > 0)
+        const damage = sources.filter((other) => (player.commanderDamage[other.id] ?? 0) > 0)
         return (
           <section key={player.id} className={active ? 'table-public-player table-player-active' : 'table-public-player'} aria-label={player.name}>
             <header className="table-public-header">

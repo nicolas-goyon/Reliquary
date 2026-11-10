@@ -24,7 +24,6 @@ function setup(id: string, name: string): PlayerSetup {
   }
 }
 
-const table = createTable([setup('0', 'Ana'), setup('1', 'Bob')], 5, 20)
 const lobby = {
   gameId,
   seats: [
@@ -204,11 +203,14 @@ describe('online games', () => {
     const user = userEvent.setup()
     render(<App />)
 
-    const socket = await connect(playerView(table, '0'))
+    // In a game with the commander damage, Ana dealt 3 commander damage to Bob. The board of Bob shows it.
+    const start = applyAction(createTable([setup('0', 'Ana'), setup('1', 'Bob')], 5, 40, { commander: true }), { type: 'commanderDamage', playerId: '1', fromPlayerId: '0', change: 3 })
+    const socket = await connect(playerView(start, '0'))
     const hand = await screen.findByRole('region', { name: 'Hand' })
     expect(within(hand).getAllByRole('button', { name: /^Play Ana card/ })).toHaveLength(7)
     const bob = screen.getByRole('region', { name: 'Bob' })
     expect(bob).toHaveTextContent('Hand7Library13')
+    expect(within(bob).getByText('Commander damage from Ana: 3')).toBeInTheDocument()
     expect(screen.queryByText(/Bob card/)).not.toBeInTheDocument()
     expect(await seriousAccessibilityProblems()).toEqual([])
 
@@ -217,8 +219,8 @@ describe('online games', () => {
     const [invocation] = socket.invocations('Act')
     expect((invocation.arguments as unknown[])[1]).toEqual({ type: 'draw', playerId: '0' })
     act(() => socket.complete('Act', { accepted: 4 }))
-    const after = applyAction(table, { type: 'draw', playerId: '0' })
-    act(() => socket.patch(4, diffViews(playerView(table, '0'), playerView(after, '0')), viewHash(playerView(after, '0')), 'Ana drew 1 card'))
+    const after = applyAction(start, { type: 'draw', playerId: '0' })
+    act(() => socket.patch(4, diffViews(playerView(start, '0'), playerView(after, '0')), viewHash(playerView(after, '0')), 'Ana drew 1 card'))
     expect(within(screen.getByRole('region', { name: 'Hand' })).getAllByRole('button', { name: /^Play Ana card/ })).toHaveLength(8)
     expect(screen.getByRole('region', { name: 'Game log' })).toHaveTextContent('Ana drew 1 card')
     expect(socket.invocations('Resync')).toHaveLength(0)

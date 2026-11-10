@@ -78,7 +78,7 @@ export function OnlineTable({ view, seat, log, act, isHost, onLeave, onEnd }: On
       )}
       <section aria-labelledby={`${windowId}-others`}>
         <h2 id={`${windowId}-others`}>{t('online.table.others')}</h2>
-        <PublicBoard table={others} />
+        <PublicBoard table={others} sources={view.players} />
       </section>
       <section className="panel online-log" aria-labelledby={`${windowId}-log`}>
         <h2 id={`${windowId}-log`}>{t('online.table.log')}</h2>
