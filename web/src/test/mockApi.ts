@@ -23,7 +23,8 @@ export function session(token = 'token-1', account: Record<string, unknown> = te
 }
 
 /**
- * Replaces fetch with handlers for "METHOD /path" keys. A request with no handler fails the test.
+ * Replaces fetch with handlers for "METHOD /path" keys. A request with no handler fails the test,
+ * except `GET /extensions`, which gives no extension by default.
  * @returns The list of the requests, for the assertions.
  */
 export function mockApi(handlers: Record<string, Handler>) {
@@ -33,6 +34,11 @@ export function mockApi(handlers: Record<string, Handler>) {
     vi.fn(async (input: string, init: RequestInit = {}) => {
       const url = new URL(input, 'http://localhost')
       const key = `${init.method ?? 'GET'} ${url.pathname.replace(/^\/api\/v1/, '')}`
+      // The shell asks the extensions after each sign-in, to start the plugin runtime.
+      // A test with no handler for this request gets an instance with no extension, and the request is not in the list.
+      if (key === 'GET /extensions' && !handlers[key]) {
+        return Response.json({ coreApi: '1.1.0', items: [], plugins: { maxActive: 8, frameOrigin: null } })
+      }
       const body = typeof init.body === 'string' ? JSON.parse(init.body) : undefined
       const headers = (init.headers ?? {}) as Record<string, string>
       calls.push({ key, body, headers })
