@@ -156,6 +156,33 @@ web:
   affinity: {}
   topologySpreadConstraints: []
 
+# The migration Job. Helm runs it before each install and each upgrade, with the CLI image of the new version.
+# When the Job fails, the upgrade stops and the old version continues to run.
+migrate:
+  image:
+    repository: ""
+    tag: ""
+    digest: ""
+  # The maximum time of the Job, in seconds.
+  activeDeadlineSeconds: 1800
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      memory: 1Gi
+  # A backup of the databases before the migrations of an upgrade, with "reliquary backup".
+  # The CLI writes the backup to a folder <UTC date>-before-revision-<revision> of the volume.
+  backup:
+    enabled: false
+    # Required when backup.enabled is true. A PersistentVolumeClaim that you make, with enough space for the backups.
+    # The chart deletes no backup. Delete the old backups yourself.
+    existingClaim: ""
+  podAnnotations: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
 # An optional Redis server with 1 replica, for a small cluster. Redis keeps the keys that protect the cookies, so it needs a persistent volume.
 # For a production instance, use a Redis server with a backup. See docs/deployment/kubernetes.md.
 redis:
