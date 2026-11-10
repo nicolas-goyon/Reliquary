@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { TableAction } from '../engine'
 import { applyViewChanges, viewHash, type PlayerView, type ViewChange } from '../views'
 import type { Lobby, OnlineSnapshot } from './gameApi'
-import { HubClient, type ActResult, type HubClientOptions, type HubStatus, type Patch } from './hubClient'
+import { HubClient, type ActResult, type HubClientOptions, type HubStatus, type Patch, type ResyncReason } from './hubClient'
 
 /** The state of an online game in the page. */
 export interface OnlineGameState {
@@ -29,22 +29,24 @@ const logSize = 30
 const initialState: OnlineGameState = { status: 'connecting', lobby: null, view: null, log: [], closedReason: null, desyncs: 0 }
 
 /**
- * Gives the next state after a patch, and tells if the view is not in sync.
- * The view is not in sync when the patch cannot apply, or when the new view does not have the hash of the server.
+ * Gives the next state after a patch, and the reason of a Resync when the page needs the full view.
+ * - "view": the page has no view, for example after the start. This is not a desynchronization.
+ * - "patch": the patch cannot apply.
+ * - "hash": the new view does not have the hash of the server.
  */
-export function applyPatch(state: OnlineGameState, patch: Patch): { state: OnlineGameState; desync: boolean } {
+export function applyPatch(state: OnlineGameState, patch: Patch): { state: OnlineGameState; resync: ResyncReason | null } {
   const log = patch.log ? [patch.log, ...state.log].slice(0, logSize) : state.log
   if (!state.view) {
     // In the lobby, each change of the lobby comes with an empty patch and an empty hash: there is no view yet.
     // A patch with a hash, for example the patch of the start, needs a full view.
-    return { state: { ...state, log }, desync: patch.hash !== '' || patch.changes.length > 0 }
+    return { state: { ...state, log }, resync: patch.hash !== '' || patch.changes.length > 0 ? 'view' : null }
   }
   try {
     const view = applyViewChanges(state.view, patch.changes as ViewChange[])
     const desync = viewHash(view) !== patch.hash
-    return { state: { ...state, view, log, desyncs: state.desyncs + (desync ? 1 : 0) }, desync }
+    return { state: { ...state, view, log, desyncs: state.desyncs + (desync ? 1 : 0) }, resync: desync ? 'hash' : null }
   } catch {
-    return { state: { ...state, log, desyncs: state.desyncs + 1 }, desync: true }
+    return { state: { ...state, log, desyncs: state.desyncs + 1 }, resync: 'patch' }
   }
 }
 
@@ -81,8 +83,8 @@ export function useOnlineGame(gameToken: string | null, url: string, createSocke
       onPatch: (patch) => {
         const result = applyPatch(current, patch)
         update(result.state)
-        if (result.desync) {
-          hub.resync()
+        if (result.resync) {
+          hub.resync(result.resync)
         }
       },
       onClosed: (reason) => update({ ...current, status: 'closed', closedReason: reason }),

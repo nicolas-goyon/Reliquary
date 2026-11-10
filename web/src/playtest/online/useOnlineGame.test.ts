@@ -19,26 +19,29 @@ function patchFor(seq: number, hash?: string): Patch {
 describe('online game state', () => {
   it('applies a patch with the correct hash', () => {
     const result = applyPatch(state, patchFor(1))
-    expect(result.desync).toBe(false)
+    expect(result.resync).toBeNull()
     expect(result.state.view?.players[0].zones.hand).toHaveLength(8)
     expect(result.state.log).toEqual(['s1 drew 1 card'])
   })
 
   it('finds a view that is not in sync', () => {
     const result = applyPatch(state, patchFor(1, '0000000000000000'))
-    expect(result.desync).toBe(true)
+    expect(result.resync).toBe('hash')
     expect(result.state.desyncs).toBe(1)
   })
 
   it('finds a patch that cannot apply', () => {
     const result = applyPatch(state, { ...patchFor(1), changes: [{ seat: 's9', field: 'life', value: 1 }] })
-    expect(result.desync).toBe(true)
+    expect(result.resync).toBe('patch')
     expect(result.state.view).toBe(state.view)
   })
 
-  it('accepts the empty patches of the lobby, and asks for a full view at the start', () => {
+  it('accepts the empty patches of the lobby, and asks for a full view at the start with the reason "view"', () => {
     const lobbyState = { ...state, view: null }
-    expect(applyPatch(lobbyState, { seq: 2, actorSeat: '0', log: '', changes: [], hash: '' }).desync).toBe(false)
-    expect(applyPatch(lobbyState, { seq: 3, actorSeat: '0', log: '', changes: [], hash: '0123456789abcdef' }).desync).toBe(true)
+    expect(applyPatch(lobbyState, { seq: 2, actorSeat: '0', log: '', changes: [], hash: '' }).resync).toBeNull()
+    const start = applyPatch(lobbyState, { seq: 3, actorSeat: '0', log: '', changes: [], hash: '0123456789abcdef' })
+    // The page has no view yet: this is not a desynchronization, so the metric of the desynchronizations does not count it.
+    expect(start.resync).toBe('view')
+    expect(start.state.desyncs).toBe(0)
   })
 })
