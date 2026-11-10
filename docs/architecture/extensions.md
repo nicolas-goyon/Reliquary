@@ -73,6 +73,18 @@ Plugins have two purposes:
   A plugin cannot access the DOM of the core or the DOM of other plugins.
 - For buttons, menu items, navigation items, table columns, import formats and export formats, the plugin sends data.
   The core renders this data with its own components.
+- The slots `deck.actions`, `app.menu` and `navigation` accept buttons and menu items from plugins:
+  - The plugin calls `ui.contribute` with an ID, a label and an optional icon.
+    The label has an English text and optional translations, with 40 characters at most.
+    The icon comes from a fixed set of 12 icons.
+  - The core checks the data and refuses a slot that the plugin manifest does not declare.
+    A plugin can add 3 items at most to each slot.
+  - The registry keeps the item as a contribution of the kind `plugin`, with data and no render function.
+    `SlotItem` renders it with the component `PluginAction` of the core, after the items of the core.
+  - When the user selects the item, the core calls `ui.action` with the IDs of the context, for example `{ deckId }`.
+    The plugin does not get the objects of the page.
+  - A contribution of a development plugin shows the badge "Not checked".
+  - When the core removes the plugin frame, it also removes the items of the plugin.
 - Panels (analysis tabs, the card page, plugin pages and dialogs) render in their own sandboxed iframe.
 - The plugin frame contains no credential of the user.
   The core calls the public API for the plugin with a plugin token, which has only the scopes that the user accepted.

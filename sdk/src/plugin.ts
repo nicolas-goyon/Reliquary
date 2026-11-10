@@ -191,6 +191,7 @@ function createSdk(peer: RpcPeer<PluginMethods, HostMethods>, message: ConnectMe
         const data: ContributionData = { id: contribution.id }
         if (contribution.order !== undefined) data.order = contribution.order
         if ('label' in contribution) data.label = contribution.label
+        if ('icon' in contribution && contribution.icon) data.icon = contribution.icon
         if ('title' in contribution) data.title = contribution.title
         if ('panel' in contribution) data.panel = contribution.panel
         if ('onAction' in contribution && contribution.onAction) {

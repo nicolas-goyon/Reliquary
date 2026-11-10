@@ -1,6 +1,6 @@
-import { Component, type ErrorInfo, type ReactNode } from 'react'
+import { Component, lazy, Suspense, type ErrorInfo, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useSlotContributions, type SlotContexts, type SlotContribution, type SlotName } from './registry'
+import { isPluginContribution, useSlotContributions, type AnySlotContribution, type SlotContexts, type SlotName } from './registry'
 
 interface SlotProps<Name extends SlotName> {
   name: Name
@@ -27,18 +27,28 @@ export function Slot<Name extends SlotName>({ name, context, className }: SlotPr
 
 interface SlotItemProps<Name extends SlotName> {
   slot: Name
-  contribution: SlotContribution<Name>
+  contribution: AnySlotContribution<Name>
   context: SlotContexts[Name]
 }
+
+// The component of plugin items loads only when a plugin adds an item, so the main bundle does not contain it.
+const PluginAction = lazy(() => import('../plugins/PluginAction').then((module) => ({ default: module.PluginAction })))
 
 /**
  * Renders one contribution of a slot inside its own error boundary.
  * A slot with its own layout, for example the tabs of the analysis, uses it for each contribution.
+ * The core renders the data of a plugin contribution with its own component.
  */
 export function SlotItem<Name extends SlotName>({ slot, contribution, context }: SlotItemProps<Name>) {
   return (
     <ContributionBoundary slot={slot} contributionId={contribution.id}>
-      <Contribution render={() => contribution.render(context)} />
+      {isPluginContribution(contribution) ? (
+        <Suspense fallback={null}>
+          <PluginAction contribution={contribution} context={context} appearance={slot === 'deck.actions' ? 'button' : 'link'} />
+        </Suspense>
+      ) : (
+        <Contribution render={() => contribution.render(context)} />
+      )}
     </ContributionBoundary>
   )
 }

@@ -49,6 +49,8 @@ export interface DevelopmentPlugin {
   entry: string
   /** The origins of the network list of the plugin manifest. */
   network: string[]
+  /** The slots of the plugin manifest. */
+  slots: string[]
 }
 
 /** The causes of a DevelopmentManifestError. The interface shows a text for each code. */
@@ -86,7 +88,7 @@ export async function loadDevelopmentManifest(manifestUrl: string, fetcher: type
       ? error
       : new DevelopmentManifestError('notAvailable', 'The plugin manifest did not load. Make sure that the server of the plugin runs and accepts requests from this site.')
   }
-  const { id, name, version, entry, network } = manifest ?? {}
+  const { id, name, version, entry, network, slots } = manifest ?? {}
   if (typeof id !== 'string' || typeof version !== 'string' || typeof entry !== 'string') {
     throw new DevelopmentManifestError('missingFields', 'The plugin manifest must have the fields "id", "version" and "entry".')
   }
@@ -101,6 +103,7 @@ export async function loadDevelopmentManifest(manifestUrl: string, fetcher: type
     version,
     entry: entryUrl,
     network: Array.isArray(network) ? network.filter((item): item is string => typeof item === 'string' && isHttpUrl(item)) : [],
+    slots: Array.isArray(slots) ? slots.filter((item): item is string => typeof item === 'string') : [],
   }
 }
 

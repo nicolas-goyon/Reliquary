@@ -15,6 +15,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - The development mode for plugins: on a development instance, a user loads a plugin from the URL of its plugin manifest.
   The interface shows a "Not checked" banner for this plugin.
   The setting `Plugins:AllowDevelopmentPlugins` is off by default.
+- Plugins can add buttons and menu items to the deck actions, the user menu and the navigation.
+  The core renders the data of the plugin with its own components.
 
 ## [0.2.0] - 2026-11-09
 

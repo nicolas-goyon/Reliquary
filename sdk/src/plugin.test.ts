@@ -106,6 +106,7 @@ describe('definePlugin', () => {
           await sdk.ui.contribute('deck.actions', {
             id: 'sync',
             label: { en: 'Sync', fr: 'Synchroniser' },
+            icon: 'sync',
             order: 5,
             onAction: ({ deckId }) => void actions.push(deckId),
           })
@@ -123,7 +124,7 @@ describe('definePlugin', () => {
     await handle.ready
     await host.call('ui.action', { slot: 'deck.actions', id: 'sync', context: { deckId: 'deck-1' } })
 
-    assert.deepEqual(contributions, [{ slot: 'deck.actions', contribution: { id: 'sync', order: 5, label: { en: 'Sync', fr: 'Synchroniser' } } }])
+    assert.deepEqual(contributions, [{ slot: 'deck.actions', contribution: { id: 'sync', order: 5, label: { en: 'Sync', fr: 'Synchroniser' }, icon: 'sync' } }])
     assert.deepEqual(actions, ['deck-1'])
     await assert.rejects(host.call('ui.action', { slot: 'deck.actions', id: 'other', context: { deckId: 'deck-1' } }), (error: RpcError) => error.code === errorCodes.invalidParams)
     host.close()

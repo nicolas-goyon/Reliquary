@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { pluginActionSlots, pluginIcons } from '../slots/registry'
 
 /**
  * The web app keeps a copy of two files of the plugin SDK, because the container build of the web app sees only the folder web/.
@@ -28,5 +29,21 @@ describe('copies of the plugin SDK', () => {
 
     expect(sdk.length).toBeGreaterThan(0)
     expect(normalize(web)).toBe(normalize(sdk))
+  })
+
+  it('gives the same icons as the plugin SDK', () => {
+    const sdk = read('../../../sdk/src/slots.ts')
+    const list = sdk.match(/export const pluginIcons = \[([^\]]*)\]/)?.[1] ?? ''
+
+    expect([...list.matchAll(/'([^']+)'/g)].map((match) => match[1])).toEqual([...pluginIcons])
+  })
+
+  it('gives a context type in the plugin SDK for each slot with plugin data', () => {
+    const sdk = read('../../../sdk/src/slots.ts')
+
+    for (const slot of pluginActionSlots) {
+      const key = slot.includes('.') ? `'${slot}'` : slot
+      expect(sdk).toContain(`${key}: ActionContribution<'${slot}'>`)
+    }
   })
 })
