@@ -30,30 +30,6 @@ public static class DevelopmentPluginEndpoints
             .WithSummary("Sends the HTML of the frame of a development plugin. The CSP allows the origin of the entry point. The instance must allow development plugins.");
     }
 
-    /// <summary>
-    /// Makes the Content Security Policy of the frame of a development plugin.
-    /// </summary>
-    /// <param name="entry">The address of the entry point of the plugin.</param>
-    /// <param name="network">The origins of the network list of the plugin manifest.</param>
-    /// <returns>The value of the header <c>Content-Security-Policy</c>.</returns>
-    public static string ContentSecurityPolicy(Uri entry, IReadOnlyList<Uri> network)
-    {
-        var origin = Origin(entry);
-        // The development server of the plugin can reload the plugin through a WebSocket on the same host.
-        var socket = (entry.Scheme == Uri.UriSchemeHttps ? "wss" : "ws") + origin[entry.Scheme.Length..];
-        var networkOrigins = string.Concat(network.Select(uri => " " + Origin(uri)).Distinct(StringComparer.Ordinal));
-        return string.Join("; ",
-            "default-src 'none'",
-            $"script-src {origin}",
-            $"style-src {origin} 'unsafe-inline'",
-            $"font-src {origin}",
-            $"img-src {origin}{networkOrigins} data: blob:",
-            $"connect-src {origin} {socket}{networkOrigins}",
-            "worker-src blob:",
-            "base-uri 'none'",
-            "form-action 'none'");
-    }
-
     private static Results<ContentHttpResult, ProblemHttpResult> Frame(
         string? entry, string[]? network, IOptions<PluginOptions> options, HttpContext context)
     {
@@ -84,7 +60,7 @@ public static class DevelopmentPluginEndpoints
             networkUris.Add(uri);
         }
 
-        context.Response.Headers.ContentSecurityPolicy = ContentSecurityPolicy(entryUri, networkUris);
+        context.Response.Headers.ContentSecurityPolicy = PluginFramePolicy.ForDevelopment(entryUri, networkUris);
         context.Response.Headers.CacheControl = "no-store";
         context.Response.Headers.XContentTypeOptions = "nosniff";
         context.Response.Headers["Referrer-Policy"] = "no-referrer";
@@ -115,6 +91,4 @@ public static class DevelopmentPluginEndpoints
         uri = parsed;
         return true;
     }
-
-    private static string Origin(Uri uri) => uri.GetLeftPart(UriPartial.Authority);
 }

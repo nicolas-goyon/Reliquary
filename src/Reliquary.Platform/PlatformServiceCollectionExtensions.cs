@@ -50,6 +50,7 @@ public static class PlatformServiceCollectionExtensions
         services.TryAddSingleton<IDomainEventWriter, OutboxWriter>();
         services.TryAddSingleton<MigrationRunner>();
         services.TryAddSingleton<ExtensionRegistry>();
+        services.TryAddSingleton<PluginFileStore>();
 
         if (string.IsNullOrWhiteSpace(configuration[$"{EmailOptions.Section}:Smtp:Host"]))
         {
