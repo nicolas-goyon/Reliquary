@@ -1,0 +1,32 @@
+# Values that use most options of the chart: an existing Secret, the Redis StatefulSet and the settings of the emails.
+# tools/deploy-tests/check-chart.sh uses this file.
+config:
+  publicUrl: https://reliquary.example.org
+  administratorEmails:
+    - admin@example.org
+  email:
+    from: Reliquary <noreply@example.org>
+    smtp:
+      host: smtp.example.org
+      userName: reliquary
+  google:
+    clientId: example.apps.googleusercontent.com
+  moxfieldUserAgent: Reliquary/0.2 (admin@example.org)
+extraEnv:
+  - name: Logging__LogLevel__Default
+    value: Warning
+secrets:
+  existingSecret: reliquary-secrets
+api:
+  replicas: 3
+  image:
+    digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+  topologySpreadConstraints:
+    - maxSkew: 1
+      topologyKey: kubernetes.io/hostname
+      whenUnsatisfiable: ScheduleAnyway
+      labelSelector:
+        matchLabels:
+          app.kubernetes.io/component: api
+redis:
+  enabled: true

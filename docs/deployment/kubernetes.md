@@ -1,7 +1,7 @@
 # Requirements for Kubernetes
 
 This page lists what the images of Reliquary need on Kubernetes.
-The Helm chart of milestone M4 ([#64](https://github.com/nicolas-goyon/reliquary/issues/64)) will use these rules.
+The Helm chart in `deploy/helm/reliquary` applies these rules.
 [ADR 0053](../decisions/0053-helm-chart-scope.md) gives the scope of the chart.
 Terms follow the [glossary](../glossary.md).
 [ADR 0042](../decisions/0042-deployed-instances-and-updates.md) gives the reasons.
@@ -62,3 +62,26 @@ Do the backup before the migrations, with `reliquary backup` and a persistent vo
 ## Redis
 
 Redis keeps the keys that protect the cookies. Give Redis a persistent volume, or the users must sign in again after a restart of Redis.
+
+## Helm chart
+
+The chart in `deploy/helm/reliquary` contains these resources:
+
+| Resource | Content |
+| --- | --- |
+| Deployment and Service `api` | The public API, with 2 replicas by default (`api.replicas`) and a PodDisruptionBudget |
+| Deployment and Service `worker` | The worker, with 1 replica. An update stops the old pod before the new pod starts. |
+| Deployment and Service `web` | The web app, with 2 replicas by default (`web.replicas`) and a PodDisruptionBudget |
+| Secret | The secret settings, when `secrets.existingSecret` is empty |
+| StatefulSet and Service `redis` | An optional Redis server with a persistent volume, when `redis.enabled` is `true` |
+
+The chart has no subcharts. PostgreSQL is always external.
+
+`values.yaml` gives all the values, with a comment for each value.
+These values are necessary:
+
+- `config.publicUrl`: the public address of the site.
+- `secrets.existingSecret`: the name of a Secret with the keys `Auth__SigningKey`, `ConnectionStrings__Users` and `ConnectionStrings__Redis`.
+  The containers read all the keys of the Secret as environment variables.
+
+To check a change of the chart, run `just helm-check`.
