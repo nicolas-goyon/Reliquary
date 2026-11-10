@@ -10,7 +10,7 @@ The tests use the sample with a fake HTTP handler, so they send no request to re
 ## Recorded responses
 
 These files are real responses of `POST https://api.recommander.cards/public-release/api/decks/recommend/top`.
-They were recorded on 2026-11-10 with the body `{"card_format":"oracle_id","commander":"<Oracle ID>","deck":[]}`.
+A contributor recorded them on 2026-11-10 with the body `{"card_format":"oracle_id","commander":"<Oracle ID>","deck":[]}`.
 
 | File | Request | Status |
 | --- | --- | --- |
