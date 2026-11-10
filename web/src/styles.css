@@ -412,6 +412,22 @@ button:disabled {
   margin: 0 0 0.5rem;
 }
 
+.development-plugins {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0 0 1rem;
+  padding: 0;
+  list-style: none;
+}
+
+.development-plugins code {
+  overflow-wrap: anywhere;
+}
+
+.plugin-not-checked {
+  margin-bottom: 0.5rem;
+}
+
 .secret {
   display: block;
   padding: 0.5rem;

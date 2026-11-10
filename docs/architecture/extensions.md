@@ -128,8 +128,44 @@ The instance settings of the section `Plugins` are:
 | --- | --- | --- |
 | `Plugins:MaxActivePlugins` | 8 | The maximum number of active plugins for each user. `PUT /api/v1/me/extensions/{id}` refuses one more plugin with the error `too_many_active_plugins`. |
 | `Plugins:FrameOrigin` | none | A second host name for the plugin frames, for example `https://plugins.example.org`. Without a value, the frames use the host of the instance, with an opaque origin. |
+| `Plugins:AllowDevelopmentPlugins` | `false` | Allows the development mode. `appsettings.Development.json` and the local instance of `compose.yaml` turn it on. A deployed instance keeps it off. |
 
 `GET /api/v1/extensions` gives these settings to the web app in the field `plugins`.
+
+#### Development mode
+
+On a development instance, a user loads a plugin from the URL of its plugin manifest, for example `http://localhost:5173/manifest.json`.
+
+1. The panel **Development plugins** of the account page shows only when `Plugins:AllowDevelopmentPlugins` is on.
+2. The web app reads the plugin manifest from the URL.
+   The server of the plugin must accept requests from the origin of the instance (CORS).
+3. The browser keeps the URL in its local storage. The core keeps no data about development plugins.
+4. The runtime loads the frame from `GET /api/v1/plugins/development/frame?entry=<URL>&network=<origin>`.
+   The CSP of this frame allows the origin of the entry point for scripts, styles, fonts, images and connections.
+   It also allows the WebSocket of this origin, so the server of the plugin can reload the plugin.
+   The `network` origins of the plugin manifest get `connect-src` and `img-src`.
+5. The connect message has `development: true`, and the interface shows a "Not checked" banner for the plugin.
+   Each contribution of a development plugin must show this banner.
+
+The core does not check a development plugin, but the plugin runs in the same sandbox as other plugins.
+The development plugins count in the limit of active plugins.
+
+#### Scripts in a plugin frame
+
+The frame has an opaque origin, so the browser sends the requests of the frame with the header `Origin: null`.
+A test with Chromium 158 and Firefox 159 gave these results for the entry point of a plugin:
+
+| Script | Without `Access-Control-Allow-Origin` | With `Access-Control-Allow-Origin: *` |
+| --- | --- | --- |
+| `<script type="module">` | Does not run | Runs |
+| Classic script with `integrity` and `crossorigin` | Does not run | Runs |
+| Classic script with no `integrity` | Runs | Runs |
+
+Thus:
+
+- The API must send `Access-Control-Allow-Origin: *` with the files of a plugin, because the frame loads them with an integrity hash.
+- The default CORS rule of the Vite server accepts only `localhost` origins, not `null`.
+  A plugin author sets `server.cors` to `true` in the Vite configuration of the plugin to use the development mode.
 
 #### Workers in a plugin frame
 

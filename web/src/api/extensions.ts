@@ -24,6 +24,8 @@ export interface PluginRuntimeSettings {
   maxActive: number
   /** The origin of the plugin frames, or null for the host of the instance. */
   frameOrigin: string | null
+  /** True when a user can load a plugin from a URL: the development mode. */
+  developmentPlugins: boolean
 }
 
 /** The response of `GET /extensions`. */

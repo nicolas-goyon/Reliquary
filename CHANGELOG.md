@@ -12,6 +12,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - The plugin runtime of the web app (ADR 0049): a sandboxed plugin frame for each active plugin, the RPC channel and the watchdog.
   The web app loads the runtime only when the user has an active plugin.
 - The settings `Plugins:MaxActivePlugins` (8 by default) and `Plugins:FrameOrigin`.
+- The development mode for plugins: on a development instance, a user loads a plugin from the URL of its plugin manifest.
+  The interface shows a "Not checked" banner for this plugin.
+  The setting `Plugins:AllowDevelopmentPlugins` is off by default.
 
 ## [0.2.0] - 2026-11-09
 

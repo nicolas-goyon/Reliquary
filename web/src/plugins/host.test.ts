@@ -14,7 +14,7 @@ function createHost(options: Partial<PluginHostOptions> = {}) {
   const events: PluginHostEvent[] = []
   const host = new PluginHost({
     container,
-    settings: { maxActive: 2, frameOrigin: null },
+    settings: { maxActive: 2, frameOrigin: null, developmentPlugins: false },
     coreApi: '1.1.0',
     language: () => 'fr',
     hostWindow,
@@ -80,7 +80,7 @@ describe('PluginHost', () => {
   })
 
   it('uses the frame origin of the instance', () => {
-    const context = createHost({ settings: { maxActive: 8, frameOrigin: 'https://plugins.example.org/' } })
+    const context = createHost({ settings: { maxActive: 8, frameOrigin: 'https://plugins.example.org/', developmentPlugins: false } })
 
     void context.host.start({ id: 'moxfield-sync', version: '0.1.0' })
 
@@ -107,13 +107,13 @@ describe('PluginHost', () => {
     expect(message).toEqual({ type: connectMessageType, coreApi: '1.1.0', plugin: { id: 'moxfield-sync', version: '0.1.0' }, language: 'fr', development: false })
     expect(origin).toBe('*')
     expect(transfer).toHaveLength(1)
-    expect(context.events).toEqual([{ type: 'started', plugin: { id: 'moxfield-sync', version: '0.1.0' } }])
+    expect(context.events).toEqual([{ type: 'started', plugin: { id: 'moxfield-sync', version: '0.1.0' }, development: false }])
     ;(transfer[0] as MessagePort).close()
     await context.host.stopAll()
   })
 
   it('refuses a plugin over the limit of active plugins', async () => {
-    const context = createHost({ settings: { maxActive: 2, frameOrigin: null } })
+    const context = createHost({ settings: { maxActive: 2, frameOrigin: null, developmentPlugins: false } })
     const first = await startFakePlugin(context, 'first')
     const second = await startFakePlugin(context, 'second')
 
@@ -162,6 +162,23 @@ describe('PluginHost', () => {
     await context.host.stopAll()
     alive.plugin.close()
     blocked.plugin.close()
+  })
+
+  it('starts a development plugin with its own frame address and the development flag', async () => {
+    const context = createHost()
+    const started = context.host.start({ id: 'dev', version: '0.0.1' }, { src: '/api/v1/plugins/development/frame?entry=x', development: true })
+    const frame = frameOf(context, 'dev')!
+    const postMessage = vi.spyOn(frame.contentWindow!, 'postMessage').mockImplementation(() => undefined)
+
+    sendReady(context, frame.contentWindow)
+    await started
+
+    expect(frame.getAttribute('src')).toBe('/api/v1/plugins/development/frame?entry=x')
+    expect(frame.getAttribute('sandbox')).toBe('allow-scripts')
+    expect(postMessage.mock.calls[0][0]).toMatchObject({ development: true })
+    expect(context.host.isDevelopment('dev')).toBe(true)
+    ;((postMessage.mock.calls[0] as unknown as [unknown, string, MessagePort[]])[2][0]).close()
+    await context.host.stopAll()
   })
 
   it('removes the frame when the frame sends no ready message in the time limit', async () => {

@@ -123,5 +123,9 @@
     "invalid_format": "This value does not have the correct format.",
     "not_allowed": "This value is not permitted.",
     "unknown": "This value is not correct."
+  },
+  "plugins": {
+    "notChecked": "Not checked.",
+    "notCheckedDescription": "The plugin {{name}} comes from a development URL. Reliquary did not review it. Use it only to develop a plugin."
   }
 }

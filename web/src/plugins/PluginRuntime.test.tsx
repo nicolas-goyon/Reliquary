@@ -11,10 +11,10 @@ const runtime = vi.hoisted(() => ({
 }))
 vi.mock('./runtime', () => runtime)
 
-function list(active: boolean): ExtensionList {
+function list(active: boolean, developmentPlugins = false): ExtensionList {
   return {
     coreApi: '1.1.0',
-    plugins: { maxActive: 8, frameOrigin: null },
+    plugins: { maxActive: 8, frameOrigin: null, developmentPlugins },
     items: [
       { id: 'moxfield-sync', kind: 'plugin', name: 'Moxfield', version: '0.1.0', coreApi: '^1.0', permissions: [], slots: [], enabled: true, compatible: true, active },
       { id: 'module', kind: 'module', name: 'Module', version: '1.0.0', coreApi: '^1.0', permissions: [], slots: [], enabled: true, compatible: true, active: true },
@@ -36,6 +36,7 @@ function renderRuntime(state: AuthState, response: ExtensionList | (() => Extens
 describe('PluginRuntime', () => {
   afterEach(() => {
     vi.clearAllMocks()
+    localStorage.clear()
   })
 
   it('does not ask the extensions for an anonymous user', async () => {
@@ -60,7 +61,7 @@ describe('PluginRuntime', () => {
     const response = list(true)
     const { view } = renderRuntime({ status: 'authenticated', account: testAccount }, response)
 
-    await waitFor(() => expect(runtime.startPluginRuntime).toHaveBeenCalledWith(response))
+    await waitFor(() => expect(runtime.startPluginRuntime).toHaveBeenCalledWith(response, { developmentUrls: [] }))
     const host = runtime.startPluginRuntime.mock.results[0].value
     view.unmount()
 
@@ -75,7 +76,7 @@ describe('PluginRuntime', () => {
     response = list(true)
     act(() => notifyPluginsChanged())
 
-    await waitFor(() => expect(runtime.startPluginRuntime).toHaveBeenCalledWith(response))
+    await waitFor(() => expect(runtime.startPluginRuntime).toHaveBeenCalledWith(response, { developmentUrls: [] }))
     expect(request).toHaveBeenCalledTimes(2)
   })
 
@@ -88,5 +89,24 @@ describe('PluginRuntime', () => {
 
     await waitFor(() => expect(runtime.startPluginRuntime).toHaveBeenCalledTimes(2))
     expect(first.stopAll).toHaveBeenCalledTimes(1)
+  })
+
+  it('starts the runtime for a development plugin on an instance that allows them', async () => {
+    localStorage.setItem('reliquary.developmentPlugins', JSON.stringify(['http://localhost:5173/manifest.json']))
+    const response = list(false, true)
+
+    renderRuntime({ status: 'authenticated', account: testAccount }, response)
+
+    await waitFor(() => expect(runtime.startPluginRuntime).toHaveBeenCalledWith(response, { developmentUrls: ['http://localhost:5173/manifest.json'] }))
+  })
+
+  it('does not start the runtime for a development plugin when the instance does not allow them', async () => {
+    localStorage.setItem('reliquary.developmentPlugins', JSON.stringify(['http://localhost:5173/manifest.json']))
+    const { request } = renderRuntime({ status: 'authenticated', account: testAccount }, list(false, false))
+
+    await waitFor(() => expect(request).toHaveBeenCalled())
+    await new Promise((resolve) => setTimeout(resolve, 10))
+
+    expect(runtime.startPluginRuntime).not.toHaveBeenCalled()
   })
 })

@@ -14,6 +14,8 @@ x-backend-environment: &backend-environment
   Auth__AdministratorEmails__0: admin@reliquary.localhost
   Auth__AllowAccountsWithoutEmail: ${RELIQUARY_ACCOUNTS_WITHOUT_EMAIL:-true}
   Auth__RequireCheckedEmail: ${RELIQUARY_REQUIRE_CHECKED_EMAIL:-false}
+  # The local instance is a development instance: a user can load a plugin from a URL, for example from the Vite server of a plugin.
+  Plugins__AllowDevelopmentPlugins: ${RELIQUARY_DEVELOPMENT_PLUGINS:-true}
   Auth__Providers__Google__ClientId: ${RELIQUARY_GOOGLE_CLIENT_ID:-}
   Auth__Providers__Google__ClientSecret: ${RELIQUARY_GOOGLE_CLIENT_SECRET:-}
   Email__From: Reliquary <noreply@reliquary.localhost>
