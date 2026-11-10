@@ -48,6 +48,8 @@ export interface ConnectMessage {
   language: string
   /** True when the plugin comes from a URL in the development mode. */
   development: boolean
+  /** Only in a panel frame: the panel that the frame shows, with the context of its slot. */
+  panel?: { id: string; slot: string; context: unknown }
 }
 
 /** The error codes of the protocol. The codes from -32768 to -32000 come from JSON-RPC 2.0. */

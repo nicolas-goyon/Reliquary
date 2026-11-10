@@ -16,8 +16,8 @@ function list(active: boolean, developmentPlugins = false): ExtensionList {
     coreApi: '1.1.0',
     plugins: { maxActive: 8, frameOrigin: null, developmentPlugins },
     items: [
-      { id: 'moxfield-sync', kind: 'plugin', name: 'Moxfield', version: '0.1.0', coreApi: '^1.0', permissions: [], slots: [], enabled: true, compatible: true, active },
-      { id: 'module', kind: 'module', name: 'Module', version: '1.0.0', coreApi: '^1.0', permissions: [], slots: [], enabled: true, compatible: true, active: true },
+      { id: 'moxfield-sync', kind: 'plugin', name: 'Moxfield', version: '0.1.0', coreApi: '^1.0', permissions: [], slots: [], enabled: true, compatible: true, active, panels: [], i18n: null },
+      { id: 'module', kind: 'module', name: 'Module', version: '1.0.0', coreApi: '^1.0', permissions: [], slots: [], enabled: true, compatible: true, active: true, panels: [], i18n: null },
     ],
   }
 }

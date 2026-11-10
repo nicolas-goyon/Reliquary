@@ -17,6 +17,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
   The setting `Plugins:AllowDevelopmentPlugins` is off by default.
 - Plugins can add buttons and menu items to the deck actions, the user menu and the navigation.
   The core renders the data of the plugin with its own components.
+- Plugin panels in sandboxed iframes: analysis tabs, parts of the card page, plugin pages and plugin dialogs.
+  The core creates the frame of a panel only when the user opens the panel.
+- Plugin columns in the table mode. The core asks the cells of all the rows in one call, and keeps them until the deck changes.
 
 ## [0.2.0] - 2026-11-09
 

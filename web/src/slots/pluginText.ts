@@ -1,4 +1,4 @@
-import type { PluginText } from '../slots/registry'
+import type { PluginText } from './registry'
 
 /** Gets the text of a plugin in the language of the interface, or in English. */
 export function pluginText(text: PluginText, language: string | undefined): string {

@@ -9,6 +9,7 @@ import { RpcError, RpcPeer, type PortLike } from './rpc.ts'
 class FakeFrame implements PluginEnvironment {
   readonly sent: unknown[] = []
   readonly parent = { postMessage: (message: unknown) => this.sent.push(message) }
+  readonly document = { body: { id: 'body' } as unknown as HTMLElement, documentElement: { scrollHeight: 120 } as unknown as HTMLElement }
   private readonly listeners = new Set<(event: MessageEvent) => void>()
 
   addEventListener(_type: 'message', listener: (event: MessageEvent) => void): void {
@@ -155,5 +156,106 @@ describe('definePlugin', () => {
     const handle = definePlugin({ activate: () => undefined })
 
     await assert.rejects(handle.ready, /not in a plugin frame/)
+  })
+
+  it('mounts a panel in a panel frame, with no call of activate', async () => {
+    const frame = new FakeFrame()
+    const mounted: unknown[] = []
+    const updates: unknown[] = []
+    let activations = 0
+    const handle = definePlugin(
+      {
+        activate: () => void activations++,
+        panels: {
+          stats: {
+            mount: (element, context) => void mounted.push([element, context]),
+            update: (context) => void updates.push(context),
+          },
+        },
+      },
+      { environment: frame },
+    )
+
+    const host = frame.connect({ panel: { id: 'stats', slot: 'analysis.tabs', context: { deckId: 'deck-1' } } })
+    await handle.ready
+    await host.call('panel.update', { context: { deckId: 'deck-2' } })
+
+    assert.equal(activations, 0)
+    assert.deepEqual(mounted, [[frame.document.body, { deckId: 'deck-1' }]])
+    assert.deepEqual(updates, [{ deckId: 'deck-2' }])
+    host.close()
+  })
+
+  it('sends the size, the dialogs and the pages to the core', async () => {
+    const frame = new FakeFrame()
+    const handle = definePlugin({ activate: () => undefined }, { environment: frame })
+    const host = frame.connect()
+    const calls: unknown[] = []
+    for (const method of ['ui.resize', 'ui.openDialog', 'ui.closeDialog', 'ui.openPage'] as const) {
+      host.handle(method, (params: unknown) => {
+        calls.push([method, params])
+        return null
+      })
+    }
+    const sdk = await handle.ready
+
+    await sdk.ui.resize(300)
+    await sdk.ui.openDialog('confirm', { deckId: 'deck-1' })
+    await sdk.ui.closeDialog()
+    await sdk.ui.openPage('settings')
+
+    assert.deepEqual(calls, [
+      ['ui.resize', { height: 300 }],
+      ['ui.openDialog', { panel: 'confirm', data: { deckId: 'deck-1' } }],
+      ['ui.closeDialog', null],
+      ['ui.openPage', { page: 'settings' }],
+    ])
+    host.close()
+  })
+
+  it('rejects "ready" when the plugin has no code for the panel', async () => {
+    const frame = new FakeFrame()
+    const handle = definePlugin({ activate: () => undefined }, { environment: frame })
+
+    const host = frame.connect({ panel: { id: 'missing', slot: 'card.page', context: { oracleId: 'x' } } })
+
+    await assert.rejects(handle.ready, /no code for the panel "missing"/)
+    host.close()
+  })
+
+  it('gives the cells of a column for many rows in one call', async () => {
+    const frame = new FakeFrame()
+    const handle = definePlugin(
+      {
+        async activate(sdk) {
+          await sdk.ui.contribute('table.columns', {
+            id: 'price',
+            title: { en: 'Price', fr: 'Prix' },
+            cells: (rows) => rows.map((row) => (row.quantity > 1 ? { text: `${row.quantity} x 1 €`, tone: 'warning' } : null)),
+          })
+          await sdk.ui.contribute('table.columns', { id: 'broken', title: 'Broken', cells: () => [] })
+        },
+      },
+      { environment: frame },
+    )
+    const host = frame.connect()
+    const contributions: unknown[] = []
+    host.handle('ui.contribute', (params) => {
+      contributions.push(params)
+      return null
+    })
+    await handle.ready
+    const rows = [
+      { deckId: 'deck-1', lineId: 'line-1', oracleId: 'oracle-1', quantity: 2, zone: 'main' },
+      { deckId: 'deck-1', lineId: 'line-2', oracleId: 'oracle-2', quantity: 1, zone: 'main' },
+    ]
+
+    const result = await host.call('ui.cells', { id: 'price', rows })
+
+    assert.deepEqual(contributions[0], { slot: 'table.columns', contribution: { id: 'price', title: { en: 'Price', fr: 'Prix' } } })
+    assert.deepEqual(result, { cells: [{ text: '2 x 1 €', tone: 'warning' }, null] })
+    await assert.rejects(host.call('ui.cells', { id: 'broken', rows }), (error: RpcError) => error.code === errorCodes.internalError)
+    await assert.rejects(host.call('ui.cells', { id: 'missing', rows }), (error: RpcError) => error.code === errorCodes.invalidParams)
+    host.close()
   })
 })

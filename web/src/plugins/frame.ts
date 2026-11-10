@@ -17,20 +17,23 @@ export function frameUrl(plugin: PluginVersion, frameOrigin: string | null): str
 }
 
 /**
- * Creates the iframe of a plugin.
+ * Creates the iframe of a plugin. With a panel title, the frame is visible: it is the frame of a panel.
  * - `sandbox="allow-scripts"` only: the frame has an opaque origin, so it cannot read the cookies, the storage or the DOM of the core.
  * - The `allow` attribute is empty: the frame gets no device. Issue #290 adds the devices that the user accepts.
  * - The frame sends no referrer.
  */
-export function createPluginFrame(document: Document, plugin: PluginVersion, src: string): HTMLIFrameElement {
+export function createPluginFrame(document: Document, plugin: PluginVersion, src: string, panelTitle?: string): HTMLIFrameElement {
   const frame = document.createElement('iframe')
   frame.setAttribute('sandbox', 'allow-scripts')
   frame.setAttribute('allow', '')
   frame.setAttribute('referrerpolicy', 'no-referrer')
-  frame.setAttribute('aria-hidden', 'true')
-  frame.tabIndex = -1
-  frame.hidden = true
-  frame.title = plugin.id
+  if (panelTitle === undefined) {
+    // The main frame of a plugin has no interface.
+    frame.setAttribute('aria-hidden', 'true')
+    frame.tabIndex = -1
+    frame.hidden = true
+  }
+  frame.title = panelTitle ?? plugin.id
   frame.dataset.plugin = plugin.id
   frame.src = src
   return frame

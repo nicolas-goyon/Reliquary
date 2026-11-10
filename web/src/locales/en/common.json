@@ -127,6 +127,13 @@
   "plugins": {
     "notChecked": "Not checked.",
     "notCheckedDescription": "The plugin {{name}} comes from a development URL. Reliquary did not review it. Use it only to develop a plugin.",
-    "actionFailed": "The plugin {{name}} did not complete the action."
+    "actionFailed": "The plugin {{name}} did not complete the action.",
+    "panelLoading": "The plugin {{name}} loads its panel.",
+    "panelFailed": "The panel of the plugin {{name}} did not answer. Close the panel and open it again.",
+    "pageUnavailable": "This plugin page is not available. Make sure that the plugin is active for your account.",
+    "pageTitle": "Plugin page",
+    "closeDialog": "Close",
+    "cellLoading": "The plugin loads the cell.",
+    "cellFailed": "The plugin {{name}} did not give this cell."
   }
 }
