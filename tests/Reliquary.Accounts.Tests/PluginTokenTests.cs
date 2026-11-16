@@ -171,7 +171,7 @@ public sealed class PluginTokenTests
     private static (JsonElement Header, JsonElement Payload) Decode(string token)
     {
         var parts = token["rlp_".Length..].Split('.');
-        return (JsonDocument.Parse(Base64UrlEncoder.Decode(parts[0])).RootElement.Clone(), JsonDocument.Parse(Base64UrlEncoder.Decode(parts[1])).RootElement.Clone());
+        return (JsonElement.Parse(Base64UrlEncoder.Decode(parts[0])), JsonElement.Parse(Base64UrlEncoder.Decode(parts[1])));
     }
 
     /// <summary>Signs a JWT with the given properties, as an attacker with a token of another kind could try.</summary>
