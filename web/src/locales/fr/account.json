@@ -85,6 +85,43 @@
       "profile_read": "Lire votre compte : adresse e-mail, nom et langue"
     }
   },
+  "plugins": {
+    "title": "Plugins",
+    "description": "Les plugins ajoutent des fonctions à Reliquary. Chaque plugin s’exécute dans un bac à sable et n’obtient que les accès que vous acceptez.",
+    "version": "Version {{version}}",
+    "state": {
+      "active": "Actif.",
+      "inactive": "Inactif.",
+      "paused": "En pause. La nouvelle version demande plus d’accès. Lisez les nouveaux accès pour relancer le plugin."
+    },
+    "activate": "Activer",
+    "deactivate": "Désactiver",
+    "review": "Lire les nouveaux accès",
+    "activated": "Le plugin {{name}} est actif.",
+    "deactivated": "Le plugin {{name}} est inactif.",
+    "consent": {
+      "title": "Activer {{name}}",
+      "updateTitle": "Nouveaux accès pour {{name}}",
+      "intro": "Lisez les accès que demande le plugin {{name}} (version {{version}}). Le plugin n’obtient que ces accès.",
+      "updateIntro": "Vous avez accepté la version {{accepted}} de {{name}}. La version {{version}} demande en plus les accès ci-dessous. Le plugin reste en pause tant que vous n’acceptez pas ces accès.",
+      "nothing": "Le plugin ne demande aucun accès à vos données, à d’autres sites ou à vos appareils.",
+      "scopes": "Vos données",
+      "network": "Sites que le plugin peut contacter",
+      "networkHint": "Le plugin peut envoyer des données à ces sites et en recevoir.",
+      "siteHost": "Le site {{host}}",
+      "subdomains": "Tous les sites du domaine {{host}}",
+      "computer": "Les programmes de votre ordinateur",
+      "computerPort": "Un programme de votre ordinateur, sur le port {{port}}",
+      "devices": "Appareils",
+      "camera": "Votre caméra",
+      "loopbackNetwork": "Les programmes de votre ordinateur, par le réseau local",
+      "sites": "Comptes liés",
+      "site": "Lier votre compte du site {{site}}",
+      "accept": "Accepter et activer",
+      "acceptUpdate": "Accepter les nouveaux accès",
+      "cancel": "Annuler"
+    }
+  },
   "developmentPlugins": {
     "title": "Plugins en développement",
     "description": "Cette instance est une instance de développement. Vous pouvez charger un plugin depuis l’URL de son manifeste, par exemple le serveur Vite du plugin. Le plugin s’exécute dans un bac à sable, mais personne ne l’a examiné. Ne chargez que vos propres plugins.",

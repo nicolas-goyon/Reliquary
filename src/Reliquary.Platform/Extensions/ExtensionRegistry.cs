@@ -50,7 +50,8 @@ internal sealed class ExtensionRow
 }
 
 /// <summary>
-/// Reads and writes the extension registry: the installed extensions of the instance and the plugin activations of each user.
+/// Reads and writes the extension registry: the installed extensions of the instance.
+/// <see cref="PluginActivations"/> keeps the plugin activations of each user.
 /// </summary>
 /// <param name="database">The databases of the instance.</param>
 /// <param name="time">The clock.</param>
@@ -154,32 +155,5 @@ internal sealed class ExtensionRegistry(IDatabase database, TimeProvider time)
             "delete from users.extensions where id = @id",
             new { id },
             cancellationToken: cancellationToken)) == 1;
-    }
-
-    /// <summary>
-    /// Gets the plugin activations of a user.
-    /// </summary>
-    /// <returns>The activation flag of each plugin that the user changed.</returns>
-    public async Task<IReadOnlyDictionary<string, bool>> PluginActivationsAsync(Guid ownerId, CancellationToken cancellationToken)
-    {
-        await using var connection = await database.OpenContentAsync(ownerId, ContentAccess.Read, cancellationToken);
-        var rows = await connection.QueryAsync<(string ExtensionId, bool Enabled)>(new CommandDefinition(
-            "select extension_id, enabled from content.plugin_activations where owner_id = @ownerId",
-            new { ownerId },
-            cancellationToken: cancellationToken));
-        return rows.ToDictionary(row => row.ExtensionId, row => row.Enabled, StringComparer.Ordinal);
-    }
-
-    public async Task SetPluginActivationAsync(Guid ownerId, string extensionId, bool enabled, CancellationToken cancellationToken)
-    {
-        await using var connection = await database.OpenContentAsync(ownerId, ContentAccess.Write, cancellationToken);
-        await connection.ExecuteAsync(new CommandDefinition(
-            """
-            insert into content.plugin_activations (owner_id, extension_id, enabled, updated_at)
-            values (@ownerId, @extensionId, @enabled, @now)
-            on conflict (owner_id, extension_id) do update set enabled = excluded.enabled, updated_at = excluded.updated_at
-            """,
-            new { ownerId, extensionId, enabled, now = time.GetUtcNow() },
-            cancellationToken: cancellationToken));
     }
 }

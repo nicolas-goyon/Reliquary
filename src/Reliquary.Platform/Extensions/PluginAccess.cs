@@ -3,16 +3,18 @@ using Reliquary.BuildingBlocks.Security;
 namespace Reliquary.Platform.Extensions;
 
 /// <summary>
-/// Tells whether a plugin runs for a user, from the extension registry.
-/// A plugin runs when the instance has it, enables it, the plugin supports the core API, the plugin catalog did not revoke the version, and the user activated it.
+/// Tells whether a plugin runs for a user, from the extension registry and the consent of the user.
+/// A plugin runs when the instance has it, enables it, the plugin supports the core API, the plugin catalog did not revoke the version,
+/// the user activated it, and the user accepted all the access of the installed version.
 /// </summary>
 /// <param name="registry">The extension registry.</param>
-internal sealed class PluginAccess(ExtensionRegistry registry) : IPluginAccess
+/// <param name="activations">The plugin activations of the users.</param>
+internal sealed class PluginAccess(ExtensionRegistry registry, PluginActivations activations) : IPluginAccess
 {
     /// <inheritdoc />
     /// <remarks>
-    /// The scopes are the permissions of the manifest that are scopes of the public API.
-    /// The consent of issue #287 will keep the scopes that the user accepted, and this method will then give only these scopes.
+    /// The scopes are the scopes of the public API that the installed version asks for and that the user accepted.
+    /// A paused plugin gets no scopes: the method returns null.
     /// </remarks>
     public async Task<IReadOnlyList<string>?> ScopesAsync(Guid ownerId, string pluginId, CancellationToken cancellationToken)
     {
@@ -22,12 +24,14 @@ internal sealed class PluginAccess(ExtensionRegistry registry) : IPluginAccess
             return null;
         }
 
-        var activations = await registry.PluginActivationsAsync(ownerId, cancellationToken);
-        if (!activations.GetValueOrDefault(pluginId))
+        var asked = PluginGrant.FromManifest(row.Manifest);
+        var activation = await activations.FindAsync(ownerId, pluginId, cancellationToken);
+        if (activation is null || !activation.Runs(asked))
         {
             return null;
         }
 
-        return Scopes.All.Where(scope => row.Permissions.Contains(scope, StringComparer.Ordinal)).ToList();
+        var accepted = asked.Intersect(activation.Accepted);
+        return Scopes.All.Where(scope => accepted.Scopes.Contains(scope, StringComparer.Ordinal)).ToList();
     }
 }

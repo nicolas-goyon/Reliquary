@@ -22,6 +22,26 @@ export interface Extension {
   i18n: Record<string, Record<string, string>> | null
   /** The import formats and the export formats of the plugin manifest. */
   formats: ExtensionFormat[]
+  /** The network origins that the plugin manifest asks for. */
+  network: string[]
+  /** The devices that the plugin manifest asks for: "camera" and "loopback-network". */
+  devices: string[]
+  /** The host names of the linked account sites of the plugin manifest. */
+  sites: string[]
+  /** The access that the user accepted for the plugin, or null. */
+  consent: PluginConsent | null
+  /** True when the user activated the plugin, but the installed version asks for access that the user did not accept. */
+  paused: boolean
+}
+
+/** The access that the user accepted for a plugin version. */
+export interface PluginConsent {
+  version: string
+  scopes: string[]
+  network: string[]
+  devices: string[]
+  sites: string[]
+  acceptedAt: string | null
 }
 
 /** An import format or an export format of a plugin manifest. */

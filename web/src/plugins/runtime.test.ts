@@ -6,7 +6,7 @@ function list(developmentPlugins: boolean): ExtensionList {
   return {
     coreApi: '1.1.0',
     plugins: { maxActive: 8, frameOrigin: null, developmentPlugins },
-    items: [{ id: 'installed', kind: 'plugin', name: 'Installed', version: '1.0.0', coreApi: '^1.0', permissions: [], slots: [], enabled: true, compatible: true, active: true, panels: [], i18n: null, formats: [] }],
+    items: [{ id: 'installed', kind: 'plugin', name: 'Installed', version: '1.0.0', coreApi: '^1.0', permissions: [], slots: [], enabled: true, compatible: true, active: true, panels: [], i18n: null, formats: [], network: [], devices: [], sites: [], consent: null, paused: false }],
   }
 }
 
@@ -30,6 +30,20 @@ describe('startPluginRuntime', () => {
     expect(host.isDevelopment('installed')).toBe(false)
     await host.stopAll()
     expect(document.querySelector('.plugin-frames')).toBeNull()
+  })
+
+  it('gives the frame only the network origins and the devices that the user accepted', async () => {
+    const accepted = list(false)
+    accepted.items[0] = {
+      ...accepted.items[0],
+      network: ['https://api.example.com', 'https://cdn.example.com'],
+      devices: ['camera'],
+      consent: { version: '1.0.0', scopes: [], network: ['https://api.example.com', 'https://old.example.com'], devices: ['camera'], sites: [], acceptedAt: null },
+    }
+    const host = startPluginRuntime(accepted, { connectTimeoutMs: 60_000 })
+
+    expect(document.querySelector('iframe[data-plugin="installed"]')).toHaveAttribute('src', '/api/v1/plugins/installed/1.0.0/frame?network=https%3A%2F%2Fapi.example.com&devices=camera')
+    await host.stopAll()
   })
 
   it('ignores the development plugins when the instance does not allow them', async () => {

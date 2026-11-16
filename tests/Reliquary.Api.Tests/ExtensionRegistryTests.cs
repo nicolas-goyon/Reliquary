@@ -43,7 +43,8 @@ public sealed class ExtensionRegistryTests
         var beforeEnable = await ListAsync(user);
         var enable = await admin.PatchAsJsonAsync("/api/v1/admin/extensions/moxfield-sync", new { enabled = true, settings = new { relay = true } }, TestContext.Current.CancellationToken);
         var afterEnable = await ListAsync(user);
-        var activate = await user.PutAsJsonAsync("/api/v1/me/extensions/moxfield-sync", new { enabled = true }, TestContext.Current.CancellationToken);
+        var consent = new { version = "0.1.0", scopes = new[] { "decks:read", "decks:write" }, network = new[] { "https://api.moxfield.com" } };
+        var activate = await user.PutAsJsonAsync("/api/v1/me/extensions/moxfield-sync", new { enabled = true, consent }, TestContext.Current.CancellationToken);
         var afterActivate = await ListAsync(user);
         var anonymous = await ListAsync(instance.Factory.CreateClient());
 

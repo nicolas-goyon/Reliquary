@@ -2,6 +2,7 @@ import { activePlugins, type ExtensionList } from '../api/extensions'
 import type { SlotRegistry } from '../slots/registry'
 import { registerContributionMethods } from './contributions'
 import { developmentFrameUrl, loadDevelopmentManifest } from './development'
+import { frameAccess } from './consent'
 import { frameUrl } from './frame'
 import { registerPluginFormats } from './formats'
 import { registerPluginUi, type PanelPlugin } from './pluginUi'
@@ -92,18 +93,20 @@ export function startPluginRuntime(list: ExtensionList, options: RuntimeOptions 
   }
 
   for (const plugin of activePlugins(list)) {
+    // The panel frames use the same address, so all the frames of the plugin get only the accepted access.
+    const src = frameUrl(plugin, list.plugins.frameOrigin, frameAccess(plugin))
     plugins.set(plugin.id, {
       id: plugin.id,
       name: plugin.name,
       version: plugin.version,
       slots: plugin.slots,
       development: false,
-      src: frameUrl(plugin, list.plugins.frameOrigin),
+      src,
       panels: plugin.panels ?? [],
       i18n: plugin.i18n ?? null,
       formats: plugin.formats ?? [],
     })
-    start({ id: plugin.id, version: plugin.version })
+    start({ id: plugin.id, version: plugin.version }, { src })
   }
 
   if (list.plugins.developmentPlugins) {

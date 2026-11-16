@@ -244,7 +244,7 @@ public sealed class PluginTokenTests
         }
 
         public async Task ActivateAsync(bool enabled) =>
-            Assert.Equal(HttpStatusCode.NoContent, (await User.SendAsync(HttpMethod.Put, $"/api/v1/me/extensions/{PluginId}", new { enabled })).StatusCode);
+            Assert.Equal(HttpStatusCode.NoContent, (await User.SendAsync(HttpMethod.Put, $"/api/v1/me/extensions/{PluginId}", new { enabled, consent = new { version = "1.0.0", scopes = DecksRead } })).StatusCode);
 
         /// <summary>Gets a delegation token with the scope decks:read for the user.</summary>
         public async Task<string> DelegationTokenAsync()
