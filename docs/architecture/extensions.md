@@ -117,6 +117,20 @@ Plugins have two purposes:
   - The core keeps the cells of the last version of each deck. A change of the deck increases its version, so the core asks the cells again.
   - A cell that the plugin does not give shows a dash, with the reason for screen readers.
   - The header of a column of a development plugin shows the badge "Not checked".
+- Plugin formats use the slots `deck.import-formats`, `deck.export-formats`, `collection.import-formats` and `collection.export-formats`:
+  - The field `formats` of the plugin manifest declares each format, with its direction, its target, its title and its file name extensions.
+    `GET /api/v1/extensions` gives the formats to the web app.
+  - The import and export forms show the plugin formats after the formats of the core.
+    A format of a development plugin shows "not checked" after its name.
+  - An import format calls `format.import` with the content and the name of the file.
+    The plugin gives a deck list in the text format of Reliquary, or a collection CSV of Reliquary.
+    The core then imports this text with its own endpoint and the session of the user, so the plugin needs no write scope.
+  - An export format gets the CSV file of Reliquary from the export endpoint of the core.
+    Then it calls `format.export`, and the plugin gives its file: a name, a media type and a text.
+  - A conversion has a time limit of 30 seconds.
+    The size limit of 1 MB of the RPC channel applies to the content in the two directions.
+  - The core removes the folder part and the control characters of the file name.
+    It accepts only text media types, JSON and XML, and uses `text/plain` for other types.
 - Panels (analysis tabs, the card page, plugin pages and dialogs) render in their own sandboxed iframe.
 - The plugin frame contains no credential of the user.
   The core calls the public API for the plugin with a plugin token, which has only the scopes that the user accepted.

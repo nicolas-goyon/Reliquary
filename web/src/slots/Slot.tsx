@@ -1,6 +1,6 @@
 import { Component, lazy, Suspense, type ErrorInfo, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { isPluginColumn, isPluginContribution, isPluginPanel, useSlotContributions, type AnySlotContribution, type SlotContexts, type SlotName, type TableColumnContext } from './registry'
+import { isPluginColumn, isPluginContribution, isPluginFormat, isPluginPanel, useSlotContributions, type AnySlotContribution, type SlotContexts, type SlotName, type TableColumnContext } from './registry'
 
 interface SlotProps<Name extends SlotName> {
   name: Name
@@ -48,7 +48,7 @@ export function SlotItem<Name extends SlotName>({ slot, contribution, context }:
         <Suspense fallback={null}>
           <PluginAction contribution={contribution} context={context} appearance={slot === 'deck.actions' ? 'button' : 'link'} />
         </Suspense>
-      ) : isPluginColumn(contribution) ? (
+      ) : isPluginFormat(contribution) ? null : isPluginColumn(contribution) ? (
         <Suspense fallback={null}>
           <PluginColumn contribution={contribution} context={context as TableColumnContext} />
         </Suspense>

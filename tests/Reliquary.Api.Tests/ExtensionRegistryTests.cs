@@ -160,7 +160,7 @@ public sealed class ExtensionRegistryTests
     }
 
     [Fact]
-    public async Task ExtensionListGivesThePanelsAndTheTranslationsOfAPlugin()
+    public async Task ExtensionListGivesThePanelsTheFormatsAndTheTranslationsOfAPlugin()
     {
         await using var instance = await Instance.CreateAsync();
         using var admin = await instance.SignInAsync("admin@example.org");
@@ -174,6 +174,11 @@ public sealed class ExtensionRegistryTests
             entry = "dist/index.js",
             slots = new[] { "card.page" },
             panels = new[] { new { id = "prices", slot = "card.page", title = "Prices" } },
+            formats = new object[]
+            {
+                new { id = "dek", direction = "import", target = "deck", title = "Scanner list", extensions = new[] { ".scan" } },
+                new { id = "sheet", direction = "export", target = "collection", title = "Sheet" },
+            },
             i18n = new Dictionary<string, Dictionary<string, string>> { ["fr"] = new() { ["panels.prices.title"] = "Prix" } },
         };
         (await admin.PutAsJsonAsync("/api/v1/admin/extensions/card-scan", manifest, TestContext.Current.CancellationToken)).EnsureSuccessStatusCode();
@@ -183,6 +188,11 @@ public sealed class ExtensionRegistryTests
 
         Assert.Equal([new ExtensionPanelResponse("prices", "card.page", "Prices")], item.Panels);
         Assert.Equal("Prix", item.I18n!.Value.GetProperty("fr").GetProperty("panels.prices.title").GetString());
+        Assert.Equal(2, item.Formats.Count);
+        Assert.Equal(["dek", "sheet"], item.Formats.Select(format => format.Id));
+        Assert.Equal(("import", "deck", "Scanner list"), (item.Formats[0].Direction, item.Formats[0].Target, item.Formats[0].Title));
+        Assert.Equal([".scan"], item.Formats[0].Extensions);
+        Assert.Empty(item.Formats[1].Extensions);
     }
 
     [Fact]

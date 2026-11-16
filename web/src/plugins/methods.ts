@@ -27,6 +27,10 @@ export interface PluginMethods {
   'plugin.deactivate': { params: null; result: null }
   /** Only in a panel frame: the context of the slot changed. */
   'panel.update': { params: { context: unknown }; result: null }
+  /** The user imports a file with an import format of the plugin. */
+  'format.import': { params: { id: string; content: string; fileName: string | null }; result: unknown }
+  /** The user exports with an export format of the plugin. */
+  'format.export': { params: { id: string; content: string }; result: unknown }
   /** The core asks the cells of many rows of a column of the table mode. */
   'ui.cells': { params: { id: string; rows: Record<string, unknown>[] }; result: unknown }
   /** The user selected a button or a menu item of the plugin. */

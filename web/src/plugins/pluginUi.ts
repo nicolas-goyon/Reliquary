@@ -1,4 +1,4 @@
-import type { ExtensionPanel } from '../api/extensions'
+import type { ExtensionFormat, ExtensionPanel } from '../api/extensions'
 import { navigate } from '../router/navigation'
 import { pluginPanelSlots, type PanelState, type PluginPanelSlot, type PluginText, type SlotRegistry } from '../slots/registry'
 import type { HostPeer } from './connection'
@@ -14,6 +14,7 @@ export interface PanelPlugin extends ContributingPlugin {
   src: string
   panels: ExtensionPanel[]
   i18n: Record<string, Record<string, string>> | null
+  formats: ExtensionFormat[]
 }
 
 /** The options of the runtime that each panel frame uses. */

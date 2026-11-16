@@ -21,6 +21,7 @@ const plugin: PanelPlugin = {
     { id: 'confirm', slot: 'plugin.dialog', title: 'Confirm the import' },
   ],
   i18n: { fr: { 'panels.stats.title': 'Statistiques du scan', name: 'Scan de cartes' } },
+  formats: [],
 }
 
 function setup() {

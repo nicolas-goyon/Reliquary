@@ -20,6 +20,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Plugin panels in sandboxed iframes: analysis tabs, parts of the card page, plugin pages and plugin dialogs.
   The core creates the frame of a panel only when the user opens the panel.
 - Plugin columns in the table mode. The core asks the cells of all the rows in one call, and keeps them until the deck changes.
+- Plugin import formats and export formats for decks and for the collection.
+  The plugin converts the file, and the core imports or exports the data with its own endpoints.
 
 ## [0.2.0] - 2026-11-09
 
