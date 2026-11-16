@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Reliquary.BuildingBlocks.Data;
 using Reliquary.BuildingBlocks.Email;
 using Reliquary.BuildingBlocks.Events;
+using Reliquary.BuildingBlocks.Security;
 using Reliquary.Platform.Backup;
 using Reliquary.Platform.Data;
 using Reliquary.Platform.Email;
@@ -51,6 +52,7 @@ public static class PlatformServiceCollectionExtensions
         services.TryAddSingleton<MigrationRunner>();
         services.TryAddSingleton<ExtensionRegistry>();
         services.TryAddSingleton<PluginFileStore>();
+        services.TryAddSingleton<IPluginAccess, PluginAccess>();
 
         if (string.IsNullOrWhiteSpace(configuration[$"{EmailOptions.Section}:Smtp:Host"]))
         {
