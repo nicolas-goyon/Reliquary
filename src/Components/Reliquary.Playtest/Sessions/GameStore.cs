@@ -30,6 +30,12 @@ public enum GameWriteStatus
 
     /// <summary>The game does not exist, or it expired.</summary>
     NotFound,
+
+    /// <summary>
+    /// Another API replica had conflicts on this game, and it has the priority now. The store did not write.
+    /// Wait until the priority ends (<see cref="GameStore{T}.WaitForPriorityAsync"/>), then read the game again.
+    /// </summary>
+    Yield,
 }
 
 /// <summary>
@@ -38,7 +44,7 @@ public enum GameWriteStatus
 /// <param name="Status">The result.</param>
 /// <param name="Seq">
 /// For <see cref="GameWriteStatus.Written"/> and <see cref="GameWriteStatus.Duplicate"/>, the sequence number of the change.
-/// For <see cref="GameWriteStatus.Conflict"/>, the current sequence number. Else 0.
+/// For <see cref="GameWriteStatus.Conflict"/> and <see cref="GameWriteStatus.Yield"/>, the current sequence number. Else 0.
 /// </param>
 public sealed record GameWriteResult(GameWriteStatus Status, long Seq);
 
@@ -117,10 +123,13 @@ internal sealed class GameStore<T>(Lazy<IConnectionMultiplexer> redis, IOptions<
         return 1
         """;
 
-    // KEYS: 1 state, 2 seq, 3 log, 4 action IDs.
+    // KEYS: 1 state, 2 seq, 3 log, 4 action IDs, 5 priority.
     // ARGV: 1 expected seq, 2 state, 3 TTL in milliseconds, 4 log entry, 5 seat ('' for the server),
-    // 6 client action ID ('' for none), 7 stream length, 8 IDs per seat.
-    // Returns {status, seq}: 1 written, 2 conflict, 3 duplicate, 4 not found.
+    // 6 client action ID ('' for none), 7 stream length, 8 IDs per seat, 9 replica ID, 10 priority lifetime in milliseconds.
+    // Returns {status, seq}: 1 written, 2 conflict, 3 duplicate, 4 not found, 5 yield.
+    // A conflict also returns the current state: {2, seq, state}. The caller can then try again with no read.
+    // A conflict gives the priority to the replica of the caller, when no other replica has it. While another replica has
+    // the priority, the script does not write (yield). A write of the replica with the priority ends the priority.
     // The hash of the action IDs has these fields: "id:{seat}:{client action ID}" = seq of the action,
     // "slot:{seat}:{n}" = the client action ID in the slot n of the ring of the seat, "next:{seat}" = the count of IDs of the seat.
     private const string WriteScript = """
@@ -135,8 +144,16 @@ internal sealed class GameStore<T>(Lazy<IConnectionMultiplexer> redis, IOptions<
             return {3, tonumber(previous)}
           end
         end
+        local owner = redis.call('GET', KEYS[5])
+        if owner and owner ~= ARGV[9] then
+          return {5, tonumber(current)}
+        end
         if current ~= ARGV[1] then
-          return {2, tonumber(current)}
+          redis.call('SET', KEYS[5], ARGV[9], 'PX', ARGV[10])
+          return {2, tonumber(current), redis.call('GET', KEYS[1])}
+        end
+        if owner then
+          redis.call('DEL', KEYS[5])
         end
         local seq = redis.call('INCR', KEYS[2])
         redis.call('SET', KEYS[1], ARGV[2], 'PX', ARGV[3])
@@ -156,15 +173,32 @@ internal sealed class GameStore<T>(Lazy<IConnectionMultiplexer> redis, IOptions<
         return {1, seq}
         """;
 
-    // KEYS: 1 state, 2 seq, 3 log, 4 action IDs.
+    // KEYS: 1 state, 2 seq, 3 log, 4 action IDs, 5 priority.
     private const string DeleteScript = """
-        return redis.call('DEL', KEYS[1], KEYS[2], KEYS[3], KEYS[4])
+        return redis.call('DEL', KEYS[1], KEYS[2], KEYS[3], KEYS[4], KEYS[5])
+        """;
+
+    // KEYS: 1 priority. ARGV: 1 replica ID. Ends the priority only when this replica has it.
+    private const string ReleasePriorityScript = """
+        if redis.call('GET', KEYS[1]) == ARGV[1] then
+          return redis.call('DEL', KEYS[1])
+        end
+        return 0
         """;
 
     // KEYS: 1 state, 2 seq. Reads the two keys in one step, so the state and the number agree.
     private const string ReadScript = """
         return {redis.call('GET', KEYS[2]), redis.call('GET', KEYS[1])}
         """;
+
+    /// <summary>
+    /// The lifetime of the priority of a replica after a conflict. The replica normally ends it before, with its next write.
+    /// When the replica stops, the other replicas wait for this time at most.
+    /// </summary>
+    public static readonly TimeSpan PriorityLifetime = TimeSpan.FromSeconds(1);
+
+    /// <summary>The ID of this store in the priority key. Each API replica has its own store, so each replica has its own ID.</summary>
+    private readonly string replica = Guid.NewGuid().ToString("N");
 
     /// <summary>The highest seat number. The seats have the numbers 0 to <see cref="MaxSeat"/>.</summary>
     public const int MaxSeat = 15;
@@ -182,6 +216,9 @@ internal sealed class GameStore<T>(Lazy<IConnectionMultiplexer> redis, IOptions<
 
     /// <summary>Gets the key of the action stream of a game.</summary>
     public static string LogKey(string gameId) => $"{KeyPrefix}{{{gameId}}}:log";
+
+    /// <summary>Gets the key of the priority of a game: the ID of the replica that had conflicts and writes next.</summary>
+    public static string PriorityKey(string gameId) => $"{KeyPrefix}{{{gameId}}}:priority";
 
     /// <summary>Gets the key of the recent client action IDs of a game.</summary>
     public static string ActionsKey(string gameId) => $"{KeyPrefix}{{{gameId}}}:actions";
@@ -237,7 +274,19 @@ internal sealed class GameStore<T>(Lazy<IConnectionMultiplexer> redis, IOptions<
     /// <param name="state">The new state.</param>
     /// <param name="change">The change, for the action stream and for the client action IDs.</param>
     /// <returns>The result of the write.</returns>
-    public async Task<GameWriteResult> WriteAsync(string gameId, long expectedSeq, T state, GameChange change)
+    public async Task<GameWriteResult> WriteAsync(string gameId, long expectedSeq, T state, GameChange change) =>
+        (await WriteOrReadAsync(gameId, expectedSeq, state, change)).Result;
+
+    /// <summary>
+    /// Writes a new state of a game, as <see cref="WriteAsync"/>. After a conflict, also gives the current state of the game,
+    /// read in the same step as the conflict. The caller can then apply its change again with no other read.
+    /// </summary>
+    /// <param name="gameId">The ID of the game.</param>
+    /// <param name="expectedSeq">The sequence number of the state that the caller read.</param>
+    /// <param name="state">The new state.</param>
+    /// <param name="change">The change, for the action stream and for the client action IDs.</param>
+    /// <returns>The result of the write, and the current game after a conflict (else <see langword="null"/>).</returns>
+    public async Task<(GameWriteResult Result, StoredGame<T>? Current)> WriteOrReadAsync(string gameId, long expectedSeq, T state, GameChange change)
     {
         CheckId(gameId);
         ArgumentNullException.ThrowIfNull(change);
@@ -255,7 +304,7 @@ internal sealed class GameStore<T>(Lazy<IConnectionMultiplexer> redis, IOptions<
         var clientActionId = change.Seat is null ? string.Empty : change.ClientActionId ?? string.Empty;
         var values = (RedisResult[])(await Database.ScriptEvaluateAsync(
             WriteScript,
-            [StateKey(gameId), SeqKey(gameId), LogKey(gameId), ActionsKey(gameId)],
+            [StateKey(gameId), SeqKey(gameId), LogKey(gameId), ActionsKey(gameId), PriorityKey(gameId)],
             [
                 expectedSeq,
                 JsonSerializer.Serialize(state, Json),
@@ -265,12 +314,15 @@ internal sealed class GameStore<T>(Lazy<IConnectionMultiplexer> redis, IOptions<
                 clientActionId,
                 Settings.ActionStreamLength,
                 Settings.ClientActionIdsPerSeat,
+                replica,
+                (long)PriorityLifetime.TotalMilliseconds,
             ]))!;
         var status = (long)values[0] switch
         {
             1 => GameWriteStatus.Written,
             2 => GameWriteStatus.Conflict,
             3 => GameWriteStatus.Duplicate,
+            5 => GameWriteStatus.Yield,
             _ => GameWriteStatus.NotFound,
         };
         if (status == GameWriteStatus.Written)
@@ -278,7 +330,49 @@ internal sealed class GameStore<T>(Lazy<IConnectionMultiplexer> redis, IOptions<
             MarkActive(gameId);
         }
 
-        return new GameWriteResult(status, (long)values[1]);
+        var result = new GameWriteResult(status, (long)values[1]);
+        if (status != GameWriteStatus.Conflict || values.Length < 3 || values[2].IsNull)
+        {
+            return (result, null);
+        }
+
+        var current = JsonSerializer.Deserialize<T>((string)values[2]!, Json)
+            ?? throw new InvalidOperationException($"The state of the game {gameId} in Redis is null.");
+        return (result, new StoredGame<T>(result.Seq, current));
+    }
+
+    /// <summary>
+    /// Waits until no other replica has the priority of a game, with a short random wait between the checks.
+    /// </summary>
+    /// <param name="gameId">The ID of the game.</param>
+    /// <param name="delay">Gives the wait before the next check, from the number of the check.</param>
+    /// <param name="until">The time stamp, from <see cref="System.Diagnostics.Stopwatch.GetTimestamp"/>, after which the method stops waiting.</param>
+    /// <returns>A task that completes when the priority ended, or at <paramref name="until"/>.</returns>
+    public async Task WaitForPriorityAsync(string gameId, Func<int, TimeSpan> delay, long until)
+    {
+        CheckId(gameId);
+        ArgumentNullException.ThrowIfNull(delay);
+        for (var check = 0; System.Diagnostics.Stopwatch.GetTimestamp() < until; check++)
+        {
+            var owner = await Database.StringGetAsync(PriorityKey(gameId));
+            if (owner.IsNull || owner == replica)
+            {
+                return;
+            }
+
+            await Task.Delay(delay(check));
+        }
+    }
+
+    /// <summary>
+    /// Ends the priority of this replica on a game, for example when its change stops after a conflict with no write.
+    /// </summary>
+    /// <param name="gameId">The ID of the game.</param>
+    /// <returns>A task that completes when the store ended the priority.</returns>
+    public async Task ReleasePriorityAsync(string gameId)
+    {
+        CheckId(gameId);
+        await Database.ScriptEvaluateAsync(ReleasePriorityScript, [PriorityKey(gameId)], [replica]);
     }
 
     /// <summary>
@@ -325,7 +419,7 @@ internal sealed class GameStore<T>(Lazy<IConnectionMultiplexer> redis, IOptions<
         CheckId(gameId);
         var deleted = await Database.ScriptEvaluateAsync(
             DeleteScript,
-            [StateKey(gameId), SeqKey(gameId), LogKey(gameId), ActionsKey(gameId)]);
+            [StateKey(gameId), SeqKey(gameId), LogKey(gameId), ActionsKey(gameId), PriorityKey(gameId)]);
         await Database.SortedSetRemoveAsync(ActiveKey, gameId);
         return (long)deleted > 0;
     }

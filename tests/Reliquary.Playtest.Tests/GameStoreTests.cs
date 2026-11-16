@@ -277,6 +277,84 @@ public sealed class GameStoreTests(RedisFixture redis)
     }
 
     [Fact]
+    public async Task ConflictGivesTheCurrentStateWithItsSequenceNumber()
+    {
+        var (store, gameId) = await NewStoreAsync();
+        var state = TableStateTests.SampleState();
+        await store.CreateAsync(gameId, state, Created());
+        await store.WriteAsync(gameId, 0, state with { Turn = 5 }, Act(0, "a1"));
+
+        var (conflict, current) = await store.WriteOrReadAsync(gameId, 0, state with { Turn = 9 }, Act(1, "b1"));
+        var (written, none) = await store.WriteOrReadAsync(gameId, current!.Seq, current.State with { Turn = 6 }, Act(1, "b1"));
+
+        Assert.Equal(new GameWriteResult(GameWriteStatus.Conflict, 1), conflict);
+        Assert.Equal(1, current.Seq);
+        Assert.Equal(5, current.State.Turn);
+        Assert.Equal(new GameWriteResult(GameWriteStatus.Written, 2), written);
+        Assert.Null(none);
+    }
+
+    [Fact]
+    public async Task ConflictGivesThePriorityToTheReplicaUntilItsNextWrite()
+    {
+        // Two stores on one Redis are two API replicas.
+        var (first, gameId) = await NewStoreAsync();
+        var (second, _) = await NewStoreAsync();
+        var state = TableStateTests.SampleState();
+        await first.CreateAsync(gameId, state, Created());
+        await first.WriteAsync(gameId, 0, state, Act(0, "a1"));
+
+        var conflict = await second.WriteAsync(gameId, 0, state, Act(1, "b1"));
+        var yielded = await first.WriteAsync(gameId, 1, state, Act(0, "a2"));
+        var priority = await second.WriteAsync(gameId, 1, state, Act(1, "b1"));
+        var after = await first.WriteAsync(gameId, 2, state, Act(0, "a2"));
+
+        Assert.Equal(GameWriteStatus.Conflict, conflict.Status);
+        Assert.Equal(new GameWriteResult(GameWriteStatus.Yield, 1), yielded);
+        Assert.Equal(new GameWriteResult(GameWriteStatus.Written, 2), priority);
+        Assert.Equal(new GameWriteResult(GameWriteStatus.Written, 3), after);
+    }
+
+    [Fact]
+    public async Task ReleaseEndsThePriorityAndWaitReturnsAfterTheEnd()
+    {
+        var (first, gameId) = await NewStoreAsync();
+        var (second, _) = await NewStoreAsync();
+        var state = TableStateTests.SampleState();
+        await first.CreateAsync(gameId, state, Created());
+        await first.WriteAsync(gameId, 0, state, Act(0, "a1"));
+        await second.WriteAsync(gameId, 0, state, Act(1, "b1"));
+        var until = System.Diagnostics.Stopwatch.GetTimestamp() + (5 * System.Diagnostics.Stopwatch.Frequency);
+
+        var wait = first.WaitForPriorityAsync(gameId, _ => TimeSpan.FromMilliseconds(2), until);
+        await Task.Delay(50, Cancel);
+        var waiting = !wait.IsCompleted;
+        await second.ReleasePriorityAsync(gameId);
+        await wait.WaitAsync(TimeSpan.FromSeconds(5), Cancel);
+        var written = await first.WriteAsync(gameId, 1, state, Act(0, "a2"));
+
+        Assert.True(waiting);
+        Assert.Equal(GameWriteStatus.Written, written.Status);
+    }
+
+    [Fact]
+    public async Task PriorityEndsAfterItsLifetimeWhenTheReplicaStops()
+    {
+        var (first, gameId) = await NewStoreAsync();
+        var (second, _) = await NewStoreAsync();
+        var state = TableStateTests.SampleState();
+        await first.CreateAsync(gameId, state, Created());
+        await first.WriteAsync(gameId, 0, state, Act(0, "a1"));
+        await second.WriteAsync(gameId, 0, state, Act(1, "b1"));
+        var connection = await redis.GetAsync();
+
+        var ttl = await connection.GetDatabase().KeyTimeToLiveAsync(GameStore<TableState>.PriorityKey(gameId));
+
+        Assert.NotNull(ttl);
+        Assert.InRange(ttl.Value, TimeSpan.FromMilliseconds(1), GameStore<TableState>.PriorityLifetime);
+    }
+
+    [Fact]
     public async Task FindActionGivesTheSequenceNumberOfAnAppliedAction()
     {
         var (store, gameId) = await NewStoreAsync();

@@ -20,11 +20,20 @@ internal static class PlaytestMetrics
     /// <summary>The name of the counter of the patches that the API sent to the seats.</summary>
     public const string PatchesName = "reliquary.playtest.patches";
 
+    /// <summary>The name of the histogram of the conflicts of the compare-and-set before a change of a game was written.</summary>
+    public const string ConflictsName = "reliquary.playtest.write.conflicts";
+
     /// <summary>The reasons of <c>Resync</c> that are a desynchronization. Another reason, or no reason, has the value <c>other</c>.</summary>
     public static IReadOnlyList<string> DesyncReasons { get; } = ["hash", "gap", "patch"];
 
     /// <summary>The reason of <c>Resync</c> when the client has no view, for example after the start. It is not a desynchronization.</summary>
     public const string NoViewReason = "view";
+
+    private static readonly Histogram<int> Conflicts = Telemetry.Meter.CreateHistogram(
+        ConflictsName,
+        unit: "{conflict}",
+        description: "The number of conflicts of the compare-and-set before the API wrote a change of a game. A high value shows many writers on one game on different API replicas.",
+        advice: new InstrumentAdvice<int> { HistogramBucketBoundaries = [0, 1, 2, 3, 5, 8, 13, 21, 34] });
 
     private static readonly Histogram<double> ActionDuration = Telemetry.Meter.CreateHistogram(
         ActionDurationName,
@@ -76,6 +85,10 @@ internal static class PlaytestMetrics
 
     /// <summary>Records one patch sent to one seat.</summary>
     public static void RecordPatch() => Patches.Add(1);
+
+    /// <summary>Records the number of conflicts before a change of a game was written.</summary>
+    /// <param name="conflicts">The number of conflicts. 0 when the first attempt was written.</param>
+    public static void RecordConflicts(int conflicts) => Conflicts.Record(conflicts);
 
     /// <summary>
     /// Sets the source of the gauge of the open games. The source gives <see langword="null"/> when it has no value yet.
