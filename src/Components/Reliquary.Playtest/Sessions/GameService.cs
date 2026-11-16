@@ -1,4 +1,5 @@
 using System.Buffers.Text;
+using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -57,9 +58,11 @@ internal sealed record ActResult(long? Seq, string? Rejected, GameUpdate? Update
 /// Creates the online games, gives the seats and the game tokens, and keeps the lobby. See docs/architecture/online-games.md.
 /// </summary>
 /// <remarks>
-/// Each change reads the game, changes it and writes it with a compare-and-set on the sequence number. After a conflict, the service waits
-/// for a short random time and reads the game again. On one replica, only one change of a game runs at a time (<see cref="GameWriteGate"/>),
-/// so a conflict comes only from another replica.
+/// Each change reads the game, changes it and writes it with a compare-and-set on the sequence number. On one replica, only one change
+/// of a game runs at a time (<see cref="GameWriteGate"/>), so a conflict comes only from another replica.
+/// A conflict gives the current state and the priority of the game to the replica: the other replicas do not write
+/// (<see cref="GameWriteStatus.Yield"/>) until the replica with the priority writes. Thus a replica cannot lose all its attempts
+/// to a faster replica. A change can try again for <see cref="RetryBudget"/>.
 /// </remarks>
 internal sealed class GameService(
     GameStore<OnlineGame> store,
@@ -72,8 +75,13 @@ internal sealed class GameService(
     /// <summary>The maximum length of a nickname.</summary>
     public const int MaxNicknameLength = 24;
 
-    /// <summary>The number of attempts of a change after conflicts.</summary>
-    private const int MaxAttempts = 16;
+    /// <summary>
+    /// The time that a change can try again after conflicts. After this time, the change fails with <c>service_unavailable</c>.
+    /// A time and not a number of attempts: on a slow computer, each attempt is slower.
+    /// With the priority, a change has one conflict at most, so this limit stops only a change that cannot continue,
+    /// for example when Redis is very slow. It is longer than <see cref="GameStore{T}.PriorityLifetime"/>, the longest wait for a replica that stopped.
+    /// </summary>
+    public static readonly TimeSpan RetryBudget = TimeSpan.FromSeconds(2);
 
     /// <summary>The longest wait between two attempts of a change after a conflict, in milliseconds.</summary>
     public const int MaxRetryDelayMilliseconds = 5;
@@ -288,7 +296,7 @@ internal sealed class GameService(
     }
 
     /// <summary>
-    /// Applies an action of a player to the table with a compare-and-set. After a conflict, the service reads the game again,
+    /// Applies an action of a player to the table with a compare-and-set. After a conflict, the service takes the current state,
     /// checks the action again and applies it again. A repeated client action ID gives the sequence number of the first action,
     /// also when the action is not valid any more.
     /// </summary>
@@ -308,46 +316,52 @@ internal sealed class GameService(
         }
 
         var playerId = OnlineGame.PlayerId(seat);
-        for (var attempt = 0; attempt < MaxAttempts; attempt++)
+        var retries = new Retries(Stopwatch.GetTimestamp());
+        try
         {
-            var game = current.State;
-            if (game.Status != GameStatuses.Started || game.Table is null)
+            while (true)
             {
-                return ActResult.Refuse(ActionRejections.NotStarted);
-            }
+                var game = current.State;
+                if (game.Status != GameStatuses.Started || game.Table is null)
+                {
+                    return ActResult.Refuse(ActionRejections.NotStarted);
+                }
 
-            if (ActionRules.Check(game.Table, playerId, action) is { } rejection)
-            {
-                // A retry of an applied action can be not valid now, for example "nextTurn" or a move of a token.
-                // The retry must give the sequence number of the first action, not a refusal.
-                return await store.FindActionAsync(GameKeys.Id(gameId), seat, clientActionId) is { } applied
-                    ? new ActResult(applied, null, null)
-                    : ActResult.Refuse(rejection);
-            }
+                if (ActionRules.Check(game.Table, playerId, action) is { } rejection)
+                {
+                    // A retry of an applied action can be not valid now, for example "nextTurn" or a move of a token.
+                    // The retry must give the sequence number of the first action, not a refusal.
+                    return await store.FindActionAsync(GameKeys.Id(gameId), seat, clientActionId) is { } applied
+                        ? new ActResult(applied, null, null)
+                        : ActResult.Refuse(rejection);
+                }
 
-            var table = TableEngine.Apply(game.Table, action);
-            var entry = new GameChange(seat, clientActionId, JsonSerializer.Serialize(action, TableJson.Options));
-            var result = await store.WriteAsync(GameKeys.Id(gameId), current.Seq, game with { Table = table }, entry);
-            switch (result.Status)
-            {
-                case GameWriteStatus.Written:
-                    var nickname = game.FindSeat(seat)?.Nickname ?? playerId;
-                    return new ActResult(result.Seq, null, new GameUpdate(game with { Table = table }, result.Seq, seat, ActionRules.Describe(nickname, game.Table, action), game.Table));
-                case GameWriteStatus.Duplicate:
-                    return new ActResult(result.Seq, null, null);
-                case GameWriteStatus.NotFound:
-                    return ActResult.Refuse(ActionRejections.GameClosed);
-            }
+                var table = TableEngine.Apply(game.Table, action);
+                var entry = new GameChange(seat, clientActionId, JsonSerializer.Serialize(action, TableJson.Options));
+                var (result, latest) = await store.WriteOrReadAsync(GameKeys.Id(gameId), current.Seq, game with { Table = table }, entry);
+                switch (result.Status)
+                {
+                    case GameWriteStatus.Written:
+                        retries.Written();
+                        var nickname = game.FindSeat(seat)?.Nickname ?? playerId;
+                        return new ActResult(result.Seq, null, new GameUpdate(game with { Table = table }, result.Seq, seat, ActionRules.Describe(nickname, game.Table, action), game.Table));
+                    case GameWriteStatus.Duplicate:
+                        return new ActResult(result.Seq, null, null);
+                    case GameWriteStatus.NotFound:
+                        return ActResult.Refuse(ActionRejections.GameClosed);
+                }
 
-            await Task.Delay(RetryDelay(attempt));
-            current = await ReadAsync(gameId) ?? throw ApiNotFound("The game does not exist or it ended.");
-            if (current.State.FindSeat(seat) is null)
-            {
-                throw GameException.TokenInvalid();
+                current = await NextAttemptAsync(gameId, result.Status, latest, retries);
+                if (current.State.FindSeat(seat) is null)
+                {
+                    throw GameException.TokenInvalid();
+                }
             }
         }
-
-        throw new GameException(StatusCodes.Status503ServiceUnavailable, ErrorCodes.ServiceUnavailable, "The game changed too many times during the request. Try again.");
+        finally
+        {
+            await EndPriorityAsync(gameId, retries);
+        }
     }
 
     /// <summary>
@@ -389,29 +403,89 @@ internal sealed class GameService(
     }
 
     /// <summary>
-    /// Applies a change to a game with a compare-and-set. After a conflict, the service reads the game again and applies the change again.
+    /// Applies a change to a game with a compare-and-set. After a conflict, the service takes the current state and applies the change again.
     /// </summary>
     private async Task<(OnlineGame Game, long Seq)> ChangeAsync(Guid gameId, StoredGame<OnlineGame> first, Func<OnlineGame, (OnlineGame Game, GameChange Change)> change)
     {
         using var turn = await writes.EnterAsync(gameId);
         var current = first;
-        for (var attempt = 0; attempt < MaxAttempts; attempt++)
+        var retries = new Retries(Stopwatch.GetTimestamp());
+        try
         {
-            var (game, entry) = change(current.State);
-            var result = await store.WriteAsync(GameKeys.Id(gameId), current.Seq, game, entry);
-            switch (result.Status)
+            while (true)
             {
-                case GameWriteStatus.Written:
-                    return (game, result.Seq);
-                case GameWriteStatus.NotFound:
-                    throw ApiNotFound("The game does not exist or it ended.");
-            }
+                var (game, entry) = change(current.State);
+                var (result, latest) = await store.WriteOrReadAsync(GameKeys.Id(gameId), current.Seq, game, entry);
+                switch (result.Status)
+                {
+                    case GameWriteStatus.Written:
+                        retries.Written();
+                        return (game, result.Seq);
+                    case GameWriteStatus.NotFound:
+                        throw ApiNotFound("The game does not exist or it ended.");
+                }
 
-            await Task.Delay(RetryDelay(attempt));
-            current = await ReadAsync(gameId) ?? throw ApiNotFound("The game does not exist or it ended.");
+                current = await NextAttemptAsync(gameId, result.Status, latest, retries);
+            }
+        }
+        finally
+        {
+            await EndPriorityAsync(gameId, retries);
+        }
+    }
+
+    /// <summary>
+    /// Gives the game for the next attempt of a change that the store did not write.
+    /// </summary>
+    /// <param name="gameId">The game.</param>
+    /// <param name="status">The result of the last attempt: <see cref="GameWriteStatus.Conflict"/> or <see cref="GameWriteStatus.Yield"/>.</param>
+    /// <param name="latest">The state that the conflict gave, or <see langword="null"/>.</param>
+    /// <param name="retries">The attempts of the change.</param>
+    /// <returns>The game.</returns>
+    /// <exception cref="GameException">The change tried again for <see cref="RetryBudget"/>, or the game ended.</exception>
+    private async Task<StoredGame<OnlineGame>> NextAttemptAsync(Guid gameId, GameWriteStatus status, StoredGame<OnlineGame>? latest, Retries retries)
+    {
+        retries.NotWritten(status);
+        if (Stopwatch.GetElapsedTime(retries.Started) >= RetryBudget)
+        {
+            throw new GameException(StatusCodes.Status503ServiceUnavailable, ErrorCodes.ServiceUnavailable, "The game changed too many times during the request. Try again.");
         }
 
-        throw new GameException(StatusCodes.Status503ServiceUnavailable, ErrorCodes.ServiceUnavailable, "The game changed too many times during the request. Try again.");
+        // After a conflict, this replica has the priority: the state of the conflict is the newest state, and the next attempt
+        // is the only write of the game. A game after its hard limit goes to ReadAsync, which closes it.
+        if (status == GameWriteStatus.Conflict && latest is not null && !latest.State.IsOver(time.GetUtcNow()))
+        {
+            return latest;
+        }
+
+        // Another replica has the priority: wait until it writes, with a short random wait between the checks. Then read the game again.
+        if (status == GameWriteStatus.Yield)
+        {
+            await store.WaitForPriorityAsync(GameKeys.Id(gameId), RetryDelay, retries.Started + (long)(RetryBudget.TotalSeconds * Stopwatch.Frequency));
+        }
+
+        return await ReadAsync(gameId) ?? throw ApiNotFound("The game does not exist or it ended.");
+    }
+
+    /// <summary>
+    /// Ends the priority of this replica on a game when the change had a conflict and stopped with no write: a refusal, a duplicate or an error.
+    /// A write of the replica ends the priority in the store. When Redis does not answer, the priority ends with its lifetime.
+    /// </summary>
+    private async Task EndPriorityAsync(Guid gameId, Retries retries)
+    {
+        if (!retries.MayHavePriority)
+        {
+            return;
+        }
+
+        try
+        {
+            await store.ReleasePriorityAsync(GameKeys.Id(gameId));
+        }
+        catch (Exception exception) when (exception is StackExchange.Redis.RedisException or TimeoutException)
+        {
+            // The priority ends with its lifetime. The change gives its own result or error.
+        }
     }
 
     private async Task<(SeatDeck Deck, string? Format)> ResolveDeckAsync(Guid? accountId, DeckChoice choice, CancellationToken cancellationToken)
@@ -505,11 +579,10 @@ internal sealed class GameService(
     private static string Hash(string secret) => Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(secret)));
 
     /// <summary>
-    /// Gives a random wait after a conflict: from 1 ms to a limit that grows with each attempt, up to <see cref="MaxRetryDelayMilliseconds"/>.
-    /// Without a wait, the players that conflict read and write again at the same time, and conflict again.
-    /// All the waits of one change are 70 ms at most, so the wait does not make an action slow for the players.
+    /// Gives a random wait between two checks of the priority of another replica: from 1 ms to a limit that grows with each attempt, up to <see cref="MaxRetryDelayMilliseconds"/>.
+    /// The random part spreads the checks of the replicas that wait. <see cref="RetryBudget"/> limits the time of all the attempts.
     /// </summary>
-    /// <param name="attempt">The number of the attempt that failed, from 0.</param>
+    /// <param name="attempt">The number of the wait, from 0.</param>
     /// <returns>The wait.</returns>
     internal static TimeSpan RetryDelay(int attempt) =>
         TimeSpan.FromMilliseconds(Random.Shared.Next(1, Math.Min(attempt + 1, MaxRetryDelayMilliseconds) + 1));
@@ -519,4 +592,38 @@ internal sealed class GameService(
     private static GameException ApiNotFound(string message) => new(StatusCodes.Status404NotFound, ErrorCodes.NotFound, message);
 
     private static DateTimeOffset Min(DateTimeOffset first, DateTimeOffset second) => first < second ? first : second;
+}
+
+/// <summary>
+/// The attempts of one change of a game: the start time, the number of conflicts and of yields, and the priority of the replica.
+/// </summary>
+/// <param name="started">The time stamp of the first attempt, from <see cref="Stopwatch.GetTimestamp"/>.</param>
+internal sealed class Retries(long started)
+{
+    /// <summary>Gets the time stamp of the first attempt.</summary>
+    public long Started { get; } = started;
+
+    /// <summary>Gets the number of conflicts.</summary>
+    public int Conflicts { get; private set; }
+
+    /// <summary>Gets a value that tells if this replica can have the priority of the game: a conflict, and no write after it.</summary>
+    public bool MayHavePriority { get; private set; }
+
+    /// <summary>Records an attempt that the store did not write.</summary>
+    /// <param name="status">The result of the attempt.</param>
+    public void NotWritten(GameWriteStatus status)
+    {
+        if (status == GameWriteStatus.Conflict)
+        {
+            Conflicts++;
+            MayHavePriority = true;
+        }
+    }
+
+    /// <summary>Records the write. The store ended the priority of the replica in the same step.</summary>
+    public void Written()
+    {
+        MayHavePriority = false;
+        PlaytestMetrics.RecordConflicts(Conflicts);
+    }
 }

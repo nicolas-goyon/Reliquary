@@ -3,7 +3,7 @@
  */
 
 export { definePlugin } from './plugin.ts'
-export type { DefinePluginOptions, PluginDefinition, PluginEnvironment, PluginHandle, PluginSdk } from './plugin.ts'
+export type { DefinePluginOptions, PanelDefinition, PluginDefinition, PluginEnvironment, PluginHandle, PluginSdk } from './plugin.ts'
 export { RpcError, RpcPeer, utf8Length } from './rpc.ts'
 export type { CallOptions, MethodMap, PeerOptions, PortLike } from './rpc.ts'
 export * from './protocol.ts'

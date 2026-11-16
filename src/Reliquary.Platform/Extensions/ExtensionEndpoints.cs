@@ -22,6 +22,8 @@ namespace Reliquary.Platform.Extensions;
 /// <param name="Enabled">The activation flag of the instance.</param>
 /// <param name="Compatible">Whether the extension supports the current core API. An incompatible extension does not run.</param>
 /// <param name="Active">Whether the extension runs for the user: a module when the instance enables it, a plugin when the user also activates it.</param>
+/// <param name="Panels">The panels of the plugin manifest. The web app shows each panel in its own sandboxed iframe.</param>
+/// <param name="I18n">The translations of the plugin manifest, or null.</param>
 public sealed record ExtensionResponse(
     string Id,
     string Kind,
@@ -32,7 +34,15 @@ public sealed record ExtensionResponse(
     IReadOnlyList<string> Slots,
     bool Enabled,
     bool Compatible,
-    bool Active);
+    bool Active,
+    IReadOnlyList<ExtensionPanelResponse> Panels,
+    JsonElement? I18n);
+
+/// <summary>A panel of a plugin manifest.</summary>
+/// <param name="Id">The ID of the panel in the plugin.</param>
+/// <param name="Slot">The slot of the panel, for example <c>analysis.tabs</c>.</param>
+/// <param name="Title">The title in English.</param>
+public sealed record ExtensionPanelResponse(string Id, string Slot, string Title);
 
 /// <summary>The extensions of the instance and the version of the core API.</summary>
 /// <param name="CoreApi">The current version of the core API.</param>
@@ -297,7 +307,32 @@ public static class ExtensionEndpoints
     private static ExtensionResponse ToResponse(ExtensionRow row, IReadOnlyDictionary<string, bool>? activations)
     {
         var active = row.Enabled && row.Compatible && (row.Kind == "module" || (activations?.GetValueOrDefault(row.Id) ?? false));
-        return new ExtensionResponse(row.Id, row.Kind, row.Name, row.Version, row.CoreApi, row.Permissions, row.Slots, row.Enabled, row.Compatible, active);
+        var (panels, i18n) = ReadPanels(row.Manifest);
+        return new ExtensionResponse(row.Id, row.Kind, row.Name, row.Version, row.CoreApi, row.Permissions, row.Slots, row.Enabled, row.Compatible, active, panels, i18n);
+    }
+
+    /// <summary>Reads the panels and the translations of a manifest. The API checked the manifest at install time.</summary>
+    private static (IReadOnlyList<ExtensionPanelResponse> Panels, JsonElement? I18n) ReadPanels(string manifest)
+    {
+        using var document = JsonDocument.Parse(manifest);
+        var root = document.RootElement;
+        var panels = new List<ExtensionPanelResponse>();
+        if (root.TryGetProperty("panels", out var list) && list.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var panel in list.EnumerateArray())
+            {
+                if (panel.ValueKind == JsonValueKind.Object
+                    && panel.TryGetProperty("id", out var id) && id.ValueKind == JsonValueKind.String
+                    && panel.TryGetProperty("slot", out var slot) && slot.ValueKind == JsonValueKind.String
+                    && panel.TryGetProperty("title", out var title) && title.ValueKind == JsonValueKind.String)
+                {
+                    panels.Add(new ExtensionPanelResponse(id.GetString()!, slot.GetString()!, title.GetString()!));
+                }
+            }
+        }
+
+        JsonElement? i18n = root.TryGetProperty("i18n", out var translations) && translations.ValueKind == JsonValueKind.Object ? translations.Clone() : null;
+        return (panels, i18n);
     }
 
     private static AdminExtensionResponse ToAdminResponse(ExtensionRow row) => new(

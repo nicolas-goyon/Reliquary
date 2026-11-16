@@ -1,6 +1,7 @@
 import type { ApiFetchParams, ApiFetchResult, HostMethods, LinkedAccount, PluginMethods, RelayFetchParams, RelayFetchResult } from './methods.ts'
 import { connectMessageType, coreApiVersion, errorCodes, readyMessageType, type ConnectMessage } from './protocol.ts'
 import { RpcError, RpcPeer, type PeerOptions } from './rpc.ts'
+import type { PanelSlot } from './manifest.ts'
 import type { ContributionData, SlotContexts, SlotContributions, SlotName } from './slots.ts'
 
 /** The functions that the SDK gives to a plugin. */
@@ -41,10 +42,32 @@ export interface PluginSdk {
      * Adds a contribution to a slot. The plugin manifest must declare the slot.
      * @returns A function that removes the contribution.
      */
-    contribute<Slot extends SlotName>(slot: Slot, contribution: SlotContributions[Slot]): Promise<() => Promise<void>>
+    contribute<Slot extends keyof SlotContributions>(slot: Slot, contribution: SlotContributions[Slot]): Promise<() => Promise<void>>
     /** Shows a short message to the user. */
     notify(message: string, tone?: 'info' | 'success' | 'error'): Promise<void>
+    /**
+     * Only in a panel frame: gives the height of the content, in CSS pixels. The core applies the maximum height of the slot.
+     * The SDK calls it when the size of the page changes, so a panel seldom needs it.
+     */
+    resize(height: number): Promise<void>
+    /** Opens a panel of the slot "plugin.dialog" in a dialog of the core. The panel gets `data` in its context. */
+    openDialog(panel: string, data?: unknown): Promise<void>
+    /** Closes the dialog of the plugin. */
+    closeDialog(): Promise<void>
+    /** Opens a panel of the slot "plugin.page". */
+    openPage(page: string): Promise<void>
   }
+}
+
+/**
+ * The code of a panel. The plugin manifest declares the panel in the field `panels`.
+ * The core shows each open panel in its own frame. In this frame, the SDK calls `mount`, not `activate`.
+ */
+export interface PanelDefinition {
+  /** Renders the panel in the element. The context has the IDs of the slot, for example `{ deckId }` for "analysis.tabs". */
+  mount(element: HTMLElement, context: SlotContexts[PanelSlot], sdk: PluginSdk): void | Promise<void>
+  /** The context of the slot changed, for example after a change of the deck. */
+  update?(context: SlotContexts[PanelSlot]): void | Promise<void>
 }
 
 /** The definition of a plugin. */
@@ -53,6 +76,8 @@ export interface PluginDefinition {
   activate(sdk: PluginSdk): void | Promise<void>
   /** Runs before the core removes the plugin frame. */
   deactivate?(): void | Promise<void>
+  /** The panels of the plugin, by the ID of the plugin manifest. */
+  panels?: Record<string, PanelDefinition>
 }
 
 /** The window of the plugin frame, as the SDK uses it. Tests give a different environment. */
@@ -61,10 +86,12 @@ export interface PluginEnvironment {
   readonly parent: { postMessage(message: unknown, targetOrigin: string): void }
   addEventListener(type: 'message', listener: (event: MessageEvent) => void): void
   removeEventListener(type: 'message', listener: (event: MessageEvent) => void): void
+  /** The document of the frame. A panel renders in its body. */
+  readonly document?: { readonly body: HTMLElement; readonly documentElement: HTMLElement }
 }
 
 export interface PluginHandle {
-  /** Resolves after the call of `activate`. Rejects when the plugin is not in a plugin frame, or when `activate` fails. */
+  /** Resolves after the call of `activate`, or of `mount` in a panel frame. Rejects when the plugin is not in a plugin frame, or when `activate` or `mount` fails. */
   readonly ready: Promise<PluginSdk>
 }
 
@@ -114,7 +141,7 @@ export function definePlugin(definition: PluginDefinition, options: DefinePlugin
       const peer = new RpcPeer<PluginMethods, HostMethods>(event.ports[0], options)
       const sdk = createSdk(peer, message)
       Promise.resolve()
-        .then(() => definition.activate(sdk))
+        .then(() => (message.panel ? mountPanel(definition, message.panel, sdk, peer, environment) : definition.activate(sdk)))
         .then(() => resolve(sdk), reject)
       peer.handle('plugin.deactivate', async () => {
         await definition.deactivate?.()
@@ -126,6 +153,39 @@ export function definePlugin(definition: PluginDefinition, options: DefinePlugin
   })
   ready.catch(() => undefined)
   return { ready }
+}
+
+/** Renders a panel in the body of the frame, and gives its height to the core when it changes. */
+async function mountPanel(
+  definition: PluginDefinition,
+  panel: NonNullable<ConnectMessage['panel']>,
+  sdk: PluginSdk,
+  peer: RpcPeer<PluginMethods, HostMethods>,
+  environment: PluginEnvironment,
+): Promise<void> {
+  const code = definition.panels?.[panel.id]
+  if (!code) {
+    throw new Error(`The plugin has no code for the panel "${panel.id}". Add it to the field "panels" of definePlugin.`)
+  }
+  peer.handle('panel.update', async ({ context }) => {
+    await code.update?.(context as SlotContexts[PanelSlot])
+    return null
+  })
+  const document = environment.document ?? (typeof window === 'undefined' ? undefined : window.document)
+  if (!document) {
+    throw new Error('The panel frame has no document.')
+  }
+  await code.mount(document.body, panel.context as SlotContexts[PanelSlot], sdk)
+  if (typeof ResizeObserver !== 'undefined') {
+    let last = -1
+    new ResizeObserver(() => {
+      const height = Math.ceil(document.documentElement.scrollHeight)
+      if (height !== last) {
+        last = height
+        sdk.ui.resize(height).catch(() => undefined)
+      }
+    }).observe(document.documentElement)
+  }
 }
 
 function isConnectMessage(data: unknown): data is ConnectMessage {
@@ -193,7 +253,6 @@ function createSdk(peer: RpcPeer<PluginMethods, HostMethods>, message: ConnectMe
         if ('label' in contribution) data.label = contribution.label
         if ('icon' in contribution && contribution.icon) data.icon = contribution.icon
         if ('title' in contribution) data.title = contribution.title
-        if ('panel' in contribution) data.panel = contribution.panel
         if ('onAction' in contribution && contribution.onAction) {
           actions.set(key(slot, contribution.id), contribution.onAction as (context: SlotContexts[SlotName]) => void | Promise<void>)
         }
@@ -211,6 +270,18 @@ function createSdk(peer: RpcPeer<PluginMethods, HostMethods>, message: ConnectMe
       },
       notify: async (text, tone = 'info') => {
         await peer.call('ui.notify', { message: text, tone })
+      },
+      resize: async (height) => {
+        await peer.call('ui.resize', { height })
+      },
+      openDialog: async (panel, data) => {
+        await peer.call('ui.openDialog', data === undefined ? { panel } : { panel, data })
+      },
+      closeDialog: async () => {
+        await peer.call('ui.closeDialog', null)
+      },
+      openPage: async (page) => {
+        await peer.call('ui.openPage', { page })
       },
     },
   }
