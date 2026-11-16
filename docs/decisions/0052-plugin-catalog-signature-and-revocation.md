@@ -37,7 +37,7 @@ The options for the signature are:
   - `plugins`, with the versions, the files and the SHA-384 hash of each file
   - `revoked`, the revoked versions with a reason
 - **Signature**: one ECDSA P-256 signature covers the canonical bytes of `index.json`.
-  The core trusts the public keys of the setting `Plugins:CatalogKeys`. The key of the project is the default value.
+  The core trusts the public keys of the setting `Plugins:Catalog:Keys`. The key of the project is the default value.
 - **Instance**: a scheduled job of the worker ([ADR 0019](0019-hosts-and-scheduled-jobs.md)) gets the index each hour.
   1. It refuses an index with a bad signature, a smaller `serial` or a past `expires` date.
   2. It gets the new files and checks their hashes.

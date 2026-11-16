@@ -397,6 +397,65 @@ The plugin token also contains `sub` (the user), `plg` (the plugin ID) and `scop
 A delegation token is a random secret with the start `rld_`, so it is never a valid JWT.
 The policies `Session` and `Administrator` refuse a plugin token, so a plugin token cannot get a new plugin token.
 
+### Plugin catalog
+
+The plugin catalog publishes two files: the catalog index `index.json` and its signature `index.json.sig`.
+[ADR 0052](../decisions/0052-plugin-catalog-signature-and-revocation.md) gives the reasons for the design.
+
+```json
+{
+  "format": 1,
+  "serial": 42,
+  "expires": "2026-12-16T00:00:00Z",
+  "keyId": "reliquary-2026",
+  "plugins": [
+    {
+      "id": "deck-stats",
+      "versions": [
+        {
+          "version": "1.2.0",
+          "files": [
+            { "path": "manifest.json", "integrity": "sha384-...", "size": 412 },
+            { "path": "dist/index.js", "integrity": "sha384-...", "size": 18230 }
+          ]
+        }
+      ]
+    }
+  ],
+  "revoked": [
+    { "id": "deck-stats", "version": "1.1.0", "reason": "The version sends the deck lists to a site that the manifest does not declare." }
+  ]
+}
+```
+
+| Field | Content |
+| --- | --- |
+| `format` | The version of the format. The core reads only the format 1. |
+| `serial` | A number that increases at each publication, 1 or more. |
+| `expires` | The end of the validity, in the ISO 8601 format. The catalog signs the index again before this date. |
+| `keyId` | The ID of the key that signed the index. |
+| `plugins` | The plugins, with their versions. Each version has 1 to 200 files: the path, the SHA-384 integrity value and the size in bytes. The file `manifest.json` is the plugin manifest of the version, and it is necessary. The rules of the paths and of the sizes are the rules of the store of plugin files. |
+| `revoked` | The revoked versions: the plugin ID, the version and a reason of 500 characters or fewer. |
+
+`CatalogIndexCheck` of the platform checks an index in this order:
+
+1. The index has 1 MB or less, and the signature has 256 bytes or less.
+2. A trusted key made the signature.
+   The signature is a DER ECDSA P-256 signature with SHA-256 of the exact bytes of `index.json`.
+   Thus the check does not serialize the JSON again, and `openssl dgst -sha256 -sign` makes a valid signature.
+3. The JSON follows the format.
+   The check refuses an unknown field, a field two times, a missing field and a `null` value.
+   The field `keyId` must name the key that made the signature.
+4. The serial is not smaller than the serial of the last index of the instance.
+   An index with the same serial must have the same bytes.
+5. The date `expires` is in the future.
+
+The setting `Plugins:Catalog:Keys` gives the trusted keys.
+Each key has an `Id` and a `PublicKey`: a PEM block or the Base64 text of a DER SubjectPublicKeyInfo structure.
+To change the signing key, the operator adds the new key, waits for an index from the new key, then removes the old key.
+Without a value, the instance trusts the keys of the project.
+The project catalog has no key yet, so an instance must set `Plugins:Catalog:Keys` until the project adds its key to the code.
+
 ### Life cycle and security
 
 1. **Development mode**: on a development instance, a user can load a plugin from a URL.
