@@ -125,26 +125,27 @@ internal static class LastUse
 }
 
 /// <summary>
-/// Checks the scope of each request with a delegation token, on all the endpoints of the public API.
-/// An endpoint accepts a delegation token only when it declares a scope with <c>RequireScope</c> and the token has this scope.
+/// Checks the scope of each request with a delegation token or a plugin token, on all the endpoints of the public API.
+/// An endpoint accepts these tokens only when it declares a scope with <c>RequireScope</c> and the token has this scope.
 /// </summary>
 internal sealed class ScopeFilter : IEndpointFilter
 {
     public async ValueTask<object?> InvokeAsync(EndpointFilterInvocationContext context, EndpointFilterDelegate next)
     {
         var http = context.HttpContext;
-        if (!http.User.IsDelegated())
+        if (!http.User.IsScoped())
         {
             return await next(context);
         }
 
+        var token = http.User.FindFirst(ReliquaryClaims.AuthMethod)?.Value == AuthMethods.Plugin ? "plugin token" : "delegation token";
         var required = http.GetEndpoint()?.Metadata.GetMetadata<RequiredScopeMetadata>();
         if (required is null)
         {
             return ApiProblems.Problem(
                 StatusCodes.Status403Forbidden,
                 AccountErrorCodes.ScopeMissing,
-                "This endpoint does not accept a delegation token. See the list of the endpoints for each scope in docs/architecture/service-accounts.md.");
+                $"This endpoint does not accept a {token}. See the list of the endpoints for each scope in docs/architecture/service-accounts.md.");
         }
 
         if (!http.User.HasScope(required.Scope))
@@ -152,7 +153,7 @@ internal sealed class ScopeFilter : IEndpointFilter
             return ApiProblems.Problem(
                 StatusCodes.Status403Forbidden,
                 AccountErrorCodes.ScopeMissing,
-                $"The delegation token does not have the scope {required.Scope}. Ask for a token with this scope.",
+                $"The {token} does not have the scope {required.Scope}. Ask for a token with this scope.",
                 new Dictionary<string, object?> { ["scope"] = required.Scope });
         }
 

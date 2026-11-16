@@ -366,6 +366,37 @@ A file response has these headers:
 - `Content-Security-Policy: sandbox; default-src 'none'`. A browser that opens a file directly gives it an opaque origin, so a plugin file cannot run on the origin of the instance.
 - `X-Content-Type-Options: nosniff`, the media type of the file, and an `ETag` with the SHA-384 hash
 
+### Plugin tokens
+
+The plugin frame contains no credential of the user.
+The web app calls the public API for a plugin with a plugin token.
+[ADR 0049](../decisions/0049-plugin-sandbox.md) gives the reasons.
+
+- `POST /api/v1/me/extensions/{id}/token` gives a plugin token. Only a web session can call it.
+  The plugin must run for the user: the instance enables it, it supports the core API, and the user activated it. Else the API returns 404.
+- The response gives `token`, `expiresAt`, `pluginId` and `scopes`.
+  The token is valid for 10 minutes (`Auth:PluginTokenLifetime`).
+- The scopes are the permissions of the manifest. The consent of issue #287 will limit them to the scopes that the user accepted.
+- The web app sends the token in the header `Authorization: Bearer rlp_...`.
+  `ScopeFilter` checks the scope of the endpoint, as for a delegation token. An endpoint without a scope refuses the token with the status 403 and the code `scope_missing`.
+- The API asks the extension registry for each request whether the plugin still runs for the user.
+  After a deactivation by the user or by the administrator, the token gives the status 401.
+
+A plugin token is a JWT with the signing key of the access tokens.
+Three properties keep it separate from the access token of a web session, in both directions:
+
+| Property | Access token | Plugin token |
+| --- | --- | --- |
+| Start of the header value | None | `rlp_` |
+| Audience (`aud`) | `Auth:Audience`, `reliquary` by default | `reliquary-plugin` |
+| Token type (`typ` of the JWT header) | `JWT` | `rlp+jwt` |
+| Method (`amr`) | `session` | `plugin` |
+
+Each scheme checks all its properties, so a token with one property of the other kind fails.
+The plugin token also contains `sub` (the user), `plg` (the plugin ID) and `scope` (the scopes, with a space between them).
+A delegation token is a random secret with the start `rld_`, so it is never a valid JWT.
+The policies `Session` and `Administrator` refuse a plugin token, so a plugin token cannot get a new plugin token.
+
 ### Life cycle and security
 
 1. **Development mode**: on a development instance, a user can load a plugin from a URL.

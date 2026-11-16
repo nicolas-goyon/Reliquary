@@ -12,6 +12,9 @@ namespace Reliquary.Accounts.Auth;
 /// </summary>
 internal sealed class AccessTokens(IOptions<AuthOptions> options, TimeProvider time)
 {
+    /// <summary>The token type in the header of an access token. The scheme of the access tokens accepts only this type.</summary>
+    public const string TokenType = "JWT";
+
     private readonly JsonWebTokenHandler handler = new() { SetDefaultTimesOnTokenCreation = false };
 
     /// <summary>
@@ -40,6 +43,7 @@ internal sealed class AccessTokens(IOptions<AuthOptions> options, TimeProvider t
         {
             Issuer = settings.Issuer,
             Audience = settings.Audience,
+            TokenType = TokenType,
             Claims = claims,
             IssuedAt = now.UtcDateTime,
             NotBefore = now.UtcDateTime,
