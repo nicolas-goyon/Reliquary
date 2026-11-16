@@ -12,12 +12,16 @@ export interface SlotContexts {
   'app.menu': Record<string, never>
   /** The action bar of a deck. */
   'deck.actions': { deckId: string }
-  /** The tabs of the deck analysis. */
+  /** A tab of the deck analysis: a panel. */
   'analysis.tabs': { deckId: string }
   /** The columns of the table mode. The core asks a value for each row. */
   'table.columns': { deckId: string; lineId: string; oracleId: string | null }
-  /** The page of a card. */
+  /** A part of the page of a card: a panel. */
   'card.page': { oracleId: string }
+  /** A page of the plugin at /plugins/<plugin ID>/<panel ID>: a panel. */
+  'plugin.page': { page: string }
+  /** A dialog of the plugin: a panel. `data` is the data of `sdk.ui.openDialog`. */
+  'plugin.dialog': { data: unknown }
   /** The account page. */
   'account.page': Record<string, never>
   /** The linked accounts panel of the account page. */
@@ -58,26 +62,13 @@ export interface ColumnContribution {
   cell(context: SlotContexts['table.columns']): string | null | Promise<string | null>
 }
 
-/** A panel: an analysis tab or a part of the card page or of the account page. It renders in its own sandboxed iframe. */
-export interface PanelContribution {
-  id: string
-  title: LocalizedText
-  order?: number
-  /** The path of the HTML file of the panel in the plugin files. */
-  panel: string
-}
-
-/** The contribution of a plugin to each slot. */
+/** The contributions that a plugin sends as data to a slot. */
 export interface SlotContributions {
   navigation: ActionContribution<'navigation'>
   'app.menu': ActionContribution<'app.menu'>
   'deck.actions': ActionContribution<'deck.actions'>
-  'analysis.tabs': PanelContribution
   'table.columns': ColumnContribution
-  'card.page': PanelContribution
-  'account.page': PanelContribution
-  'account.linked': PanelContribution
 }
 
 /** The data of a contribution that the plugin sends to the core: the contribution without its functions. */
-export type ContributionData = { id: string; order?: number; label?: LocalizedText; icon?: PluginIcon; title?: LocalizedText; panel?: string }
+export type ContributionData = { id: string; order?: number; label?: LocalizedText; icon?: PluginIcon; title?: LocalizedText }

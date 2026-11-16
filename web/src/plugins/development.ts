@@ -4,6 +4,7 @@
  * The browser keeps the URLs. The core does not check these plugins.
  */
 
+import type { ExtensionPanel } from '../api/extensions'
 import { notifyPluginsChanged } from './events'
 
 const storageKey = 'reliquary.developmentPlugins'
@@ -51,6 +52,9 @@ export interface DevelopmentPlugin {
   network: string[]
   /** The slots of the plugin manifest. */
   slots: string[]
+  /** The panels of the plugin manifest. */
+  panels: ExtensionPanel[]
+  i18n: Record<string, Record<string, string>> | null
 }
 
 /** The causes of a DevelopmentManifestError. The interface shows a text for each code. */
@@ -88,7 +92,7 @@ export async function loadDevelopmentManifest(manifestUrl: string, fetcher: type
       ? error
       : new DevelopmentManifestError('notAvailable', 'The plugin manifest did not load. Make sure that the server of the plugin runs and accepts requests from this site.')
   }
-  const { id, name, version, entry, network, slots } = manifest ?? {}
+  const { id, name, version, entry, network, slots, panels, i18n } = manifest ?? {}
   if (typeof id !== 'string' || typeof version !== 'string' || typeof entry !== 'string') {
     throw new DevelopmentManifestError('missingFields', 'The plugin manifest must have the fields "id", "version" and "entry".')
   }
@@ -104,7 +108,14 @@ export async function loadDevelopmentManifest(manifestUrl: string, fetcher: type
     entry: entryUrl,
     network: Array.isArray(network) ? network.filter((item): item is string => typeof item === 'string' && isHttpUrl(item)) : [],
     slots: Array.isArray(slots) ? slots.filter((item): item is string => typeof item === 'string') : [],
+    panels: Array.isArray(panels) ? panels.filter(isPanel) : [],
+    i18n: typeof i18n === 'object' && i18n !== null && !Array.isArray(i18n) ? (i18n as Record<string, Record<string, string>>) : null,
   }
+}
+
+function isPanel(value: unknown): value is ExtensionPanel {
+  const panel = value as Partial<ExtensionPanel> | null
+  return typeof panel?.id === 'string' && typeof panel.slot === 'string' && typeof panel.title === 'string'
 }
 
 /** Gets the address of the frame of a development plugin. The API sends it only on a development instance. */

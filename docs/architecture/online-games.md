@@ -87,7 +87,11 @@ Rules:
 
 - The order of the changes is the sequence number of the game store, not the order of the messages. The client keeps a reorder buffer.
 - Each change of a game is a compare-and-set in Redis. On one API replica, only one change of a game runs at a time. The other changes wait.
-  After a conflict with another replica, the API waits from 1 ms to 5 ms. Then it reads the game again and tries again, 16 times at most.
+  A conflict comes only from another replica. The conflict gives the current state and the priority of the game to the replica.
+  The replica tries again at once with this state. The other replicas do not write until this write, so a slow replica cannot lose all its attempts.
+  A replica that must wait checks the priority again after 1 ms to 5 ms, and then reads the game again.
+  The priority ends with the next write of the replica, or after 1 second.
+  A change stops with `service_unavailable` after 2 seconds of attempts.
 - The start makes the table with the decks of the seats and a random seed. The seed never leaves the server. The commander damage applies when the format is `commander` or when a deck has a command zone.
 - Each player changes only their own objects. Only the active player can end the turn. A draw has 20 cards at most. A token name has 64 characters at most.
 - A retry of `Act` with the same `clientActionId` gives the sequence number of the first action and applies nothing.
@@ -146,6 +150,7 @@ The guide [Observability](../development/observability.md) tells how to read the
 | `reliquary.playtest.desyncs` | Counter | `{desync}` | The calls of `Resync` because the view of a client was not correct. The attribute `reason` gives the cause. |
 | `reliquary.playtest.games.active` | Gauge | `{game}` | The open games: in the lobby or started, with a change in the last hour. |
 | `reliquary.playtest.patches` | Counter | `{patch}` | The patches that the API sent to the seats. |
+| `reliquary.playtest.write.conflicts` | Histogram | `{conflict}` | The conflicts of the compare-and-set before the API wrote a change of a game. The value is 0 or 1 when the priority works. |
 
 The client gives a reason to each call of `Resync`:
 
@@ -198,6 +203,7 @@ The output of the test gives the latency, the server time and the duration.
 
 The test `FourPlayersThatActWithNoPauseGetNoRefusal` sends 400 life changes from 12 connections (3 for each player, on the two hosts) with no pause.
 Each action must get a sequence number, not `service_unavailable`.
+The output of the test gives the number of conflicts before each write.
 
 The [end-to-end test](../development/end-to-end-test.md) adds a check in real browsers.
 It runs on a schedule: 4 players with accounts and guests, 2 API replicas behind Nginx, 10 minutes each night and 60 minutes each week.
@@ -226,6 +232,7 @@ The online games are only in Redis. A restart of Redis ends the games in progres
 | `reliquary:playtest:game:{id}:seq` | The sequence number of the last change |
 | `reliquary:playtest:game:{id}:log` | The action stream, about 10,000 entries at most |
 | `reliquary:playtest:game:{id}:actions` | The last client action IDs of each seat |
+| `reliquary:playtest:game:{id}:priority` | The API replica that had a conflict and writes next. It expires after 1 second. |
 | `reliquary:playtest:games:active` | The open games, with the time of their last change. Only the gauge `reliquary.playtest.games.active` uses it. |
 | `reliquary:playtest:limits:open:{account}` | The open games of a host |
 | `reliquary:playtest:limits:created:{day}:{account}` | The number of games of a host on one day (UTC). It expires after 2 days. |
