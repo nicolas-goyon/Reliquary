@@ -43,6 +43,9 @@ internal static partial class PlatformLog
     [LoggerMessage(EventId = 1403, Level = LogLevel.Warning, Message = "The catalog sync did not add the plugin {PluginId} {Version}. It tries again at the next sync. {Reason}")]
     public static partial void CatalogVersionFailed(this ILogger logger, string pluginId, string version, string reason);
 
+    [LoggerMessage(EventId = 1404, Level = LogLevel.Warning, Message = "The plugin catalog revoked the plugin {PluginId} {Version}. The version does not run on this instance. Reason: {Reason}")]
+    public static partial void CatalogVersionRevoked(this ILogger logger, string pluginId, string version, string reason);
+
     [LoggerMessage(EventId = 1300, Level = LogLevel.Warning, Message = "The instance has no SMTP server, so the email goes to the log. To: {To}. Subject: {Subject}.\n{Body}")]
     public static partial void EmailWrittenToLog(this ILogger logger, string to, string subject, string body);
 }

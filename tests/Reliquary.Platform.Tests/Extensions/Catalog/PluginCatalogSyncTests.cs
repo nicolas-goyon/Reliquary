@@ -140,6 +140,51 @@ public sealed class PluginCatalogSyncTests : IDisposable
     }
 
     [Fact]
+    public async Task RevocationDisablesTheInstalledVersionOnly()
+    {
+        catalog.AddVersion("hello", "1.0.0");
+        await using var host = await CreateHostAsync();
+        await using var connection = new NpgsqlConnection(host.Databases[0].ConnectionString);
+        await connection.ExecuteAsync(
+            """
+            insert into users.extensions (id, kind, name, version, core_api, manifest, enabled, installed_at, updated_at)
+            values ('hello', 'plugin', 'Hello', '1.0.0', '^1.0', '{}', true, now(), now()),
+                   ('other', 'plugin', 'Other', '2.0.0', '^1.0', '{}', true, now(), now())
+            """);
+        catalog.Revoked.Add(new CatalogRevocation("hello", "1.0.0", "Test revocation."));
+        catalog.Revoked.Add(new CatalogRevocation("other", "1.0.0", "An older version."));
+
+        var result = await host.Get<PluginCatalogSync>().SyncAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(2, result.NewRevocations.Count);
+        var enabled = (await connection.QueryAsync<(string Id, bool Enabled)>("select id, enabled from users.extensions order by id")).ToList();
+        Assert.Equal([("hello", false), ("other", true)], enabled);
+        var registry = host.Get<ExtensionRegistry>();
+        Assert.Equal("Test revocation.", (await registry.FindAsync("hello", TestContext.Current.CancellationToken))!.RevocationReason);
+        Assert.Null((await registry.FindAsync("other", TestContext.Current.CancellationToken))!.RevocationReason);
+        Assert.Equal(["other"], (await registry.ListAsync(enabledOnly: true, TestContext.Current.CancellationToken)).Select(row => row.Id));
+    }
+
+    [Fact]
+    public async Task RevocationIsPermanent()
+    {
+        catalog.AddVersion("hello", "1.0.0");
+        catalog.Revoked.Add(new CatalogRevocation("hello", "1.0.0", "Test revocation."));
+        await using var host = await CreateHostAsync();
+        var sync = host.Get<PluginCatalogSync>();
+        await sync.SyncAsync(TestContext.Current.CancellationToken);
+
+        catalog.Serial = 2;
+        catalog.Revoked.Clear();
+        served = null;
+        var result = await sync.SyncAsync(TestContext.Current.CancellationToken);
+
+        Assert.Empty(result.NewRevocations);
+        Assert.Equal("Test revocation.", await host.Get<ExtensionRegistry>().RevocationReasonAsync("hello", "1.0.0", TestContext.Current.CancellationToken));
+        Assert.Empty(result.AddedVersions);
+    }
+
+    [Fact]
     public async Task OlderIndexIsRefusedAndTheInstanceKeepsTheLastIndex()
     {
         catalog.AddVersion("hello", "1.0.0");

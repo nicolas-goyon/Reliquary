@@ -13,11 +13,13 @@ namespace Reliquary.Platform.Extensions.Catalog;
 /// <param name="Serial">The serial of the index.</param>
 /// <param name="AddedVersions">The plugin versions whose files the sync added to the store.</param>
 /// <param name="FailedVersions">The plugin versions that the sync did not add. The next sync tries them again.</param>
+/// <param name="NewRevocations">The revocations that the instance did not have before this sync.</param>
 public sealed record CatalogSyncResult(
     CatalogIndexStatus Status,
     long Serial,
     IReadOnlyList<string> AddedVersions,
-    IReadOnlyList<string> FailedVersions);
+    IReadOnlyList<string> FailedVersions,
+    IReadOnlyList<CatalogRevocation> NewRevocations);
 
 /// <summary>
 /// Gets the catalog index and the files of the plugin versions. See docs/decisions/0052-plugin-catalog-signature-and-revocation.md.
@@ -26,6 +28,8 @@ public sealed record CatalogSyncResult(
 /// <list type="number">
 /// <item>The sync gets <c>index.json</c> and <c>index.json.sig</c>, and checks them with <see cref="CatalogIndexCheck"/>.
 /// It keeps the last index that it accepted in <c>users.plugin_catalog</c>. A refused index does not change this row.</item>
+/// <item>In the same transaction, it adds the revocations of the index to <c>users.extension_revocations</c>, and disables each installed plugin whose version is revoked.
+/// The registry, the plugin token and the frame endpoint then refuse the revoked version.</item>
 /// <item>For each version that is not revoked and not in the store, it gets the files from <c>{folder of the index}/{plugin ID}/{version}/{path}</c>.
 /// It checks the size and the SHA-384 hash of each file, and the plugin manifest of the version. Then it keeps the files with <see cref="PluginFileStore"/>.</item>
 /// </list>
@@ -76,19 +80,25 @@ public sealed class PluginCatalogSync(
         }
 
         var accepted = result.Index!;
-        await SaveStateAsync(accepted, index, signature, now, cancellationToken);
+        var revoked = await SaveStateAsync(accepted, index, signature, now, cancellationToken);
         if (result.Status == CatalogIndexStatus.Valid)
         {
             logger.CatalogIndexAccepted(accepted.Serial, accepted.KeyId);
         }
 
+        foreach (var revocation in revoked)
+        {
+            logger.CatalogVersionRevoked(revocation.Id, revocation.Version, revocation.Reason);
+        }
+
+        var revokedVersions = await RevokedVersionsAsync(cancellationToken);
         var added = new List<string>();
         var failed = new List<string>();
         foreach (var plugin in accepted.Plugins)
         {
             foreach (var version in plugin.Versions)
             {
-                if (accepted.IsRevoked(plugin.Id, version.Version) || await files.HasVersionAsync(plugin.Id, version.Version, cancellationToken))
+                if (revokedVersions.Contains((plugin.Id, version.Version)) || await files.HasVersionAsync(plugin.Id, version.Version, cancellationToken))
                 {
                     continue;
                 }
@@ -115,7 +125,7 @@ public sealed class PluginCatalogSync(
             throw new InvalidOperationException($"The catalog sync accepted the index {accepted.Serial}, but did not add these plugin versions: {string.Join(", ", failed)}.");
         }
 
-        return new CatalogSyncResult(result.Status, accepted.Serial, added, failed);
+        return new CatalogSyncResult(result.Status, accepted.Serial, added, failed, revoked);
     }
 
     /// <summary>
@@ -232,9 +242,14 @@ public sealed class PluginCatalogSync(
             cancellationToken: cancellationToken));
     }
 
-    private async Task SaveStateAsync(CatalogIndex index, byte[] content, byte[] signature, DateTimeOffset now, CancellationToken cancellationToken)
+    /// <summary>
+    /// Keeps the accepted index and applies its revocations in one transaction.
+    /// </summary>
+    /// <returns>The revocations that the instance did not have before.</returns>
+    private async Task<IReadOnlyList<CatalogRevocation>> SaveStateAsync(CatalogIndex index, byte[] content, byte[] signature, DateTimeOffset now, CancellationToken cancellationToken)
     {
         await using var connection = await database.OpenUsersAsync(cancellationToken);
+        await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
 
         // The condition on the serial keeps the larger serial if two syncs run at the same time.
         await connection.ExecuteAsync(new CommandDefinition(
@@ -248,7 +263,51 @@ public sealed class PluginCatalogSync(
             where users.plugin_catalog.serial <= excluded.serial
             """,
             new { index.Serial, Expires = index.Expires.ToUniversalTime(), index.KeyId, sha256 = SHA256.HashData(content), content, signature, now },
+            transaction,
             cancellationToken: cancellationToken));
+
+        // A revocation is permanent. A later index without the revocation does not enable the version again.
+        var added = new List<CatalogRevocation>();
+        foreach (var revocation in index.Revoked)
+        {
+            var inserted = await connection.ExecuteAsync(new CommandDefinition(
+                """
+                insert into users.extension_revocations (extension_id, version, reason, revoked_at)
+                values (@Id, @Version, @Reason, @now)
+                on conflict (extension_id, version) do nothing
+                """,
+                new { revocation.Id, revocation.Version, revocation.Reason, now },
+                transaction,
+                cancellationToken: cancellationToken));
+            if (inserted == 1)
+            {
+                added.Add(revocation);
+            }
+        }
+
+        await connection.ExecuteAsync(new CommandDefinition(
+            """
+            update users.extensions e
+            set enabled = false, updated_at = @now
+            from users.extension_revocations r
+            where r.extension_id = e.id and r.version = e.version and e.enabled
+            """,
+            new { now },
+            transaction,
+            cancellationToken: cancellationToken));
+
+        await transaction.CommitAsync(cancellationToken);
+        return added;
+    }
+
+    /// <summary>Gets all the revoked versions of the instance. The list contains the revocations of the earlier indexes too.</summary>
+    private async Task<HashSet<(string Id, string Version)>> RevokedVersionsAsync(CancellationToken cancellationToken)
+    {
+        await using var connection = await database.OpenUsersAsync(cancellationToken);
+        var rows = await connection.QueryAsync<(string Id, string Version)>(new CommandDefinition(
+            "select extension_id, version from users.extension_revocations",
+            cancellationToken: cancellationToken));
+        return rows.ToHashSet();
     }
 
     /// <summary>A file of the catalog is not correct.</summary>

@@ -35,6 +35,15 @@ internal sealed class ExtensionRow
     public DateTime UpdatedAt { get; set; }
 
     /// <summary>
+    /// Gets or sets the reason of the revocation of the installed version, or <see langword="null"/> when the plugin catalog did not revoke it.
+    /// A revoked version does not run, and the instance cannot enable it again.
+    /// </summary>
+    public string? RevocationReason { get; set; }
+
+    /// <summary>Gets whether the plugin catalog revoked the installed version.</summary>
+    public bool Revoked => RevocationReason is not null;
+
+    /// <summary>
     /// Tells whether the extension supports the current core API. An update of the core can make an installed extension incompatible.
     /// </summary>
     public bool Compatible => VersionRange.TryParse(CoreApi, out var range) && range!.Contains(BuildingBlocks.Versioning.CoreApi.Version);
@@ -49,7 +58,8 @@ internal sealed class ExtensionRegistry(IDatabase database, TimeProvider time)
 {
     private const string Columns = """
         id, kind, name, version, core_api as CoreApi, permissions, slots, manifest::text as Manifest, settings::text as Settings,
-        enabled, installed_at as InstalledAt, updated_at as UpdatedAt
+        enabled, installed_at as InstalledAt, updated_at as UpdatedAt,
+        (select r.reason from users.extension_revocations r where r.extension_id = users.extensions.id and r.version = users.extensions.version) as RevocationReason
         """;
 
     public async Task<IReadOnlyList<ExtensionRow>> ListAsync(bool enabledOnly, CancellationToken cancellationToken)
@@ -59,7 +69,7 @@ internal sealed class ExtensionRegistry(IDatabase database, TimeProvider time)
             $"select {Columns} from users.extensions where (not @enabledOnly or enabled) order by kind, id",
             new { enabledOnly },
             cancellationToken: cancellationToken));
-        return rows.Where(row => !enabledOnly || row.Compatible).ToList();
+        return rows.Where(row => !enabledOnly || (row.Compatible && !row.Revoked)).ToList();
     }
 
     public async Task<ExtensionRow?> FindAsync(string id, CancellationToken cancellationToken)
@@ -108,6 +118,19 @@ internal sealed class ExtensionRegistry(IDatabase database, TimeProvider time)
             cancellationToken: cancellationToken));
         var row = await FindAsync(manifest.Id!, cancellationToken) ?? throw new InvalidOperationException($"The extension {manifest.Id} is not in the registry after the installation.");
         return (row, created);
+    }
+
+    /// <summary>
+    /// Gets the reason of the revocation of a plugin version.
+    /// </summary>
+    /// <returns>The reason, or <see langword="null"/> when the plugin catalog did not revoke the version.</returns>
+    public async Task<string?> RevocationReasonAsync(string id, string version, CancellationToken cancellationToken)
+    {
+        await using var connection = await database.OpenUsersAsync(cancellationToken);
+        return await connection.QuerySingleOrDefaultAsync<string>(new CommandDefinition(
+            "select reason from users.extension_revocations where extension_id = @id and version = @version",
+            new { id, version },
+            cancellationToken: cancellationToken));
     }
 
     public async Task<ExtensionRow?> UpdateAsync(string id, bool? enabled, JsonElement? settings, CancellationToken cancellationToken)
