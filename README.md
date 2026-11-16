@@ -32,7 +32,7 @@ The [GitHub milestones](https://github.com/nicolas-goyon/reliquary/milestones) a
 
 ## Technology
 
-- Backend: C# and ASP.NET Core on .NET 10, as a modular monolith
+- Backend: C# and ASP.NET Core on .NET 11, as a modular monolith
 - Front end: TypeScript, React and Vite, with a French and English interface
 - Data: PostgreSQL and Redis
 - Real time: SignalR
@@ -46,7 +46,7 @@ just up        # build and start a full instance with the demo data on http://lo
 just down      # destroy the instance and its data
 ```
 
-To change the code, you also need the .NET 10 SDK, Node.js 24 and Python 3:
+To change the code, you also need the .NET 11 SDK, Node.js 24 and Python 3:
 
 ```shell
 just infra     # start PostgreSQL, Redis and Mailpit

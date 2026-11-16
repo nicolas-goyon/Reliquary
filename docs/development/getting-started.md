@@ -7,7 +7,7 @@ Terms follow the [glossary](../glossary.md).
 
 | Tool | Version | Use |
 | --- | --- | --- |
-| .NET SDK | 10.0 (see `global.json`) | Backend |
+| .NET SDK | 11.0 (see `global.json`) | Backend |
 | Node.js | 24 (see `web/.nvmrc`), or 22.12 and later | Web app |
 | Docker with Compose | Compose 2.17 or later | PostgreSQL and Redis |
 | [just](https://just.systems) | 1.40 or later | Development commands |

@@ -11,7 +11,7 @@ Terms follow the [glossary](../glossary.md).
 | A POSIX shell (Linux, macOS, WSL 2 on Windows) | Yes | Yes, or PowerShell on Windows | Yes |
 | [just](https://just.systems) 1.40 or later | Yes | Optional | No |
 | Git | Yes | Optional | No |
-| .NET SDK 10.0 (see `global.json`) | Only for hot reload | No | No |
+| .NET SDK 11.0 (see `global.json`) | Only for hot reload | No | No |
 | Node.js 24, or 22.12 and later | Only for hot reload | No | No |
 | Python 3.11 or later | Only for the documentation checks | No | No |
 | A reverse proxy with HTTPS, for example Caddy | No | No | Yes |

@@ -13,7 +13,7 @@ Each record gives the context, the decision and its consequences.
 | [0003](0003-languages.md) | Languages: English for the project, French and English for the interface | Accepted |
 | [0004](0004-writing-rules.md) | Writing rules: ASD-STE100 Simplified Technical English | Accepted |
 | [0005](0005-git-workflow.md) | Git workflow: develop, main and pull requests | Accepted |
-| [0006](0006-backend-and-frontend-languages.md) | Backend in C# and ASP.NET Core, front end and plugins in TypeScript | Accepted |
+| [0006](0006-backend-and-frontend-languages.md) | Backend in C# and ASP.NET Core, front end and plugins in TypeScript | Accepted. Amended by 0054 |
 | [0007](0007-modular-monolith.md) | Modular monolith for the core | Accepted |
 | [0008](0008-postgresql-schemas-and-shard-directory.md) | PostgreSQL with separate schemas and a shard directory | Accepted |
 | [0009](0009-single-instance-without-federation.md) | One instance without federation | Accepted |
@@ -61,6 +61,7 @@ Each record gives the context, the decision and its consequences.
 | [0051](0051-linked-accounts.md) | Linked accounts with a user name or an API key first, and OAuth 2 later | Accepted |
 | [0052](0052-plugin-catalog-signature-and-revocation.md) | The plugin catalog publishes a signed index with file hashes and revoked versions | Accepted |
 | [0053](0053-helm-chart-scope.md) | The Helm chart deploys the API, the worker and the web app, with external PostgreSQL and Redis | Accepted |
+| [0054](0054-dotnet-11-and-the-latest-dotnet-version.md) | The backend uses the latest version of .NET, LTS or STS. It uses .NET 11 from 2026-11-16 | Accepted |
 
 ## Open decisions
 

@@ -360,7 +360,7 @@ public sealed class GameEndpointTests(PlaytestInstance instance)
     {
         var body = await response.Content.ReadAsStringAsync(Cancel);
         Assert.True(response.StatusCode == status, $"{response.StatusCode}: {body}");
-        var problem = JsonDocument.Parse(body).RootElement.Clone();
+        var problem = JsonElement.Parse(body);
         Assert.Equal(code, problem.GetProperty("code").GetString());
         return problem;
     }

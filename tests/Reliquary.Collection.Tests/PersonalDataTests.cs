@@ -34,7 +34,7 @@ public sealed class PersonalDataTests(CollectionInstance instance)
         using var zip = new ZipArchive(stream, ZipArchiveMode.Read);
         var entries = zip.Entries.Select(entry => entry.FullName).Where(name => name.StartsWith("collection/", StringComparison.Ordinal)).Order(StringComparer.Ordinal).ToList();
         var text = await new StreamReader(zip.GetEntry("collection/text/Rack 1.txt")!.Open()).ReadToEndAsync(Cancel);
-        var locations = JsonDocument.Parse(await new StreamReader(zip.GetEntry("collection/locations.json")!.Open()).ReadToEndAsync(Cancel)).RootElement;
+        var locations = JsonElement.Parse(await new StreamReader(zip.GetEntry("collection/locations.json")!.Open()).ReadToEndAsync(Cancel));
 
         Assert.Equal(
             ["collection/deck-tokens.json", "collection/inventories.json", "collection/locations.json", "collection/movements.json", "collection/settings.json", "collection/shares.json", "collection/storage-rules.json", "collection/text/Rack 1.txt"],
