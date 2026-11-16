@@ -137,5 +137,37 @@
       "missingFields": "The plugin manifest does not have the fields \"id\", \"version\" and \"entry\". Add these fields to the plugin manifest.",
       "invalidEntry": "The field \"entry\" of the plugin manifest is not an http or https URL. Change the field \"entry\"."
     }
+  },
+  "linkedAccounts": {
+    "title": "Linked accounts",
+    "description": "Your plugins use these accounts on other sites. Reliquary encrypts each API key, and only the plugin of the link can read it.",
+    "site": "Site",
+    "plugin": "Plugin",
+    "stateTitle": "State",
+    "lastSync": "Last sync",
+    "actions": "Actions",
+    "never": "Never",
+    "state": {
+      "notLinked": "Not linked",
+      "linked": "Linked",
+      "synced": "Synced",
+      "failed": "Sync failed",
+      "keyLost": "Link the account again"
+    },
+    "pluginInactive": "The plugin does not run. You can only unlink the account.",
+    "link": "Link",
+    "change": "Change",
+    "unlink": "Unlink",
+    "unlinkConfirm": "Unlink your account on {{site}}? Reliquary deletes the link and its API key.",
+    "oauthLater": "This sign-in method is not available yet.",
+    "formTitle": "Link your account on {{site}}",
+    "apiKey": "API key",
+    "apiKeyHint": "Reliquary encrypts the key. Only the plugin of the link can read it. The page never shows it again.",
+    "userName": "User name",
+    "userNameOptional": "User name (optional)",
+    "userNameHint": "Your public user name on the site. The plugin reads only your public data.",
+    "submit": "Link the account",
+    "cancel": "Cancel",
+    "linked": "Reliquary linked your account on {{site}}."
   }
 }

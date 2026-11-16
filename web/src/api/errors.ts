@@ -48,6 +48,10 @@ export const translatedErrorCodes = [
   'consent_required',
   'consent_outdated',
   'too_many_active_plugins',
+  'vault_not_configured',
+  'vault_key_missing',
+  'vault_secret_unreadable',
+  'linked_account_method_not_supported',
 ] as const
 
 export type TranslatedErrorCode = (typeof translatedErrorCodes)[number]

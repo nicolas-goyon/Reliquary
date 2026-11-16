@@ -118,7 +118,11 @@
     "plugin_format_failed": "The plugin did not convert the file. Check the file, or select a different format.",
     "consent_required": "The plugin asks for access that you did not accept. Read the access, then accept it.",
     "consent_outdated": "The plugin changed while the dialog was open. Close the dialog and read the access again.",
-    "too_many_active_plugins": "You have the maximum number of active plugins. Deactivate a plugin, then try again."
+    "too_many_active_plugins": "You have the maximum number of active plugins. Deactivate a plugin, then try again.",
+    "vault_not_configured": "The instance cannot keep an API key. Tell the administrator of the instance.",
+    "vault_key_missing": "The instance lost the key of this secret. Link the account again.",
+    "vault_secret_unreadable": "The instance cannot read this secret. Link the account again.",
+    "linked_account_method_not_supported": "This sign-in method is not available yet."
   },
   "fieldErrors": {
     "required": "This field is necessary.",
