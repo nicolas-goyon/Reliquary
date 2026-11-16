@@ -110,6 +110,7 @@ Rules for the error codes:
 | `api_key_limit` | 409 | The account has the maximum number of API keys. |
 | `provider_not_enabled` | 404 | The OAuth provider is not enabled on the instance. |
 | `core_version_not_supported` | 409 | The extension does not support the current version of the core API. |
+| `version_revoked` | 409 | The plugin catalog revoked this plugin version. Install a different version. |
 | `scope_missing` | 403 | The delegation token does not have the scope of the endpoint, or the endpoint does not accept delegation tokens. |
 | `delegation_limit` | 409 | The account has the maximum number of active delegations. |
 | `service_account_name_taken` | 409 | A service account with the same name exists. |

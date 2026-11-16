@@ -143,11 +143,12 @@ public static class PluginFileEndpoints
 
     /// <summary>
     /// Finds the plugin version that the endpoints can send: the installed version of a plugin that the instance enables and that supports the core API.
+    /// The plugin catalog must not have revoked the version.
     /// </summary>
     private static async Task<FramePlugin?> FindVersionAsync(string id, string version, ExtensionRegistry registry, CancellationToken cancellationToken)
     {
         var row = await registry.FindAsync(id, cancellationToken);
-        if (row is not { Kind: "plugin", Enabled: true, Compatible: true } || row.Version != version)
+        if (row is not { Kind: "plugin", Enabled: true, Compatible: true, Revoked: false } || row.Version != version)
         {
             return null;
         }

@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Reliquary.Platform.Extensions;
 using Reliquary.Platform.Migrations;
@@ -80,7 +81,12 @@ internal sealed class PluginInstance : IAsyncDisposable
         }
     }
 
-    public static async Task<PluginInstance> CreateAsync(params (string Key, string Value)[] settings)
+    public static Task<PluginInstance> CreateAsync(params (string Key, string Value)[] settings) => CreateAsync(null, settings);
+
+    /// <summary>
+    /// Creates an instance with settings and changes of the services, for example the HTTP handler of the plugin catalog.
+    /// </summary>
+    public static async Task<PluginInstance> CreateAsync(Action<IServiceCollection>? services, params (string Key, string Value)[] settings)
     {
         var database = await TestServers.CreateDatabaseAsync("plugins");
         var factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
@@ -95,6 +101,11 @@ internal sealed class PluginInstance : IAsyncDisposable
             foreach (var (key, value) in settings)
             {
                 builder.UseSetting(key, value);
+            }
+
+            if (services is not null)
+            {
+                builder.ConfigureTestServices(services);
             }
         });
         await factory.Services.GetRequiredService<MigrationRunner>().MigrateAsync(TestContext.Current.CancellationToken);

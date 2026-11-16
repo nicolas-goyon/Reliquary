@@ -4,7 +4,7 @@ namespace Reliquary.Platform.Extensions;
 
 /// <summary>
 /// Tells whether a plugin runs for a user, from the extension registry.
-/// A plugin runs when the instance has it, enables it, the plugin supports the core API, and the user activated it.
+/// A plugin runs when the instance has it, enables it, the plugin supports the core API, the plugin catalog did not revoke the version, and the user activated it.
 /// </summary>
 /// <param name="registry">The extension registry.</param>
 internal sealed class PluginAccess(ExtensionRegistry registry) : IPluginAccess
@@ -17,7 +17,7 @@ internal sealed class PluginAccess(ExtensionRegistry registry) : IPluginAccess
     public async Task<IReadOnlyList<string>?> ScopesAsync(Guid ownerId, string pluginId, CancellationToken cancellationToken)
     {
         var row = await registry.FindAsync(pluginId, cancellationToken);
-        if (row is not { Kind: "plugin", Enabled: true, Compatible: true })
+        if (row is not { Kind: "plugin", Enabled: true, Compatible: true, Revoked: false })
         {
             return null;
         }

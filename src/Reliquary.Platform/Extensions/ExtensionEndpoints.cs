@@ -72,7 +72,8 @@ public sealed record PluginRuntimeResponse(int MaxActive, string? FrameOrigin, b
 /// <param name="Settings">The settings of the instance for the extension.</param>
 /// <param name="InstalledAt">The time of the first installation.</param>
 /// <param name="UpdatedAt">The time of the last change.</param>
-public sealed record AdminExtensionResponse(ExtensionResponse Extension, JsonElement Manifest, JsonElement Settings, DateTimeOffset InstalledAt, DateTimeOffset UpdatedAt);
+/// <param name="RevocationReason">The reason of the revocation of the installed version by the plugin catalog, or null. A revoked version does not run.</param>
+public sealed record AdminExtensionResponse(ExtensionResponse Extension, JsonElement Manifest, JsonElement Settings, DateTimeOffset InstalledAt, DateTimeOffset UpdatedAt, string? RevocationReason);
 
 /// <summary>The body of a change of an extension. A missing field does not change.</summary>
 /// <param name="Enabled">The activation flag of the instance.</param>
@@ -90,6 +91,9 @@ public static class ExtensionEndpoints
 {
     /// <summary>The extension does not support the current core API.</summary>
     public const string CoreVersionNotSupported = "core_version_not_supported";
+
+    /// <summary>The plugin catalog revoked this plugin version.</summary>
+    public const string VersionRevoked = "version_revoked";
 
     /// <summary>The user has the maximum number of active plugins.</summary>
     public const string TooManyActivePlugins = "too_many_active_plugins";
@@ -158,7 +162,7 @@ public static class ExtensionEndpoints
         }
 
         var extension = await registry.FindAsync(id, cancellationToken);
-        if (extension is not { Kind: "plugin", Enabled: true } || !extension.Compatible)
+        if (extension is not { Kind: "plugin", Enabled: true, Revoked: false } || !extension.Compatible)
         {
             return ApiProblems.NotFound("The instance has no enabled plugin with this ID.");
         }
@@ -225,6 +229,11 @@ public static class ExtensionEndpoints
                 $"The extension supports the core API versions \"{manifest.CoreApi}\", but the core API version is {CoreApi.Version}. Install a version of the extension for this core.");
         }
 
+        if (manifest.Kind == "plugin" && await registry.RevocationReasonAsync(id, manifest.Version!, cancellationToken) is { } reason)
+        {
+            return ApiProblems.Conflict(VersionRevoked, $"The plugin catalog revoked the version {manifest.Version} of {id}: {reason} Install a different version.");
+        }
+
         var existing = await registry.FindAsync(id, cancellationToken);
         if (existing is not null && existing.Kind != manifest.Kind)
         {
@@ -257,6 +266,13 @@ public static class ExtensionEndpoints
             return ApiProblems.Conflict(
                 CoreVersionNotSupported,
                 $"The extension supports the core API versions \"{existing.CoreApi}\", but the core API version is {CoreApi.Version}. Install a compatible version before you enable it.");
+        }
+
+        if (request.Enabled == true && existing.Revoked)
+        {
+            return ApiProblems.Conflict(
+                VersionRevoked,
+                $"The plugin catalog revoked the version {existing.Version} of {id}: {existing.RevocationReason} Install a different version before you enable it.");
         }
 
         var settings = request.Settings is { ValueKind: JsonValueKind.Object } value ? value : (JsonElement?)null;
@@ -322,7 +338,7 @@ public static class ExtensionEndpoints
 
     private static ExtensionResponse ToResponse(ExtensionRow row, IReadOnlyDictionary<string, bool>? activations)
     {
-        var active = row.Enabled && row.Compatible && (row.Kind == "module" || (activations?.GetValueOrDefault(row.Id) ?? false));
+        var active = row.Enabled && row.Compatible && !row.Revoked && (row.Kind == "module" || (activations?.GetValueOrDefault(row.Id) ?? false));
         var (panels, i18n, formats) = ReadInterface(row.Manifest);
         return new ExtensionResponse(row.Id, row.Kind, row.Name, row.Version, row.CoreApi, row.Permissions, row.Slots, row.Enabled, row.Compatible, active, panels, i18n, formats);
     }
@@ -388,7 +404,8 @@ public static class ExtensionEndpoints
         ParseJson(row.Manifest),
         ParseJson(row.Settings),
         new DateTimeOffset(row.InstalledAt, TimeSpan.Zero),
-        new DateTimeOffset(row.UpdatedAt, TimeSpan.Zero));
+        new DateTimeOffset(row.UpdatedAt, TimeSpan.Zero),
+        row.RevocationReason);
 
     private static JsonElement ParseJson(string json)
     {

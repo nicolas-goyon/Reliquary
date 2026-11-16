@@ -325,6 +325,7 @@ Two endpoints send a plugin version to the browser:
 
 The two endpoints accept requests with no credential, because the browser sends no credential when it opens the frame.
 They send only the installed version of a plugin that the instance enables, so a disabled plugin stops at the next start of its frame.
+They do not send a version that the plugin catalog revoked.
 
 The frame request has no credential, so the API does not know the user.
 Thus the runtime of the web app puts the values that the user accepted in the query of the frame address:
@@ -479,6 +480,27 @@ An administrator can start it with `reliquary jobs run plugins.catalog`.
 
 The job does not install a plugin in the extension registry.
 The administrator installs a plugin of the catalog with the plugin manifest of the version.
+
+#### Revocation
+
+The field `revoked` of the catalog index stops a plugin version on all instances after one sync.
+
+1. The catalog sync adds each revocation to the table `users.extension_revocations`, in the transaction that keeps the index.
+   A revocation is permanent.
+   A later index without the revocation does not enable the version again, so a fixed plugin needs a new version.
+2. The catalog sync disables each installed plugin whose version the catalog revoked.
+   The sync does not get the files of a revoked version.
+3. The API then refuses the revoked version:
+   - `GET /api/v1/extensions` does not list it.
+   - The frame endpoint and the file endpoint return the status 404.
+   - `POST /api/v1/me/extensions/{id}/token` and `PUT /api/v1/me/extensions/{id}` return the status 404.
+   - A plugin token of the version gets the status 401 at its next request.
+   - `PATCH /api/v1/admin/extensions/{id}` cannot enable it, and `PUT /api/v1/admin/extensions/{id}` cannot install it. The error is `version_revoked`.
+   - `GET /api/v1/admin/extensions` gives the reason in the field `revocationReason`.
+4. While a plugin runs, the web app gets `GET /api/v1/extensions` each 10 minutes, and when the page becomes visible again.
+   When the active plugins or their versions changed, the web app removes all the plugin frames and starts the active plugins again.
+   Thus a revoked version stops in the browser 10 minutes after the sync at most.
+   Before this check, the frame can run, but its plugin token gets the status 401.
 
 ### Life cycle and security
 

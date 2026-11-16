@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { ExtensionList } from '../api/extensions'
 import { AuthContext, type AuthContextValue, type AuthState } from '../auth/session'
 import { testAccount } from '../test/mockApi'
-import { notifyPluginsChanged } from './events'
+import { notifyPluginsChanged, pluginCheckIntervalMs } from './events'
 import { PluginRuntime } from './PluginRuntime'
 
 const runtime = vi.hoisted(() => ({
@@ -35,6 +35,7 @@ function renderRuntime(state: AuthState, response: ExtensionList | (() => Extens
 
 describe('PluginRuntime', () => {
   afterEach(() => {
+    vi.useRealTimers()
     vi.clearAllMocks()
     localStorage.clear()
   })
@@ -108,5 +109,42 @@ describe('PluginRuntime', () => {
     await new Promise((resolve) => setTimeout(resolve, 10))
 
     expect(runtime.startPluginRuntime).not.toHaveBeenCalled()
+  })
+  it('stops a plugin that the instance no longer gives at the next check', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    let response = list(true)
+    const { request } = renderRuntime({ status: 'authenticated', account: testAccount }, () => response)
+    await waitFor(() => expect(runtime.startPluginRuntime).toHaveBeenCalledTimes(1))
+    const first = runtime.startPluginRuntime.mock.results[0].value
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(pluginCheckIntervalMs)
+    })
+    expect(request).toHaveBeenCalledTimes(2)
+    expect(runtime.startPluginRuntime).toHaveBeenCalledTimes(1)
+
+    // The catalog revoked the version, so the instance does not give the plugin.
+    response = { ...list(true), items: list(true).items.filter((item) => item.kind !== 'plugin') }
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(pluginCheckIntervalMs)
+    })
+
+    await waitFor(() => expect(first.stopAll).toHaveBeenCalledTimes(1))
+    expect(runtime.startPluginRuntime).toHaveBeenCalledTimes(1)
+  })
+
+  it('starts the runtime again when the version of a plugin changes', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    let response = list(true)
+    renderRuntime({ status: 'authenticated', account: testAccount }, () => response)
+    await waitFor(() => expect(runtime.startPluginRuntime).toHaveBeenCalledTimes(1))
+
+    response = { ...list(true), items: list(true).items.map((item) => (item.kind === 'plugin' ? { ...item, version: '0.2.0' } : item)) }
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(pluginCheckIntervalMs)
+    })
+
+    await waitFor(() => expect(runtime.startPluginRuntime).toHaveBeenCalledTimes(2))
+    expect(runtime.startPluginRuntime).toHaveBeenLastCalledWith(response, { developmentUrls: [], registry: undefined })
   })
 })
