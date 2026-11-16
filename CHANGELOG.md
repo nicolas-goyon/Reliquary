@@ -7,6 +7,24 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Added
 
+- The local multiplayer mode: one person tests a deck against 2 or 3 other decks on one computer (ADR 0045).
+  The person uses one window, or one window for each player.
+  The players enter the life points, the counters and the commander damage. Commander damage shows only in a Commander game.
+- The shared screen: a table window shows all the boards, and shows the hands and the libraries only as numbers of cards.
+- Online games for 2 to 4 players (ADR 0047). An account creates a game, and the other players join with an invite link, as an account or as a guest.
+  The server keeps all the zones and sends to each player only their view.
+  The API can run with more than one replica: the hub of the table uses SignalR with a Redis backplane.
+- The metrics of online games: `reliquary.playtest.action.duration`, `reliquary.playtest.desyncs`, `reliquary.playtest.games.active` and `reliquary.playtest.write.conflicts`.
+- The deck image, the link preview and the embed of a public deck (ADR 0046).
+- The archetype of a deck, and the filters of the public deck search by archetype and by a range of dates.
+- The filters of the deck list: assembled deck and completeness.
+- The note of a deck line in the table mode and on the deck page.
+- The purchase list marks a card when its lowest market price is more than the maximum price of its line.
+- The Helm chart in `deploy/helm/reliquary`, with the migration Job, the HTTPRoute and the Ingress, and the production guide for Kubernetes (ADR 0053).
+- The decision records of the plugins (ADR 0048 to ADR 0053) and the check of the plugin manifests with a shared JSON Schema.
+- The plugin files and the plugin frame, with a CSP and a permissions policy for each plugin.
+  The policy comes from the list of permissions that the user accepts.
+- The plugin token: a short token with the plugin ID and the accepted scopes. The API never accepts it as a session token.
 - The plugin SDK `reliquary-plugin-sdk` in the folder `sdk/`, under the Apache License 2.0 (ADR 0048).
   It contains `definePlugin`, the RPC client of the plugin frame and the types of the plugin manifest.
 - The plugin runtime of the web app (ADR 0049): a sandboxed plugin frame for each active plugin, the RPC channel and the watchdog.
@@ -22,6 +40,21 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Plugin columns in the table mode. The core asks the cells of all the rows in one call, and keeps them until the deck changes.
 - Plugin import formats and export formats for decks and for the collection.
   The plugin converts the file, and the core imports or exports the data with its own endpoints.
+
+### Changed
+
+- The backend uses .NET 11 (ADR 0054). The images use `dotnet/aspnet:11.0`, on Ubuntu 26.04.
+  If the outbox publisher or the job runner stops with an error, the worker process now stops with an error.
+- The OpenAPI documents stay at version 3.1. The tags of the documents are in alphabetical order.
+- The web app writes the proxy PDF with its own PDF writer. The web app has 7 runtime npm packages instead of 30.
+- The web app finds the language of the browser with no extra package.
+- The packages: i18next 27, react-i18next 18, MailKit 5, System.CommandLine 3, the ASP.NET Core 11 packages.
+
+### Fixed
+
+- In an online game, a player sees on the boards of the other players the commander damage that they dealt.
+- An action of an online game is not refused when 4 players act at the same time on 2 API replicas.
+- The security advisory of `Microsoft.AspNetCore.SignalR.StackExchangeRedis` 10.0.14: the version 10.0.15, then 11.0.0.
 
 ## [0.2.0] - 2026-11-09
 
