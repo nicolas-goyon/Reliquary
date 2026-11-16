@@ -12,6 +12,12 @@ namespace Reliquary.Platform.Tests.Extensions.Catalog;
 /// </summary>
 internal sealed class TestCatalog : IDisposable
 {
+    /// <summary>The folder of the test catalog.</summary>
+    public const string Folder = "https://catalog.test/plugins/";
+
+    /// <summary>The address of the index of the test catalog.</summary>
+    public const string IndexUrl = Folder + "index.json";
+
     private readonly ECDsa key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
 
     public TestCatalog(string keyId = "test-key") => KeyId = keyId;
@@ -90,8 +96,69 @@ internal sealed class TestCatalog : IDisposable
     /// <summary>Makes the bytes of <c>index.json</c>.</summary>
     public byte[] Index() => JsonSerializer.SerializeToUtf8Bytes(IndexObject());
 
+    /// <summary>
+    /// Makes the files that the catalog serves: the index, its signature and the files of each version.
+    /// </summary>
+    /// <returns>The content of each address.</returns>
+    public Dictionary<string, byte[]> Files()
+    {
+        var index = Index();
+        var result = new Dictionary<string, byte[]>(StringComparer.Ordinal)
+        {
+            [IndexUrl] = index,
+            [IndexUrl + ".sig"] = Sign(index),
+        };
+        foreach (var (id, version, files) in Versions)
+        {
+            foreach (var (path, content) in files)
+            {
+                result[FileUrl(id, version, path)] = content;
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>Gets the address of a file of a plugin version.</summary>
+    public static string FileUrl(string id, string version, string path) => $"{Folder}{id}/{version}/{path}";
+
     /// <summary>Signs bytes with the test key, in the DER format of openssl.</summary>
     public byte[] Sign(byte[] data) => key.SignData(data, HashAlgorithmName.SHA256, DSASignatureFormat.Rfc3279DerSequence);
 
     public void Dispose() => key.Dispose();
+}
+
+/// <summary>
+/// An HTTP handler that serves the files of a test catalog, with no network.
+/// </summary>
+/// <param name="files">Gives the content of each address at the time of the request.</param>
+internal sealed class TestCatalogHandler(Func<IReadOnlyDictionary<string, byte[]>> files) : HttpMessageHandler
+{
+    private readonly List<string> requests = [];
+
+    /// <summary>Gets the addresses of the requests, in order.</summary>
+    public IReadOnlyList<string> Requests
+    {
+        get
+        {
+            lock (requests)
+            {
+                return requests.ToList();
+            }
+        }
+    }
+
+    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    {
+        var url = request.RequestUri!.ToString();
+        lock (requests)
+        {
+            requests.Add(url);
+        }
+
+        var response = files().TryGetValue(url, out var content)
+            ? new HttpResponseMessage(System.Net.HttpStatusCode.OK) { Content = new ByteArrayContent(content) }
+            : new HttpResponseMessage(System.Net.HttpStatusCode.NotFound);
+        return Task.FromResult(response);
+    }
 }

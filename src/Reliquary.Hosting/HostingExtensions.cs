@@ -62,7 +62,7 @@ public static class HostingExtensions
     /// <returns>The service collection.</returns>
     public static IServiceCollection AddReliquaryWorker(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddReliquaryWorkerPlatform();
+        services.AddReliquaryWorkerPlatform(configuration);
 
         foreach (var component in CoreComponents.All)
         {

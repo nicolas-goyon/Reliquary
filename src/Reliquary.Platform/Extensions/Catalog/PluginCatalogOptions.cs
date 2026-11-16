@@ -16,6 +16,9 @@ public sealed class PluginCatalogOptions
     /// </summary>
     public string? Url { get; set; }
 
+    /// <summary>Gets or sets the minimum time between two syncs of the catalog. The default is one hour.</summary>
+    public TimeSpan Interval { get; set; } = TimeSpan.FromHours(1);
+
     /// <summary>
     /// Gets or sets the public keys that can sign the catalog index.
     /// Without a value, the instance trusts the keys of <see cref="ProjectKeys"/>.
