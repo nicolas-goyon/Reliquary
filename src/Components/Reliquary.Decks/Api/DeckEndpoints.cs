@@ -30,7 +30,7 @@ internal static class DeckEndpoints
 
         owner.MapGet(string.Empty, ListAsync)
             .WithName("ListDecks")
-            .WithSummary("Lists the decks of the user with filters by folder, format, color identity, deck tag, archive, assembled deck and completeness. The pinned decks come first, then the sort applies. The completeness filter needs the scope collection:read for a delegation token.")
+            .WithSummary("Lists the decks of the user with filters by folder, format, color identity, deck tag, archive, assembled deck and completeness. The pinned decks come first, then the sort applies. The completeness filter needs the scope collection:read for a delegation token or a plugin token.")
             .RequireScope(Scopes.DecksRead);
 
         owner.MapPost(string.Empty, CreateAsync)
@@ -195,8 +195,8 @@ internal static class DeckEndpoints
             return ApiProblems.Validation(errors);
         }
 
-        // The completeness reads the collection, so a delegation token needs the scope of the collection too.
-        if (complete is not null && user.IsDelegated() && !user.HasScope(Scopes.CollectionRead))
+        // The completeness reads the collection, so a delegation token or a plugin token needs the scope of the collection too.
+        if (complete is not null && user.IsScoped() && !user.HasScope(Scopes.CollectionRead))
         {
             return ApiProblems.Problem(
                 StatusCodes.Status403Forbidden,

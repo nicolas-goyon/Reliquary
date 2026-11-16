@@ -31,8 +31,11 @@ public static class ReliquaryClaims
     /// <summary>The ID of the delegation, when the method is <see cref="AuthMethods.Delegation"/>.</summary>
     public const string DelegationId = "rlq_dlg";
 
-    /// <summary>One scope of a delegation token. A principal has one claim for each scope. See <see cref="Scopes"/>.</summary>
+    /// <summary>One scope of a delegation token or of a plugin token. A principal has one claim for each scope. See <see cref="Scopes"/>.</summary>
     public const string Scope = "scope";
+
+    /// <summary>The ID of the plugin, when the method is <see cref="AuthMethods.Plugin"/>.</summary>
+    public const string PluginId = "plg";
 }
 
 /// <summary>
@@ -51,6 +54,9 @@ public static class AuthMethods
 
     /// <summary>A delegation token: a service account acts for a user, with the scopes of the token.</summary>
     public const string Delegation = "delegation";
+
+    /// <summary>A plugin token: the web app calls the API for a plugin of the user, with the scopes that the user accepted for the plugin.</summary>
+    public const string Plugin = "plugin";
 }
 
 /// <summary>
@@ -68,8 +74,8 @@ public static class Roles
 public static class AuthPolicies
 {
     /// <summary>
-    /// An authenticated user, with an access token, an API key or a delegation token. A service account is not a user.
-    /// A delegation token also needs the scope of the endpoint. See <see cref="ScopeEndpointExtensions.RequireScope{TBuilder}"/>.
+    /// An authenticated user, with an access token, an API key, a delegation token or a plugin token. A service account is not a user.
+    /// A delegation token and a plugin token also need the scope of the endpoint. See <see cref="ScopeEndpointExtensions.RequireScope{TBuilder}"/>.
     /// </summary>
     public const string User = "user";
 
