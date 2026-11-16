@@ -102,6 +102,7 @@ public static class ExtensionEndpoints
             .RequireAuthorization(AuthPolicies.Session);
 
         api.MapDevelopmentPluginEndpoints();
+        api.MapPluginFileEndpoints();
 
         var admin = api.MapGroup("/admin/extensions").WithTags("Administration").RequireAuthorization(AuthPolicies.Administrator);
 
@@ -274,7 +275,8 @@ public static class ExtensionEndpoints
             return false;
         }
 
-        var isPlugin = body.TryGetProperty("kind", out var kind) && kind.ValueKind == JsonValueKind.String && kind.GetString() == "plugin";
+        // A manifest of the plugin catalog has no kind, so a manifest without a kind is a plugin manifest.
+        var isPlugin = !body.TryGetProperty("kind", out var kind) || (kind.ValueKind == JsonValueKind.String && kind.GetString() == "plugin");
         if (isPlugin)
         {
             errors = PluginManifestCheck.Check(body);
@@ -287,6 +289,10 @@ public static class ExtensionEndpoints
         try
         {
             manifest = body.Deserialize<ExtensionManifest>(JsonSerializerOptions.Web)!;
+            if (isPlugin)
+            {
+                manifest = manifest with { Kind = "plugin" };
+            }
         }
         catch (JsonException)
         {
