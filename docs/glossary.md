@@ -132,6 +132,7 @@ The French column gives the term for the French interface.
 | Plugin SDK | The npm package `reliquary-plugin-sdk` in the folder `sdk/`. A plugin uses it to talk to the core in its plugin frame. It uses the Apache License 2.0. | — |
 | Vault | The encrypted store of the core for the secrets of linked accounts. Each secret belongs to one user, one plugin and one site. | — |
 | Catalog index | The signed JSON file of the plugin catalog. It lists the plugin versions, the hash of each file and the revoked versions. | — |
+| Catalog sync | The worker job that gets the catalog index, checks its signature, keeps the files of the new plugin versions and applies the revocations. | — |
 | Network relay | An endpoint of the core that sends the requests of a plugin to a site that refuses calls from a browser. | — |
 | Core API version | The version of the API that the core gives to extensions. A manifest gives the versions that the extension supports, for example `^1.0`. | Version de l'API du cœur |
 

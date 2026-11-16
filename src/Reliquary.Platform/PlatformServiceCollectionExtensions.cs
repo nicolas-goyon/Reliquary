@@ -13,6 +13,7 @@ using Reliquary.Platform.Data;
 using Reliquary.Platform.Email;
 using Reliquary.Platform.Events;
 using Reliquary.Platform.Extensions;
+using Reliquary.Platform.Extensions.Catalog;
 using Reliquary.Platform.Health;
 using Reliquary.Platform.Jobs;
 using Reliquary.Platform.Migrations;
@@ -40,6 +41,7 @@ public static class PlatformServiceCollectionExtensions
         services.Configure<JobOptions>(configuration.GetSection(JobOptions.Section));
         services.Configure<EmailOptions>(configuration.GetSection(EmailOptions.Section));
         services.Configure<PluginOptions>(configuration.GetSection(PluginOptions.Section));
+        services.Configure<PluginCatalogOptions>(configuration.GetSection(PluginCatalogOptions.Section));
 
         services.AddMemoryCache();
         services.TryAddSingleton(TimeProvider.System);
@@ -53,6 +55,12 @@ public static class PlatformServiceCollectionExtensions
         services.TryAddSingleton<ExtensionRegistry>();
         services.TryAddSingleton<PluginFileStore>();
         services.TryAddSingleton<IPluginAccess, PluginAccess>();
+        services.TryAddSingleton<PluginCatalogSync>();
+        services.AddHttpClient(PluginCatalogSync.HttpClientName, client =>
+        {
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("Reliquary (+https://github.com/nicolas-goyon/reliquary)");
+            client.Timeout = TimeSpan.FromMinutes(2);
+        });
 
         if (string.IsNullOrWhiteSpace(configuration[$"{EmailOptions.Section}:Smtp:Host"]))
         {
@@ -106,9 +114,15 @@ public static class PlatformServiceCollectionExtensions
     /// Adds the background services of the worker process: the outbox publisher and the scheduled job runner.
     /// </summary>
     /// <param name="services">The service collection.</param>
+    /// <param name="configuration">The configuration of the host. With the setting <c>Plugins:Catalog:Url</c>, the worker also syncs the plugin catalog.</param>
     /// <returns>The service collection.</returns>
-    public static IServiceCollection AddReliquaryWorkerPlatform(this IServiceCollection services)
+    public static IServiceCollection AddReliquaryWorkerPlatform(this IServiceCollection services, IConfiguration? configuration = null)
     {
+        if (!string.IsNullOrWhiteSpace(configuration?[$"{PluginCatalogOptions.Section}:Url"]))
+        {
+            services.AddSingleton<Reliquary.BuildingBlocks.Jobs.IScheduledJob, PluginCatalogJob>();
+        }
+
         services.TryAddSingleton<OutboxPublisher>();
         services.TryAddSingleton<ScheduledJobRunner>();
         services.AddHostedService(provider => provider.GetRequiredService<OutboxPublisher>());

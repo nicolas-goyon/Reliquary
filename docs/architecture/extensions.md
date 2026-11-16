@@ -187,6 +187,9 @@ The instance settings of the section `Plugins` are:
 | `Plugins:MaxActivePlugins` | 8 | The maximum number of active plugins for each user. `PUT /api/v1/me/extensions/{id}` refuses one more plugin with the error `too_many_active_plugins`. |
 | `Plugins:FrameOrigin` | none | A second host name for the plugin frames, for example `https://plugins.example.org`. Without a value, the frames use the host of the instance, with an opaque origin. |
 | `Plugins:AllowDevelopmentPlugins` | `false` | Allows the development mode. `appsettings.Development.json` and the local instance of `compose.yaml` turn it on. A deployed instance keeps it off. |
+| `Plugins:Catalog:Url` | none | The address of the catalog index, with HTTPS. Without a value, the worker does not sync a plugin catalog. See [Plugin catalog](#plugin-catalog). |
+| `Plugins:Catalog:Keys` | the keys of the project | The public keys that can sign the catalog index. |
+| `Plugins:Catalog:Interval` | `01:00:00` | The minimum time between two syncs of the catalog. |
 
 `GET /api/v1/extensions` gives these settings to the web app in the field `plugins`.
 
@@ -455,6 +458,27 @@ Each key has an `Id` and a `PublicKey`: a PEM block or the Base64 text of a DER 
 To change the signing key, the operator adds the new key, waits for an index from the new key, then removes the old key.
 Without a value, the instance trusts the keys of the project.
 The project catalog has no key yet, so an instance must set `Plugins:Catalog:Keys` until the project adds its key to the code.
+
+#### Catalog sync
+
+The worker job `plugins.catalog` syncs the catalog each hour.
+The worker has this job only when `Plugins:Catalog:Url` has a value.
+An administrator can start it with `reliquary jobs run plugins.catalog`.
+
+1. The job gets the index and the signature from `Plugins:Catalog:Url` and from the same address with `.sig` at the end.
+2. It checks them with `CatalogIndexCheck`.
+   When the check refuses the index, the job fails and the instance keeps its last index.
+3. The table `users.plugin_catalog` keeps the last index that the instance accepted: the serial, the hash, the bytes of the index and the signature.
+4. For each version that is not revoked and not in the store of plugin files, the job gets each file from `<folder of the index>/<plugin ID>/<version>/<path>`.
+   For example, the address of `dist/index.js` of `deck-stats` 1.2.0 is `https://example.org/catalog/deck-stats/1.2.0/dist/index.js`.
+5. The job checks the size and the SHA-384 hash of each file.
+   It also checks the plugin manifest of the version with `PluginManifestCheck`, its ID, its version and its entry file.
+6. `PluginFileStore` keeps the files of each version that passes the checks.
+   A version with an incorrect file stays out of the store.
+   The job then fails, and the next sync tries the version again.
+
+The job does not install a plugin in the extension registry.
+The administrator installs a plugin of the catalog with the plugin manifest of the version.
 
 ### Life cycle and security
 
