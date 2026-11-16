@@ -55,6 +55,16 @@ export interface LinkedAccount {
   lastSyncAt: string | null
 }
 
+/** The linked account of a site with its secret. Only the plugin of the link gets it. */
+export interface LinkedAccountSecret {
+  site: string
+  auth: 'public-username' | 'api-key' | 'oauth2-pkce'
+  /** The name of the account on the site, or null. */
+  userName: string | null
+  /** The API key, or null for a public user name. */
+  secret: string | null
+}
+
 /** The methods that the core answers. The plugin calls them. */
 export interface HostMethods {
   [method: string]: { params: unknown; result: unknown }
@@ -65,6 +75,8 @@ export interface HostMethods {
   'storage.remove': { params: { key: string }; result: null }
   'storage.keys': { params: null; result: { keys: string[] } }
   'accounts.list': { params: null; result: { accounts: LinkedAccount[] } }
+  /** Gives the linked account of a site with its secret. The core gets it from the vault with a plugin token of this plugin. */
+  'accounts.secret': { params: { site: string }; result: LinkedAccountSecret }
   'ui.contribute': { params: { slot: SlotName; contribution: ContributionData }; result: null }
   'ui.withdraw': { params: { slot: SlotName; id: string }; result: null }
   'ui.notify': { params: { message: string; tone: 'info' | 'success' | 'error' }; result: null }
@@ -96,6 +108,11 @@ export interface PluginMethods {
   'format.import': { params: { id: string; content: string; fileName: string | null }; result: { content: string } }
   /** The user exports with an export format of the plugin. The core gives the CSV file of Reliquary, and the plugin gives its file. */
   'format.export': { params: { id: string; content: string }; result: ExportedFile }
+  /**
+   * The core starts a sync of a linked account: on a click of the user, when the web app opens, or periodically.
+   * The plugin throws an error when the sync fails. The core shows the message of the error to the user.
+   */
+  'account.sync': { params: { account: LinkedAccount }; result: null }
   /** The core asks the cells of many rows of a column of the table mode. The answer has one cell for each row, in the same order. */
   'ui.cells': { params: { id: string; rows: SlotContexts['table.columns'][] }; result: { cells: (CellValue | null)[] } }
 }

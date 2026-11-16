@@ -279,4 +279,45 @@ describe('definePlugin', () => {
     await assert.rejects(host.call('format.export', { id: 'scan', content: 'x' }), (error: RpcError) => error.code === errorCodes.invalidParams)
     host.close()
   })
+
+  it('syncs a linked account with the secret from the core', async () => {
+    const frame = new FakeFrame()
+    const synced: string[] = []
+    const handle = definePlugin(
+      {
+        activate: () => undefined,
+        syncAccount: async (account, sdk) => {
+          const { secret } = await sdk.accounts.secret(account.site)
+          if (secret === 'wrong') {
+            throw new Error('The site refused the API key.')
+          }
+          synced.push(`${account.site}:${secret}`)
+        },
+      },
+      { environment: frame },
+    )
+    const host = frame.connect()
+    let secret = 'key-1'
+    host.handle('accounts.secret', ({ site }) => ({ site, auth: 'api-key' as const, userName: null, secret }))
+    await handle.ready
+    const account = { site: 'example.com', userName: null, connected: true, lastSyncAt: null }
+
+    assert.equal(await host.call('account.sync', { account }), null)
+    secret = 'wrong'
+    await assert.rejects(host.call('account.sync', { account }), (error: RpcError) => error.message === 'The site refused the API key.')
+
+    assert.deepEqual(synced, ['example.com:key-1'])
+    host.close()
+  })
+
+  it('refuses a sync when the plugin has no sync code', async () => {
+    const frame = new FakeFrame()
+    const handle = definePlugin({ activate: () => undefined }, { environment: frame })
+    const host = frame.connect()
+    await handle.ready
+
+    const account = { site: 'example.com', userName: null, connected: true, lastSyncAt: null }
+    await assert.rejects(host.call('account.sync', { account }), (error: RpcError) => error.code === errorCodes.methodNotFound)
+    host.close()
+  })
 })

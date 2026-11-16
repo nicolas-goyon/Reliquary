@@ -6,6 +6,7 @@ import i18n from '../i18n'
 import { seriousAccessibilityProblems } from '../test/axe'
 import { mockApi, problem, session, testAccount, type Handler } from '../test/mockApi'
 import type { LinkedAccountSite } from './api'
+import { notifyLinkedAccountsChanged, setSyncController } from './syncState'
 
 const apiSite: LinkedAccountSite = {
   pluginId: 'deck-sync',
@@ -54,6 +55,7 @@ describe('linked accounts', () => {
   })
 
   afterEach(() => {
+    setSyncController(null)
     vi.unstubAllGlobals()
     vi.restoreAllMocks()
   })
@@ -189,6 +191,54 @@ describe('linked accounts', () => {
     expect(within(old).getByText('The plugin does not run. You can only unlink the account.')).toBeInTheDocument()
     expect(within(old).queryByRole('button', { name: /Change/ })).not.toBeInTheDocument()
     expect(within(old).getByRole('button', { name: 'Unlink example.org' })).toBeInTheDocument()
+  })
+
+  it('runs a sync of a plugin that runs, and shows the new state', async () => {
+    let items: LinkedAccountSite[] = [{ ...nameSite, link: { ...nameSite.link!, state: 'linked', lastSyncAt: null } }]
+    const sync = vi.fn<() => Promise<void>>(async () => {
+      items = [{ ...nameSite, link: { ...nameSite.link!, state: 'failed', lastSyncError: 'The site answered 503.' } }]
+      notifyLinkedAccountsChanged()
+    })
+    setSyncController({ isRunning: (pluginId) => pluginId === 'deck-sync', sync })
+    mockApi(handlers({ 'GET /me/linked-accounts': () => Response.json({ items }) }))
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.click(await screen.findByRole('button', { name: 'Sync example.org' }))
+
+    expect(sync).toHaveBeenCalledWith('deck-sync', 'example.org')
+    const row = screen.getByRole('row', { name: /example\.org/ })
+    expect(await within(row).findByText('Sync failed')).toBeInTheDocument()
+    expect(within(row).getByText('The site answered 503.')).toBeInTheDocument()
+    expect(await seriousAccessibilityProblems()).toEqual([])
+  })
+
+  it('runs a first sync after a link when the plugin runs', async () => {
+    const sync = vi.fn<() => Promise<void>>(async () => undefined)
+    setSyncController({ isRunning: () => true, sync })
+    mockApi(
+      handlers({
+        'GET /me/linked-accounts': () => Response.json({ items: [{ ...nameSite, link: null }] }),
+        'PUT /me/extensions/deck-sync/accounts/example.org': () => Response.json(nameSite),
+      }),
+    )
+    const user = userEvent.setup()
+    render(<App />)
+
+    expect(screen.queryByRole('button', { name: /^Sync/ })).not.toBeInTheDocument()
+    await user.click(await screen.findByRole('button', { name: 'Link example.org' }))
+    await user.type(screen.getByLabelText('User name'), 'Jace')
+    await user.click(screen.getByRole('button', { name: 'Link the account' }))
+
+    await vi.waitFor(() => expect(sync).toHaveBeenCalledWith('deck-sync', 'example.org'))
+  })
+
+  it('shows no sync button when the plugin does not run', async () => {
+    mockApi(handlers({ 'GET /me/linked-accounts': () => Response.json({ items: [nameSite] }) }))
+    render(<App />)
+
+    expect(await screen.findByRole('button', { name: 'Unlink example.org' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Sync example.org' })).not.toBeInTheDocument()
   })
 
   it('shows the panel in French with the translated name of the plugin', async () => {

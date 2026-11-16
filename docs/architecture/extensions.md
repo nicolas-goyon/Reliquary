@@ -71,12 +71,28 @@ It also has the state and the time of the last sync.
 | `GET /api/v1/me/linked-accounts` | Web session | Lists the sites of the plugins that run for the user, with the link of each site. It also lists the links of the plugins that do not run, so the user can unlink them. The response never contains a secret. |
 | `PUT /api/v1/me/extensions/{id}/accounts/{site}` | Web session | Links an account, or replaces the link. The body has `userName` for `public-username`, and `secret` with an optional `userName` for `api-key`. |
 | `DELETE /api/v1/me/extensions/{id}/accounts/{site}` | Web session | Deletes the link and its secret. |
+| `POST /api/v1/me/extensions/{id}/accounts/{site}/sync` | Web session | Records the result of a sync: `succeeded`, and `error` after a failed sync. The API keeps the time of the request and 200 characters of the message. |
 | `GET /api/v1/me/extensions/{id}/accounts/{site}/secret` | Plugin token of the plugin `{id}` | Gives `site`, `auth`, `userName` and `secret`. The response has `Cache-Control: no-store`. |
 
 - The plugin must run for the user, and its plugin manifest must declare the site. Else the API returns 404.
 - The API refuses `oauth2-pkce` with the code `linked_account_method_not_supported` until OAuth arrives.
 - A plugin token of a different plugin gets the status 403. A web session, an API key and a delegation token also get the status 403.
 - `RequirePluginToken()` marks an endpoint that accepts only a plugin token. `ScopeFilter` lets a plugin token through to such an endpoint, with no scope.
+
+#### Sync of linked accounts
+
+The web app runs the sync. `web/src/linkedAccounts/sync.ts` loads with the plugin runtime.
+
+- When a plugin frame starts, the core reads the linked accounts of the plugin:
+  - `on-open`: the core runs a sync of each linked account.
+  - `periodic`: the core runs a sync when the last sync is older than the interval, then checks again after each interval.
+    The interval is `intervalMinutes`, 60 minutes when the manifest gives no interval, and 15 minutes at least.
+    Before a periodic sync, the core reads the time of the last sync again, so two tabs do not run two syncs.
+- The Linked accounts panel shows a **Sync** button when the plugin frame runs. A new link also gets a first sync.
+- For a sync, the core calls `account.sync` on the plugin, with a time limit of 60 seconds.
+  The plugin throws an error when the sync fails. The core sends the result with `POST .../sync`.
+- The plugin gets the secret with `accounts.secret`. The core gets a plugin token, then calls the secret endpoint, and gives the answer to the frame of this plugin only.
+  The plugin gets its linked accounts without secrets with `accounts.list`.
 
 #### Vault
 

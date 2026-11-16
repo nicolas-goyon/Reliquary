@@ -62,7 +62,7 @@ describe('PluginRuntime', () => {
     const response = list(true)
     const { view } = renderRuntime({ status: 'authenticated', account: testAccount }, response)
 
-    await waitFor(() => expect(runtime.startPluginRuntime).toHaveBeenCalledWith(response, { developmentUrls: [], registry: undefined }))
+    await waitFor(() => expect(runtime.startPluginRuntime).toHaveBeenCalledWith(response, expect.objectContaining({ developmentUrls: [], registry: undefined })))
     const host = runtime.startPluginRuntime.mock.results[0].value
     view.unmount()
 
@@ -77,7 +77,7 @@ describe('PluginRuntime', () => {
     response = list(true)
     act(() => notifyPluginsChanged())
 
-    await waitFor(() => expect(runtime.startPluginRuntime).toHaveBeenCalledWith(response, { developmentUrls: [], registry: undefined }))
+    await waitFor(() => expect(runtime.startPluginRuntime).toHaveBeenCalledWith(response, expect.objectContaining({ developmentUrls: [], registry: undefined })))
     expect(request).toHaveBeenCalledTimes(2)
   })
 
@@ -98,7 +98,7 @@ describe('PluginRuntime', () => {
 
     renderRuntime({ status: 'authenticated', account: testAccount }, response)
 
-    await waitFor(() => expect(runtime.startPluginRuntime).toHaveBeenCalledWith(response, { developmentUrls: ['http://localhost:5173/manifest.json'], registry: undefined }))
+    await waitFor(() => expect(runtime.startPluginRuntime).toHaveBeenCalledWith(response, expect.objectContaining({ developmentUrls: ['http://localhost:5173/manifest.json'], registry: undefined })))
   })
 
   it('does not start the runtime for a development plugin when the instance does not allow them', async () => {
@@ -145,6 +145,6 @@ describe('PluginRuntime', () => {
     })
 
     await waitFor(() => expect(runtime.startPluginRuntime).toHaveBeenCalledTimes(2))
-    expect(runtime.startPluginRuntime).toHaveBeenLastCalledWith(response, { developmentUrls: [], registry: undefined })
+    expect(runtime.startPluginRuntime).toHaveBeenLastCalledWith(response, expect.objectContaining({ developmentUrls: [], registry: undefined }))
   })
 })

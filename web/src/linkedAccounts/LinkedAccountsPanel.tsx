@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useId, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useId, useState, useSyncExternalStore, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { ExtensionList } from '../api/extensions'
 import { useAuth } from '../auth/session'
 import { ErrorAlert, SuccessAlert, TextField } from '../components/Forms'
 import { linkPath, siteKey, type LinkAccountBody, type LinkedAccountList, type LinkedAccountSite } from './api'
+import { getSyncController, subscribeSyncState, syncStateVersion } from './syncState'
 
 /** Gets the name of the plugin in the language of the interface, from the translations of the plugin manifest. */
 function pluginName(item: LinkedAccountSite, extensions: ExtensionList | null, language: string | undefined): string {
@@ -28,15 +29,22 @@ export function LinkedAccountsPanel() {
   const [secret, setSecret] = useState('')
   const [saved, setSaved] = useState<string | null>(null)
   const [error, setError] = useState<unknown>(null)
+  const [syncing, setSyncing] = useState<string[]>([])
+  // The version changes after a sync, and when a plugin frame starts or stops.
+  const syncVersion = useSyncExternalStore(subscribeSyncState, syncStateVersion)
+  const controller = getSyncController()
 
   const load = useCallback(() => request<LinkedAccountList>('/me/linked-accounts').then((list) => setItems(list.items)), [request])
 
   useEffect(() => {
     load().catch((caught: unknown) => setError(caught))
+  }, [load, syncVersion])
+
+  useEffect(() => {
     request<ExtensionList>('/extensions')
       .then(setExtensions)
       .catch(() => setExtensions(null))
-  }, [load, request])
+  }, [request])
 
   if (!items || items.length === 0) {
     // The panel shows only when a plugin of the user declares a site, or when a link stays.
@@ -67,8 +75,25 @@ export function LinkedAccountsPanel() {
       setEditing(null)
       setSecret('')
       await load()
+      // A new link gets a first sync when the plugin runs.
+      if (controller?.isRunning(editing.pluginId)) {
+        void handleSync(editing)
+      }
     } catch (caught) {
       setError(caught)
+    }
+  }
+
+  async function handleSync(item: LinkedAccountSite) {
+    const key = siteKey(item)
+    setSyncing((current) => [...current, key])
+    setError(null)
+    try {
+      await controller?.sync(item.pluginId, item.site)
+    } catch (caught) {
+      setError(caught)
+    } finally {
+      setSyncing((current) => current.filter((entry) => entry !== key))
     }
   }
 
@@ -92,6 +117,9 @@ export function LinkedAccountsPanel() {
   function stateText(item: LinkedAccountSite): string {
     if (!item.link) {
       return t('linkedAccounts.state.notLinked')
+    }
+    if (syncing.includes(siteKey(item))) {
+      return t('linkedAccounts.state.syncing')
     }
     if (!item.link.secretReadable) {
       return t('linkedAccounts.state.keyLost')
@@ -141,6 +169,12 @@ export function LinkedAccountsPanel() {
                     </button>
                   )}
                   {item.pluginActive && item.auth === 'oauth2-pkce' && !item.link && <span className="field-hint">{t('linkedAccounts.oauthLater')}</span>}
+                  {item.link && item.link.secretReadable && item.pluginActive && controller?.isRunning(item.pluginId) && (
+                    <button type="button" onClick={() => void handleSync(item)} disabled={syncing.includes(siteKey(item))}>
+                      {t('linkedAccounts.sync')}{' '}
+                      <span className="visually-hidden">{item.site}</span>
+                    </button>
+                  )}
                   {item.link && (
                     <button type="button" className="button-danger" onClick={() => void handleUnlink(item)}>
                       {t('linkedAccounts.unlink')}

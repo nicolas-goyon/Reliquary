@@ -152,11 +152,13 @@
       "linked": "Linked",
       "synced": "Synced",
       "failed": "Sync failed",
-      "keyLost": "Link the account again"
+      "keyLost": "Link the account again",
+      "syncing": "Sync in progress"
     },
     "pluginInactive": "The plugin does not run. You can only unlink the account.",
     "link": "Link",
     "change": "Change",
+    "sync": "Sync",
     "unlink": "Unlink",
     "unlinkConfirm": "Unlink your account on {{site}}? Reliquary deletes the link and its API key.",
     "oauthLater": "This sign-in method is not available yet.",

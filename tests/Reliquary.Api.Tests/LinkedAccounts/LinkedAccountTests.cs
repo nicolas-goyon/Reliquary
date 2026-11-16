@@ -181,6 +181,40 @@ public sealed class LinkedAccountTests(LinkedAccountInstanceFixture fixture) : I
     }
 
     [Fact]
+    public async Task WebAppRecordsTheResultOfASync()
+    {
+        var (user, id) = await SetupAsync();
+        (await user.PutAsJsonAsync(Link(id, NameSite), new { userName = "Jace" }, Cancel)).EnsureSuccessStatusCode();
+
+        var failed = await user.PostAsJsonAsync($"{Link(id, NameSite)}/sync", new { succeeded = false, error = "The site\nanswered 503. " + new string('x', 300) }, Cancel);
+        var afterFailure = await LinkAsync(user, id, NameSite);
+        var succeeded = await user.PostAsJsonAsync($"{Link(id, NameSite)}/sync", new { succeeded = true, error = "ignored" }, Cancel);
+        var afterSuccess = await LinkAsync(user, id, NameSite);
+        var missing = await user.PostAsJsonAsync($"{Link(id, NameSite)}/sync", new { }, Cancel);
+        var notLinked = await user.PostAsJsonAsync($"{Link(id, ApiSite)}/sync", new { succeeded = true }, Cancel);
+        var withToken = await user.SendAsync(
+            new HttpRequestMessage(HttpMethod.Post, $"{Link(id, NameSite)}/sync")
+            {
+                Content = JsonContent.Create(new { succeeded = true }),
+                Headers = { Authorization = new AuthenticationHeaderValue("Bearer", await PluginTokenAsync(user, id)) },
+            },
+            Cancel);
+
+        Assert.Equal(HttpStatusCode.NoContent, failed.StatusCode);
+        Assert.Equal("failed", afterFailure.GetProperty("state").GetString());
+        var error = afterFailure.GetProperty("lastSyncError").GetString()!;
+        Assert.StartsWith("The site answered 503. xxx", error, StringComparison.Ordinal);
+        Assert.Equal(LinkedAccountEndpoints.MaxSyncErrorLength, error.Length);
+        Assert.Equal(JsonValueKind.String, afterFailure.GetProperty("lastSyncAt").ValueKind);
+        Assert.Equal(HttpStatusCode.NoContent, succeeded.StatusCode);
+        Assert.Equal("synced", afterSuccess.GetProperty("state").GetString());
+        Assert.Equal(JsonValueKind.Null, afterSuccess.GetProperty("lastSyncError").ValueKind);
+        Assert.Equal(HttpStatusCode.BadRequest, missing.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, notLinked.StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, withToken.StatusCode);
+    }
+
+    [Fact]
     public async Task KeyRotationKeepsTheOldSecretsReadable()
     {
         var (user, id) = await SetupAsync();
@@ -292,6 +326,11 @@ public sealed class LinkedAccountTests(LinkedAccountInstanceFixture fixture) : I
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadFromJsonAsync<JsonElement>(Cancel);
     }
+
+    private static async Task<JsonElement> LinkAsync(HttpClient user, string id, string site) =>
+        (await ListAsync(user)).GetProperty("items").EnumerateArray()
+            .First(item => item.GetProperty("pluginId").GetString() == id && item.GetProperty("site").GetString() == site)
+            .GetProperty("link");
 
     private static async Task<string?> CodeAsync(HttpResponseMessage response) =>
         (await response.Content.ReadFromJsonAsync<JsonElement>(Cancel)).GetProperty("code").GetString();

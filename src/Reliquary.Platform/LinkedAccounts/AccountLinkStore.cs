@@ -126,6 +126,20 @@ internal sealed class AccountLinkStore(IDatabase database)
             cancellationToken: cancellationToken)) == 1;
     }
 
+    /// <summary>Records the result of a sync: the state, the time and the message of a failed sync.</summary>
+    /// <returns><see langword="true"/> when the link exists.</returns>
+    public async Task<bool> RecordSyncAsync(Guid ownerId, string extensionId, string site, bool succeeded, string? error, DateTime at, CancellationToken cancellationToken)
+    {
+        await using var connection = await database.OpenContentAsync(ownerId, ContentAccess.Write, cancellationToken);
+        return await connection.ExecuteAsync(new CommandDefinition(
+            """
+            update content.account_links set state = @state, last_sync_at = @at, last_sync_error = @error, updated_at = @at
+            where owner_id = @ownerId and extension_id = @extensionId and site = @site
+            """,
+            new { ownerId, extensionId, site, state = succeeded ? AccountLinkStates.Synced : AccountLinkStates.Failed, error, at },
+            cancellationToken: cancellationToken)) == 1;
+    }
+
     /// <summary>Deletes a linked account and its secret.</summary>
     /// <returns><see langword="true"/> when the link existed.</returns>
     public async Task<bool> DeleteAsync(Guid ownerId, string extensionId, string site, CancellationToken cancellationToken)

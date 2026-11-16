@@ -152,11 +152,13 @@
       "linked": "Lié",
       "synced": "Synchronisé",
       "failed": "Échec de la synchronisation",
-      "keyLost": "Liez le compte à nouveau"
+      "keyLost": "Liez le compte à nouveau",
+      "syncing": "Synchronisation en cours"
     },
     "pluginInactive": "Le plugin ne fonctionne pas. Vous pouvez seulement délier le compte.",
     "link": "Lier",
     "change": "Modifier",
+    "sync": "Synchroniser",
     "unlink": "Délier",
     "unlinkConfirm": "Délier votre compte sur {{site}} ? Reliquary supprime le lien et sa clé d’API.",
     "oauthLater": "Cette méthode de connexion n’est pas encore disponible.",
