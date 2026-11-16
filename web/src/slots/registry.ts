@@ -34,6 +34,14 @@ export interface SlotContexts {
   'plugin.page': { pluginId: string; page: string }
   /** The open dialogs of the plugins. Only plugin panels use this slot. */
   'plugin.dialog': Record<string, never>
+  /** The import formats of decks. Only plugin formats use this slot. */
+  'deck.import-formats': Record<string, never>
+  /** The export formats of decks. Only plugin formats use this slot. */
+  'deck.export-formats': Record<string, never>
+  /** The import formats of the collection. Only plugin formats use this slot. */
+  'collection.import-formats': Record<string, never>
+  /** The export formats of the collection. Only plugin formats use this slot. */
+  'collection.export-formats': Record<string, never>
 }
 
 export type SlotName = keyof SlotContexts
@@ -48,6 +56,10 @@ export const slotNames = [
   'account.page',
   'plugin.page',
   'plugin.dialog',
+  'deck.import-formats',
+  'deck.export-formats',
+  'collection.import-formats',
+  'collection.export-formats',
 ] as const satisfies readonly SlotName[]
 
 /** One interface element in a slot. */
@@ -152,11 +164,41 @@ export interface PluginColumnContribution {
   cell(context: Extract<TableColumnContext, { part: 'cell' }>): Promise<PluginCell | null>
 }
 
+/** The slots of the import formats and the export formats of plugins. */
+export const pluginFormatSlots = ['deck.import-formats', 'deck.export-formats', 'collection.import-formats', 'collection.export-formats'] as const
+export type PluginFormatSlot = (typeof pluginFormatSlots)[number]
+
+/** The result of a conversion: the text to import, or the file to download. */
+export interface ConvertedFile {
+  content: string
+  fileName: string
+  contentType: string
+}
+
+/**
+ * An import format or an export format of a plugin. The plugin manifest declares it.
+ * An import format converts a file into a deck list or a collection CSV of Reliquary, and the core imports the result.
+ * An export format converts the CSV file of Reliquary into the file of the format.
+ */
+export interface PluginFormatContribution {
+  kind: 'plugin-format'
+  /** A unique ID in the slot: "plugin.<plugin ID>.<format ID>". */
+  id: string
+  order?: number
+  plugin: { id: string; name: string; development: boolean }
+  title: PluginText
+  /** The file name extensions, for example ".dek". */
+  extensions: string[]
+  /** Sends the content to the plugin. The promise rejects when the plugin fails or does not answer. */
+  convert(content: string, fileName: string | null): Promise<ConvertedFile>
+}
+
 /** The plugin contributions that each slot accepts. */
 type PluginContributionOf<Name extends SlotName> =
   | (Name extends PluginActionSlot ? PluginActionContribution : never)
   | (Name extends PluginPanelSlot ? PluginPanelContribution : never)
   | (Name extends 'table.columns' ? PluginColumnContribution : never)
+  | (Name extends PluginFormatSlot ? PluginFormatContribution : never)
 
 /** A contribution of the core, or a contribution of a plugin in a slot that accepts plugin data. */
 export type AnySlotContribution<Name extends SlotName> = SlotContribution<Name> | PluginContributionOf<Name>
@@ -164,6 +206,11 @@ export type AnySlotContribution<Name extends SlotName> = SlotContribution<Name> 
 /** Tells whether a contribution is a button or a menu item of a plugin. */
 export function isPluginContribution<Name extends SlotName>(contribution: AnySlotContribution<Name>): contribution is Extract<PluginContributionOf<Name>, PluginActionContribution> {
   return 'kind' in contribution && contribution.kind === 'plugin'
+}
+
+/** Tells whether a contribution is an import format or an export format of a plugin. */
+export function isPluginFormat<Name extends SlotName>(contribution: AnySlotContribution<Name>): contribution is Extract<PluginContributionOf<Name>, PluginFormatContribution> {
+  return 'kind' in contribution && contribution.kind === 'plugin-format'
 }
 
 /** Tells whether a contribution is a column of a plugin. */

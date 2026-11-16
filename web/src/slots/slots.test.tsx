@@ -22,7 +22,7 @@ describe('slots', () => {
   })
 
   it('names the slots of the architecture', () => {
-    expect(slotNames).toEqual(['navigation', 'app.menu', 'deck.actions', 'analysis.tabs', 'table.columns', 'card.page', 'account.page', 'plugin.page', 'plugin.dialog'])
+    expect(slotNames).toEqual(['navigation', 'app.menu', 'deck.actions', 'analysis.tabs', 'table.columns', 'card.page', 'account.page', 'plugin.page', 'plugin.dialog', 'deck.import-formats', 'deck.export-formats', 'collection.import-formats', 'collection.export-formats'])
   })
 
   it('renders each contribution in its own container, in order', () => {

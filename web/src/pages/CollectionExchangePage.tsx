@@ -15,6 +15,8 @@ import {
 } from '../api/collection'
 import type { ExportedFile } from '../api/exchange'
 import { useAuth } from '../auth/session'
+import { acceptWithPluginFormats, convertWithPlugin, pluginFormatForFile, pluginFormatValue, requirePluginFormat, usePluginFormats } from '../slots/pluginFormats'
+import { PluginFormatOptions } from '../slots/PluginFormatOptions'
 import { ErrorAlert, SuccessAlert } from '../components/Forms'
 import { downloadFile } from '../proxies/pdf'
 import { Link } from '../router/Link'
@@ -72,7 +74,10 @@ function ImportForm({ locations, initialLocation }: { locations: CollectionLocat
   const id = useId()
   const targets = flattenLocations(locations).filter(({ location }) => location.kind !== 'deck')
   const [content, setContent] = useState('')
-  const [format, setFormat] = useState<ExchangeFormat>('text')
+  // A format of the core, or the value of a plugin format ("plugin:<ID>").
+  const [format, setFormat] = useState<string>('text')
+  const [fileName, setFileName] = useState<string | null>(null)
+  const pluginFormats = usePluginFormats('collection.import-formats')
   const [locationId, setLocationId] = useState(() => targets.find(({ location }) => location.id === initialLocation)?.location.id ?? targets[0]?.location.id ?? '')
   const [origin, setOrigin] = useState<(typeof addOrigins)[number]>('nowhere')
   const [currency, setCurrency] = useState('USD')
@@ -86,7 +91,9 @@ function ImportForm({ locations, initialLocation }: { locations: CollectionLocat
     }
     const text = await file.text()
     setContent(text)
-    setFormat(detectCollectionFormat(file.name, text))
+    setFileName(file.name)
+    const pluginFormat = pluginFormatForFile(pluginFormats, file.name)
+    setFormat(pluginFormat ? pluginFormatValue(pluginFormat) : detectCollectionFormat(file.name, text))
   }
 
   async function handleSubmit(event: FormEvent) {
@@ -94,10 +101,13 @@ function ImportForm({ locations, initialLocation }: { locations: CollectionLocat
     setError(null)
     setResult(null)
     try {
+      // A plugin format converts the file into a collection CSV of Reliquary. The core imports this CSV, so the plugin needs no write scope.
+      const pluginFormat = requirePluginFormat(pluginFormats, format)
+      const imported = pluginFormat ? (await convertWithPlugin(pluginFormat, content, fileName)).content : content
       setResult(
         await request<ImportResult>(`/collection/locations/${locationId}/import`, {
           method: 'POST',
-          body: { format, content, origin, currency: currency.trim().toUpperCase() },
+          body: { format: pluginFormat ? 'csv' : format, content: imported, origin, currency: currency.trim().toUpperCase() },
         }),
       )
     } catch (caught) {
@@ -115,7 +125,7 @@ function ImportForm({ locations, initialLocation }: { locations: CollectionLocat
         <>
           <div className="field">
             <label htmlFor={`${id}-file`}>{t('exchange.file')}</label>
-            <input id={`${id}-file`} type="file" accept=".txt,.dek,.csv" onChange={(event) => void handleFile(event)} />
+            <input id={`${id}-file`} type="file" accept={acceptWithPluginFormats('.txt,.dek,.csv', pluginFormats)} onChange={(event) => void handleFile(event)} />
             <p className="field-hint">{t('exchange.fileHint')}</p>
           </div>
           <div className="field">
@@ -124,12 +134,13 @@ function ImportForm({ locations, initialLocation }: { locations: CollectionLocat
           </div>
           <div className="field">
             <label htmlFor={`${id}-format`}>{t('exchange.format')}</label>
-            <select id={`${id}-format`} value={format} onChange={(event) => setFormat(event.target.value as ExchangeFormat)}>
+            <select id={`${id}-format`} value={format} onChange={(event) => setFormat(event.target.value)}>
               {exchangeFormats.map((known) => (
                 <option key={known} value={known}>
                   {t(`exchange.formats.${known}`)}
                 </option>
               ))}
+              <PluginFormatOptions formats={pluginFormats} />
             </select>
           </div>
           <div className="field">
@@ -186,7 +197,9 @@ function ExportForm({ locations, initialLocation }: { locations: CollectionLocat
   const all = flattenLocations(locations)
   const [locationId, setLocationId] = useState(() => all.find(({ location }) => location.id === initialLocation)?.location.id ?? '')
   const [sections, setSections] = useState(true)
-  const [format, setFormat] = useState<ExchangeFormat>('csv')
+  // A format of the core, or the value of a plugin format ("plugin:<ID>").
+  const [format, setFormat] = useState<string>('csv')
+  const pluginFormats = usePluginFormats('collection.export-formats')
   const [error, setError] = useState<unknown>(null)
   const selected = all.find(({ location }) => location.id === locationId)
   const hasSections = selected !== undefined && selected.location.sections.length > 0
@@ -195,7 +208,10 @@ function ExportForm({ locations, initialLocation }: { locations: CollectionLocat
     event.preventDefault()
     setError(null)
     try {
-      const file = await request<ExportedFile>(exportPath(format, locationId, hasSections && sections))
+      // A plugin format converts the CSV file of Reliquary into its own file.
+      const pluginFormat = requirePluginFormat(pluginFormats, format)
+      const exported = await request<ExportedFile>(exportPath(pluginFormat ? 'csv' : (format as ExchangeFormat), locationId, hasSections && sections))
+      const file = pluginFormat ? await convertWithPlugin(pluginFormat, exported.content, null) : exported
       downloadFile(new Blob([file.content], { type: file.contentType }), file.fileName)
     } catch (caught) {
       setError(caught)
@@ -224,14 +240,15 @@ function ExportForm({ locations, initialLocation }: { locations: CollectionLocat
       )}
       <div className="field">
         <label htmlFor={`${id}-format`}>{t('exchange.format')}</label>
-        <select id={`${id}-format`} value={format} onChange={(event) => setFormat(event.target.value as ExchangeFormat)}>
+        <select id={`${id}-format`} value={format} onChange={(event) => setFormat(event.target.value)}>
           {exchangeFormats.map((known) => (
             <option key={known} value={known}>
               {t(`exchange.formats.${known}`)}
             </option>
           ))}
+          <PluginFormatOptions formats={pluginFormats} />
         </select>
-        <p className="field-hint">{t(`exchange.exportHints.${format}`)}</p>
+        {!format.startsWith('plugin:') && <p className="field-hint">{t(`exchange.exportHints.${format as ExchangeFormat}`)}</p>}
       </div>
       <ErrorAlert error={error} />
       <div className="form-actions">

@@ -20,6 +20,19 @@ export interface Extension {
   panels: ExtensionPanel[]
   /** The translations of the plugin manifest, by language, or null. */
   i18n: Record<string, Record<string, string>> | null
+  /** The import formats and the export formats of the plugin manifest. */
+  formats: ExtensionFormat[]
+}
+
+/** An import format or an export format of a plugin manifest. */
+export interface ExtensionFormat {
+  id: string
+  direction: 'import' | 'export'
+  target: 'deck' | 'collection'
+  /** The name in English. The translations are in `i18n` with the key `formats.<id>.title`. */
+  title: string
+  /** The file name extensions, for example ".dek". */
+  extensions: string[]
 }
 
 /** A panel of a plugin manifest. The web app shows each open panel in its own sandboxed iframe. */

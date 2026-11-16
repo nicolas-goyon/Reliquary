@@ -258,4 +258,25 @@ describe('definePlugin', () => {
     await assert.rejects(host.call('ui.cells', { id: 'missing', rows }), (error: RpcError) => error.code === errorCodes.invalidParams)
     host.close()
   })
+
+  it('converts the files of the formats of the plugin', async () => {
+    const frame = new FakeFrame()
+    const handle = definePlugin(
+      {
+        activate: () => undefined,
+        formats: {
+          scan: { import: (content, fileName) => `1 ${content.trim()} (${fileName})` },
+          sheet: { export: (content) => ({ fileName: 'collection.tsv', contentType: 'text/tab-separated-values', content: content.replaceAll(',', '\t') }) },
+        },
+      },
+      { environment: frame },
+    )
+    const host = frame.connect()
+    await handle.ready
+
+    assert.deepEqual(await host.call('format.import', { id: 'scan', content: 'Sol Ring\n', fileName: 'scan.txt' }), { content: '1 Sol Ring (scan.txt)' })
+    assert.deepEqual(await host.call('format.export', { id: 'sheet', content: 'a,b' }), { fileName: 'collection.tsv', contentType: 'text/tab-separated-values', content: 'a\tb' })
+    await assert.rejects(host.call('format.export', { id: 'scan', content: 'x' }), (error: RpcError) => error.code === errorCodes.invalidParams)
+    host.close()
+  })
 })

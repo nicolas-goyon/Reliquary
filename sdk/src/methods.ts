@@ -36,6 +36,15 @@ export interface RelayFetchResult {
   body: string
 }
 
+/** A file that an export format gives. */
+export interface ExportedFile {
+  /** The name of the file, with its extension. 100 characters at most, with no "/" or "\\". */
+  fileName: string
+  /** For example "text/plain", "text/csv", "application/json" or "application/xml". The default is "text/plain". */
+  contentType?: string
+  content: string
+}
+
 /** A linked account of the user for this plugin. */
 export interface LinkedAccount {
   site: string
@@ -80,6 +89,13 @@ export interface PluginMethods {
   'ui.action': { params: { slot: SlotName; id: string; context: SlotContexts[SlotName] }; result: null }
   /** Only in a panel frame: the context of the slot changed, for example after a change of the deck. */
   'panel.update': { params: { context: unknown }; result: null }
+  /**
+   * The user imports a file with an import format of the plugin. The plugin gives the text that the core imports:
+   * a deck list in the text format of Reliquary for a deck, or a CSV file of Reliquary for a collection.
+   */
+  'format.import': { params: { id: string; content: string; fileName: string | null }; result: { content: string } }
+  /** The user exports with an export format of the plugin. The core gives the CSV file of Reliquary, and the plugin gives its file. */
+  'format.export': { params: { id: string; content: string }; result: ExportedFile }
   /** The core asks the cells of many rows of a column of the table mode. The answer has one cell for each row, in the same order. */
   'ui.cells': { params: { id: string; rows: SlotContexts['table.columns'][] }; result: { cells: (CellValue | null)[] } }
 }

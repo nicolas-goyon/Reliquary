@@ -4,7 +4,7 @@
  * The browser keeps the URLs. The core does not check these plugins.
  */
 
-import type { ExtensionPanel } from '../api/extensions'
+import type { ExtensionFormat, ExtensionPanel } from '../api/extensions'
 import { notifyPluginsChanged } from './events'
 
 const storageKey = 'reliquary.developmentPlugins'
@@ -55,6 +55,7 @@ export interface DevelopmentPlugin {
   /** The panels of the plugin manifest. */
   panels: ExtensionPanel[]
   i18n: Record<string, Record<string, string>> | null
+  formats: ExtensionFormat[]
 }
 
 /** The causes of a DevelopmentManifestError. The interface shows a text for each code. */
@@ -92,7 +93,7 @@ export async function loadDevelopmentManifest(manifestUrl: string, fetcher: type
       ? error
       : new DevelopmentManifestError('notAvailable', 'The plugin manifest did not load. Make sure that the server of the plugin runs and accepts requests from this site.')
   }
-  const { id, name, version, entry, network, slots, panels, i18n } = manifest ?? {}
+  const { id, name, version, entry, network, slots, panels, i18n, formats } = manifest ?? {}
   if (typeof id !== 'string' || typeof version !== 'string' || typeof entry !== 'string') {
     throw new DevelopmentManifestError('missingFields', 'The plugin manifest must have the fields "id", "version" and "entry".')
   }
@@ -110,7 +111,18 @@ export async function loadDevelopmentManifest(manifestUrl: string, fetcher: type
     slots: Array.isArray(slots) ? slots.filter((item): item is string => typeof item === 'string') : [],
     panels: Array.isArray(panels) ? panels.filter(isPanel) : [],
     i18n: typeof i18n === 'object' && i18n !== null && !Array.isArray(i18n) ? (i18n as Record<string, Record<string, string>>) : null,
+    formats: Array.isArray(formats) ? formats.filter(isFormat).map((format) => ({ ...format, extensions: Array.isArray(format.extensions) ? format.extensions : [] })) : [],
   }
+}
+
+function isFormat(value: unknown): value is ExtensionFormat {
+  const format = value as Partial<ExtensionFormat> | null
+  return (
+    typeof format?.id === 'string' &&
+    typeof format.title === 'string' &&
+    (format.direction === 'import' || format.direction === 'export') &&
+    (format.target === 'deck' || format.target === 'collection')
+  )
 }
 
 function isPanel(value: unknown): value is ExtensionPanel {
