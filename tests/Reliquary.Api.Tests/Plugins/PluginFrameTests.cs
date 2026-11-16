@@ -16,6 +16,14 @@ public sealed class PluginFrameTests(PluginInstanceFixture fixture) : IClassFixt
 
     private static readonly string[] WideNetwork = ["https://*.example.com:8443", "http://localhost:5000", "http://127.0.0.1"];
 
+    private static readonly string[] LocalNetwork = ["http://localhost:5000"];
+
+    private static readonly string[] TwoLocalOrigins = ["http://localhost:5000", "http://localhost:5000"];
+
+    private static readonly string[] BothDevices = ["camera", "loopback-network"];
+
+    private static readonly string[] Camera = ["camera"];
+
     private PluginInstance Instance => fixture.Instance;
 
     /// <summary>The expected policies. <c>{0}</c> is the URL of the folder of the plugin files.</summary>
@@ -41,7 +49,7 @@ public sealed class PluginFrameTests(PluginInstanceFixture fixture) : IClassFixt
     {
         var id = await InstallAsync(("network", network));
 
-        var response = await GetAsync(Frame(id));
+        var response = await GetAsync(Frame(id, network));
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal(string.Format(null, policy, Files(id)), Assert.Single(response.Headers.GetValues("Content-Security-Policy")));
@@ -192,7 +200,77 @@ public sealed class PluginFrameTests(PluginInstanceFixture fixture) : IClassFixt
         Assert.Equal(HttpStatusCode.BadRequest, refused.StatusCode);
     }
 
-    private static string Frame(string id) => $"/api/v1/plugins/{id}/1.0.0/frame";
+    [Fact]
+    public async Task FrameReachesOnlyTheAcceptedOrigins()
+    {
+        var id = await InstallAsync(("network", WideNetwork));
+
+        var none = await GetAsync(Frame(id));
+        var one = await GetAsync(Frame(id, TwoLocalOrigins));
+
+        Assert.Contains($"; connect-src {Files(id)}; ", Policy(none), StringComparison.Ordinal);
+        Assert.Contains($"; img-src {Files(id)} data: blob:; ", Policy(none), StringComparison.Ordinal);
+        Assert.Contains($"; connect-src {Files(id)} http://localhost:5000; ", Policy(one), StringComparison.Ordinal);
+        Assert.Contains($"; img-src {Files(id)} http://localhost:5000 data: blob:; ", Policy(one), StringComparison.Ordinal);
+        Assert.DoesNotContain("example.com", Policy(one), StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("network", "https://other.example.org")]
+    [InlineData("network", "https://*.example.org")]
+    [InlineData("network", "*")]
+    [InlineData("network", "https://api.example.com; script-src *")]
+    [InlineData("devices", "camera")]
+    [InlineData("devices", "microphone")]
+    public async Task ValueOutsideTheManifestIsRefused(string field, string value)
+    {
+        var id = await InstallAsync(("network", ApiNetwork));
+        var path = field == "network" ? Frame(id, [.. ApiNetwork, value]) : Frame(id, devices: [value]);
+
+        var response = await GetAsync(path);
+        var body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Contains(field == "network" ? "\"field\":\"network[1]\"" : "\"field\":\"devices[0]\"", body, StringComparison.Ordinal);
+        Assert.False(response.Headers.Contains("Content-Security-Policy"));
+    }
+
+    [Fact]
+    public async Task FrameGetsOnlyTheAcceptedDevices()
+    {
+        var id = await InstallAsync(("devices", BothDevices), ("network", LocalNetwork));
+
+        var none = Permissions(await GetAsync(Frame(id)));
+        var camera = Permissions(await GetAsync(Frame(id, devices: Camera)));
+        var both = Permissions(await GetAsync(Frame(id, LocalNetwork, BothDevices)));
+
+        Assert.Contains("camera=()", none, StringComparison.Ordinal);
+        Assert.Contains("loopback-network=()", none, StringComparison.Ordinal);
+        Assert.Contains("microphone=()", none, StringComparison.Ordinal);
+        Assert.DoesNotContain("camera=", camera, StringComparison.Ordinal);
+        Assert.Contains("loopback-network=()", camera, StringComparison.Ordinal);
+        Assert.DoesNotContain("camera=", both, StringComparison.Ordinal);
+        Assert.DoesNotContain("loopback-network=", both, StringComparison.Ordinal);
+        Assert.DoesNotContain("local-network-access=", both, StringComparison.Ordinal);
+        Assert.Contains("local-network=()", both, StringComparison.Ordinal);
+        Assert.Contains("geolocation=()", both, StringComparison.Ordinal);
+    }
+
+    /// <summary>Gets the address of the frame, with the network origins and the devices that the user accepted.</summary>
+    private static string Frame(string id, IEnumerable<string>? network = null, IEnumerable<string>? devices = null)
+    {
+        var query = (network ?? []).Select(origin => "network=" + Uri.EscapeDataString(origin))
+            .Concat((devices ?? []).Select(device => "devices=" + Uri.EscapeDataString(device)))
+            .ToList();
+        var path = $"/api/v1/plugins/{id}/1.0.0/frame";
+        return query.Count == 0 ? path : $"{path}?{string.Join('&', query)}";
+    }
+
+    private static string Policy(HttpResponseMessage response) =>
+        Assert.Single(response.Headers.GetValues("Content-Security-Policy"));
+
+    private static string Permissions(HttpResponseMessage response) =>
+        Assert.Single(response.Headers.GetValues("Permissions-Policy"));
 
     private static string Files(string id) => $"http://localhost/api/v1/plugins/{id}/1.0.0/files/";
 
