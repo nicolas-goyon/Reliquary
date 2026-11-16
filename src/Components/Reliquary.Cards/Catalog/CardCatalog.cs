@@ -170,6 +170,45 @@ internal sealed class CardCatalog(IDatabase database) : ICardCatalog
     }
 
     /// <inheritdoc />
+    public async Task<IReadOnlyDictionary<Guid, IReadOnlyList<PrintingPrices>>> GetPricesAsync(IReadOnlyCollection<Guid> oracleIds, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(oracleIds);
+        if (oracleIds.Count == 0)
+        {
+            return new Dictionary<Guid, IReadOnlyList<PrintingPrices>>();
+        }
+
+        var ids = oracleIds.Distinct().ToArray();
+        await using var connection = await database.OpenReferenceAsync(cancellationToken);
+        var rows = await connection.QueryAsync<PriceRow>(new CommandDefinition(
+            "select p.id, p.oracle_id as OracleId, p.lang, p.prices::text as Prices from reference.printings p where p.oracle_id = any(@ids) and p.prices <> '{}'::jsonb",
+            new { ids },
+            cancellationToken: cancellationToken));
+        return rows
+            .Select(row => (row.OracleId, Prices: new PrintingPrices(row.Id, row.Lang, ReadPrices(row.Prices))))
+            .Where(item => item.Prices.Prices.Count > 0)
+            .GroupBy(item => item.OracleId)
+            .ToDictionary(group => group.Key, group => (IReadOnlyList<PrintingPrices>)[.. group.Select(item => item.Prices)]);
+    }
+
+    /// <summary>
+    /// Reads the prices of Scryfall. Scryfall gives each price as a text, or null when it has no price.
+    /// </summary>
+    private static Dictionary<string, decimal> ReadPrices(string json)
+    {
+        var prices = new Dictionary<string, decimal>(StringComparer.Ordinal);
+        foreach (var (key, value) in JsonSerializer.Deserialize<Dictionary<string, string?>>(json) ?? [])
+        {
+            if (decimal.TryParse(value, System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out var amount))
+            {
+                prices[key] = amount;
+            }
+        }
+
+        return prices;
+    }
+
+    /// <inheritdoc />
     public async Task<IReadOnlyDictionary<Guid, IReadOnlyList<CardOracleTag>>> GetOracleTagsAsync(IReadOnlyCollection<Guid> oracleIds, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(oracleIds);
@@ -324,6 +363,17 @@ internal sealed class CardCatalog(IDatabase database) : ICardCatalog
         public Guid OracleId { get; set; }
 
         public string Name { get; set; } = string.Empty;
+    }
+
+    private sealed class PriceRow
+    {
+        public Guid Id { get; set; }
+
+        public Guid OracleId { get; set; }
+
+        public string Lang { get; set; } = "en";
+
+        public string Prices { get; set; } = "{}";
     }
 
     private sealed class PrintingRow

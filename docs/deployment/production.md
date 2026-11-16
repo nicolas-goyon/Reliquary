@@ -4,8 +4,7 @@ A production instance is a server that other people use.
 Reliquary gives two ways to run it:
 
 - **Docker Compose on one server**, with the script `reliquary-update`. This page describes it.
-- **Kubernetes.** The Helm chart comes with the milestone M4 ([#64](https://github.com/nicolas-goyon/reliquary/issues/64)).
-  [Requirements for Kubernetes](kubernetes.md) gives what a deployment must give to the images.
+- **Kubernetes**, with the Helm chart. [Production instance on Kubernetes](production-kubernetes.md) describes it.
 
 Terms follow the [glossary](../glossary.md).
 
@@ -63,11 +62,11 @@ ssh your-user@your-server
    sudo usermod --append --groups docker reliquary
    ```
 
-2. As this user, make the folder of the instance and get the script of the release:
+2. As this user, make the folder of the instance, download the script and make the `.env` file:
 
    ```shell
    mkdir ~/reliquary && cd ~/reliquary
-   docker run --rm --entrypoint cat ghcr.io/nicolas-goyon/reliquary-cli:0.2.0 /app/deploy/reliquary-update > reliquary-update
+   curl --fail --location --output reliquary-update https://nicolas-goyon.github.io/reliquary/downloads/reliquary-update
    chmod +x reliquary-update
    ./reliquary-update --init 0.2.0
    ```
@@ -112,6 +111,26 @@ ssh your-user@your-server
 6. Open `https://your-domain`, make the account of the administrator email address, and open the link of the email.
 
 The port 18035 of Mailpit stays on `127.0.0.1`. With a real email server, Mailpit receives no email.
+
+## WebSockets for the online games
+
+The online games use a WebSocket on the path `/api/v1/playtest/hub`.
+The reverse proxy must let WebSockets through on this path.
+A game can stay open for hours, so the connection must stay open for a long time.
+
+- The reverse proxy must send the headers `Upgrade` and `Connection` to the web container.
+- The read timeout and the idle timeout of this path must be 60 seconds or more. Use 1 hour, as the web container does.
+  The browser and the API send a ping each 15 seconds, so a connection with no message for 30 seconds is lost.
+- The reverse proxy must not keep the query string of this path in its access log.
+  The query string contains the game token of the player.
+
+With its default settings, Caddy lets WebSockets through and keeps them open.
+The access log of Caddy is off by default. When you enable it, it contains the query string.
+With Nginx, use the settings of the location `/api/v1/playtest/hub` in `web/nginx.conf.template`.
+
+Two API replicas or more need no sticky sessions.
+The browser connects to the hub with no negotiation, and the replicas share the games and the hub messages in Redis.
+The [online games architecture](../architecture/online-games.md#table-hub) gives the details.
 
 ## Back up to a different computer
 

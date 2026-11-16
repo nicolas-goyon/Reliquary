@@ -84,8 +84,8 @@ The project chose AGPL-3.0 for these reasons:
 - Other people can continue the project if its author stops.
 - No fork of the project can become closed source, even as SaaS (software as a service).
 
-The project can publish the plugin SDK separately under MIT or Apache 2.0, so that plugins can have their own license.
-The choice between MIT and Apache 2.0 for the plugin SDK is still open.
+The plugin SDK uses the Apache License 2.0, so that plugins can have their own license.
+[ADR 0048](../decisions/0048-plugin-sdk-license-and-packaging.md) gives the reasons.
 If the project considers a paid offer one day, it will need a contributor license agreement (CLA).
 With a CLA, the project keeps the possibility of a dual license.
 

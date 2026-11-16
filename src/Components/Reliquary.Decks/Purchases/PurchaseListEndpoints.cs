@@ -44,6 +44,8 @@ public sealed record PurchaseCopyResponse(
 /// <param name="FromCollection">The available copies that complete the line.</param>
 /// <param name="ToBuy">The number of copies to buy.</param>
 /// <param name="Closest">When <paramref name="ToBuy"/> is more than zero: the copies of the collection that do not fit the line, with the reasons. The best copies are first.</param>
+/// <param name="LowestPrice">When <paramref name="ToBuy"/> is more than zero and the line has a maximum price: the lowest market price of a printing that fits the line, or <see langword="null"/> when no price is known.</param>
+/// <param name="AboveMaximumPrice">Whether <paramref name="LowestPrice"/> is more than the maximum price of the line.</param>
 public sealed record PurchaseListLineResponse(
     Guid OracleId,
     string Zone,
@@ -52,7 +54,9 @@ public sealed record PurchaseListLineResponse(
     int InDeck,
     IReadOnlyList<PurchaseCopyResponse> FromCollection,
     int ToBuy,
-    IReadOnlyList<PurchaseCopyResponse> Closest);
+    IReadOnlyList<PurchaseCopyResponse> Closest,
+    PriceLimit? LowestPrice,
+    bool AboveMaximumPrice);
 
 /// <summary>The purchase list of a deck or a variant.</summary>
 /// <param name="DeckId">The deck.</param>
@@ -139,7 +143,7 @@ internal static class PurchaseListEndpoints
         var plan = await transitions.CalculateAsync(user.GetAccountId(), deckId, cancellationToken);
         var taken = plan.Additions.SelectMany(line => line.FromCollection).ToList();
         var printingIds = taken.Select(copy => copy.Copy.PrintingId).Concat(plan.Additions.SelectMany(line => line.Closest).Select(other => other.Copy.PrintingId));
-        var (cards, printings) = await DeckEndpoints.CardDataAsync(
+        var (cards, printings) = await DeckResponses.CardDataAsync(
             catalog, plan.Removals.Select(removal => removal.OracleId).Concat(plan.Additions.Select(line => line.Need.OracleId)), printingIds, cancellationToken);
         return TypedResults.Ok(new TransitionPlanResponse(
             plan.Target.Id,
@@ -164,7 +168,7 @@ internal static class PurchaseListEndpoints
         var tokens = includeTokens ?? false;
         var (deck, lines) = await purchases.CalculateAsync(user.GetAccountId(), deckId, tokens, cancellationToken);
         var printingIds = lines.SelectMany(line => line.FromDeck.Concat(line.FromCollection).Select(taken => taken.Copy.PrintingId).Concat(line.Closest.Select(other => other.Copy.PrintingId)));
-        var (cards, printings) = await DeckEndpoints.CardDataAsync(catalog, lines.Select(line => line.Need.OracleId), printingIds, cancellationToken);
+        var (cards, printings) = await DeckResponses.CardDataAsync(catalog, lines.Select(line => line.Need.OracleId), printingIds, cancellationToken);
         return TypedResults.Ok(new PurchaseListResponse(
             deck.Id,
             tokens,
@@ -176,7 +180,9 @@ internal static class PurchaseListEndpoints
                 line.FromDeck.Sum(taken => taken.Quantity),
                 [.. line.FromCollection.Select(taken => ToResponse(taken.Copy, taken.Quantity, []))],
                 line.ToBuy,
-                [.. line.Closest.Select(other => ToResponse(other.Copy, other.Quantity, other.Reasons))]))],
+                [.. line.Closest.Select(other => ToResponse(other.Copy, other.Quantity, other.Reasons))],
+                line.LowestPrice,
+                line.AboveMaximumPrice))],
             lines.Sum(line => line.ToBuy),
             cards,
             printings));

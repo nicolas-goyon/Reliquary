@@ -14,4 +14,15 @@ public static class Ids
     /// </summary>
     /// <returns>A new identifier.</returns>
     public static Guid New() => Guid.CreateVersion7();
+
+    /// <summary>
+    /// Creates a new UUIDv7 identifier with the current time of a time provider.
+    /// </summary>
+    /// <param name="time">The time provider. A test can give a fake time provider to get a known order.</param>
+    /// <returns>A new identifier.</returns>
+    public static Guid New(TimeProvider time)
+    {
+        ArgumentNullException.ThrowIfNull(time);
+        return Guid.CreateVersion7(time.GetUtcNow());
+    }
 }

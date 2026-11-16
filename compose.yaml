@@ -14,6 +14,8 @@ x-backend-environment: &backend-environment
   Auth__AdministratorEmails__0: admin@reliquary.localhost
   Auth__AllowAccountsWithoutEmail: ${RELIQUARY_ACCOUNTS_WITHOUT_EMAIL:-true}
   Auth__RequireCheckedEmail: ${RELIQUARY_REQUIRE_CHECKED_EMAIL:-false}
+  # The local instance is a development instance: a user can load a plugin from a URL, for example from the Vite server of a plugin.
+  Plugins__AllowDevelopmentPlugins: ${RELIQUARY_DEVELOPMENT_PLUGINS:-true}
   Auth__Providers__Google__ClientId: ${RELIQUARY_GOOGLE_CLIENT_ID:-}
   Auth__Providers__Google__ClientSecret: ${RELIQUARY_GOOGLE_CLIENT_SECRET:-}
   Email__From: Reliquary <noreply@reliquary.localhost>
@@ -54,7 +56,7 @@ services:
 
   # A test email server. It keeps all the emails and sends none. Read the emails at http://localhost:18025.
   mailpit:
-    image: axllent/mailpit:v1.33.0
+    image: axllent/mailpit:v1.33.1
     ports:
       - "127.0.0.1:${RELIQUARY_SMTP_PORT:-11025}:1025"
       - "127.0.0.1:${RELIQUARY_MAILPIT_PORT:-18025}:8025"
@@ -131,7 +133,7 @@ services:
   # Optional: Grafana with Prometheus, Tempo and Loki, and an OpenTelemetry collector.
   # Start it with "just observability". See docs/development/observability.md.
   observability:
-    image: grafana/otel-lgtm:0.39.0
+    image: grafana/otel-lgtm:0.40.0
     profiles: ["observability"]
     ports:
       - "127.0.0.1:${RELIQUARY_GRAFANA_PORT:-3000}:3000"

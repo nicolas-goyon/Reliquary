@@ -1,0 +1,15 @@
+# The health endpoints and the metrics of the worker. The worker has no public endpoint.
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "reliquary.fullname" . }}-worker
+  labels:
+    {{- include "reliquary.componentLabels" (dict "context" . "component" "worker") | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "reliquary.selectorLabels" (dict "context" . "component" "worker") | nindent 4 }}
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http

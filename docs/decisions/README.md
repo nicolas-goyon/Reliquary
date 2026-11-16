@@ -9,16 +9,16 @@ Each record gives the context, the decision and its consequences.
 | Number | Decision | Status |
 | --- | --- | --- |
 | [0001](0001-record-architecture-decisions.md) | Record architecture decisions | Accepted |
-| [0002](0002-license-agpl-3.0.md) | License: AGPL-3.0 for the core | Accepted |
+| [0002](0002-license-agpl-3.0.md) | License: AGPL-3.0 for the core | Accepted. Completed by 0048 |
 | [0003](0003-languages.md) | Languages: English for the project, French and English for the interface | Accepted |
 | [0004](0004-writing-rules.md) | Writing rules: ASD-STE100 Simplified Technical English | Accepted |
 | [0005](0005-git-workflow.md) | Git workflow: develop, main and pull requests | Accepted |
-| [0006](0006-backend-and-frontend-languages.md) | Backend in C# and ASP.NET Core, front end and plugins in TypeScript | Accepted |
+| [0006](0006-backend-and-frontend-languages.md) | Backend in C# and ASP.NET Core, front end and plugins in TypeScript | Accepted. Amended by 0054 |
 | [0007](0007-modular-monolith.md) | Modular monolith for the core | Accepted |
 | [0008](0008-postgresql-schemas-and-shard-directory.md) | PostgreSQL with separate schemas and a shard directory | Accepted |
 | [0009](0009-single-instance-without-federation.md) | One instance without federation | Accepted |
 | [0010](0010-plugins-and-modules.md) | Two extension levels: plugins and modules | Accepted |
-| [0011](0011-plugin-network-allowlist.md) | Plugin network access through a declared list of domains | Accepted |
+| [0011](0011-plugin-network-allowlist.md) | Plugin network access through a declared list of domains | Accepted. Amended by 0050 |
 | [0012](0012-card-data-sources.md) | Card data sources and card images | Accepted |
 | [0013](0013-two-level-locations.md) | Locations with two levels | Accepted |
 | [0014](0014-product-scope.md) | Product scope | Accepted |
@@ -45,13 +45,23 @@ Each record gives the context, the decision and its consequences.
 | [0035](0035-moderation-of-public-content.md) | Moderation of the public content in the Decks component, with the data in the users database | Accepted |
 | [0036](0036-internal-api.md) | Internal API for the modules under `/internal/v1`, with its own OpenAPI document | Accepted |
 | [0037](0037-service-accounts-and-delegation-tokens.md) | Service accounts, delegations from the account page and delegation tokens with scopes | Accepted |
-| [0038](0038-proxy-pdf-in-the-browser.md) | The web app makes the PDF of the proxies, with jsPDF | Accepted |
+| [0038](0038-proxy-pdf-in-the-browser.md) | The web app makes the PDF of the proxies, with its own PDF writer | Accepted |
 | [0039](0039-accounts-without-email-on-development-instances.md) | Accounts without email on development instances | Accepted |
-| [0040](0040-table-engine-in-the-browser.md) | The table engine runs in the browser | Accepted |
+| [0040](0040-table-engine-in-the-browser.md) | The table engine runs in the browser | Accepted. Amended by 0047 |
 | [0041](0041-deck-import-from-a-link.md) | The API reads a deck from a link of Moxfield or Archidekt | Accepted |
 | [0042](0042-deployed-instances-and-updates.md) | Deployed instances with the published images, the script `reliquary-update`, and the migration rules | Accepted |
 | [0043](0043-releases-with-release-please.md) | Releases with release-please on `main`, and a changelog written by hand | Accepted |
 | [0044](0044-powershell-update-script-for-windows.md) | The script `reliquary-update.ps1` for PowerShell on Windows, with the same commands and files as `reliquary-update` | Accepted |
+| [0045](0045-window-sync-with-broadcastchannel.md) | The windows of a game on one computer sync with BroadcastChannel | Accepted |
+| [0046](0046-deck-image-and-embed.md) | Deck image in the browser, link previews from the read model with Nginx SSI, and an embed page for public decks | Accepted |
+| [0047](0047-trusted-server-for-online-games.md) | Online games use a trusted server: the API keeps the full state, and each player gets only their view | Accepted |
+| [0048](0048-plugin-sdk-license-and-packaging.md) | The plugin SDK uses Apache 2.0 and lives in the folder `sdk/` of the main repository | Accepted |
+| [0049](0049-plugin-sandbox.md) | Plugins run in sandboxed iframes with an opaque origin, a CSP for each plugin, an RPC channel and a plugin token | Accepted |
+| [0050](0050-no-plugin-code-on-the-server.md) | The server runs no plugin code. A vault keeps the secrets of plugins, and the network relay is off by default | Accepted |
+| [0051](0051-linked-accounts.md) | Linked accounts with a user name or an API key first, and OAuth 2 later | Accepted |
+| [0052](0052-plugin-catalog-signature-and-revocation.md) | The plugin catalog publishes a signed index with file hashes and revoked versions | Accepted |
+| [0053](0053-helm-chart-scope.md) | The Helm chart deploys the API, the worker and the web app, with external PostgreSQL and Redis | Accepted |
+| [0054](0054-dotnet-11-and-the-latest-dotnet-version.md) | The backend uses the latest version of .NET, LTS or STS. It uses .NET 11 from 2026-11-16 | Accepted |
 
 ## Open decisions
 
@@ -61,6 +71,5 @@ An ADR records the answer, and the pull request of the ADR closes the issue.
 | Issue | Question | Milestone |
 | --- | --- | --- |
 | [#36](https://github.com/nicolas-goyon/reliquary/issues/36) | Analysis rules for cards with more than one face | M1 |
-| [#58](https://github.com/nicolas-goyon/reliquary/issues/58) | License of the plugin SDK: MIT or Apache 2.0 | M4 |
 | [#67](https://github.com/nicolas-goyon/reliquary/issues/67) | Rights of shared collections and card reservation | Later |
 | [#72](https://github.com/nicolas-goyon/reliquary/issues/72) | Quota threshold and price above the free quota | Later |

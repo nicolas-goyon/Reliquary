@@ -102,6 +102,29 @@ describe('decks', () => {
     expect(calls.find((call) => call.key === `PATCH /decks/${deckId}/lines/l2`)?.body).toEqual({ quantity: 2 })
   })
 
+  it('changes the archetype of the deck and shows it', async () => {
+    window.history.replaceState(null, '', `/decks/${deckId}`)
+    const calls = mockApi({
+      'POST /auth/refresh': () => session(),
+      [`GET /decks/${deckId}`]: () => Response.json(deck()),
+      [`GET /decks/${deckId}/legality`]: () => Response.json(notLegal),
+      [`PATCH /decks/${deckId}`]: ({ body }) => Response.json(deck({ version: 4, archetype: (body as { archetype: string }).archetype || null })),
+    })
+    const user = userEvent.setup()
+    render(<App />)
+
+    const field = await screen.findByLabelText('Archetype')
+    expect(field).toHaveValue('')
+    await user.selectOptions(field, 'control')
+
+    await waitFor(() => expect(screen.getByLabelText('Archetype')).toHaveValue('control'))
+    expect(screen.getByText(/Commander · Control · 2 cards/)).toBeInTheDocument()
+    await user.selectOptions(screen.getByLabelText('Archetype'), '')
+
+    await waitFor(() => expect(screen.getByLabelText('Archetype')).toHaveValue(''))
+    expect(calls.filter((call) => call.key === `PATCH /decks/${deckId}`).map((call) => call.body)).toEqual([{ archetype: 'control' }, { archetype: '' }])
+  })
+
   it('adds a card with the autocomplete', async () => {
     window.history.replaceState(null, '', `/decks/${deckId}`)
     const calls = mockApi({
@@ -318,6 +341,7 @@ describe('deck organization', () => {
     updatedAt: '2026-10-27T10:00:00Z',
     tags: index === 0 ? ['Casual'] : [],
     colorIdentity: index === 0 ? 'WUBG' : '',
+    assembled: index === 0,
   })
 
   it('moves five decks to a folder in one action', async () => {
@@ -367,12 +391,15 @@ describe('deck organization', () => {
     await user.click(screen.getByRole('checkbox', { name: 'Green' }))
     await user.click(screen.getByRole('checkbox', { name: 'White' }))
     await user.selectOptions(screen.getByLabelText('Deck tag'), 'Casual')
+    await user.selectOptions(screen.getByLabelText('Assembled decks'), 'true')
+    await user.selectOptions(screen.getByLabelText('Completeness'), 'false')
     await user.selectOptions(screen.getByLabelText('Sort'), 'name')
+    expect(screen.getByText('Assembled deck')).toBeInTheDocument()
     await user.type(screen.getByLabelText('New folder'), 'Modern')
     await user.click(screen.getByRole('button', { name: 'Add' }))
 
     await waitFor(() => expect(calls.some((call) => call.key === 'POST /deck-folders')).toBe(true))
     const lastList = (fetch as unknown as { mock: { calls: [string][] } }).mock.calls.map(([url]) => url).filter((url) => url.startsWith('/api/v1/decks?')).at(-1)
-    expect(lastList).toBe('/api/v1/decks?limit=100&colors=WG&tag=Casual&sort=name')
+    expect(lastList).toBe('/api/v1/decks?limit=100&colors=WG&tag=Casual&assembled=true&complete=false&sort=name')
   })
 })

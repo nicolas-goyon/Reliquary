@@ -50,10 +50,15 @@ Plugins have two purposes:
   Reliquary builds this panel from the installed plugins.
   For each site, the panel shows the site, the plugin that uses the site, the connection state and the last synchronization.
   The panel also has buttons to link and unlink the account.
-- The core encrypts the access tokens and keeps them in its vault.
-  Each access token belongs to one user and one plugin.
-  Only this plugin can read the access token again.
-  When the user unlinks the account, the core deletes the access tokens.
+- The core encrypts the secrets of linked accounts and keeps them in its vault.
+  Each secret belongs to one user, one plugin and one site.
+  Only this plugin can read the secret again, with a plugin token.
+  When the user unlinks the account, the core deletes the secret.
+- M4 delivers the public user name and the API key first.
+  OAuth 2 with PKCE comes at the end of M4 only if a real plugin needs it.
+- The core runs the sync. The minimum interval of a periodic sync is 15 minutes.
+
+[ADR 0051](../decisions/0051-linked-accounts.md) gives the reasons for these rules.
 
 ### Interface slots
 
@@ -62,9 +67,74 @@ Plugins have two purposes:
   They also include the card page, the account page and the navigation items.
 - A plugin declares in its plugin manifest the slots that it uses.
   In these slots, it adds buttons, charts, interface elements or a new group of menu items.
-- The core isolates each contribution of a plugin.
-  It renders the contribution in a sandboxed iframe, or in an interface component that the SDK loads.
+- The core isolates each plugin.
+  Each active plugin runs in one plugin frame: a sandboxed iframe with an opaque origin and a CSP for this plugin.
+  The plugin and the core communicate with JSON-RPC 2.0 on a `MessageChannel`.
   A plugin cannot access the DOM of the core or the DOM of other plugins.
+- For buttons, menu items, navigation items, table columns, import formats and export formats, the plugin sends data.
+  The core renders this data with its own components.
+- The slots `deck.actions`, `app.menu` and `navigation` accept buttons and menu items from plugins:
+  - The plugin calls `ui.contribute` with an ID, a label and an optional icon.
+    The label has an English text and optional translations, with 40 characters at most.
+    The icon comes from a fixed set of 12 icons.
+  - The core checks the data and refuses a slot that the plugin manifest does not declare.
+    A plugin can add 3 items at most to each slot.
+  - The registry keeps the item as a contribution of the kind `plugin`, with data and no render function.
+    `SlotItem` renders it with the component `PluginAction` of the core, after the items of the core.
+  - When the user selects the item, the core calls `ui.action` with the IDs of the context, for example `{ deckId }`.
+    The plugin does not get the objects of the page.
+  - A contribution of a development plugin shows the badge "Not checked".
+  - When the core removes the plugin frame, it also removes the items of the plugin.
+- Plugin panels use the slots `analysis.tabs`, `card.page`, `plugin.page` and `plugin.dialog`:
+  - The field `panels` of the plugin manifest declares each panel, with its slot and its title.
+    The field `i18n` gives the translated titles with the key `panels.<id>.title`.
+    `GET /api/v1/extensions` gives the panels and the translations to the web app.
+  - The registry keeps each panel as a contribution of the kind `plugin-panel`, with no render function.
+    `SlotItem` renders it with the component `PluginPanel` of the core.
+  - The core creates the frame of a panel only when the user opens the panel, and removes it when the panel closes.
+    An analysis tab opens when the user selects it, and a part of the card page opens when the user expands it.
+  - A panel frame uses the same frame address as the plugin.
+    The connect message has the field `panel` with the ID, the slot and the context.
+    Thus the SDK calls the code of the panel and not `activate`.
+  - The panel gets the IDs of the context only: `{ deckId }`, `{ oracleId }`, `{ page }` or `{ data }`.
+    When the IDs change, the core calls `panel.update`.
+  - The SDK gives the height of the content with `ui.resize`.
+    The core applies a minimum of 48 pixels and the maximum of the slot: 800 for `analysis.tabs`, 600 for `card.page` and `plugin.dialog`, 2000 for `plugin.page`.
+  - `ui.openPage` opens the page `/plugins/<plugin ID>/<panel ID>`.
+    `ui.openDialog` opens a panel of the slot `plugin.dialog` in a dialog of the core, and `ui.closeDialog` closes it.
+  - The watchdog also applies to each panel frame.
+    A panel that does not answer shows an error, and the core removes its frame.
+  - A panel of a development plugin shows the banner "Not checked".
+- Plugin columns use the slot `table.columns`:
+  - The plugin calls `ui.contribute` with an ID and a title. A plugin can add 2 columns at most.
+  - The registry keeps the column as a contribution of the kind `plugin-column`, with no render function.
+    `SlotItem` renders the header and the cells with the component `PluginColumn` of the core. A cell has no iframe.
+  - The core collects the cells that the table asks in one render.
+    Then it calls `ui.cells` one time with all the rows, in parts of 200 rows.
+    Each row has the deck ID, the line ID, the oracle ID, the quantity and the zone.
+  - The plugin gives one cell for each row: a text of 100 characters at most, an optional tone and an optional tooltip, or null.
+    The tones are `neutral`, `positive`, `warning` and `negative`.
+  - The core keeps the cells of the last version of each deck. A change of the deck increases its version, so the core asks the cells again.
+  - A cell that the plugin does not give shows a dash, with the reason for screen readers.
+  - The header of a column of a development plugin shows the badge "Not checked".
+- Plugin formats use the slots `deck.import-formats`, `deck.export-formats`, `collection.import-formats` and `collection.export-formats`:
+  - The field `formats` of the plugin manifest declares each format, with its direction, its target, its title and its file name extensions.
+    `GET /api/v1/extensions` gives the formats to the web app.
+  - The import and export forms show the plugin formats after the formats of the core.
+    A format of a development plugin shows "not checked" after its name.
+  - An import format calls `format.import` with the content and the name of the file.
+    The plugin gives a deck list in the text format of Reliquary, or a collection CSV of Reliquary.
+    The core then imports this text with its own endpoint and the session of the user, so the plugin needs no write scope.
+  - An export format gets the CSV file of Reliquary from the export endpoint of the core.
+    Then it calls `format.export`, and the plugin gives its file: a name, a media type and a text.
+  - A conversion has a time limit of 30 seconds.
+    The size limit of 1 MB of the RPC channel applies to the content in the two directions.
+  - The core removes the folder part and the control characters of the file name.
+    It accepts only text media types, JSON and XML, and uses `text/plain` for other types.
+- Panels (analysis tabs, the card page, plugin pages and dialogs) render in their own sandboxed iframe.
+- The plugin frame contains no credential of the user.
+  The core calls the public API for the plugin with a plugin token, which has only the scopes that the user accepted.
+- [ADR 0049](../decisions/0049-plugin-sandbox.md) gives the reasons for the sandbox.
 - The web app has the slots from milestone M0, and the core uses them for its own panels.
   `web/src/slots/registry.ts` gives the names of the slots and the context of each slot.
   `web/src/slots/coreContributions.tsx` registers the panels of the core, for example the panels of the account page.
@@ -85,16 +155,105 @@ Plugins have two purposes:
   - The user can change the order of the contributions and hide them.
   - The core disables a plugin automatically if the plugin crashes or slows the interface.
 
+### Plugin runtime
+
+The folder `web/src/plugins` contains the plugin runtime of the web app.
+[ADR 0049](../decisions/0049-plugin-sandbox.md) gives the design.
+
+- The web app gets `GET /api/v1/extensions` after the sign-in.
+  It loads the runtime module only when the user has an active plugin, so the main bundle does not contain the runtime.
+- For each active plugin, the runtime creates a hidden plugin frame with `sandbox="allow-scripts"`, an empty `allow` attribute and no referrer.
+  The address of the frame is `/api/v1/plugins/{id}/{version}/frame`.
+- The connection has two window messages:
+  1. The plugin frame sends `reliquary:ready` to its parent window.
+  2. The runtime checks that `event.source` is the window of the frame.
+     Then it sends `reliquary:connect` one time, with the port of a new `MessageChannel`.
+- After the connection, the core and the plugin send JSON-RPC 2.0 messages on the port.
+  Each message is one JSON string, with a size limit of 1 MB.
+  Each call has a time limit of 5 seconds by default.
+- The runtime sends the heartbeat `plugin.ping` each 2 seconds, with a time limit of 2 seconds.
+  After 3 missed heartbeats in a row, the runtime removes the frame.
+- The runtime removes a frame that does not send `reliquary:ready` in 10 seconds.
+- The plugin SDK has the same protocol in `sdk/src`.
+  The container build of the web app sees only the folder `web/`, so `web/src/plugins` keeps a copy of `protocol.ts` and `rpc.ts`.
+  The test `web/src/plugins/sdkCopies.test.ts` fails when a copy is different from the file in `sdk/src`.
+- After a change of the plugins of the user, for example an activation, the web app calls `notifyPluginsChanged()`.
+  The runtime then gets `GET /api/v1/extensions` again, removes all the plugin frames, and starts the active plugins again.
+
+The instance settings of the section `Plugins` are:
+
+| Setting | Default | Effect |
+| --- | --- | --- |
+| `Plugins:MaxActivePlugins` | 8 | The maximum number of active plugins for each user. `PUT /api/v1/me/extensions/{id}` refuses one more plugin with the error `too_many_active_plugins`. |
+| `Plugins:FrameOrigin` | none | A second host name for the plugin frames, for example `https://plugins.example.org`. Without a value, the frames use the host of the instance, with an opaque origin. |
+| `Plugins:AllowDevelopmentPlugins` | `false` | Allows the development mode. `appsettings.Development.json` and the local instance of `compose.yaml` turn it on. A deployed instance keeps it off. |
+
+`GET /api/v1/extensions` gives these settings to the web app in the field `plugins`.
+
+#### Development mode
+
+On a development instance, a user loads a plugin from the URL of its plugin manifest, for example `http://localhost:5173/manifest.json`.
+
+1. The panel **Development plugins** of the account page shows only when `Plugins:AllowDevelopmentPlugins` is on.
+2. The web app reads the plugin manifest from the URL.
+   The server of the plugin must accept requests from the origin of the instance (CORS).
+3. The browser keeps the URL in its local storage. The core keeps no data about development plugins.
+4. The runtime loads the frame from `GET /api/v1/plugins/development/frame?entry=<URL>&network=<origin>`.
+   The CSP of this frame allows the origin of the entry point for scripts, styles, fonts, images and connections.
+   It also allows the WebSocket of this origin, so the server of the plugin can reload the plugin.
+   The `network` origins of the plugin manifest get `connect-src` and `img-src`.
+   `PluginFramePolicy.ForDevelopment` makes this CSP. The same class makes the CSP of the installed plugins, so the two policies have the same common rules.
+5. The connect message has `development: true`, and the interface shows a "Not checked" banner for the plugin.
+   Each contribution of a development plugin must show this banner.
+
+The core does not check a development plugin, but the plugin runs in the same sandbox as other plugins.
+The development plugins count in the limit of active plugins.
+
+#### Scripts in a plugin frame
+
+The frame has an opaque origin, so the browser sends the requests of the frame with the header `Origin: null`.
+A test with Chromium 158 and Firefox 159 gave these results for the entry point of a plugin:
+
+| Script | Without `Access-Control-Allow-Origin` | With `Access-Control-Allow-Origin: *` |
+| --- | --- | --- |
+| `<script type="module">` | Does not run | Runs |
+| Classic script with `integrity` and `crossorigin` | Does not run | Runs |
+| Classic script with no `integrity` | Runs | Runs |
+
+Thus:
+
+- The API must send `Access-Control-Allow-Origin: *` with the files of a plugin, because the frame loads them with an integrity hash.
+- The default CORS rule of the Vite server accepts only `localhost` origins, not `null`.
+  A plugin author sets `server.cors` to `true` in the Vite configuration of the plugin to use the development mode.
+
+#### Workers in a plugin frame
+
+A plugin can move long tasks to a Worker, so the main thread of the frame answers the heartbeats.
+A test with Chromium 158 and Firefox 159 gave these results in a frame with an opaque origin and `default-src 'none'`:
+
+| Worker | `worker-src blob:` | No `worker-src` |
+| --- | --- | --- |
+| Classic Worker from a `blob:` URL | Runs in Chromium and Firefox | Blocked |
+| Module Worker from a `blob:` URL | Runs in Firefox, fails in Chromium | Blocked |
+| Worker from a file of the plugin | Fails: the file does not have the opaque origin of the frame | Fails |
+| Worker from a `data:` URL | Blocked | Blocked |
+
+Thus the CSP of the plugin frame must contain `worker-src blob:`, and a plugin must use a classic Worker from a `blob:` URL.
+A `MessagePort` can go to such a Worker.
+
 ### Network
 
 - A plugin can reach only the domains that its plugin manifest declares.
   These domains can include `localhost`, for example for a scan application or a local tool.
+- The CSP of the plugin frame contains only the domains of the plugin manifest that the user accepted.
+  The section [Plugin frame and plugin files](#plugin-frame-and-plugin-files) gives the rules.
 - Some sites refuse calls from a browser (CORS).
   For these sites, the core offers a network relay.
   The relay accepts only the domains of the plugin manifest, and it has quotas.
   The relay does not log the content of the requests.
+  The relay is off by default, and the administrator enables it for the instance.
 
-[ADR 0011](../decisions/0011-plugin-network-allowlist.md) gives the reasons for these rules.
+[ADR 0011](../decisions/0011-plugin-network-allowlist.md) and [ADR 0050](../decisions/0050-no-plugin-code-on-the-server.md) give the reasons for these rules.
 
 ### Plugin manifest
 
@@ -120,20 +279,142 @@ This example shows the plugin manifest of a plugin that synchronizes decks with 
 }
 ```
 
+The JSON Schema `sdk/schema/manifest.schema.json` gives the rules of the plugin manifest.
+The SDK, the plugin catalog and the API use this file.
+The API applies the same rules with `PluginManifestCheck` in the platform, and a test compares the two.
+When you change a rule, change the schema and `PluginManifestRules` in the same pull request.
+
+| Field | Content |
+| --- | --- |
+| `id` | 2 to 64 lowercase letters, digits and hyphens. Necessary. |
+| `kind` | The value must be `plugin`. The schema accepts a manifest without `kind`, but `PUT /api/v1/admin/extensions/{id}` needs it, because this endpoint also installs modules. |
+| `name`, `description` | The texts in English. `name` is necessary. |
+| `version` | `major.minor.patch` with an optional pre-release part. The version cannot have build metadata, because the version is part of the URLs of the plugin files. |
+| `coreApi` | The range of core API versions, in the syntax of npm. Necessary. |
+| `entry` | The relative path of the JavaScript module of the plugin. A path segment cannot start with a dot. Necessary. |
+| `permissions` | The scopes of the public API. |
+| `slots` | The slots that the plugin uses. |
+| `network` | HTTPS origins, `http://localhost` and `http://127.0.0.1`, with an optional port. An origin can have a wildcard for one level only, for example `https://*.example.com`. |
+| `devices` | `camera` and `loopback-network`. |
+| `accounts` | The linked account sites: the host name, the authentication method and the sync. The interval of a periodic sync is 15 to 1440 minutes. |
+| `panels` | The panels: an ID, a slot (`analysis.tabs`, `card.page`, `plugin.page` or `plugin.dialog`) and a title. The slot must also be in `slots`. |
+| `formats` | The import formats and the export formats: an ID, the direction, the data (`deck` or `collection`), a title and the file name extensions. |
+| `i18n` | The translated texts for each language. The keys `name`, `description`, `panels.<id>.title` and `formats.<id>.title` translate the texts of the manifest. |
+| `settings` | The default settings of the instance, as a JSON object. |
+
+The API refuses a plugin manifest with an unknown field.
+The registry keeps all the fields of the plugin manifest.
+
+### Plugin frame and plugin files
+
+The table `users.extension_files` keeps the files of each plugin version: the path, the content, the media type and the SHA-384 hash.
+The files of a version do not change.
+The catalog sync adds the files of a new version with `PluginFileStore`.
+The store accepts 200 files and 5 MB at most for each version.
+It accepts only these file name extensions: `.js`, `.mjs`, `.css`, `.json`, `.map`, `.txt`, `.wasm`, `.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`, `.svg`, `.woff` and `.woff2`.
+A plugin has no HTML file, because the API makes the HTML of the plugin frames.
+
+Two endpoints send a plugin version to the browser:
+
+- `GET /api/v1/plugins/{id}/{version}/frame` sends the HTML of the plugin frame.
+  The HTML loads the entry of the manifest as a module, with its SHA-384 integrity hash.
+- `GET /api/v1/plugins/{id}/{version}/files/{path}` sends a file of the plugin.
+
+The two endpoints accept requests with no credential, because the browser sends no credential when it opens the frame.
+They send only the installed version of a plugin that the instance enables, so a disabled plugin stops at the next start of its frame.
+
+The frame request has no credential, so the API does not know the user.
+Thus the runtime of the web app puts the values that the user accepted in the query of the frame address:
+
+```text
+/api/v1/plugins/{id}/{version}/frame?network=https%3A%2F%2Fapi.example.com&devices=camera
+```
+
+- Each `network` value must be an origin of the `network` list of the manifest, with the same text.
+  Each `devices` value must be a device of the manifest.
+  The API refuses another value with the status 400 and the code `not_allowed`.
+  Thus the query can only remove values of the manifest, and a wildcard is possible only when the manifest declares it.
+- Without `network`, the frame can reach no network origin.
+  Without `devices`, the frame gets no device.
+
+The frame response has these headers:
+
+- `Content-Security-Policy`. `PluginFramePolicy` makes the policy for all the plugin frames:
+  - `default-src 'none'`
+  - `script-src`, `style-src` and `font-src`: the folder of the files of the plugin version. `style-src` also has `'unsafe-inline'`.
+  - `img-src`: the folder of the files, the accepted `network` origins, `data:` and `blob:`
+  - `connect-src`: the folder of the files and the accepted `network` origins
+  - `worker-src blob:`. In a frame with an opaque origin, only a classic Worker from a `blob:` URL works.
+  - `base-uri 'none'` and `form-action 'none'`
+- `Permissions-Policy`. The header turns off the powerful features of the browser, for example `camera`, `microphone`, `geolocation` and `usb`.
+  It does not turn off the features of the accepted devices: `camera` for the device `camera`, and `loopback-network` and `local-network-access` for the device `loopback-network`.
+  A header can only remove a permission.
+  The `allow` attribute of the iframe gives the accepted devices to the frame, for example `allow="camera"`.
+- `Cache-Control: no-store`, `X-Content-Type-Options: nosniff` and `Referrer-Policy: no-referrer`
+
+Known limit: a sandboxed frame can open a new address in its own frame.
+Thus a plugin can open its frame address again with all the `network` origins of its manifest, also the origins that the user did not accept.
+The new document has no RPC port, so it cannot get more data from the core.
+But the plugin can put data that it already has in the new address, and then send this data to an origin of its manifest.
+Thus the limit of the accepted list is strong only for the origins that are not in the manifest.
+The review of the plugin catalog checks each origin of the manifest.
+A signed frame address from the API can remove this limit later.
+
+A file response has these headers:
+
+- `Access-Control-Allow-Origin: *`. The frame has an opaque origin, so its requests have the header `Origin: null`. A script with an integrity hash needs this header.
+- `Content-Security-Policy: sandbox; default-src 'none'`. A browser that opens a file directly gives it an opaque origin, so a plugin file cannot run on the origin of the instance.
+- `X-Content-Type-Options: nosniff`, the media type of the file, and an `ETag` with the SHA-384 hash
+
+### Plugin tokens
+
+The plugin frame contains no credential of the user.
+The web app calls the public API for a plugin with a plugin token.
+[ADR 0049](../decisions/0049-plugin-sandbox.md) gives the reasons.
+
+- `POST /api/v1/me/extensions/{id}/token` gives a plugin token. Only a web session can call it.
+  The plugin must run for the user: the instance enables it, it supports the core API, and the user activated it. Else the API returns 404.
+- The response gives `token`, `expiresAt`, `pluginId` and `scopes`.
+  The token is valid for 10 minutes (`Auth:PluginTokenLifetime`).
+- The scopes are the permissions of the manifest. The consent of issue #287 will limit them to the scopes that the user accepted.
+- The web app sends the token in the header `Authorization: Bearer rlp_...`.
+  `ScopeFilter` checks the scope of the endpoint, as for a delegation token. An endpoint without a scope refuses the token with the status 403 and the code `scope_missing`.
+- The API asks the extension registry for each request whether the plugin still runs for the user.
+  After a deactivation by the user or by the administrator, the token gives the status 401.
+
+A plugin token is a JWT with the signing key of the access tokens.
+Three properties keep it separate from the access token of a web session, in both directions:
+
+| Property | Access token | Plugin token |
+| --- | --- | --- |
+| Start of the header value | None | `rlp_` |
+| Audience (`aud`) | `Auth:Audience`, `reliquary` by default | `reliquary-plugin` |
+| Token type (`typ` of the JWT header) | `JWT` | `rlp+jwt` |
+| Method (`amr`) | `session` | `plugin` |
+
+Each scheme checks all its properties, so a token with one property of the other kind fails.
+The plugin token also contains `sub` (the user), `plg` (the plugin ID) and `scope` (the scopes, with a space between them).
+A delegation token is a random secret with the start `rld_`, so it is never a valid JWT.
+The policies `Session` and `Administrator` refuse a plugin token, so a plugin token cannot get a new plugin token.
+
 ### Life cycle and security
 
-1. **Development mode**: anyone can load a plugin from a local folder or from a URL.
+1. **Development mode**: on a development instance, a user can load a plugin from a URL.
    The interface then shows a "not checked" banner.
+   Deployed instances disable the development mode by default.
 2. **Plugin catalog**: each plugin of the catalog has a public Git repository and a reproducible build.
    An automatic analysis rejects a plugin that contains hard-coded keys or access tokens.
    It also rejects a plugin that uses domains that its plugin manifest does not declare.
-3. **Review and signature**: the project reviews each plugin, then signs it.
-   By default, Reliquary offers only signed plugins.
-   The other plugins need an explicit approval from the user.
+3. **Review and signature**: the project reviews each plugin, then signs the catalog index.
+   The catalog index contains the SHA-384 hash of each plugin file.
+   By default, Reliquary offers only the signed plugins that the administrator enabled for the instance.
 4. **Permissions**: each permission has a scope, for example `decks:read` or `collection:write`.
    The user accepts the permissions when they install the plugin.
    Each new permission or new domain needs a new approval from the user.
 5. **Revocation**: the project can revoke a compromised plugin version remotely.
+   The worker gets the catalog index each hour and disables the revoked versions.
+
+[ADR 0052](../decisions/0052-plugin-catalog-signature-and-revocation.md) gives the reasons for the catalog rules.
 
 ## Modules
 
@@ -215,10 +496,15 @@ The extension registry is ready from milestone M0, before any extension can run.
 
 ## Related decisions
 
-- [ADR 0002](../decisions/0002-license-agpl-3.0.md): the license of the core, and the open question about the license of the plugin SDK
+- [ADR 0002](../decisions/0002-license-agpl-3.0.md): the license of the core
 - [ADR 0007](../decisions/0007-modular-monolith.md): modular monolith for the core
 - [ADR 0010](../decisions/0010-plugins-and-modules.md): two extension levels, plugins and modules
 - [ADR 0011](../decisions/0011-plugin-network-allowlist.md): plugin network access through a declared list of domains
 - [ADR 0023](../decisions/0023-extension-registry.md): the extension registry and the version of the core API
 - [ADR 0036](../decisions/0036-internal-api.md): the internal API for the modules
 - [ADR 0037](../decisions/0037-service-accounts-and-delegation-tokens.md): the service accounts and the delegation tokens
+- [ADR 0048](../decisions/0048-plugin-sdk-license-and-packaging.md): the license and the place of the plugin SDK
+- [ADR 0049](../decisions/0049-plugin-sandbox.md): the plugin sandbox and the plugin token
+- [ADR 0050](../decisions/0050-no-plugin-code-on-the-server.md): no plugin code on the server, the vault and the network relay
+- [ADR 0051](../decisions/0051-linked-accounts.md): linked accounts
+- [ADR 0052](../decisions/0052-plugin-catalog-signature-and-revocation.md): the plugin catalog, its signature and the revocation

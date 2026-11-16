@@ -22,7 +22,14 @@ import { MovementsPage } from './pages/MovementsPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { SignInPage } from './pages/SignInPage'
 import { TablePage } from './pages/TablePage'
+import { LocalGamePage } from './pages/LocalGamePage'
+import { PlayerWindowPage } from './pages/PlayerWindowPage'
+import { TableWindowPage } from './pages/TableWindowPage'
+import { OnlineCreatePage } from './pages/OnlineCreatePage'
+import { OnlineGamePage } from './pages/OnlineGamePage'
+import { gameIdPattern } from './playtest/gameId'
 import { TransitionPlanPage } from './pages/TransitionPlanPage'
+import { EmbedDeckPage } from './share/EmbedDeckPage'
 import { AuthProvider } from './auth/AuthProvider'
 import { useAuth } from './auth/session'
 import { LanguageSwitcher } from './components/LanguageSwitcher'
@@ -37,6 +44,9 @@ import { SlotRegistry, SlotRegistryContext } from './slots/registry'
 import { Slot } from './slots/Slot'
 import { registerCoreContributions } from './slots/coreContributions'
 import { webVersion } from './version'
+import { PluginDialogs } from './plugins/PluginDialogs'
+import { PluginRuntime } from './plugins/PluginRuntime'
+import { PluginPage } from './pages/PluginPage'
 
 const repositoryUrl = 'https://github.com/nicolas-goyon/reliquary'
 
@@ -45,9 +55,18 @@ const patternRoutes: { pattern: RegExp; render(match: RegExpMatchArray): ReactNo
   { pattern: /^\/cards\/([0-9a-f-]{36})$/, render: (match) => <CardPage key={match[1]} id={match[1]} /> },
   { pattern: /^\/decks\/([0-9a-f-]{36})$/, render: (match) => <DeckPage key={match[1]} id={match[1]} /> },
   { pattern: /^\/decks\/([0-9a-f-]{36})\/test$/, render: (match) => <TablePage key={match[1]} id={match[1]} /> },
+  { pattern: /^\/decks\/([0-9a-f-]{36})\/test\/local$/, render: (match) => <LocalGamePage key={match[1]} id={match[1]} /> },
+  {
+    pattern: new RegExp(`^/test/games/(${gameIdPattern})/players/(player-[1-4])$`),
+    render: (match) => <PlayerWindowPage key={match[0]} gameId={match[1]} playerId={match[2]} />,
+  },
+  { pattern: new RegExp(`^/test/games/(${gameIdPattern})/table$`), render: (match) => <TableWindowPage key={match[1]} gameId={match[1]} /> },
+  { pattern: /^\/decks\/([0-9a-f-]{36})\/test\/online$/, render: (match) => <OnlineCreatePage key={match[1]} id={match[1]} /> },
+  { pattern: /^\/play\/([0-9A-Za-z_-]{1,64})$/, render: (match) => <OnlineGamePage key={match[1]} gameId={match[1]} /> },
   { pattern: /^\/decks\/([0-9a-f-]{36})\/transition-plan$/, render: (match) => <TransitionPlanPage key={match[1]} id={match[1]} /> },
 
   { pattern: /^\/decks\/([0-9a-f-]{36})\/purchase-list$/, render: (match) => <PurchaseListPage key={match[1]} id={match[1]} /> },
+  { pattern: /^\/plugins\/([a-z0-9][a-z0-9-]{1,63})\/([a-z][a-z0-9-]{0,31})$/, render: (match) => <PluginPage key={match[0]} pluginId={match[1]} page={match[2]} /> },
   { pattern: /^\/authors\/([0-9a-f-]{36})$/, render: (match) => <AuthorPage key={match[1]} id={match[1]} /> },
   { pattern: /^\/collection\/locations\/([0-9a-f-]{36})$/, render: (match) => <LocationPage key={match[1]} id={match[1]} /> },
   { pattern: /^\/collection\/locations\/([0-9a-f-]{36})\/inventory$/, render: (match) => <InventoryPage key={match[1]} id={match[1]} /> },
@@ -90,9 +109,19 @@ function createCoreRegistry(): SlotRegistry {
   return registry
 }
 
+/** The embed pages: other sites show them in an iframe. See docs/decisions/0046-deck-image-and-embed.md. */
+const embedPattern = /^\/embed\/decks\/([0-9a-f-]{36})$/
+
 /** The application: the providers, the shell and the pages. */
 export function App({ registry }: { registry?: SlotRegistry }) {
   const [slotRegistry] = useState(() => registry ?? createCoreRegistry())
+  const location = useLocation()
+  const embed = location.pathname.match(embedPattern)
+
+  // An embed page has no shell and no session: it does not ask the refresh cookie, and it shows only public data.
+  if (embed) {
+    return <EmbedDeckPage key={embed[1]} id={embed[1]} />
+  }
 
   return (
     <SlotRegistryContext.Provider value={slotRegistry}>
@@ -159,6 +188,8 @@ function Shell() {
         </button>
       </footer>
       {helpOpen && <ShortcutHelp onClose={() => setHelpOpen(false)} />}
+      <PluginRuntime />
+      <PluginDialogs />
     </div>
   )
 }

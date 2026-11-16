@@ -16,6 +16,8 @@ export interface PublicDeck {
   copyCount: number
   favoriteCount: number
   updatedAt: string
+  /** The archetype, or null. Optional for older test data. */
+  archetype?: string | null
 }
 
 export interface Author {
@@ -46,15 +48,21 @@ export interface PublicDeckFilters {
   commander: string
   card: string
   colors: string
+  /** The first day of the last change, in the format yyyy-MM-dd (UTC), or empty. */
+  updatedFrom: string
+  /** The last day of the last change, in the format yyyy-MM-dd (UTC), or empty. */
+  updatedTo: string
+  /** An archetype, or empty for all the archetypes. */
+  archetype: string
   sort: PublicDeckSort
 }
 
-export const emptyPublicDeckFilters: PublicDeckFilters = { q: '', format: '', commander: '', card: '', colors: '', sort: 'recent' }
+export const emptyPublicDeckFilters: PublicDeckFilters = { q: '', format: '', commander: '', card: '', colors: '', updatedFrom: '', updatedTo: '', archetype: '', sort: 'recent' }
 
 /** Gets the query of the search for the filters. Empty filters are not in the query. */
 export function publicDeckQuery(filters: PublicDeckFilters, author?: string): string {
   const query = new URLSearchParams({ limit: '50' })
-  for (const key of ['q', 'format', 'commander', 'card', 'colors'] as const) {
+  for (const key of ['q', 'format', 'commander', 'card', 'colors', 'archetype', 'updatedFrom', 'updatedTo'] as const) {
     const value = filters[key].trim()
     if (value) {
       query.set(key, value)
@@ -79,6 +87,9 @@ export function filtersFromSearch(search: string): PublicDeckFilters {
     commander: query.get('commander') ?? '',
     card: query.get('card') ?? '',
     colors: query.get('colors') ?? '',
+    updatedFrom: query.get('updatedFrom') ?? '',
+    updatedTo: query.get('updatedTo') ?? '',
+    archetype: query.get('archetype') ?? '',
     sort: sort === 'popular' ? 'popular' : 'recent',
   }
 }

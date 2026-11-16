@@ -24,5 +24,6 @@
     <Project Path="tests/Reliquary.Collection.Tests/Reliquary.Collection.Tests.csproj" />
     <Project Path="tests/Reliquary.Decks.Tests/Reliquary.Decks.Tests.csproj" />
     <Project Path="tests/Reliquary.Platform.Tests/Reliquary.Platform.Tests.csproj" />
+    <Project Path="tests/Reliquary.Playtest.Tests/Reliquary.Playtest.Tests.csproj" />
   </Folder>
 </Solution>

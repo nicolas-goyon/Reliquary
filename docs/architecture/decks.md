@@ -17,7 +17,7 @@ The OpenAPI document gives the bodies and the responses.
 | `POST /decks/export` | Owner | Gives several decks in one ZIP file, with one file for each deck. |
 | `POST /decks` | User | Creates a deck, with its first lines. |
 | `GET /decks/{id}` | Owner, or anyone for an unlisted or public deck | Gets a deck with its lines, cards, printings and tags. |
-| `PATCH /decks/{id}` | Owner | Changes the name, the format, the visibility, the folder, the description, the pin, the archive or the deck tags. |
+| `PATCH /decks/{id}` | Owner | Changes the name, the format, the visibility, the folder, the description, the archetype, the pin, the archive or the deck tags. An empty `archetype` removes the archetype. |
 | `DELETE /decks/{id}` | Owner | Deletes a deck. |
 | `POST /decks/{id}/lines` | Owner | Adds cards. |
 | `PUT /decks/{id}/lines` | Owner | Replaces all the lines. |
@@ -131,9 +131,18 @@ The query of `GET /decks` accepts these parameters:
 | `colors` | The exact color identity: the letters `W`, `U`, `B`, `R` and `G` in any order, or `C` for colorless | All the colors |
 | `tag` | A deck tag. The comparison ignores the case. | All the decks |
 | `archived` | `exclude`, `include` or `only` | `exclude` |
+| `assembled` | `true` for the assembled decks only, `false` for the other decks | All the decks |
+| `complete` | `true` for the complete decks only, `false` for the decks with cards to buy | All the decks |
 | `sort` | `updated`, `created`, `name` or `format` | `updated` |
 
 The pinned decks always come first. Then the sort applies.
+Each deck of the list has the field `assembled`.
+
+A deck is complete when its [purchase list](purchase-list.md#purchase-list) with no tokens has no card to buy.
+The purchase list compares the commander, companion, main and sideboard zones with the available cards and with the cards in the location of the deck.
+A deck with no card in these zones is complete.
+The filter reads the collection, so a delegation token needs the scope `collection:read` for `complete`.
+With `complete`, the API calculates the purchase list of each deck of the other filters, then makes the page.
 
 The color identity of a deck is the color identity of its commanders.
 A deck with no commander uses the cards of its main deck and its companions.
@@ -165,6 +174,9 @@ When a deck is not a deck of the user, the API changes no deck and gives the sta
 | `GET /public-decks` | Anyone | Searches the public decks. See the parameters below. |
 | `GET /public-decks/favorites` | User | Lists the favorite decks of the user. |
 | `GET /public-decks/following` | User | Lists the public decks of the authors that the user follows. |
+| `GET /public-decks/{id}` | Anyone | Gets one public deck. A private, unlisted or hidden deck gives the status 404. |
+| `GET /public-decks/{id}/preview` | Anyone | Gets the HTML tags of the link preview of a public deck. See [deck sharing](#deck-sharing). |
+| `GET /oembed` | Anyone | Gives the oEmbed response of the link of a public deck. See [deck sharing](#deck-sharing). |
 | `GET /public-decks/{id}/social` | Anyone | Tells whether the deck is public and a favorite of the user, and gives its counts and its author. |
 | `PUT /public-decks/{id}/favorite` | User | Adds a public deck to the favorites. |
 | `DELETE /public-decks/{id}/favorite` | User | Removes a deck from the favorites. |
@@ -183,9 +195,32 @@ The query of `GET /public-decks` accepts these parameters:
 | `card` | The Oracle ID or the name of a card of the main zones, in any language |
 | `colors` | The exact color identity, like the deck list |
 | `author` | The account ID of the author |
+| `archetype` | An archetype: `aggro`, `midrange`, `control`, `combo`, `tempo`, `ramp`, `stax`, `voltron`, `tokens`, `aristocrats`, `spellslinger`, `reanimator`, `typal`, `lands` or `group_hug` |
+| `updatedFrom` | The first day of the last change of the deck, in the format `yyyy-MM-dd`. The day is a UTC day. |
+| `updatedTo` | The last day of the last change of the deck, in the format `yyyy-MM-dd`. It must be on or after `updatedFrom`. |
 | `sort` | `recent` (default) or `popular`: the number of copies by other users plus the number of favorites |
 
 A visitor with no account opens an unlisted or public deck with its link: `GET /decks/{id}`.
+
+## Deck sharing
+
+[ADR 0046](../decisions/0046-deck-image-and-embed.md) gives the reasons for these rules.
+Only a public deck has an image, a link preview and an embed.
+
+- The web app draws the image of a deck in the browser and gives a PNG file. The API has no image endpoint.
+- `GET /public-decks/{id}/preview` gives `text/html`: the Open Graph tags, the Twitter card and the oEmbed discovery link.
+  The web container puts the tags in the deck page `/decks/{id}`. `og:image` is the image of the first commander.
+- `GET /oembed` accepts these query parameters:
+
+| Parameter | Values |
+| --- | --- |
+| `url` | The link of a deck page or of an embed page, for example `https://reliquary.example.org/decks/{id}`. The host is not checked. |
+| `format` | `json`, or no value. Another value gives the status 501 with the code `oembed_format_not_available`. |
+| `maxwidth`, `maxheight` | The maximum size of the iframe in pixels. The default size is 600 × 700. The minimum is 200. |
+
+The response has the type `rich`. Its `html` is an iframe on the embed page `/embed/decks/{id}`.
+A link that is not the link of a deck gives the status 400. A deck that is not public gives the status 404.
+The API makes the absolute links from the setting `Auth:PublicUrl`.
 
 ## Moderation
 

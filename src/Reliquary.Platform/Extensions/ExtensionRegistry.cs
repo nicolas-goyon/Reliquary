@@ -74,11 +74,13 @@ internal sealed class ExtensionRegistry(IDatabase database, TimeProvider time)
     /// <summary>
     /// Installs an extension, or updates the manifest of an installed extension. An update keeps the activation flag and the settings.
     /// </summary>
+    /// <param name="manifest">The checked manifest.</param>
+    /// <param name="manifestJson">The JSON text of the manifest that the registry keeps.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The extension, and <see langword="true"/> when the extension is new.</returns>
-    public async Task<(ExtensionRow Row, bool Created)> InstallAsync(ExtensionManifest manifest, CancellationToken cancellationToken)
+    public async Task<(ExtensionRow Row, bool Created)> InstallAsync(ExtensionManifest manifest, string manifestJson, CancellationToken cancellationToken)
     {
         var now = time.GetUtcNow();
-        var manifestJson = JsonSerializer.Serialize(manifest, JsonSerializerOptions.Web);
         var settings = manifest.Settings is { ValueKind: JsonValueKind.Object } value ? value.GetRawText() : "{}";
         await using var connection = await database.OpenUsersAsync(cancellationToken);
         var created = await connection.ExecuteScalarAsync<bool>(new CommandDefinition(

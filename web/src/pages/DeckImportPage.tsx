@@ -1,7 +1,7 @@
 import { useEffect, useId, useState, type ChangeEvent, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Deck, DeckTextLineError, Visibility } from '../api/decks'
-import { automaticHeader, csvFields, csvHeaders, deckNameFromFile, detectFormat, fileFormats, type CsvField, type FileFormat, type ImportWarning } from '../api/exchange'
+import { automaticHeader, csvFields, csvHeaders, deckNameFromFile, detectFormat, fileFormats, type CsvField, type ImportWarning } from '../api/exchange'
 import { ApiError } from '../api/client'
 import { useAuth } from '../auth/session'
 import { FormatSelect, VisibilitySelect } from '../components/DeckFields'
@@ -9,6 +9,8 @@ import { ErrorAlert, TextField } from '../components/Forms'
 import { LineErrorList } from '../components/LineErrors'
 import { Link } from '../router/Link'
 import { navigate } from '../router/navigation'
+import { acceptWithPluginFormats, convertWithPlugin, pluginFormatForFile, pluginFormatValue, requirePluginFormat, usePluginFormats } from '../slots/pluginFormats'
+import { PluginFormatOptions } from '../slots/PluginFormatOptions'
 
 /** The import of a deck from a file or a pasted list of another tool. */
 export function DeckImportPage() {
@@ -20,7 +22,10 @@ export function DeckImportPage() {
   const linkId = useId()
   const [link, setLink] = useState('')
   const [content, setContent] = useState('')
-  const [fileFormat, setFileFormat] = useState<FileFormat>('moxfield')
+  // A format of the core, or the value of a plugin format ("plugin:<ID>").
+  const [fileFormat, setFileFormat] = useState<string>('moxfield')
+  const [fileName, setFileName] = useState<string | null>(null)
+  const pluginFormats = usePluginFormats('deck.import-formats')
   const [name, setName] = useState('')
   const [deckFormat, setDeckFormat] = useState('commander')
   const [visibility, setVisibility] = useState<Visibility>('private')
@@ -46,7 +51,9 @@ export function DeckImportPage() {
     }
     const text = await file.text()
     setContent(text)
-    setFileFormat(detectFormat(file.name, text))
+    setFileName(file.name)
+    const pluginFormat = pluginFormatForFile(pluginFormats, file.name)
+    setFileFormat(pluginFormat ? pluginFormatValue(pluginFormat) : detectFormat(file.name, text))
     setColumns({})
     if (name.trim().length === 0) {
       setName(deckNameFromFile(file.name))
@@ -60,13 +67,16 @@ export function DeckImportPage() {
     const columnMap = Object.fromEntries(Object.entries(columns).filter(([, header]) => header))
     try {
       const fromLink = link.trim().length > 0
+      // A plugin format converts the file into a deck list of Reliquary. The core imports this list, so the plugin needs no write scope.
+      const pluginFormat = fromLink ? undefined : requirePluginFormat(pluginFormats, fileFormat)
+      const imported = pluginFormat ? (await convertWithPlugin(pluginFormat, content, fileName)).content : content
       const result = await request<{ deck: Deck; warnings: ImportWarning[] }>(fromLink ? '/decks/import-link' : '/decks/import', {
         method: 'POST',
         body: fromLink
           ? { url: link.trim(), name, deckFormat, visibility }
           : {
-              format: fileFormat,
-              content,
+              format: pluginFormat ? 'text' : fileFormat,
+              content: imported,
               name,
               deckFormat,
               visibility,
@@ -112,7 +122,7 @@ export function DeckImportPage() {
         <p className="import-or">{t('import.or')}</p>
         <div className="field">
           <label htmlFor={fileId}>{t('import.file')}</label>
-          <input id={fileId} type="file" accept=".txt,.dek,.csv,.dck" onChange={(event) => void handleFile(event)} />
+          <input id={fileId} type="file" accept={acceptWithPluginFormats('.txt,.dek,.csv,.dck', pluginFormats)} onChange={(event) => void handleFile(event)} />
           <p className="field-hint">{t('import.fileHint')}</p>
         </div>
         <div className="field">
@@ -121,12 +131,13 @@ export function DeckImportPage() {
         </div>
         <div className="field">
           <label htmlFor={formatId}>{t('import.fileFormat')}</label>
-          <select id={formatId} value={fileFormat} onChange={(event) => setFileFormat(event.target.value as FileFormat)}>
+          <select id={formatId} value={fileFormat} onChange={(event) => setFileFormat(event.target.value)}>
             {fileFormats.map((format) => (
               <option key={format} value={format}>
                 {t(`fileFormats.${format}`)}
               </option>
             ))}
+            <PluginFormatOptions formats={pluginFormats} />
           </select>
         </div>
         {fileFormat === 'csv' && headers.length > 0 && <ColumnMap headers={headers} columns={columns} onChange={setColumns} />}

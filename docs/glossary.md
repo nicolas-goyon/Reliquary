@@ -23,6 +23,7 @@ The French column gives the term for the French interface.
 | Zone | A part of a deck: commanders, companion, main deck, sideboard, considering or tokens. | Zone |
 | Considering | The zone for cards that the user thinks about for the deck. Other tools call it the maybeboard. | À l'étude |
 | Deck line | One line of a deck version: an Oracle card, a quantity, a zone, tags, a note and purchase preferences. | Ligne |
+| Archetype | The play style of a deck, for example control or combo. The owner chooses it from the list of archetypes of Reliquary. The search of public decks filters by archetype. | Archétype |
 | Deck tag | A label on a deck, for example "Casual". The user filters the deck list with deck tags. A tag is on a deck line, not on a deck. | Étiquette de deck |
 | Deck version | A frozen copy of a deck list, with a message, a date and parent versions. A deck version never changes, like a Git commit. | Version |
 | Working list | The current list of a deck or of a variant. The user changes it. A commit copies it into a new deck version. | Liste de travail |
@@ -37,6 +38,9 @@ The French column gives the term for the French interface.
 | Visibility | Who can open a deck: only the owner (private), people with the link (unlisted) or everyone (public). | Visibilité : privé, non listé, public |
 | Purchase preferences | The rules of one deck line for purchases: wanted or avoided printings, languages, minimum condition, foil and maximum price. | Préférences d'achat |
 | Purchase list | The cards to buy to complete a deck or a variant. It is the deck list minus the available cards. | Liste d'achat |
+| Deck image | A PNG file that shows a public deck, for Discord and for forums. The web app makes it in the browser. | Image du deck |
+| Embed | A read-only view of a public deck that another site shows in an iframe. | Intégration |
+| Link preview | The title, text and image that a chat application or a forum shows for the link of a public deck. | Aperçu du lien |
 | Proxy | A printed copy of a card image that replaces the card in a test game. A proxy is not a real card. Reliquary prints proxies as a PDF file. | Proxy |
 | Transition plan | The steps from the assembled version to a variant: cards to remove from the deck, cards to take from a location and cards to buy. | Plan de transition |
 | Commander | The Magic: The Gathering format, also known as EDH. Write "commander" in lowercase for the card in the command zone. | Commander |
@@ -72,11 +76,17 @@ The French column gives the term for the French interface.
 | Table engine | The engine that all deck testing modes share: zones, draw, shuffle, tokens, counters and flip. It has no automated game rules. | Moteur de table |
 | Goldfish | A test mode for one player with no opponent. | Goldfish |
 | Local multiplayer | A test mode where one person plays 3 or 4 decks. | Multi local |
-| Online game | A test mode for several people on different computers. | Partie en ligne |
+| Online game | A test mode for 2 to 4 people on different computers. The API keeps the state of the game and applies the actions. | Partie en ligne |
+| Host | The player who creates an online game. The host has the seat 0, starts the game and can end it. | Hôte |
+| Seat | The place of one player in an online game. A seat has a number from 0 to 3, a nickname and a deck. | Place |
+| Invite link | The link that lets a person join an online game. It contains a secret in its fragment. It stops at the start of the game. | Lien d’invitation |
+| Guest | A person who joins an online game with an invite link and no account. A guest gives a nickname and a deck. | Invité |
+| Game token | A signed token that gives access to one seat of one online game. The player gets it at the join. | — |
 | Game session | The real-time connection group of one online game. | Salon |
 | Shared screen | A test mode with a table window and a player window, for screen sharing, a second screen or a stream. | Affichage partagé |
 | Table window | The window that shows the table. It masks hidden information. | Fenêtre table |
 | Player window | The private window that shows the hand of one player. | Fenêtre joueur |
+| Game window | The window that keeps the state of a game on one computer. The other windows of the game get the state from it. | Fenêtre de partie |
 
 ## Accounts
 
@@ -117,6 +127,12 @@ The French column gives the term for the French interface.
 | Linked account | A connection between a Reliquary account and an account on an external site. Plugins and modules use linked accounts. | Compte lié |
 | Plugin catalog | The public list of plugins that the project reviewed and signed. | Catalogue de plugins |
 | Extension registry | The list of the extensions that the administrator installed on the instance, with an activation flag for each extension. | Registre des extensions |
+| Plugin frame | The sandboxed iframe with an opaque origin where the code of one plugin runs. | — |
+| Plugin token | A short signed token that the core gets for one plugin. It has only the scopes that the user accepted for the plugin. | — |
+| Plugin SDK | The npm package `reliquary-plugin-sdk` in the folder `sdk/`. A plugin uses it to talk to the core in its plugin frame. It uses the Apache License 2.0. | — |
+| Vault | The encrypted store of the core for the secrets of linked accounts. Each secret belongs to one user, one plugin and one site. | — |
+| Catalog index | The signed JSON file of the plugin catalog. It lists the plugin versions, the hash of each file and the revoked versions. | — |
+| Network relay | An endpoint of the core that sends the requests of a plugin to a site that refuses calls from a browser. | — |
 | Core API version | The version of the API that the core gives to extensions. A manifest gives the versions that the extension supports, for example `^1.0`. | Version de l'API du cœur |
 
 ## Platform
@@ -136,11 +152,12 @@ The French column gives the term for the French interface.
 | Milestone | A group of features with a gate at the end: M0 to M4, then Later. | Jalon |
 | Gate | A criterion that a test can prove at the end of a milestone. Work on the next milestone starts after the gate passes. | Porte |
 | Local instance | An instance on the computer of a developer, built from the source code with the demo data. `just up` creates it. | — |
-| Deployed instance | An instance that uses the published images and keeps its data. The script `reliquary-update` installs and updates it. | — |
+| Deployed instance | An instance that uses the published images and keeps its data. The script `reliquary-update` or the Helm chart installs and updates it. | — |
 | Pre-production instance | The deployed instance of the maintainer, on the channel `develop`. It shows the next release with real data. | — |
 | Channel | A tag of the images that moves to each new build: `develop` for the last build of the branch `develop`, `latest` for the last release. | — |
 | Release | A version with a number, a tag `vX.Y.Z`, a GitHub release and its images. | Version publiée |
 | Restore point | The images and the Compose file of the version before an update, with the name of the backup before the update. A rollback uses it. | — |
+| Helm chart | The package that installs an instance on Kubernetes. It is in `deploy/helm/reliquary`. | — |
 
 ## Web app
 

@@ -10,6 +10,7 @@ Terms follow the [glossary](../glossary.md).
 | --- | --- | --- | --- |
 | Service account secret | `rls_<prefix>_<secret>` | A module | The [internal API](internal-api.md) |
 | Delegation token | `rld_<prefix>_<secret>` | A module, for one user | The endpoints of the public API that declare a scope |
+| Plugin token | `rlp_<JWT>` | The web app, for one plugin of the user | The endpoints of the public API that declare a scope. See [plugin tokens](extensions.md#plugin-tokens). |
 
 Send each credential in the header `Authorization: Bearer`.
 The database stores only the prefix and a SHA-256 hash of the secret.
@@ -85,22 +86,23 @@ reliquary service-accounts revoke moxfield-sync
 
 ## Scopes
 
-An endpoint accepts a delegation token only when it declares a scope and the token has this scope.
+An endpoint accepts a delegation token or a plugin token only when it declares a scope and the token has this scope.
 Else the API returns the status 403 with the code `scope_missing`.
+The endpoint filter `ScopeFilter` of the Accounts component checks each request with one of these tokens.
 
 | Scope | Endpoints |
 | --- | --- |
-| `decks:read` | `GET /decks`, `GET /decks/tags`, `POST /decks/export`, `GET /decks/{id}`, `GET /decks/{id}/legality`, `GET /decks/{id}/export`, `GET /decks/{id}/analysis`, `GET /decks/{id}/text`, `GET /decks/{id}/auto-tag`, `GET /decks/{id}/recommendations`, `GET /deck-folders`, `GET /tags`, the `GET` endpoints of the versions and the variants, `POST /lists/compare` |
+| `decks:read` | `GET /decks`, `GET /decks/tags`, `POST /decks/export`, `GET /decks/{id}`, `GET /decks/{id}/legality`, `GET /decks/{id}/export`, `GET /decks/{id}/analysis`, `GET /decks/{id}/text`, `GET /decks/{id}/auto-tag`, `GET /decks/{id}/recommendations`, `GET /deck-folders`, `GET /tags`, the `GET` endpoints of the versions and the variants, `POST /lists/compare`, `POST /playtest/games`, `POST /playtest/games/{id}/join` |
 | `decks:write` | `POST /decks`, `POST /decks/group`, `POST /decks/import`, `POST /decks/import-link`, `PATCH /decks/{id}`, `DELETE /decks/{id}`, the endpoints of the deck lines, `POST /decks/{id}/copy`, `PUT /decks/{id}/text`, `POST /decks/{id}/auto-tag` |
 | `decks:write` | `POST`, `PATCH` and `DELETE` on `/deck-folders`, `PATCH` and `DELETE` on `/tags` |
 | `decks:write` | The `POST` endpoints of the versions and the variants, `POST /decks/{id}/merge`, and `PUT` and `DELETE` on `/decks/{id}/assembled` |
 | `collection:read` | The `GET` endpoints of `/collection`: locations, entries, settings, the global view, storage rules, movements, inventories and the exports |
-| `collection:read` | `GET /decks/{id}/purchase-list`, `GET /decks/{id}/transition-plan` |
+| `collection:read` | `GET /decks/{id}/purchase-list`, `GET /decks/{id}/transition-plan`, and the filter `complete` of `GET /decks` (with `decks:read`) |
 | `collection:write` | The `POST`, `PUT`, `PATCH` and `DELETE` endpoints of `/collection` |
 | `profile:read` | `GET /me` |
 
 All the paths start with `/api/v1`.
-The other endpoints refuse the delegation tokens, for example the public decks, the favorites, the extensions and the card search.
+The other endpoints refuse the delegation tokens and the plugin tokens, for example the public decks, the favorites, the extensions and the card search.
 A module can call the public endpoints of the cards with no credential.
 
 To give a scope to an endpoint, add `RequireScope` of `Reliquary.BuildingBlocks.Security`:

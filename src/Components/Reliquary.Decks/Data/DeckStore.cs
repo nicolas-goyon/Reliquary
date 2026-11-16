@@ -52,6 +52,9 @@ internal sealed class DeckRow
 
     /// <summary>Gets or sets the assembled version, or <see langword="null"/> when the deck is not assembled.</summary>
     public Guid? AssembledVersionId { get; set; }
+
+    /// <summary>Gets or sets the archetype (a value of <see cref="DeckRules.Archetypes"/>), or <see langword="null"/>.</summary>
+    public string? Archetype { get; set; }
 }
 
 /// <summary>
@@ -84,6 +87,8 @@ internal sealed class DeckSummaryRow
     public string[] Tags { get; set; } = [];
 
     public string ColorIdentity { get; set; } = string.Empty;
+
+    public bool Assembled { get; set; }
 }
 
 /// <summary>
@@ -115,7 +120,8 @@ internal sealed class FolderRow
 /// <param name="Archived"><c>exclude</c>, <c>include</c> or <c>only</c>.</param>
 /// <param name="Sort"><c>updated</c>, <c>created</c>, <c>name</c> or <c>format</c>.</param>
 /// <param name="Offset">The number of decks before the page.</param>
-/// <param name="Limit">The maximum number of decks.</param>
+/// <param name="Limit">The maximum number of decks, or <see langword="null"/> for all the decks.</param>
+/// <param name="Assembled">Only the assembled decks (<see langword="true"/>), only the other decks (<see langword="false"/>), or all the decks.</param>
 internal sealed record DeckListQuery(
     Guid? FolderId,
     bool NoFolder,
@@ -125,7 +131,8 @@ internal sealed record DeckListQuery(
     string Archived,
     string Sort,
     int Offset,
-    int Limit);
+    int? Limit,
+    bool? Assembled = null);
 
 /// <summary>
 /// A line of the working list of a deck.
@@ -189,7 +196,8 @@ internal sealed class DeckStore(IDatabase database)
     private const string DeckColumns = """
         id, owner_id as OwnerId, name, format, visibility, folder_id as FolderId, description, source_deck_id as SourceDeckId,
         pinned, archived_at as ArchivedAt, version, created_at as CreatedAt, updated_at as UpdatedAt, tags, color_identity as ColorIdentity,
-        variant_of as VariantOf, base_version_id as BaseVersionId, head_version_id as HeadVersionId, assembled_version_id as AssembledVersionId
+        variant_of as VariantOf, base_version_id as BaseVersionId, head_version_id as HeadVersionId, assembled_version_id as AssembledVersionId,
+        archetype
         """;
 
     private const string LineColumns = """
@@ -252,6 +260,15 @@ internal sealed class DeckStore(IDatabase database)
             cancellationToken: cancellationToken))).ToList();
 
     /// <summary>
+    /// Lists the lines of several decks in some zones, for the purchase lists.
+    /// </summary>
+    public static async Task<IReadOnlyList<DeckLineRow>> ListLinesOfDecksAsync(NpgsqlConnection connection, IReadOnlyCollection<Guid> deckIds, IReadOnlyCollection<string> zones, CancellationToken cancellationToken) =>
+        (await connection.QueryAsync<DeckLineRow>(new CommandDefinition(
+            $"select {LineColumns} from content.deck_lines l where l.deck_id = any(@deckIds) and l.zone = any(@zones) order by l.created_at, l.id",
+            new { deckIds = deckIds.ToArray(), zones = zones.ToArray() },
+            cancellationToken: cancellationToken))).ToList();
+
+    /// <summary>
     /// Lists the decks of an owner with filters. The pinned decks come first, then the sort applies.
     /// </summary>
     public static async Task<IReadOnlyList<DeckSummaryRow>> ListDecksAsync(NpgsqlConnection connection, Guid ownerId, DeckListQuery query, CancellationToken cancellationToken)
@@ -267,6 +284,7 @@ internal sealed class DeckStore(IDatabase database)
             $"""
             select d.id, d.name, d.format, d.visibility, d.folder_id as FolderId, d.pinned, d.archived_at as ArchivedAt,
                 d.created_at as CreatedAt, d.updated_at as UpdatedAt, d.tags, d.color_identity as ColorIdentity,
+                d.assembled_version_id is not null as Assembled,
                 coalesce((select sum(l.quantity) from content.deck_lines l where l.deck_id = d.id and l.zone in ('commander', 'companion', 'main')), 0)::int as CardCount,
                 coalesce((select array_agg(l.oracle_id order by l.created_at) from content.deck_lines l where l.deck_id = d.id and l.zone = 'commander'), array[]::uuid[]) as CommanderIds
             from content.decks d
@@ -278,11 +296,12 @@ internal sealed class DeckStore(IDatabase database)
                 and (@colorIdentity::text is null or d.color_identity = @colorIdentity)
                 and (@tag::text is null or exists (select 1 from unnest(d.tags) t where lower(t) = lower(@tag)))
                 and (@archived = 'include' or (@archived = 'only') = (d.archived_at is not null))
+                and (@assembled::boolean is null or @assembled = (d.assembled_version_id is not null))
             order by d.pinned desc, {order}, d.id desc
             offset @offset
             limit @limit
             """,
-            new { ownerId, query.FolderId, query.NoFolder, query.Format, query.ColorIdentity, query.Tag, query.Archived, query.Offset, query.Limit },
+            new { ownerId, query.FolderId, query.NoFolder, query.Format, query.ColorIdentity, query.Tag, query.Archived, query.Offset, query.Limit, query.Assembled },
             cancellationToken: cancellationToken))).ToList();
     }
 
@@ -353,9 +372,9 @@ internal sealed class DeckStore(IDatabase database)
         transaction.Connection!.ExecuteAsync(new CommandDefinition(
             """
             insert into content.decks (id, owner_id, name, format, visibility, folder_id, description, source_deck_id, pinned, archived_at, version, created_at, updated_at, tags, color_identity,
-                variant_of, base_version_id, head_version_id, assembled_version_id)
+                variant_of, base_version_id, head_version_id, assembled_version_id, archetype)
             values (@Id, @OwnerId, @Name, @Format, @Visibility, @FolderId, @Description, @SourceDeckId, @Pinned, @ArchivedAt, @Version, @CreatedAt, @UpdatedAt, @Tags, @ColorIdentity,
-                @VariantOf, @BaseVersionId, @HeadVersionId, @AssembledVersionId)
+                @VariantOf, @BaseVersionId, @HeadVersionId, @AssembledVersionId, @Archetype)
             """,
             deck,
             transaction,
@@ -370,7 +389,8 @@ internal sealed class DeckStore(IDatabase database)
             update content.decks
             set name = @Name, format = @Format, visibility = @Visibility, folder_id = @FolderId, description = @Description,
                 pinned = @Pinned, archived_at = @ArchivedAt, version = @Version, updated_at = @UpdatedAt,
-                tags = @Tags, color_identity = @ColorIdentity, head_version_id = @HeadVersionId, assembled_version_id = @AssembledVersionId
+                tags = @Tags, color_identity = @ColorIdentity, head_version_id = @HeadVersionId, assembled_version_id = @AssembledVersionId,
+                archetype = @Archetype
             where id = @Id and owner_id = @OwnerId
             """,
             deck,

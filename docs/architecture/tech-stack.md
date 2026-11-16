@@ -43,6 +43,9 @@ Also, the maintainer knows C# better than Go.
 - **Stateless API**: the API keeps no session in memory, and each request carries an authentication token.
   Any replica of the API can serve any request.
 - **Real time**: SignalR uses a Redis backplane, so that the players of one game session can use different replicas.
+  The web app does not use the npm package of SignalR.
+  A small client in `web/src/playtest/online/hubClient.ts` uses the JSON hub protocol over the browser WebSocket, with no negotiation.
+  The backplane can change the order of the messages, so the client puts the patches in order by their sequence numbers.
 - **Background tasks**: separate workers run the background tasks: the Scryfall synchronization, auto-tag and the tasks of modules.
   The workers scale independently of the API.
 - **Quotas**: Redis counts the requests for the quotas, so that the counts agree on all replicas.
@@ -79,7 +82,7 @@ The **Alternative** column gives an option that the project did not choose, or a
 
 | Layer | Choice | Alternative |
 | --- | --- | --- |
-| API | C# and ASP.NET Core on .NET 10, the current LTS version ([ADR 0006](../decisions/0006-backend-and-frontend-languages.md)) | Go |
+| API | C# and ASP.NET Core on .NET 11, the latest version of .NET, since 2026-11-16 ([ADR 0006](../decisions/0006-backend-and-frontend-languages.md), [ADR 0054](../decisions/0054-dotnet-11-and-the-latest-dotnet-version.md)) | Go |
 | Real time | SignalR with a Redis backplane | Raw WebSocket |
 | Database | PostgreSQL, separate schemas, shard directory ([ADR 0008](../decisions/0008-postgresql-schemas-and-shard-directory.md)) | Citus for native sharding later |
 | Migrations | Versioned SQL scripts with DbUp or grate. The M0 task [#14](https://github.com/nicolas-goyon/reliquary/issues/14) chooses the tool. | EF Core Migrations |

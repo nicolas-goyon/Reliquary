@@ -8,6 +8,15 @@ export const visibilities = ['private', 'unlisted', 'public'] as const
 export type Visibility = (typeof visibilities)[number]
 
 /** The formats that the deck dialogs offer, Commander first. */
+/** The archetypes that the owner can give to a deck. The API has the same list (DeckRules.Archetypes). */
+export const deckArchetypes = ['aggro', 'midrange', 'control', 'combo', 'tempo', 'ramp', 'stax', 'voltron', 'tokens', 'aristocrats', 'spellslinger', 'reanimator', 'typal', 'lands', 'group_hug'] as const
+export type DeckArchetype = (typeof deckArchetypes)[number]
+
+/** Tells whether a value is a known archetype. */
+export function isArchetype(value: string | null | undefined): value is DeckArchetype {
+  return deckArchetypes.some((known) => known === value)
+}
+
 export const deckFormats = ['commander', 'brawl', 'standardbrawl', 'oathbreaker', 'paupercommander', 'standard', 'pioneer', 'modern', 'legacy', 'vintage', 'pauper', 'freeform'] as const
 
 export const categories = ['ramp', 'card_draw', 'targeted_interaction', 'board_wipe', 'synergy', 'land', 'win_condition', 'protection'] as const
@@ -26,6 +35,8 @@ export interface DeckSummary {
   updatedAt: string
   tags: string[]
   colorIdentity: string
+  /** Whether the deck is an assembled deck. */
+  assembled: boolean
 }
 
 export interface DeckFolder {
@@ -60,13 +71,17 @@ export interface DeckListFilters {
   colors: string
   tag: string
   archived: 'exclude' | 'include' | 'only'
+  /** `true` for the assembled decks only, `false` for the other decks, or empty for all the decks. */
+  assembled: '' | 'true' | 'false'
+  /** `true` for the decks that the available cards complete, `false` for the decks with cards to buy, or empty for all the decks. */
+  complete: '' | 'true' | 'false'
   sort: DeckSort
 }
 
 /** Gets the query of the deck list for the filters. */
 export function deckListQuery(filters: DeckListFilters): string {
   const query = new URLSearchParams({ limit: '100' })
-  for (const key of ['folderId', 'format', 'colors', 'tag'] as const) {
+  for (const key of ['folderId', 'format', 'colors', 'tag', 'assembled', 'complete'] as const) {
     if (filters[key]) {
       query.set(key, filters[key])
     }
@@ -158,6 +173,8 @@ export interface Deck {
   headVersionId?: string | null
   /** The assembled version, or null when the deck is not an assembled deck. */
   assembledVersionId?: string | null
+  /** The archetype, or null when the owner did not choose one. Optional for older test data. */
+  archetype?: string | null
 }
 
 export interface LegalityProblem {

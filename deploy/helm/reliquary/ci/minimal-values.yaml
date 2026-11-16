@@ -1,0 +1,9 @@
+# The smallest values that render the chart: the chart makes the Secret, and PostgreSQL and Redis are external.
+# tools/deploy-tests/check-chart.sh uses this file.
+config:
+  publicUrl: https://reliquary.example.org
+secrets:
+  signingKey: dGhpcy1pcy1hLXRlc3Qta2V5LWZvci10aGUtY2hhcnQ=
+  connectionStrings:
+    users: Host=postgres;Database=reliquary;Username=reliquary;Password=test
+    redis: redis:6379

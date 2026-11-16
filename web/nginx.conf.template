@@ -15,6 +15,30 @@ map $http_x_forwarded_host $reliquary_forwarded_host {
     "" $host;
 }
 
+# Only the embed pages can show in a frame of another site. All the other pages refuse a frame of another site (clickjacking).
+# See docs/decisions/0046-deck-image-and-embed.md.
+map $request_uri $reliquary_frame_ancestors {
+    default "'self'";
+    "~^/embed/" "*";
+}
+
+# An empty value removes the header, so the embed pages have no X-Frame-Options header.
+map $request_uri $reliquary_frame_options {
+    default "SAMEORIGIN";
+    "~^/embed/" "";
+}
+
+# The table hub of the online games gets the game token in the query string, because a browser cannot set a header on a WebSocket.
+# This log format writes the path with no query string, so the access log never contains a game token.
+log_format reliquary_no_query '$remote_addr - $remote_user [$time_local] "$request_method $uri $server_protocol" '
+                              '$status $body_bytes_sent "$http_referer" "$http_user_agent"';
+
+# The value of the Connection header for the API: "upgrade" for a WebSocket, else "close" as the default of proxy_pass.
+map $http_upgrade $reliquary_connection_upgrade {
+    default upgrade;
+    "" close;
+}
+
 server {
     listen 8080;
     server_name _;
@@ -31,6 +55,24 @@ server {
         proxy_set_header X-Forwarded-Proto $reliquary_forwarded_proto;
         proxy_set_header X-Forwarded-Host $reliquary_forwarded_host;
         client_max_body_size 10m;
+    }
+
+    # The table hub of the online games: a WebSocket that stays open for the length of a game.
+    # The client sends a ping each 15 seconds, so 1 hour with no message means that the client is gone.
+    # See docs/architecture/online-games.md.
+    location = /api/v1/playtest/hub {
+        proxy_pass $api;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $reliquary_connection_upgrade;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $reliquary_forwarded_proto;
+        proxy_set_header X-Forwarded-Host $reliquary_forwarded_host;
+        proxy_read_timeout 1h;
+        proxy_send_timeout 1h;
+        proxy_buffering off;
+        access_log /var/log/nginx/access.log reliquary_no_query;
     }
 
     # The files of the build have a hash in their names, so the browser can keep them.
@@ -54,8 +96,62 @@ server {
         try_files $uri =404;
     }
 
+    # The deck page. Server side includes put the link preview tags of a public deck in the head of index.html,
+    # so Discord and the forums show a preview. A deck that is not public gets no tags.
+    location ~ "^/decks/(?<reliquary_deck_id>[0-9a-f-]{36})$" {
+        ssi on;
+        include /etc/nginx/reliquary-headers.conf;
+        add_header Cache-Control "no-cache";
+        try_files /index.html =404;
+    }
+
+    # The link preview tags of a public deck, for the include of index.html. The request sends no cookie and no token,
+    # so the API gives the tags of public decks only. An error of the API gives an empty include.
+    location ~ "^/_reliquary/preview/(?<reliquary_preview_id>[0-9a-f-]{36})$" {
+        internal;
+        proxy_pass $api/api/v1/public-decks/$reliquary_preview_id/preview;
+        proxy_pass_request_body off;
+        proxy_set_header Content-Length "";
+        proxy_set_header Cookie "";
+        proxy_set_header Authorization "";
+        proxy_set_header Accept-Encoding "";
+        proxy_intercept_errors on;
+        error_page 400 401 403 404 429 500 502 503 504 = @reliquary_empty;
+    }
+
+    location @reliquary_empty {
+        return 204;
+    }
+
+    # The embed page of a public deck. Other sites can show it in an iframe.
+    # A deck that is not public gives the status 404. The web app then shows its "not found" text.
+    location ~ "^/embed/decks/(?<reliquary_embed_id>[0-9a-f-]{36})$" {
+        auth_request /_reliquary/public-deck;
+        error_page 403 =404 /index.html;
+        include /etc/nginx/reliquary-headers.conf;
+        add_header Cache-Control "no-cache";
+        try_files /index.html =404;
+    }
+
+    # Tells whether a deck is public, for the embed page. The status 404 of the API becomes 403, so auth_request refuses the page.
+    location = /_reliquary/public-deck {
+        internal;
+        proxy_pass $api/api/v1/public-decks/$reliquary_embed_id;
+        proxy_pass_request_body off;
+        proxy_set_header Content-Length "";
+        proxy_set_header Cookie "";
+        proxy_set_header Authorization "";
+        proxy_intercept_errors on;
+        error_page 404 = @reliquary_not_public;
+    }
+
+    location @reliquary_not_public {
+        return 403;
+    }
+
     # The application has its own router: each other path gives index.html.
     location / {
+        include /etc/nginx/reliquary-headers.conf;
         add_header Cache-Control "no-cache";
         try_files $uri /index.html;
     }

@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Builder;
 namespace Reliquary.BuildingBlocks.Security;
 
 /// <summary>
-/// The scopes of the delegation tokens. A scope gives access to one group of endpoints of the public API.
+/// The scopes of the delegation tokens and of the plugin tokens. A scope gives access to one group of endpoints of the public API.
 /// See docs/architecture/service-accounts.md.
 /// </summary>
 public static class Scopes
@@ -29,7 +29,7 @@ public static class Scopes
 }
 
 /// <summary>
-/// The scope that an endpoint needs from a delegation token. An endpoint without this metadata refuses the delegation tokens.
+/// The scope that an endpoint needs from a delegation token or a plugin token. An endpoint without this metadata refuses these tokens.
 /// </summary>
 /// <param name="Scope">The scope, for example <c>decks:read</c>.</param>
 public sealed record RequiredScopeMetadata(string Scope);
@@ -40,7 +40,7 @@ public sealed record RequiredScopeMetadata(string Scope);
 public static class ScopeEndpointExtensions
 {
     /// <summary>
-    /// Lets a delegation token with the scope use the endpoint.
+    /// Lets a delegation token or a plugin token with the scope use the endpoint.
     /// The other credentials do not need a scope.
     /// </summary>
     /// <typeparam name="TBuilder">The type of the endpoint builder.</typeparam>
@@ -72,7 +72,20 @@ public static class ScopeEndpointExtensions
     }
 
     /// <summary>
-    /// Tells whether a delegation token has a scope.
+    /// Tells whether a principal uses a token with scopes: a delegation token or a plugin token.
+    /// The API checks the scope of each request with such a token.
+    /// </summary>
+    /// <param name="user">The principal.</param>
+    /// <returns><see langword="true"/> for a delegation token or a plugin token.</returns>
+    public static bool IsScoped(this ClaimsPrincipal user)
+    {
+        ArgumentNullException.ThrowIfNull(user);
+        return user.Identity?.IsAuthenticated == true
+            && user.FindFirst(ReliquaryClaims.AuthMethod)?.Value is AuthMethods.Delegation or AuthMethods.Plugin;
+    }
+
+    /// <summary>
+    /// Tells whether a delegation token or a plugin token has a scope.
     /// </summary>
     /// <param name="user">The principal.</param>
     /// <param name="scope">The scope.</param>

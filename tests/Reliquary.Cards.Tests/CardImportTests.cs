@@ -75,7 +75,7 @@ public sealed class CardImportTests(ImportedCardsFixture fixture)
         var ids = await connection.QueryFirstAsync<string>(
             "select external_ids::text from reference.printings where external_ids ? 'mtgjsonUuid' limit 1");
 
-        Assert.True(JsonDocument.Parse(ids).RootElement.TryGetProperty("mtgjsonUuid", out _));
+        Assert.True(JsonElement.Parse(ids).TryGetProperty("mtgjsonUuid", out _));
     }
 
     [Fact]
@@ -164,6 +164,6 @@ public sealed class CardImportTests(ImportedCardsFixture fixture)
         await using var connection = new NpgsqlConnection(connectionString);
         var payload = await connection.QueryFirstAsync<string>(
             "select payload::text from reference.outbox where event_type = 'cards.card_data.imported' order by id desc limit 1");
-        return JsonDocument.Parse(payload).RootElement.Clone();
+        return JsonElement.Parse(payload);
     }
 }

@@ -1,3 +1,4 @@
+using Reliquary.BuildingBlocks.Cards;
 using Reliquary.BuildingBlocks.Collection;
 
 namespace Reliquary.Decks.Purchases;
@@ -34,7 +35,12 @@ internal sealed record OtherCopies(CollectionCopy Copy, int Quantity, IReadOnlyL
 /// <param name="FromCollection">The available copies that complete the line.</param>
 /// <param name="ToBuy">The number of copies to buy.</param>
 /// <param name="Closest">When the line needs to buy cards: the copies of the collection that do not fit the preferences or are not available.</param>
-internal sealed record PurchasePlanLine(PurchaseNeed Need, IReadOnlyList<TakenCopies> FromDeck, IReadOnlyList<TakenCopies> FromCollection, int ToBuy, IReadOnlyList<OtherCopies> Closest);
+/// <param name="LowestPrice">When the line needs to buy cards and has a maximum price: the lowest market price of a printing that fits the line, in the currency of the maximum price. <see langword="null"/> when no price is known.</param>
+internal sealed record PurchasePlanLine(PurchaseNeed Need, IReadOnlyList<TakenCopies> FromDeck, IReadOnlyList<TakenCopies> FromCollection, int ToBuy, IReadOnlyList<OtherCopies> Closest, PriceLimit? LowestPrice = null)
+{
+    /// <summary>Gets a value that tells whether the lowest market price is more than the maximum price of the line.</summary>
+    public bool AboveMaximumPrice => LowestPrice is { } lowest && Need.Preferences.MaximumPrice is { } maximum && lowest.Amount > maximum.Amount;
+}
 
 /// <summary>
 /// Calculates which cards of a list come from the collection and which cards to buy. See docs/architecture/purchase-list.md.
@@ -45,6 +51,7 @@ internal sealed record PurchasePlanLine(PurchaseNeed Need, IReadOnlyList<TakenCo
 /// <item>The available cards are the cards of the pickable locations. The cards of another assembled deck are never available.</item>
 /// <item>The cards in the location of the deck itself are already in the deck.</item>
 /// <item>A copy fits a line when it agrees with the purchase preferences of the line. An unknown field (no printing, no finish or no condition) agrees, except with a wanted printing.</item>
+/// <item>The collection has no prices. The maximum price applies only to the cards to buy: the planner compares it with the market prices of the printings.</item>
 /// </list>
 /// </remarks>
 internal static class PurchasePlanner
@@ -58,8 +65,10 @@ internal static class PurchasePlanner
     /// <param name="needs">The lines.</param>
     /// <param name="copies">All the copies of the cards of the lines in the collection of the owner.</param>
     /// <param name="ownDeckIds">The decks whose location counts as the deck itself: the deck and, for a variant, its main deck.</param>
+    /// <param name="prices">The market prices of the printings of the cards, by Oracle ID, or <see langword="null"/> to ignore the maximum prices.</param>
     /// <returns>One result for each line, in the order of the lines.</returns>
-    public static IReadOnlyList<PurchasePlanLine> Plan(IReadOnlyList<PurchaseNeed> needs, IReadOnlyList<CollectionCopy> copies, IReadOnlySet<Guid> ownDeckIds)
+    public static IReadOnlyList<PurchasePlanLine> Plan(
+        IReadOnlyList<PurchaseNeed> needs, IReadOnlyList<CollectionCopy> copies, IReadOnlySet<Guid> ownDeckIds, IReadOnlyDictionary<Guid, IReadOnlyList<PrintingPrices>>? prices = null)
     {
         var free = new Dictionary<CollectionCopy, int>(ReferenceComparer.Instance);
         foreach (var copy in copies)
@@ -89,7 +98,8 @@ internal static class PurchasePlanner
                     .OrderBy(other => other.Reasons.Count)
                     .ThenBy(other => other.Reasons.Contains(Unavailable))
                     .ToList();
-            results[index] = new PurchasePlanLine(need, fromDeck, fromCollection, remaining, closest);
+            var lowest = remaining > 0 && prices is not null ? LowestPrice(need.Preferences, prices.GetValueOrDefault(need.OracleId) ?? []) : null;
+            results[index] = new PurchasePlanLine(need, fromDeck, fromCollection, remaining, closest, lowest);
         }
 
         return [.. results.Select(result => result!)];
@@ -127,6 +137,41 @@ internal static class PurchasePlanner
 
         return reasons;
     }
+
+    /// <summary>
+    /// Gets the lowest market price of a printing that fits the preferences, in the currency of the maximum price.
+    /// The printing and finish preferences apply. The language and condition preferences do not apply, because the market prices have no language and no condition.
+    /// </summary>
+    /// <returns>The lowest price, or <see langword="null"/> when the preferences have no maximum price, or no fitting printing has a price in that currency.</returns>
+    public static PriceLimit? LowestPrice(PurchasePreferences preferences, IReadOnlyList<PrintingPrices> printings)
+    {
+        if (preferences.MaximumPrice is not { } maximum || !PriceKeys.TryGetValue(maximum.Currency, out var keys))
+        {
+            return null;
+        }
+
+        var wanted = preferences.WantedPrintingIds ?? [];
+        var avoided = preferences.AvoidedPrintingIds ?? [];
+        var finishKeys = preferences.Foil switch
+        {
+            "foil" => keys.Skip(1),
+            "nonfoil" => keys.Take(1),
+            _ => keys,
+        };
+        var amounts = printings
+            .Where(printing => (wanted.Count == 0 || wanted.Contains(printing.PrintingId)) && !avoided.Contains(printing.PrintingId))
+            .SelectMany(printing => finishKeys.Select(key => printing.Prices.TryGetValue(key, out var amount) ? amount : (decimal?)null))
+            .OfType<decimal>()
+            .ToList();
+        return amounts.Count == 0 ? null : new PriceLimit(amounts.Min(), maximum.Currency);
+    }
+
+    /// <summary>The keys of the market prices for each currency: the nonfoil price first, then the foil prices. Scryfall gives prices in US dollars and euros only.</summary>
+    private static readonly Dictionary<string, string[]> PriceKeys = new(StringComparer.Ordinal)
+    {
+        ["USD"] = ["usd", "usd_foil", "usd_etched"],
+        ["EUR"] = ["eur", "eur_foil"],
+    };
 
     private static bool IsOwn(CollectionCopy copy, IReadOnlySet<Guid> ownDeckIds) =>
         copy.DeckId is { } deckId && ownDeckIds.Contains(deckId);

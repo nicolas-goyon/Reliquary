@@ -46,6 +46,7 @@ export const testDeckSummary: DeckSummary = {
   pinned: true,
   archived: false,
   colorIdentity: 'WUBG',
+  assembled: false,
   cardCount: 2,
   commanderIds: [atraxa],
   tags: ['Casual'],

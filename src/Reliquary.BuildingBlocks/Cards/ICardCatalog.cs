@@ -58,6 +58,14 @@ public interface ICardCatalog
     /// <returns>The cards of <paramref name="oracleIds"/> that match the query.</returns>
     /// <exception cref="CardQueryException">The query is not valid, has no search condition, or took too much time.</exception>
     Task<IReadOnlySet<Guid>> MatchAsync(string query, IReadOnlyCollection<Guid> oracleIds, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets the market prices of all the printings of Oracle cards. The prices come from Scryfall. Do not use them for a sale.
+    /// </summary>
+    /// <param name="oracleIds">The IDs of the Oracle cards.</param>
+    /// <param name="cancellationToken">A token that stops the operation.</param>
+    /// <returns>The printings that have one price or more, by Oracle ID. A card with no price is not in the result.</returns>
+    Task<IReadOnlyDictionary<Guid, IReadOnlyList<PrintingPrices>>> GetPricesAsync(IReadOnlyCollection<Guid> oracleIds, CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -196,3 +204,11 @@ public sealed record PrintingReference(string SetCode, string CollectorNumber, s
 /// <param name="Finishes">The finishes, for example <c>nonfoil</c> and <c>foil</c>.</param>
 /// <param name="ImageUri">The address of the normal image of the first face, or <see langword="null"/>.</param>
 public sealed record PrintingFacts(Guid PrintingId, Guid OracleId, string SetCode, string CollectorNumber, string Lang, IReadOnlyList<string> Finishes, string? ImageUri);
+
+/// <summary>
+/// The market prices of one printing.
+/// </summary>
+/// <param name="PrintingId">The ID of the printing.</param>
+/// <param name="Lang">The language of the printing.</param>
+/// <param name="Prices">The prices by Scryfall key: <c>usd</c>, <c>usd_foil</c>, <c>usd_etched</c>, <c>eur</c>, <c>eur_foil</c> and <c>tix</c>. A missing key has no price.</param>
+public sealed record PrintingPrices(Guid PrintingId, string Lang, IReadOnlyDictionary<string, decimal> Prices);

@@ -66,3 +66,8 @@ With the local instance, run `just restore-backup NAME`. It does the steps 1 to 
 ## Test of the procedure
 
 The CI job "Local instance" backs up the first instance, deletes it, restores it and checks a deck and the card data.
+
+The backup tests in `tests/Reliquary.Platform.Tests/BackupTests.cs` run `pg_dump` and `pg_restore`.
+On a computer, these tests need the PostgreSQL client tools in the `PATH`.
+In the CI job "Backend", the script `tools/ci/pg-tool-in-container.sh` runs the tools of the PostgreSQL service container with `docker exec`.
+The runner then does not install the PostgreSQL client.

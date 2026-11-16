@@ -2,7 +2,7 @@ import { useEffect, useId, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { conditions, finishes, languages } from '../api/collection'
 import type { Deck } from '../api/decks'
-import { copyPlace, hasPreferences, knownReasons, type PurchaseCopy, type PurchaseList, type PurchaseListLine, type PurchaseReason } from '../api/purchases'
+import { copyPlace, hasPreferences, knownReasons, type PriceLimit, type PurchaseCopy, type PurchaseList, type PurchaseListLine, type PurchaseReason } from '../api/purchases'
 import { useAuth } from '../auth/session'
 import { ErrorAlert } from '../components/Forms'
 import '../components/purchases/purchases.css'
@@ -114,7 +114,7 @@ function PurchaseTable({ list, deckName }: { list: PurchaseList; deckName: strin
 }
 
 function PurchaseRow({ list, line }: { list: PurchaseList; line: PurchaseListLine }) {
-  const { t } = useTranslation(['purchases', 'decks'])
+  const { t, i18n } = useTranslation(['purchases', 'decks'])
   const name = list.cards[line.oracleId]?.name ?? line.oracleId
   return (
     <tr>
@@ -148,6 +148,14 @@ function PurchaseRow({ list, line }: { list: PurchaseList; line: PurchaseListLin
       </td>
       <td>
         <span className={line.toBuy > 0 ? 'purchase-to-buy' : undefined}>{line.toBuy}</span>
+        {line.aboveMaximumPrice && line.lowestPrice && line.purchasePreferences?.maximumPrice && (
+          <p className="purchase-price-warning">
+            {t('page.aboveMaximumPrice', {
+              lowest: formatPrice(line.lowestPrice, i18n.resolvedLanguage),
+              maximum: formatPrice(line.purchasePreferences.maximumPrice, i18n.resolvedLanguage),
+            })}
+          </p>
+        )}
         {line.toBuy > 0 && line.closest.length > 0 && (
           <div className="purchase-closest">
             <span className="visually-hidden">{t('page.closestTitle')}</span>
@@ -163,6 +171,11 @@ function PurchaseRow({ list, line }: { list: PurchaseList; line: PurchaseListLin
       </td>
     </tr>
   )
+}
+
+/** Writes a price with its currency in the language of the interface, for example "2,50 €" in French. */
+function formatPrice(price: PriceLimit, language: string | undefined): string {
+  return new Intl.NumberFormat(language ?? 'en', { style: 'currency', currency: price.currency }).format(price.amount)
 }
 
 /** A closest copy as a sentence, for example "Not in French: 1 English copy in Rack 2". */

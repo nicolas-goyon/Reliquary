@@ -59,6 +59,8 @@ For a deck that is not an assembled deck, each card can have purchase preference
 - maximum price
 
 Reliquary uses these criteria for the export to marketplaces (Cardmarket and others) and for the search in the collection.
+The collection has no market price, so the maximum price applies only to the cards to buy.
+The purchase list marks a card to buy when its lowest market price is more than the maximum price.
 If no card of the collection matches the criteria, Reliquary tells the user and suggests the closest match.
 For example: "Not in French, but 1 English copy in rack 2."
 

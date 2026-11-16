@@ -7,7 +7,7 @@ Terms follow the [glossary](../glossary.md).
 
 | Tool | Version | Use |
 | --- | --- | --- |
-| .NET SDK | 10.0 (see `global.json`) | Backend |
+| .NET SDK | 11.0 (see `global.json`) | Backend |
 | Node.js | 24 (see `web/.nvmrc`), or 22.12 and later | Web app |
 | Docker with Compose | Compose 2.17 or later | PostgreSQL and Redis |
 | [just](https://just.systems) | 1.40 or later | Development commands |
@@ -151,14 +151,14 @@ CI runs the same checks for each pull request.
 | `src/Reliquary.Cli` | The command line tool `reliquary`, for example `reliquary migrate` |
 | `src/Reliquary.Hosting` | Registers the platform and the core components in the three hosts |
 | `src/Reliquary.Platform` | Shared infrastructure: connections, shard directory, migrations, outbox and scheduled jobs |
-| `src/Reliquary.BuildingBlocks` | Shared contracts, for example `ICoreComponent`, `IDatabase` and `IDomainEventWriter` |
+| `src/Reliquary.BuildingBlocks` | Shared contracts, for example `ICoreComponent`, `IDatabase` and `IDomainEventWriter`, and neutral helpers, for example the CSV reader `Text/Csv.cs` |
 | `src/Components/Reliquary.Accounts` | Accounts, authentication, API keys and quotas |
 | `src/Components/Reliquary.Cards` | Card reference data, card search and deck analysis |
 | `src/Components/Reliquary.Decks` | Decks, deck versions, variants, tags and folders |
 | `src/Components/Reliquary.Collection` | Locations, location entries, movements and inventories |
 | `src/Components/Reliquary.Playtest` | Table engine and game sessions |
 | `tests/Reliquary.Api.Tests` | Tests of the API host |
-| `tests/Reliquary.Architecture.Tests` | Tests of the rules between the core components |
+| `tests/Reliquary.Architecture.Tests` | Tests of the rules between the core components and between the layers |
 | `tests/Reliquary.Platform.Tests` | Integration tests of the platform, on PostgreSQL |
 | `tests/Reliquary.Cards.Tests` | Tests of the card import, the card endpoints and the card search, with real card fixtures |
 | `bench/Reliquary.Cards.Benchmark` | The benchmark of the card search |
@@ -178,6 +178,14 @@ CI runs the same checks for each pull request.
 - A core component communicates with other core components through interfaces and domain events.
 - Each core component has one class that implements `ICoreComponent`. `src/Reliquary.Hosting/CoreComponents.cs` lists these classes.
 - A core component declares its SQL scripts as migration sets. The [database](../architecture/database.md) page gives the rules.
+- A core component shows its internal types only to its own test project. The tests of a core component use the public API of the other core components.
+
+The architecture tests also check these rules between the layers:
+
+- `Reliquary.BuildingBlocks` references no other project.
+- `Reliquary.Platform` references `Reliquary.BuildingBlocks` only.
+- The hosts `Reliquary.Api`, `Reliquary.Worker` and `Reliquary.Cli` reference `Reliquary.Hosting` only.
+- The table engine modules `engine.ts`, `game.ts` and `projection.ts` of `web/src/playtest` import only pure modules of that folder. They do not use React, the browser, the network, the clock or a random source such as `Math.random`. The test is `web/src/playtest/purity.test.ts`.
 
 The [architecture overview](../architecture/overview.md) and [ADR 0007](../decisions/0007-modular-monolith.md) give the reasons.
 
@@ -187,6 +195,6 @@ The [architecture overview](../architecture/overview.md) and [ADR 0007](../decis
 2. Add a class `<Name>Component` that implements `ICoreComponent`.
 3. Add the project to `Reliquary.slnx`, to `src/Reliquary.Hosting/Reliquary.Hosting.csproj` and to `tests/Reliquary.Architecture.Tests/Reliquary.Architecture.Tests.csproj`.
 4. Add the component to `CoreComponents.All` in `src/Reliquary.Hosting/CoreComponents.cs`.
-5. Add the assembly to `ComponentAssemblies` in `CoreComponentTests.cs`.
+5. Add the assembly to `ComponentAssemblies` in `CoreComponentTests.cs` and in `LayerTests.cs`.
 6. Update the expected list of components in `ApiTests.cs`.
 7. Record the new core component in an ADR.

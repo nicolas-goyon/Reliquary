@@ -136,6 +136,12 @@ The local infrastructure has Mailpit: open `http://localhost:18025` to read the 
 | `POST /me/deletion` | Asks for the deletion of the account, with the password. The worker deletes the account and all its data after 7 days. |
 | `DELETE /me/deletion` | Cancels the deletion request. |
 
+The online games keep data of the players only in Redis, for 8 hours at most.
+The export does not contain them.
+The deletion does not need them, because the games of an account go out of Redis before the deletion starts.
+A guest of an online game has no account. The data of a guest go out of Redis with the game.
+The [online games architecture](online-games.md#personal-data) gives the data and their lifetimes.
+
 ## Settings
 
 | Setting | Default | Meaning |

@@ -37,7 +37,7 @@ internal static class JobsCommand
             var job = host.Services.GetServices<IScheduledJob>().FirstOrDefault(job => job.Name == jobName);
             if (job is null)
             {
-                await Console.Error.WriteLineAsync($"The job \"{jobName}\" does not exist. Run \"reliquary jobs list\" to see the jobs.");
+                await Console.Error.WriteLineAsync($"The job \"{jobName}\" does not exist. Run \"reliquary jobs list\" to see the jobs.", cancellationToken);
                 return 2;
             }
 

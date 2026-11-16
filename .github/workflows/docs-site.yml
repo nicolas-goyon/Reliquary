@@ -3,6 +3,7 @@ name: Documentation site
 # Builds the documentation site from docs/ with MkDocs Material (see mkdocs.yml).
 # A pull request builds the site and checks it. A push to develop also publishes it on GitHub Pages:
 # https://nicolas-goyon.github.io/reliquary/
+# The site also gives the update scripts of develop for download, in /downloads/.
 
 on:
   pull_request:
@@ -12,6 +13,8 @@ on:
       - mkdocs.yml
       - tools/docs-site/**
       - .github/workflows/docs-site.yml
+      - deploy/reliquary-update
+      - deploy/reliquary-update.ps1
   push:
     branches: [develop]
     paths:
@@ -19,6 +22,8 @@ on:
       - mkdocs.yml
       - tools/docs-site/**
       - .github/workflows/docs-site.yml
+      - deploy/reliquary-update
+      - deploy/reliquary-update.ps1
   workflow_dispatch:
 
 permissions:
@@ -48,6 +53,12 @@ jobs:
         env:
           NO_MKDOCS_2_WARNING: "1"
         run: mkdocs build --strict
+
+      # The scripts work with all the versions, so the site gives the scripts of develop.
+      - name: Add the update scripts for download
+        run: |
+          mkdir -p site/downloads
+          cp deploy/reliquary-update deploy/reliquary-update.ps1 site/downloads/
 
       - name: Keep the site for GitHub Pages
         if: github.event_name != 'pull_request'

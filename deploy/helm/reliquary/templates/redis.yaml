@@ -1,0 +1,80 @@
+{{- if .Values.redis.enabled }}
+# An optional Redis server with 1 replica and a persistent volume, for a small cluster.
+# Redis keeps the keys that protect the cookies. Without its data, the users must sign in again.
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "reliquary.fullname" . }}-redis
+  labels:
+    {{- include "reliquary.componentLabels" (dict "context" . "component" "redis") | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "reliquary.selectorLabels" (dict "context" . "component" "redis") | nindent 4 }}
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: redis
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "reliquary.fullname" . }}-redis
+  labels:
+    {{- include "reliquary.componentLabels" (dict "context" . "component" "redis") | nindent 4 }}
+spec:
+  replicas: 1
+  serviceName: {{ include "reliquary.fullname" . }}-redis
+  selector:
+    matchLabels:
+      {{- include "reliquary.selectorLabels" (dict "context" . "component" "redis") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "reliquary.selectorLabels" (dict "context" . "component" "redis") | nindent 8 }}
+    spec:
+      automountServiceAccountToken: false
+      # The user "redis" of the image. The volume belongs to its group.
+      securityContext:
+        {{- toYaml (merge (dict "runAsUser" 999 "runAsGroup" 999 "fsGroup" 999) .Values.podSecurityContext) | nindent 8 }}
+      containers:
+        - name: redis
+          image: {{ printf "%s:%s" .Values.redis.image.repository .Values.redis.image.tag | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args: ["redis-server", "--appendonly", "yes"]
+          ports:
+            - name: redis
+              containerPort: 6379
+          livenessProbe:
+            exec:
+              command: ["redis-cli", "ping"]
+            periodSeconds: 10
+            timeoutSeconds: 3
+          readinessProbe:
+            exec:
+              command: ["redis-cli", "ping"]
+            periodSeconds: 5
+            timeoutSeconds: 3
+          resources:
+            {{- toYaml .Values.redis.resources | nindent 12 }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        {{- include "reliquary.tmpVolume" . | nindent 8 }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        {{- with .Values.redis.persistence.storageClass }}
+        storageClassName: {{ . | quote }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.redis.persistence.size }}
+{{- end }}

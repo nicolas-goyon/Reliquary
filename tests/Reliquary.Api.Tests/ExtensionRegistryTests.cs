@@ -28,6 +28,10 @@ public sealed class ExtensionRegistryTests
 
     private static readonly string[] BadSlots = ["Deck Actions"];
 
+    private static readonly string[] WideNetwork = ["https://*.com"];
+
+    private static readonly int[] NotAnObject = [1, 2];
+
     [Fact]
     public async Task AdministratorInstallsAndEnablesAnExtension()
     {
@@ -53,6 +57,42 @@ public sealed class ExtensionRegistryTests
         Assert.Equal(HttpStatusCode.NoContent, activate.StatusCode);
         Assert.True(Assert.Single(afterActivate.Items).Active);
         Assert.False(Assert.Single(anonymous.Items).Active);
+        Assert.Equal(new PluginRuntimeResponse(8, null, false), afterActivate.Plugins);
+    }
+
+    [Fact]
+    public async Task UserCannotActivateMorePluginsThanTheLimit()
+    {
+        await using var instance = await Instance.CreateAsync(new Dictionary<string, string>
+        {
+            ["Plugins:MaxActivePlugins"] = "1",
+            ["Plugins:FrameOrigin"] = "https://plugins.example.org/",
+        });
+        using var admin = await instance.SignInAsync("admin@example.org");
+        using var user = await instance.SignInAsync("user@example.org");
+        foreach (var id in new[] { "first", "second" })
+        {
+            var manifest = new { id, kind = "plugin", name = id, version = "1.0.0", coreApi = "^1.0", entry = "index.js" };
+            (await admin.PutAsJsonAsync($"/api/v1/admin/extensions/{id}", manifest, TestContext.Current.CancellationToken)).EnsureSuccessStatusCode();
+            (await admin.PatchAsJsonAsync($"/api/v1/admin/extensions/{id}", new { enabled = true }, TestContext.Current.CancellationToken)).EnsureSuccessStatusCode();
+        }
+
+        var first = await user.PutAsJsonAsync("/api/v1/me/extensions/first", new { enabled = true }, TestContext.Current.CancellationToken);
+        var firstAgain = await user.PutAsJsonAsync("/api/v1/me/extensions/first", new { enabled = true }, TestContext.Current.CancellationToken);
+        var second = await user.PutAsJsonAsync("/api/v1/me/extensions/second", new { enabled = true }, TestContext.Current.CancellationToken);
+        var problem = await second.Content.ReadFromJsonAsync<JsonElement>(TestContext.Current.CancellationToken);
+        var deactivate = await user.PutAsJsonAsync("/api/v1/me/extensions/first", new { enabled = false }, TestContext.Current.CancellationToken);
+        var secondAfterDeactivate = await user.PutAsJsonAsync("/api/v1/me/extensions/second", new { enabled = true }, TestContext.Current.CancellationToken);
+        var list = await ListAsync(user);
+
+        Assert.Equal(HttpStatusCode.NoContent, first.StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent, firstAgain.StatusCode);
+        Assert.Equal(HttpStatusCode.Conflict, second.StatusCode);
+        Assert.Equal(ExtensionEndpoints.TooManyActivePlugins, problem.GetProperty("code").GetString());
+        Assert.Equal(HttpStatusCode.NoContent, deactivate.StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent, secondAfterDeactivate.StatusCode);
+        Assert.Equal(["second"], list.Items.Where(item => item.Active).Select(item => item.Id));
+        Assert.Equal(new PluginRuntimeResponse(1, "https://plugins.example.org", false), list.Plugins);
     }
 
     [Fact]
@@ -91,6 +131,109 @@ public sealed class ExtensionRegistryTests
     }
 
     [Fact]
+    public async Task RegistryKeepsAllTheFieldsOfAPluginManifest()
+    {
+        await using var instance = await Instance.CreateAsync();
+        using var admin = await instance.SignInAsync("admin@example.org");
+        var manifest = new
+        {
+            id = "card-scan",
+            kind = "plugin",
+            name = "Card scan",
+            version = "1.0.0",
+            coreApi = "^1.0",
+            entry = "dist/index.js",
+            slots = new[] { "analysis.tabs" },
+            devices = new[] { "camera" },
+            panels = new[] { new { id = "stats", slot = "analysis.tabs", title = "Scan statistics" } },
+            i18n = new { fr = new { name = "Scan de cartes" } },
+        };
+
+        var install = await admin.PutAsJsonAsync("/api/v1/admin/extensions/card-scan", manifest, TestContext.Current.CancellationToken);
+        var body = await install.Content.ReadFromJsonAsync<AdminExtensionResponse>(TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.Created, install.StatusCode);
+        Assert.Equal("stats", body!.Manifest.GetProperty("panels")[0].GetProperty("id").GetString());
+        Assert.Equal("camera", body.Manifest.GetProperty("devices")[0].GetString());
+        Assert.Equal("Scan de cartes", body.Manifest.GetProperty("i18n").GetProperty("fr").GetProperty("name").GetString());
+        Assert.Equal([new ExtensionPanelResponse("stats", "analysis.tabs", "Scan statistics")], body.Extension.Panels);
+    }
+
+    [Fact]
+    public async Task ExtensionListGivesThePanelsTheFormatsAndTheTranslationsOfAPlugin()
+    {
+        await using var instance = await Instance.CreateAsync();
+        using var admin = await instance.SignInAsync("admin@example.org");
+        var manifest = new
+        {
+            id = "card-scan",
+            kind = "plugin",
+            name = "Card scan",
+            version = "1.0.0",
+            coreApi = "^1.0",
+            entry = "dist/index.js",
+            slots = new[] { "card.page" },
+            panels = new[] { new { id = "prices", slot = "card.page", title = "Prices" } },
+            formats = new object[]
+            {
+                new { id = "dek", direction = "import", target = "deck", title = "Scanner list", extensions = new[] { ".scan" } },
+                new { id = "sheet", direction = "export", target = "collection", title = "Sheet" },
+            },
+            i18n = new Dictionary<string, Dictionary<string, string>> { ["fr"] = new() { ["panels.prices.title"] = "Prix" } },
+        };
+        (await admin.PutAsJsonAsync("/api/v1/admin/extensions/card-scan", manifest, TestContext.Current.CancellationToken)).EnsureSuccessStatusCode();
+        (await admin.PatchAsJsonAsync("/api/v1/admin/extensions/card-scan", new { enabled = true }, TestContext.Current.CancellationToken)).EnsureSuccessStatusCode();
+
+        var item = Assert.Single((await ListAsync(admin)).Items);
+
+        Assert.Equal([new ExtensionPanelResponse("prices", "card.page", "Prices")], item.Panels);
+        Assert.Equal("Prix", item.I18n!.Value.GetProperty("fr").GetProperty("panels.prices.title").GetString());
+        Assert.Equal(2, item.Formats.Count);
+        Assert.Equal(["dek", "sheet"], item.Formats.Select(format => format.Id));
+        Assert.Equal(("import", "deck", "Scanner list"), (item.Formats[0].Direction, item.Formats[0].Target, item.Formats[0].Title));
+        Assert.Equal([".scan"], item.Formats[0].Extensions);
+        Assert.Empty(item.Formats[1].Extensions);
+    }
+
+    [Fact]
+    public async Task IncorrectPluginManifestGivesTheFieldErrors()
+    {
+        await using var instance = await Instance.CreateAsync();
+        using var admin = await instance.SignInAsync("admin@example.org");
+
+        var response = await admin.PutAsJsonAsync(
+            "/api/v1/admin/extensions/card-scan",
+            new
+            {
+                id = "card-scan",
+                kind = "plugin",
+                name = "Card scan",
+                version = "1.0.0",
+                coreApi = "^1.0",
+                entry = "../index.js",
+                network = WideNetwork,
+                author = "Somebody",
+            },
+            TestContext.Current.CancellationToken);
+        var problem = await response.Content.ReadFromJsonAsync<JsonElement>(TestContext.Current.CancellationToken);
+        var fields = problem.GetProperty("errors").EnumerateArray().Select(error => error.GetProperty("field").GetString()).ToList();
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal(["author", "entry", "network[0]"], fields.Order(StringComparer.Ordinal));
+    }
+
+    [Fact]
+    public async Task ManifestMustBeAnObject()
+    {
+        await using var instance = await Instance.CreateAsync();
+        using var admin = await instance.SignInAsync("admin@example.org");
+
+        var response = await admin.PutAsJsonAsync("/api/v1/admin/extensions/card-scan", NotAnObject, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
     public async Task OnlyAnAdministratorCanManageTheExtensions()
     {
         await using var instance = await Instance.CreateAsync();
@@ -119,6 +262,58 @@ public sealed class ExtensionRegistryTests
         Assert.Empty(all!);
     }
 
+    [Fact]
+    public async Task DevelopmentPluginFrameNeedsTheSetting()
+    {
+        await using var instance = await Instance.CreateAsync();
+        using var client = instance.Factory.CreateClient();
+
+        var response = await client.GetAsync(new Uri("/api/v1/plugins/development/frame?entry=http://localhost:5173/src/main.ts", UriKind.Relative), TestContext.Current.CancellationToken);
+        var list = await ListAsync(client);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.False(list.Plugins.DevelopmentPlugins);
+    }
+
+    [Fact]
+    public async Task DevelopmentPluginFrameAllowsTheOriginOfThePlugin()
+    {
+        await using var instance = await Instance.CreateAsync(new Dictionary<string, string> { ["Plugins:AllowDevelopmentPlugins"] = "true" });
+        using var client = instance.Factory.CreateClient();
+
+        var response = await client.GetAsync(
+            new Uri("/api/v1/plugins/development/frame?entry=http://localhost:5173/src/main.ts&network=https://api.moxfield.com/v2", UriKind.Relative),
+            TestContext.Current.CancellationToken);
+        var html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var list = await ListAsync(client);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("text/html", response.Content.Headers.ContentType?.MediaType);
+        Assert.Equal(
+            "default-src 'none'; script-src http://localhost:5173; style-src http://localhost:5173 'unsafe-inline'; font-src http://localhost:5173; "
+            + "img-src http://localhost:5173 https://api.moxfield.com data: blob:; connect-src http://localhost:5173 ws://localhost:5173 https://api.moxfield.com; "
+            + "worker-src blob:; base-uri 'none'; form-action 'none'",
+            string.Join(";", response.Headers.GetValues("Content-Security-Policy")));
+        Assert.Contains("<script type=\"module\" src=\"http://localhost:5173/src/main.ts\"></script>", html, StringComparison.Ordinal);
+        Assert.True(list.Plugins.DevelopmentPlugins);
+    }
+
+    [Theory]
+    [InlineData("entry=javascript:alert(1)")]
+    [InlineData("entry=/src/main.ts")]
+    [InlineData("entry=http://user:secret@localhost:5173/main.ts")]
+    [InlineData("entry=http://localhost:5173/main.ts&network=ftp://example.org")]
+    [InlineData("entry=http://localhost:5173/main.ts&network=https://a.example.org%20%27unsafe-eval%27")]
+    public async Task DevelopmentPluginFrameRefusesAnIncorrectAddress(string query)
+    {
+        await using var instance = await Instance.CreateAsync(new Dictionary<string, string> { ["Plugins:AllowDevelopmentPlugins"] = "true" });
+        using var client = instance.Factory.CreateClient();
+
+        var response = await client.GetAsync(new Uri($"/api/v1/plugins/development/frame?{query}", UriKind.Relative), TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
     private static async Task<ExtensionListResponse> ListAsync(HttpClient client) =>
         (await client.GetFromJsonAsync<ExtensionListResponse>(new Uri("/api/v1/extensions", UriKind.Relative), TestContext.Current.CancellationToken))!;
 
@@ -134,7 +329,7 @@ public sealed class ExtensionRegistryTests
 
         public WebApplicationFactory<Program> Factory { get; }
 
-        public static async Task<Instance> CreateAsync()
+        public static async Task<Instance> CreateAsync(IReadOnlyDictionary<string, string>? settings = null)
         {
             var database = await TestServers.CreateDatabaseAsync("extensions");
             var factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
@@ -146,6 +341,10 @@ public sealed class ExtensionRegistryTests
                 builder.UseSetting("Auth:RequireCheckedEmail", "false");
                 builder.UseSetting("Auth:RequestsPerMinute", "1000");
                 builder.UseSetting("Auth:AdministratorEmails:0", "admin@example.org");
+                foreach (var (key, value) in settings ?? new Dictionary<string, string>())
+                {
+                    builder.UseSetting(key, value);
+                }
             });
             await factory.Services.GetRequiredService<MigrationRunner>().MigrateAsync(TestContext.Current.CancellationToken);
             return new Instance(database, factory);

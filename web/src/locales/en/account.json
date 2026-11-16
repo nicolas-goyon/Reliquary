@@ -84,5 +84,21 @@
       "collection_write": "Change your collection",
       "profile_read": "Read your account: email address, name and language"
     }
+  },
+  "developmentPlugins": {
+    "title": "Development plugins",
+    "description": "This instance is a development instance. You can load a plugin from the URL of its plugin manifest, for example the Vite server of the plugin. The plugin runs in a sandbox, but nobody reviewed it. Load only your own plugins.",
+    "url": "URL of the plugin manifest",
+    "add": "Load the plugin",
+    "remove": "Remove",
+    "none": "You have no development plugin.",
+    "loaded": "The plugin \"{{name}}\" runs now in this browser.",
+    "errors": {
+      "invalidUrl": "The URL is not correct. Enter an absolute http or https URL.",
+      "duplicate": "The list already contains this URL.",
+      "notAvailable": "The plugin manifest did not load. Make sure that the server of the plugin runs and accepts requests from this site (CORS).",
+      "missingFields": "The plugin manifest does not have the fields \"id\", \"version\" and \"entry\". Add these fields to the plugin manifest.",
+      "invalidEntry": "The field \"entry\" of the plugin manifest is not an http or https URL. Change the field \"entry\"."
+    }
   }
 }

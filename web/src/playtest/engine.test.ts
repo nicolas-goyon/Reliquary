@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { applyAction, createTable, handStatistics, openingHandSize, type PlayerSetup, type TableState } from './engine'
+import { applyAction, createTable, handStatistics, openingHandSize, type PlayerSetup, type TableAction, type TableState } from './engine'
 
 function cards(prefix: string, count: number, isLand = false): PlayerSetup['library'] {
   return Array.from({ length: count }, (_, index) => ({ id: `${prefix}-${index}`, oracleId: prefix, name: prefix, imageUri: null, isLand, manaValue: 1 }))
 }
 
-function table(players = 1, seed = 42): TableState {
+function table(players = 1, seed = 42, commander = true): TableState {
   const setups = Array.from({ length: players }, (_, index) => ({ id: `p${index}`, name: `P${index}`, library: cards(`c${index}`, 60), command: cards(`cmd${index}`, 1) }))
-  return createTable(setups, seed, 20)
+  return createTable(setups, seed, 20, { commander })
 }
 
 function cardCount(state: TableState, playerId = 'p0'): number {
@@ -95,6 +95,47 @@ describe('table engine', () => {
     expect(state.players[1].zones.battlefield[0].tapped).toBe(false)
     expect(state.players[1].zones.hand).toHaveLength(7)
     expect(applyAction(state, { type: 'nextTurn' }).activePlayerId).toBe('p0')
+  })
+
+  it('ignores the commander damage in a game that does not use it', () => {
+    const state = table(2, 42, false)
+    expect(state.commander).toBe(false)
+    expect(applyAction(state, { type: 'commanderDamage', playerId: 'p0', fromPlayerId: 'p1', change: 3 })).toEqual(state)
+  })
+
+  it('keeps the counters of each player, with no value below zero', () => {
+    let state = applyAction(table(3), { type: 'playerCounter', playerId: 'p2', counter: 'poison', change: 3 })
+    state = applyAction(state, { type: 'playerCounter', playerId: 'p2', counter: 'energy', change: -2 })
+    expect(state.players[2].counters).toEqual({ poison: 3, energy: 0, experience: 0 })
+    expect(state.players[0].counters).toEqual({ poison: 0, energy: 0, experience: 0 })
+  })
+
+  it('gives the turn to each of 4 players in order, then to the first player again', () => {
+    let state = table(4)
+    const order: string[] = []
+    for (let turn = 0; turn < 5; turn++) {
+      state = applyAction(state, { type: 'nextTurn' })
+      order.push(state.activePlayerId)
+    }
+    expect(order).toEqual(['p1', 'p2', 'p3', 'p0', 'p1'])
+    expect(state.turn).toBe(6)
+    expect(state.players.map((player) => player.zones.hand.length)).toEqual([8, 9, 8, 8])
+  })
+
+  it('gives 4 different opening hands, and the same game again for the same seed and the same actions', () => {
+    const actions: TableAction[] = [
+      { type: 'mulligan', playerId: 'p2' },
+      { type: 'shuffle', playerId: 'p3' },
+      { type: 'nextTurn' },
+      { type: 'token', playerId: 'p1', name: 'Goblin' },
+      { type: 'commanderDamage', playerId: 'p0', fromPlayerId: 'p3', change: 5 },
+      { type: 'nextTurn' },
+    ]
+    const play = (seed: number) => actions.reduce(applyAction, table(4, seed))
+    expect(play(11)).toEqual(play(11))
+    expect(play(11)).not.toEqual(play(12))
+    const hands = table(4, 11).players.map((player) => player.zones.hand.map((card) => card.id.split('-')[1]).join())
+    expect(new Set(hands).size).toBe(4)
   })
 
   it('does not change the state for an unknown card', () => {

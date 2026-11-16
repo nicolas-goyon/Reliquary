@@ -55,6 +55,7 @@ internal sealed class PublicDeckIndexer(DeckStore store)
             DeckVersion = deck.Version,
             CreatedAt = deck.CreatedAt,
             UpdatedAt = deck.UpdatedAt,
+            Archetype = deck.Archetype,
         }, cancellationToken);
     }
 

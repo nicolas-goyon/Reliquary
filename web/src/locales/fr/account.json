@@ -84,5 +84,21 @@
       "collection_write": "Modifier votre collection",
       "profile_read": "Lire votre compte : adresse e-mail, nom et langue"
     }
+  },
+  "developmentPlugins": {
+    "title": "Plugins en développement",
+    "description": "Cette instance est une instance de développement. Vous pouvez charger un plugin depuis l’URL de son manifeste, par exemple le serveur Vite du plugin. Le plugin s’exécute dans un bac à sable, mais personne ne l’a examiné. Ne chargez que vos propres plugins.",
+    "url": "URL du manifeste du plugin",
+    "add": "Charger le plugin",
+    "remove": "Retirer",
+    "none": "Vous n’avez aucun plugin en développement.",
+    "loaded": "Le plugin « {{name}} » s’exécute maintenant dans ce navigateur.",
+    "errors": {
+      "invalidUrl": "L’URL n’est pas correcte. Saisissez une URL http ou https absolue.",
+      "duplicate": "La liste contient déjà cette URL.",
+      "notAvailable": "Le manifeste du plugin n’a pas pu être chargé. Vérifiez que le serveur du plugin fonctionne et accepte les requêtes de ce site (CORS).",
+      "missingFields": "Le manifeste du plugin n’a pas les champs « id », « version » et « entry ». Ajoutez ces champs au manifeste.",
+      "invalidEntry": "Le champ « entry » du manifeste n’est pas une URL http ou https. Modifiez le champ « entry »."
+    }
   }
 }

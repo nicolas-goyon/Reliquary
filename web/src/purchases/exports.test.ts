@@ -15,7 +15,7 @@ function card(name: string): DeckCard {
 }
 
 function line(oracleId: string, zone: PurchaseListLine['zone'], quantity: number, toBuy: number, preferences: PurchaseListLine['purchasePreferences'] = null): PurchaseListLine {
-  return { oracleId, zone, quantity, purchasePreferences: preferences, inDeck: 0, fromCollection: [], toBuy, closest: [] }
+  return { oracleId, zone, quantity, purchasePreferences: preferences, inDeck: 0, fromCollection: [], toBuy, closest: [], lowestPrice: null, aboveMaximumPrice: false }
 }
 
 /** The reference list: a card in two zones, a card with nothing to buy, a card with one wanted printing and a double-faced card. */

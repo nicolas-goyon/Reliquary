@@ -1,0 +1,102 @@
+# Applies the migrations with the CLI image of the new version, before the new API and the new worker start.
+# Helm runs the Job before each install and each upgrade. The Job does not try again: a failure stops the upgrade.
+# "helm rollback" does not revert the migrations. To go back to the old version, restore the backup.
+# See docs/decisions/0042-deployed-instances-and-updates.md and docs/decisions/0053-helm-chart-scope.md.
+{{- $migrate := .Values.migrate }}
+{{- $backup := and $migrate.backup.enabled .Release.IsUpgrade }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "reliquary.fullname" . }}-migrate
+  labels:
+    {{- include "reliquary.componentLabels" (dict "context" . "component" "migrate") | nindent 4 }}
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: "0"
+    # Helm deletes the Job of the last upgrade before it makes a new Job. Thus the logs of the last Job stay available.
+    helm.sh/hook-delete-policy: before-hook-creation
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: {{ $migrate.activeDeadlineSeconds }}
+  template:
+    metadata:
+      labels:
+        {{- include "reliquary.selectorLabels" (dict "context" . "component" "migrate") | nindent 8 }}
+      {{- with $migrate.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- if $migrate.backup.enabled }}
+        # The group of the user of the CLI image. The CLI can then write to the volume of the backups.
+        {{- toYaml (merge (dict "fsGroup" 1654) .Values.podSecurityContext) | nindent 8 }}
+        {{- else }}
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+        {{- end }}
+      {{- if $backup }}
+      # The backup runs first. When it fails, the migrations do not start.
+      initContainers:
+        - name: backup
+          image: {{ include "reliquary.image" (dict "context" . "component" "cli" "values" $migrate) | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - backup
+            - {{ printf "/backups/%s-before-revision-%d" (dateInZone "20060102T150405Z" now "UTC") .Release.Revision | quote }}
+          env:
+            {{- include "reliquary.backendEnv" . | nindent 12 }}
+          envFrom:
+            - secretRef:
+                name: {{ include "reliquary.secretName" . }}
+          resources:
+            {{- toYaml $migrate.resources | nindent 12 }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: backups
+              mountPath: /backups
+      {{- end }}
+      containers:
+        - name: migrate
+          image: {{ include "reliquary.image" (dict "context" . "component" "cli" "values" $migrate) | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args: ["migrate"]
+          env:
+            {{- include "reliquary.backendEnv" . | nindent 12 }}
+          envFrom:
+            - secretRef:
+                name: {{ include "reliquary.secretName" . }}
+          resources:
+            {{- toYaml $migrate.resources | nindent 12 }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        {{- include "reliquary.tmpVolume" . | nindent 8 }}
+        {{- if $backup }}
+        - name: backups
+          persistentVolumeClaim:
+            claimName: {{ required "Set migrate.backup.existingClaim, or set migrate.backup.enabled to false." $migrate.backup.existingClaim | quote }}
+        {{- end }}
+      {{- with $migrate.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $migrate.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $migrate.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

@@ -62,6 +62,7 @@ internal sealed class DeckPersonalData(DeckStore store, DeckService decks, DeckT
                 deck.Visibility,
                 deck.FolderId,
                 deck.Description,
+                deck.Archetype,
                 deck.SourceDeckId,
                 deck.Pinned,
                 Archived = deck.ArchivedAt is not null,

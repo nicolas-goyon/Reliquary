@@ -88,6 +88,28 @@ public sealed class PurchaseListEndpointTests(DecksInstance instance)
         Assert.Equal(HttpStatusCode.NotFound, stranger.StatusCode);
     }
 
+    [Fact]
+    public async Task PurchaseListMarksACardToBuyAboveTheMaximumPrice()
+    {
+        using var client = await instance.NewUserAsync();
+        var deck = await CreateDeckAsync(client, "Budget", new { name = "Lightning Bolt" }, new { name = "Sol Ring" });
+        var bolt = deck.Lines.Single(line => deck.Cards[line.OracleId].Name == "Lightning Bolt");
+        var solRing = deck.Lines.Single(line => deck.Cards[line.OracleId].Name == "Sol Ring");
+        await client.PatchAsJsonAsync($"/api/v1/decks/{deck.Id}/lines/{bolt.Id}", new { purchasePreferences = new { maximumPrice = new { amount = 5m, currency = "EUR" } } }, Cancel);
+        await client.PatchAsJsonAsync($"/api/v1/decks/{deck.Id}/lines/{solRing.Id}", new { purchasePreferences = new { maximumPrice = new { amount = 5m, currency = "EUR" } } }, Cancel);
+
+        var list = await client.GetFromJsonAsync<PurchaseListResponse>(new Uri($"/api/v1/decks/{deck.Id}/purchase-list", UriKind.Relative), Cancel);
+
+        // The fixtures have no Lightning Bolt for less than 15.94 EUR, and a Sol Ring for 1.94 EUR.
+        var boltLine = list!.Lines.Single(line => line.OracleId == bolt.OracleId);
+        var solRingLine = list.Lines.Single(line => line.OracleId == solRing.OracleId);
+        Assert.True(boltLine.AboveMaximumPrice);
+        Assert.Equal("EUR", boltLine.LowestPrice!.Currency);
+        Assert.True(boltLine.LowestPrice.Amount > 5m);
+        Assert.False(solRingLine.AboveMaximumPrice);
+        Assert.True(solRingLine.LowestPrice!.Amount <= 5m);
+    }
+
     private static async Task<Guid> CreateLocationAsync(HttpClient client, string name)
     {
         var response = await client.PostAsJsonAsync("/api/v1/collection/locations", new { name, kind = "rack" }, Cancel);

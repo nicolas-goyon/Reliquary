@@ -3,7 +3,7 @@
 # Nginx also sends the /api requests to the API, so the web app and the API are on the same site.
 
 # The build stage runs on the platform of the builder. The output is the same for each target platform.
-FROM --platform=$BUILDPLATFORM node:24-alpine AS build
+FROM --platform=$BUILDPLATFORM node:26-alpine AS build
 WORKDIR /web
 COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund
@@ -13,7 +13,7 @@ ARG RELIQUARY_VERSION=
 ENV RELIQUARY_VERSION=$RELIQUARY_VERSION
 RUN npm run build
 
-FROM nginxinc/nginx-unprivileged:1.28-alpine
+FROM nginxinc/nginx-unprivileged:1.30-alpine
 # The Nginx image makes /etc/nginx/conf.d/default.conf from the template at start.
 # RELIQUARY_API_URL gives the address of the API. RELIQUARY_DNS_RESOLVER gives the DNS server.
 # With no RELIQUARY_DNS_RESOLVER, the script uses the first name server of /etc/resolv.conf.
@@ -24,6 +24,7 @@ USER root
 RUN rm -f /etc/nginx/conf.d/default.conf
 USER 101
 COPY nginx.conf.template /etc/nginx/templates/default.conf.template
+COPY nginx-headers.conf /etc/nginx/reliquary-headers.conf
 COPY --chmod=755 nginx-resolver.sh /docker-entrypoint.d/15-reliquary-resolver.sh
 COPY --from=build /web/dist /usr/share/nginx/html
 EXPOSE 8080

@@ -5,6 +5,17 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- The game tokens (JSON Web Tokens). The Accounts component uses the same package for the access tokens: no new package. -->
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+    <!-- The Redis backplane of the table hub, so a message reaches the players on all the API replicas. See ADR 0047. -->
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.StackExchangeRedis" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\Reliquary.BuildingBlocks\Reliquary.BuildingBlocks.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Reliquary.Playtest.Tests" />
   </ItemGroup>
 </Project>

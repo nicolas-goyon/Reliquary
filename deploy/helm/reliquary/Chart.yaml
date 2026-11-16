@@ -1,0 +1,14 @@
+apiVersion: v2
+name: reliquary
+description: "Reliquary, an open-source deck and collection manager for Magic: The Gathering."
+type: application
+# The chart has the version of the application. See docs/decisions/0053-helm-chart-scope.md.
+version: 0.2.0
+appVersion: "0.2.0"
+kubeVersion: ">=1.27.0-0"
+home: https://nicolas-goyon.github.io/reliquary/
+sources:
+  - https://github.com/nicolas-goyon/reliquary
+keywords:
+  - magic-the-gathering
+  - deck-builder

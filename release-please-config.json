@@ -24,5 +24,6 @@
         }
       ]
     }
-  }
+  },
+  "separate-pull-requests": true
 }

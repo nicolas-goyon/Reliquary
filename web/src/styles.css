@@ -412,6 +412,72 @@ button:disabled {
   margin: 0 0 0.5rem;
 }
 
+.development-plugins {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0 0 1rem;
+  padding: 0;
+  list-style: none;
+}
+
+.development-plugins code {
+  overflow-wrap: anywhere;
+}
+
+.plugin-not-checked {
+  margin-bottom: 0.5rem;
+}
+
+.badge-warning {
+  border-color: var(--color-warning);
+  color: var(--color-warning);
+}
+
+.plugin-action {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.plugin-action button {
+  display: inline-flex;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.plugin-icon {
+  flex: none;
+}
+
+.plugin-panel-frame {
+  display: block;
+  width: 100%;
+  border: 0;
+}
+
+.plugin-cell-loading::after {
+  content: "…";
+  color: var(--color-text-muted);
+}
+
+.plugin-cell-positive {
+  color: var(--color-success);
+}
+
+.plugin-cell-warning {
+  color: var(--color-warning);
+}
+
+.plugin-cell-negative {
+  color: var(--color-danger);
+}
+
+.plugin-panel > summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
 .secret {
   display: block;
   padding: 0.5rem;
@@ -893,6 +959,35 @@ button:disabled {
 .deck-line-actions {
   display: inline-flex;
   gap: 0.25rem;
+}
+
+.deck-line-note {
+  grid-column: 1 / -1;
+  padding-left: 4.5rem;
+}
+
+.line-note {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.5rem;
+  align-items: center;
+}
+
+.line-note-text {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  font-style: italic;
+  overflow-wrap: anywhere;
+}
+
+.line-note-form input {
+  min-width: 12rem;
+  flex: 1 1 12rem;
+}
+
+.deck-table-note {
+  min-width: 10rem;
+  max-width: 20rem;
 }
 
 .deck-line-actions select {
@@ -1626,6 +1721,10 @@ kbd {
     justify-content: flex-end;
   }
 
+  .deck-line-note {
+    padding-left: 0;
+  }
+
   /* The image preview opens on hover. Small screens have no hover. */
   .deck-line-preview,
   .deck-line-name:hover .deck-line-preview,
@@ -2089,6 +2188,247 @@ button,
   margin: 0;
   padding: 0;
   list-style: none;
+  font-size: 0.875rem;
+}
+
+/* Local multiplayer and the shared screen. */
+.table-players {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+  gap: 0.5rem;
+  margin: 0 0 1rem;
+  padding: 0;
+  list-style: none;
+}
+
+.table-player {
+  display: grid;
+  gap: 0.125rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  background-color: var(--color-surface);
+}
+
+.table-player:has(.table-player-button) {
+  padding: 0;
+}
+
+.table-player-active {
+  border-color: var(--color-primary);
+}
+
+.table-player-button {
+  display: grid;
+  gap: 0.125rem;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 0;
+  background: none;
+  color: inherit;
+  text-align: start;
+}
+
+.table-player-button[aria-pressed='true'] {
+  box-shadow: inset 0 -3px 0 var(--color-primary);
+}
+
+.table-player-name {
+  font-weight: 700;
+}
+
+.table-player-facts {
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
+.table-board-title {
+  margin: 0 0 0.75rem;
+  font-size: 1.25rem;
+}
+
+.table-zone-hidden {
+  display: grid;
+  gap: 0.5rem;
+  justify-items: start;
+}
+
+.table-counters {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.table-stepper {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 2.5rem auto;
+  gap: 0.25rem;
+  align-items: center;
+  font-size: 0.875rem;
+}
+
+.table-stepper-value {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.table-choice {
+  display: flex;
+  gap: 0.5rem;
+  align-items: start;
+  font-weight: normal;
+}
+
+.table-choice input {
+  min-height: 0;
+  margin-top: 0.3rem;
+}
+
+.table-choice .field-hint {
+  display: block;
+}
+
+fieldset.field {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+fieldset.field legend {
+  margin-bottom: 0.25rem;
+  font-weight: 600;
+}
+
+.table-window-links {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* The table window of the shared screen. */
+.table-shared {
+  margin-top: 1rem;
+}
+
+.table-window-turn {
+  margin: 0 0 1rem;
+}
+
+.table-public {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 28rem), 1fr));
+  gap: 1rem;
+}
+
+.table-public-player {
+  display: grid;
+  gap: 0.75rem;
+  align-content: start;
+  padding: 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  background-color: var(--color-background);
+}
+
+.table-public-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.table-public-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.table-public-player .table-zone + .table-zone {
+  margin-top: 0;
+}
+
+.table-public-player .table-zone h3 {
+  margin: 0 0 0.5rem;
+  color: var(--color-link);
+  font-size: 0.875rem;
+}
+
+.table-public-player .table-cards {
+  min-height: 0;
+}
+
+.table-public-side {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
+  gap: 0.75rem;
+}
+
+.table-hidden-counts {
+  margin: 0;
+}
+
+.table-public-counters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.875rem;
+}
+
+.table-card-small {
+  width: 5.5rem;
+}
+
+/* Online games. */
+.online-invite-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.online-invite-row input {
+  flex: 1 1 16rem;
+  min-width: 0;
+}
+
+.online-lobby .table-player {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.online-lobby .table-player-facts {
+  grid-column: 1;
+}
+
+.online-lobby .table-player .button-small {
+  grid-row: 1 / span 2;
+  grid-column: 2;
+}
+
+.online-log {
+  margin-top: 1rem;
+}
+
+.online-exit {
+  margin-top: 1rem;
+}
+
+.online-confirm {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.online-log-list {
+  max-height: 12rem;
+  margin: 0;
+  padding-left: 1.25rem;
+  overflow-y: auto;
   font-size: 0.875rem;
 }
 

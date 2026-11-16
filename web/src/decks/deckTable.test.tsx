@@ -186,6 +186,42 @@ describe('deck table mode', () => {
     expect(within(table).getByRole('columnheader', { name: 'Price' })).toBeInTheDocument()
     expect(within(row('Card 03')).getByRole('cell', { name: 'Card 03: 2 €' })).toBeInTheDocument()
   })
+
+  it('shows the cells of a plugin column, with one request for all the rows of the deck version', async () => {
+    mockApi({
+      'POST /auth/refresh': () => session(),
+      [`GET /decks/${deckId}`]: () => Response.json(deck()),
+      [`GET /decks/${deckId}/legality`]: () => Response.json(legal),
+    })
+    const registry = new SlotRegistry()
+    registerCoreContributions(registry)
+    const asked: string[] = []
+    registry.register('table.columns', {
+      kind: 'plugin-column',
+      id: 'plugin.prices.price',
+      order: 1000,
+      plugin: { id: 'prices', name: 'Prices', development: true },
+      title: { en: 'Price', fr: 'Prix' },
+      cell: async (context) => {
+        asked.push(`${context.deckVersion} ${context.line.id}`)
+        if (context.card?.name === 'Card 04') {
+          throw new Error('Timeout')
+        }
+        return context.card?.name === 'Card 03' ? { text: '2 €', tone: 'warning', tooltip: 'Price of the cheapest printing' } : null
+      },
+    })
+    const user = userEvent.setup()
+    render(<App registry={registry} />)
+    const table = await openTable(user)
+
+    const header = await within(table).findByRole('columnheader', { name: /Price/ })
+    expect(header).toHaveTextContent('Not checked.')
+    const cell = await within(row('Card 03')).findByText('2 €')
+    expect(cell).toHaveClass('plugin-cell-warning')
+    expect(cell).toHaveAttribute('title', 'Price of the cheapest printing')
+    expect(await within(row('Card 04')).findByText('The plugin Prices did not give this cell.')).toBeInTheDocument()
+    expect(new Set(asked).size).toBe(12)
+  })
 })
 
 describe('selection of the table', () => {

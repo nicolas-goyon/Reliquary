@@ -39,3 +39,17 @@ We looked at two options:
 - The PDF needs a network connection to the Scryfall servers. Reliquary does not keep a copy of the images.
 - The service worker keeps the jsPDF files with the other files of the application shell. This adds about 240 KB (gzip) to the first visit.
 - The standard PDF fonts contain only Latin characters. A card name in another script gives wrong characters in the frame of a missing image.
+
+## Update 2026-11-09: a PDF writer in Reliquary replaces jsPDF
+
+jsPDF brought 23 of the 30 runtime npm packages of the web app, for example html2canvas, canvg, DOMPurify and core-js.
+The proxy PDF uses only lines, rounded rectangles, Helvetica text and JPEG images.
+Thus the web app now has its own PDF 1.7 writer, `web/src/proxies/pdfWriter.ts`, and does not use jsPDF.
+
+- The writer uses only the standard font Helvetica with the WinAnsi encoding. `helveticaWidths.ts` gives the glyph widths from the Adobe AFM files, for the text width and the line breaks.
+- A character that WinAnsi does not have loses its accent (ő gives o), or becomes "?".
+- The writer puts the JPEG data in the PDF with no change (DCTDecode). It reads the dimensions and the color components (gray, RGB or CMYK) from the SOF marker.
+- `loadJpeg` refuses a JPEG image that PDF cannot contain with no change, for example a 12-bit image, and converts it with a canvas.
+- The web app loads the writer with a dynamic `import()`. The separate file has 6.9 KB (2.8 KB gzip), and replaces about 780 KB (237 KB gzip) of jsPDF files.
+- The web app has 7 runtime npm packages, not 30.
+- The project maintains the writer. A new PDF feature, for example a different font or PNG images, needs new code in the writer.

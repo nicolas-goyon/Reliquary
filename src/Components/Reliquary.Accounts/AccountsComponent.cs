@@ -11,6 +11,7 @@ using Reliquary.Accounts.Auth;
 using Reliquary.Accounts.Data;
 using Reliquary.Accounts.Emails;
 using Reliquary.Accounts.PersonalData;
+using Reliquary.Accounts.Plugins;
 using Reliquary.Accounts.Profile;
 using Reliquary.Accounts.Quotas;
 using Reliquary.Accounts.ServiceAccounts;
@@ -49,6 +50,7 @@ public sealed class AccountsComponent : ICoreComponent
         services.AddSingleton<IPersonalDataProvider, AccountPersonalData>();
         services.AddSingleton<PersonalDataService>();
         services.AddSingleton<AccessTokens>();
+        services.AddSingleton<PluginTokens>();
         services.AddSingleton<AccountEmails>();
         services.AddSingleton<AccountService>();
         services.AddSingleton<IDemoDataSeeder, DemoAccounts>();
@@ -105,6 +107,7 @@ public sealed class AccountsComponent : ICoreComponent
         ProfileEndpoints.Map(api);
         PersonalDataEndpoints.Map(api);
         ServiceAccountEndpoints.Map(api);
+        PluginTokenEndpoints.Map(api);
     }
 
     /// <inheritdoc />

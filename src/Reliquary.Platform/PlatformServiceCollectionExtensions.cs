@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Reliquary.BuildingBlocks.Data;
 using Reliquary.BuildingBlocks.Email;
 using Reliquary.BuildingBlocks.Events;
+using Reliquary.BuildingBlocks.Security;
 using Reliquary.Platform.Backup;
 using Reliquary.Platform.Data;
 using Reliquary.Platform.Email;
@@ -38,6 +39,7 @@ public static class PlatformServiceCollectionExtensions
         services.Configure<OutboxOptions>(configuration.GetSection(OutboxOptions.Section));
         services.Configure<JobOptions>(configuration.GetSection(JobOptions.Section));
         services.Configure<EmailOptions>(configuration.GetSection(EmailOptions.Section));
+        services.Configure<PluginOptions>(configuration.GetSection(PluginOptions.Section));
 
         services.AddMemoryCache();
         services.TryAddSingleton(TimeProvider.System);
@@ -49,6 +51,8 @@ public static class PlatformServiceCollectionExtensions
         services.TryAddSingleton<IDomainEventWriter, OutboxWriter>();
         services.TryAddSingleton<MigrationRunner>();
         services.TryAddSingleton<ExtensionRegistry>();
+        services.TryAddSingleton<PluginFileStore>();
+        services.TryAddSingleton<IPluginAccess, PluginAccess>();
 
         if (string.IsNullOrWhiteSpace(configuration[$"{EmailOptions.Section}:Smtp:Host"]))
         {

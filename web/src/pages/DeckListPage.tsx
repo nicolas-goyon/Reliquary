@@ -32,7 +32,16 @@ export function DeckListPage() {
   const [nextCursor, setNextCursor] = useState<string | null>(null)
   const [folders, setFolders] = useState<DeckFolder[]>([])
   const [deckTags, setDeckTags] = useState<DeckTagSummary[]>([])
-  const [filters, setFilters] = useState<DeckListFilters>({ folderId: '', format: '', colors: '', tag: '', archived: 'exclude', sort: 'updated' })
+  const [filters, setFilters] = useState<DeckListFilters>({
+    folderId: '',
+    format: '',
+    colors: '',
+    tag: '',
+    archived: 'exclude',
+    assembled: '',
+    complete: '',
+    sort: 'updated',
+  })
   const [selected, setSelected] = useState<string[]>([])
   const [lastClicked, setLastClicked] = useState<number | null>(null)
   const [reload, setReload] = useState(0)
@@ -159,6 +168,7 @@ export function DeckListPage() {
                       <td>
                         {deck.pinned && <span className="deck-badge">{t('list.pinned')}</span>}
                         {deck.archived && <span className="deck-badge">{t('list.archived')}</span>}
+                        {deck.assembled && <span className="deck-badge">{t('list.assembled')}</span>}
                         <Link to={`/decks/${deck.id}`}>{deck.name}</Link>
                       </td>
                       <td>{t(`formats.${formatKey(deck.format)}`)}</td>
@@ -238,6 +248,30 @@ function DeckListFilterBar({ filters, deckTags, onChange }: { filters: DeckListF
           <option value="include">{t('filters.archivedInclude')}</option>
           <option value="only">{t('filters.archivedOnly')}</option>
         </select>
+      </div>
+      <div className="field">
+        <label htmlFor={`${id}-assembled`}>{t('filters.assembled')}</label>
+        <select id={`${id}-assembled`} value={filters.assembled} onChange={(event) => onChange({ assembled: event.target.value as DeckListFilters['assembled'] })}>
+          <option value="">{t('filters.assembledAll')}</option>
+          <option value="true">{t('filters.assembledOnly')}</option>
+          <option value="false">{t('filters.assembledNot')}</option>
+        </select>
+      </div>
+      <div className="field">
+        <label htmlFor={`${id}-complete`}>{t('filters.complete')}</label>
+        <select
+          id={`${id}-complete`}
+          value={filters.complete}
+          aria-describedby={`${id}-complete-hint`}
+          onChange={(event) => onChange({ complete: event.target.value as DeckListFilters['complete'] })}
+        >
+          <option value="">{t('filters.completeAll')}</option>
+          <option value="true">{t('filters.completeYes')}</option>
+          <option value="false">{t('filters.completeNo')}</option>
+        </select>
+        <p className="field-hint" id={`${id}-complete-hint`}>
+          {t('filters.completeHint')}
+        </p>
       </div>
       <div className="field">
         <label htmlFor={`${id}-sort`}>{t('filters.sort')}</label>

@@ -41,3 +41,18 @@ The PDF has 9 cards on each page, at the real size of 63 × 88 mm, with cut mark
 - A card with no image, or with an image that does not load, gets a frame with its name.
   After the PDF, the dialog gives the names of the cards whose image did not load.
 - The user must print the PDF at 100% scale, so that each card has the real size.
+
+## Deck image and embed
+
+The **Share as image or embed** action of the social bar shares a public deck on Discord, on forums and on other sites.
+[ADR 0046](../decisions/0046-deck-image-and-embed.md) tells how Reliquary makes the image, the link preview and the embed.
+
+- Only a public deck has this action. An unlisted deck has the **Copy the link** action only, so that other sites do not show it.
+- The image is a PNG file with the deck name, the format, the card count and the author. The user selects one of two styles:
+  - the commander art and the list, grouped by card type
+  - a grid of the card images, with the quantity on each card
+- The image contains the commander, companion, main and sideboard zones. It does not contain the considering zone and the tokens.
+- The embed is an iframe with a read-only list of the deck. The dialog gives its HTML code with a copy button.
+- The link of a public deck shows a link preview on Discord and on forums.
+  The link preview has the deck name, a short description and the image of the first commander.
+- When a public deck becomes private or unlisted, its embed and its preview stop.

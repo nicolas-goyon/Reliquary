@@ -1,7 +1,9 @@
 # Requirements for Kubernetes
 
 This page lists what the images of Reliquary need on Kubernetes.
-The Helm chart of milestone M4 ([#64](https://github.com/nicolas-goyon/reliquary/issues/64)) will use these rules.
+The Helm chart in `deploy/helm/reliquary` applies these rules.
+[ADR 0053](../decisions/0053-helm-chart-scope.md) gives the scope of the chart.
+[Production instance on Kubernetes](production-kubernetes.md) tells how to install and update an instance with the chart.
 Terms follow the [glossary](../glossary.md).
 [ADR 0042](../decisions/0042-deployed-instances-and-updates.md) gives the reasons.
 
@@ -52,12 +54,90 @@ Send all the requests of the site to the web service, or send `/api` to the API 
 | Worker | `GET /health/live` | `GET /health/ready` |
 | Web | `GET /` | `GET /` |
 
+## Ingress and online games
+
+The chart has no Ingress. Give the Service `web` your own Ingress or Gateway.
+
+- The online games use a WebSocket on the path `/api/v1/playtest/hub`. The Ingress controller must let WebSockets through on this path.
+- Set the read timeout and the send timeout of this path to 1 hour. For example, with the Ingress NGINX controller, use the annotations `nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"` and `nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"`.
+- The API replicas need no sticky sessions. The replicas share the games and the hub messages in Redis.
+
+The [production guide](production.md#websockets-for-the-online-games) gives the other requirements of the reverse proxy.
+
 ## Migrations
 
 Run `reliquary migrate` with the CLI image of the new version before the new API and the new worker start.
-For example, use a Job as a Helm `pre-install` and `pre-upgrade` hook.
 Do the backup before the migrations, with `reliquary backup` and a persistent volume.
+
+The Helm chart has a Job `migrate` for this step:
+
+- Helm runs the Job before each install and each upgrade, as a `pre-install` and `pre-upgrade` hook.
+- The Job does not try again (`backoffLimit: 0`). When it fails, the upgrade stops and the old version continues to run.
+- With `migrate.backup.enabled: true`, the Job runs `reliquary backup` before the migrations of an upgrade.
+  The backup goes to the PersistentVolumeClaim of `migrate.backup.existingClaim`, in a folder `<UTC date>-before-revision-<revision>`.
+- `helm rollback` does not revert the migrations. To go back to the old version, restore the backup.
+
+The old pods continue to run during the migrations.
+The [migration rules](versions-and-updates.md#migration-rules) make this possible: a migration only adds, and a deletion comes one release after the code change.
 
 ## Redis
 
 Redis keeps the keys that protect the cookies. Give Redis a persistent volume, or the users must sign in again after a restart of Redis.
+Redis also keeps the online games. A restart of Redis ends the games in progress.
+
+## Helm chart
+
+The chart in `deploy/helm/reliquary` contains these resources:
+
+| Resource | Content |
+| --- | --- |
+| Deployment and Service `api` | The public API, with 2 replicas by default (`api.replicas`) and a PodDisruptionBudget |
+| Deployment and Service `worker` | The worker, with 1 replica. An update stops the old pod before the new pod starts. |
+| Deployment and Service `web` | The web app, with 2 replicas by default (`web.replicas`) and a PodDisruptionBudget |
+| Job `migrate` | The migrations with the CLI image, before each install and each upgrade. See [Migrations](#migrations). |
+| Secret | The secret settings, when `secrets.existingSecret` is empty |
+| HTTPRoute or Ingress | The optional route of the site to the `web` Service. See [Route of the site](#route-of-the-site). |
+| StatefulSet and Service `redis` | An optional Redis server with a persistent volume, when `redis.enabled` is `true` |
+
+The chart has no subcharts. PostgreSQL is always external.
+
+`values.yaml` gives all the values, with a comment for each value.
+These values are necessary:
+
+- `config.publicUrl`: the public address of the site.
+- `secrets.existingSecret`: the name of a Secret with the keys `Auth__SigningKey`, `ConnectionStrings__Users` and `ConnectionStrings__Redis`.
+  The containers read all the keys of the Secret as environment variables.
+
+To check a change of the chart, run `just helm-check`.
+To test the chart on a [kind](https://kind.sigs.k8s.io/) cluster, run `just helm-smoke`.
+The test installs the images `latest`, upgrades to the images `develop`, and checks the health endpoints and `/api/v1/status` after each step.
+The workflow `helm-smoke.yml` runs the same test each night.
+
+## Route of the site
+
+The chart sends all the paths of the site to the `web` Service.
+The web app sends `/api` to the API, so the web app and the API stay on the same site.
+The chart has two options:
+
+| Option | Values | Use |
+| --- | --- | --- |
+| HTTPRoute of the Gateway API | `httpRoute.enabled`, `httpRoute.parentRefs`, `httpRoute.hostnames` | The first choice. The cluster needs a Gateway API implementation and a Gateway. |
+| Ingress | `ingress.enabled`, `ingress.className`, `ingress.hosts`, `ingress.tls` | A cluster with an Ingress controller and no Gateway API |
+
+The chart adds no annotation of one controller.
+Put the annotations of your controller in `httpRoute.annotations` or `ingress.annotations`.
+
+### WebSockets
+
+The table hub of the online games uses a WebSocket on `/api/v1/playtest/hub`.
+A WebSocket stays open for the length of a game.
+Check these items on your Gateway or your Ingress controller:
+
+- The WebSocket upgrade must pass. Most Gateway API implementations and Ingress controllers let it pass with no setting.
+- The idle timeout must be 60 seconds or more. The client sends a ping each 15 seconds.
+- A timeout on the full duration of a request must be off, or longer than a game.
+  For an HTTPRoute, set `httpRoute.timeouts.request` to `"0s"` when your Gateway supports this field.
+  For an Ingress, use the annotation of your controller.
+- The web container keeps a WebSocket open for 1 hour with no message, so a longer timeout has no effect.
+
+The hub needs no sticky sessions. The API replicas share the messages of the games through Redis.

@@ -2,7 +2,26 @@
   "fields": {
     "name": "Nom",
     "format": "Format",
-    "visibility": "Visibilité"
+    "visibility": "Visibilité",
+    "archetype": "Archétype"
+  },
+  "archetypes": {
+    "none": "Aucun archétype",
+    "aggro": "Aggro",
+    "midrange": "Midrange",
+    "control": "Contrôle",
+    "combo": "Combo",
+    "tempo": "Tempo",
+    "ramp": "Ramp",
+    "stax": "Stax",
+    "voltron": "Voltron",
+    "tokens": "Jetons",
+    "aristocrats": "Aristocrates",
+    "spellslinger": "Spellslinger",
+    "reanimator": "Réanimation",
+    "typal": "Typal",
+    "lands": "Terrains",
+    "group_hug": "Group hug"
   },
   "formats": {
     "commander": "Commander",
@@ -103,6 +122,7 @@
     "tags": "Étiquettes",
     "pinned": "Épinglé",
     "archived": "Archivé",
+    "assembled": "Deck monté",
     "colorless": "Incolore"
   },
   "editor": {
@@ -159,6 +179,14 @@
       "companion_not_allowed": "{{card}} n’a pas la capacité Compagnon.",
       "other": "Le deck a un problème."
     }
+  },
+  "note": {
+    "label": "Note pour {{name}}",
+    "add": "Ajouter une note",
+    "addLabel": "Ajouter une note pour {{name}}",
+    "edit": "Modifier la note",
+    "editLabel": "Modifier la note pour {{name}}",
+    "save": "Enregistrer la note"
   },
   "text": {
     "title": "Mode texte",
@@ -399,6 +427,7 @@
   },
   "filters": {
     "allFormats": "Tous les formats",
+    "allArchetypes": "Tous les archétypes",
     "colors": "Identité de couleur",
     "color": {
       "W": "Blanc",
@@ -413,6 +442,15 @@
     "archivedExclude": "Masquer",
     "archivedInclude": "Afficher",
     "archivedOnly": "Afficher uniquement",
+    "assembled": "Decks montés",
+    "assembledAll": "Tous les decks",
+    "assembledOnly": "Uniquement les decks montés",
+    "assembledNot": "Uniquement les decks non montés",
+    "complete": "Complétude",
+    "completeAll": "Tous les decks",
+    "completeYes": "Toutes les cartes sont disponibles",
+    "completeNo": "Il manque des cartes",
+    "completeHint": "Compare le deck avec les cartes disponibles de la collection, comme la liste d’achat.",
     "sort": "Tri",
     "sorts": {
       "updated": "Dernière modification",
@@ -457,7 +495,8 @@
       "manaValue": "Valeur de mana",
       "type": "Type",
       "labels": "Tags et catégories",
-      "printing": "Impression"
+      "printing": "Impression",
+      "note": "Note"
     },
     "selectAll": "Sélectionner toutes les lignes",
     "select": "Sélectionner {{name}}",
@@ -495,6 +534,8 @@
     "name": "Nom du deck",
     "commander": "Commandant",
     "card": "Carte du deck",
+    "updatedFrom": "Dernière modification depuis le",
+    "updatedTo": "Dernière modification jusqu’au",
     "search": "Rechercher",
     "clear": "Effacer les filtres",
     "loading": "Chargement des decks…",
@@ -558,5 +599,35 @@
     "error": "L’application ne peut pas générer le PDF. Vérifiez la connexion réseau, puis réessayez.",
     "submit": "Générer le PDF",
     "close": "Fermer"
+  },
+  "share": {
+    "open": "Partager en image ou intégrer",
+    "title": "Partager le deck",
+    "imageTitle": "Image",
+    "imageHint": "L’application crée un fichier PNG pour Discord et les forums. Le navigateur crée le fichier : le serveur ne le reçoit pas.",
+    "style": "Style de l’image",
+    "styles": {
+      "list": "Illustration du commandant et liste par type de carte",
+      "grid": "Images des cartes"
+    },
+    "download": "Télécharger l’image",
+    "working": "Création de l’image en cours…",
+    "done": "L’image est prête. Le navigateur télécharge le fichier.",
+    "failed_one": "{{count}} image de carte n’a pas pu être chargée. L’image affiche un cadre avec le nom de la carte à sa place.",
+    "failed_other": "{{count}} images de cartes n’ont pas pu être chargées. L’image affiche un cadre avec le nom de la carte à leur place.",
+    "error": "Impossible de créer l’image. Vérifiez la connexion réseau, puis réessayez.",
+    "embedTitle": "Intégration",
+    "embedHint": "Collez ce code HTML dans une page web pour afficher le deck. Le deck doit rester public : un deck privé ou non listé ne s’affiche pas.",
+    "embedCode": "Code HTML d’intégration",
+    "copyCode": "Copier le code",
+    "codeCopied": "Code copié.",
+    "close": "Fermer",
+    "byAuthor": "par {{name}}",
+    "groupTitle": "{{name}} ({{count}})"
+  },
+  "embed": {
+    "missingTitle": "Deck indisponible",
+    "missing": "Ce deck n’est pas public, ou il n’existe pas.",
+    "open": "Ouvrir le deck sur Reliquary"
   }
 }

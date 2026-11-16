@@ -1,0 +1,10 @@
+# Values with the backup before the migrations of an upgrade.
+# tools/deploy-tests/check-chart.sh uses this file.
+config:
+  publicUrl: https://reliquary.example.org
+secrets:
+  existingSecret: reliquary-secrets
+migrate:
+  backup:
+    enabled: true
+    existingClaim: reliquary-backups

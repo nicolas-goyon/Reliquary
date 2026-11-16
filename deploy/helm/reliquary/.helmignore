@@ -1,0 +1,7 @@
+# Files that "helm package" does not put in the chart.
+.DS_Store
+*.swp
+*.bak
+*.tmp
+*.orig
+ci/

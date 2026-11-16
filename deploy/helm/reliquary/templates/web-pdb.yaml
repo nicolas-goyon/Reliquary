@@ -1,0 +1,13 @@
+{{- if .Values.web.podDisruptionBudget.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "reliquary.fullname" . }}-web
+  labels:
+    {{- include "reliquary.componentLabels" (dict "context" . "component" "web") | nindent 4 }}
+spec:
+  maxUnavailable: {{ .Values.web.podDisruptionBudget.maxUnavailable }}
+  selector:
+    matchLabels:
+      {{- include "reliquary.selectorLabels" (dict "context" . "component" "web") | nindent 6 }}
+{{- end }}

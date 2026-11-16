@@ -156,4 +156,31 @@ public sealed class RecommendationServiceTests
         Assert.Equal(status, result.Status.ToString());
         Assert.Equal(count, result.Cards.Count);
     }
+
+    [Fact]
+    public void ReaderReadsARecordedResponseOfTheApi()
+    {
+        using var document = JsonDocument.Parse(RecordedResponse("recommander-recorded-atraxa.json"));
+
+        var result = RecommanderSource.Read(document.RootElement);
+
+        Assert.Equal(SourceStatus.Ok, result.Status);
+        Assert.Equal(18, result.Cards.Count);
+        Assert.All(result.Cards, card => Assert.False(string.IsNullOrEmpty(card.Name)));
+        Assert.Equal(result.Cards.OrderByDescending(card => card.Score), result.Cards);
+    }
+
+    [Fact]
+    public void ReaderReadsARecordedResponseForAnUnknownCommander()
+    {
+        using var document = JsonDocument.Parse(RecordedResponse("recommander-recorded-unknown-commander.json"));
+
+        var result = RecommanderSource.Read(document.RootElement);
+
+        Assert.Equal(SourceStatus.NotFound, result.Status);
+        Assert.Empty(result.Cards);
+    }
+
+    private static string RecordedResponse(string file) =>
+        File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Recommendations", file));
 }

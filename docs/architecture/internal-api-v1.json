@@ -1,5 +1,5 @@
 {
-  "openapi": "3.1.1",
+  "openapi": "3.1.2",
   "info": {
     "title": "Reliquary internal API",
     "description": "The internal API of Reliquary for the modules. Only service accounts can use it. The version is the version of the core API. See docs/architecture/internal-api.md.",
@@ -333,16 +333,16 @@
   },
   "tags": [
     {
-      "name": "Internal API"
+      "name": "Delegations"
     },
     {
       "name": "Domain events"
     },
     {
-      "name": "Users"
+      "name": "Internal API"
     },
     {
-      "name": "Delegations"
+      "name": "Users"
     }
   ]
 }
