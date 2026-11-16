@@ -111,6 +111,10 @@ The test checks these steps:
 4. The browser refuses a request of the plugin to a domain that the user did not accept.
 5. The test catalog revokes the version. After one sync, the plugin does not run.
 
+The test is in `tests/Reliquary.Api.Tests/Plugins/SignedPluginGateTests.cs`.
+Until the consent dialog of [#287](https://github.com/nicolas-goyon/reliquary/issues/287) is in the core, the activation of the plugin accepts all its scopes in step 1.
+Step 4 checks the CSP header of the plugin frame. A test in a browser is not part of the gate test yet.
+
 The decision records [0048](decisions/0048-plugin-sdk-license-and-packaging.md) to [0053](decisions/0053-helm-chart-scope.md) give the design of M4.
 
 ## [Later](https://github.com/nicolas-goyon/reliquary/milestone/6)
