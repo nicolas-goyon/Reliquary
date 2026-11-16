@@ -1,0 +1,23 @@
+{
+  "format": 1,
+  "serial": 3,
+  "expires": "2099-01-01T00:00:00Z",
+  "keyId": "openssl-test",
+  "plugins": [
+    {
+      "id": "hello",
+      "versions": [
+        {
+          "version": "1.0.0",
+          "files": [
+            { "path": "manifest.json", "integrity": "sha384-xX5opWc8+Hw1/j/vf0a9KyqN3oIcxXYDwcfg4mahzyisp8ffKW9AVX0uZMgwb70C", "size": 88 },
+            { "path": "dist/index.js", "integrity": "sha384-v393mDht/MNBowq0Z9UpetDvKE6u6EdCihklP1GZs66vL1YCFm1Z4Q4wJtb94rY9", "size": 21 }
+          ]
+        }
+      ]
+    }
+  ],
+  "revoked": [
+    { "id": "hello", "version": "0.9.0", "reason": "Test revocation." }
+  ]
+}
