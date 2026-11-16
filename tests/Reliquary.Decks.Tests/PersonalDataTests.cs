@@ -40,7 +40,7 @@ public sealed class PersonalDataTests(DecksInstance instance)
         await using var stream = await download.Content.ReadAsStreamAsync(Cancel);
         using var zip = new ZipArchive(stream, ZipArchiveMode.Read);
         var entries = zip.Entries.Select(entry => entry.FullName).Order(StringComparer.Ordinal).ToList();
-        var account = JsonDocument.Parse(await new StreamReader(zip.GetEntry("account/account.json")!.Open()).ReadToEndAsync(Cancel)).RootElement;
+        var account = JsonElement.Parse(await new StreamReader(zip.GetEntry("account/account.json")!.Open()).ReadToEndAsync(Cancel));
         var text = await new StreamReader(zip.GetEntry("decks/text/Atraxa.txt")!.Open()).ReadToEndAsync(Cancel);
 
         Assert.Equal(HttpStatusCode.Accepted, request.StatusCode);

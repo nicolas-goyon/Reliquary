@@ -23,12 +23,12 @@ internal static class ServiceAccountsCommand
             var creation = await service.CreateAsync(result.GetValue(name), result.GetValue(description), cancellationToken);
             foreach (var error in creation.Errors)
             {
-                await Console.Error.WriteLineAsync(error.Message);
+                await Console.Error.WriteLineAsync(error.Message, cancellationToken);
             }
 
             if (creation.NameTaken)
             {
-                await Console.Error.WriteLineAsync("A service account with this name exists. Use a different name.");
+                await Console.Error.WriteLineAsync("A service account with this name exists. Use a different name.", cancellationToken);
             }
 
             if (creation.Created is not { } created)
@@ -73,7 +73,7 @@ internal static class ServiceAccountsCommand
             var account = await service.FindAsync(result.GetValue(target)!, cancellationToken);
             if (account is null || account.RevokedAt is not null)
             {
-                await Console.Error.WriteLineAsync($"No active service account has the ID or the name \"{result.GetValue(target)}\". Run \"reliquary service-accounts list\" to see the service accounts.");
+                await Console.Error.WriteLineAsync($"No active service account has the ID or the name \"{result.GetValue(target)}\". Run \"reliquary service-accounts list\" to see the service accounts.", cancellationToken);
                 return 2;
             }
 

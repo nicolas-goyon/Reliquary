@@ -1,3 +1,4 @@
+using System.Globalization;
 using Reliquary.BuildingBlocks.Cards;
 using Reliquary.BuildingBlocks.Collection;
 using Reliquary.Decks.Purchases;
@@ -20,14 +21,15 @@ public sealed class PurchasePriceTests
         new(FoilOnly, "fr", new Dictionary<string, decimal> { ["eur_foil"] = 2.00m }),
     ];
 
+    // The expected price is a string. Since .NET 11, the conversion of the double 1.2 to decimal gives 1.1999999999999999555910790150.
     [Theory]
-    [InlineData(null, null, "EUR", 1.20)]
-    [InlineData(null, null, "USD", 1.50)]
-    [InlineData("foil", null, "EUR", 2.00)]
-    [InlineData("nonfoil", null, "EUR", 1.20)]
-    [InlineData(null, "expensive", "EUR", 25)]
-    [InlineData(null, "avoidCheap", "EUR", 2.00)]
-    public void LowestPriceUsesThePrintingsAndTheFinishThatFitTheLine(string? foil, string? printings, string currency, double expected)
+    [InlineData(null, null, "EUR", "1.20")]
+    [InlineData(null, null, "USD", "1.50")]
+    [InlineData("foil", null, "EUR", "2.00")]
+    [InlineData("nonfoil", null, "EUR", "1.20")]
+    [InlineData(null, "expensive", "EUR", "25")]
+    [InlineData(null, "avoidCheap", "EUR", "2.00")]
+    public void LowestPriceUsesThePrintingsAndTheFinishThatFitTheLine(string? foil, string? printings, string currency, string expected)
     {
         var preferences = new PurchasePreferences(
             WantedPrintingIds: printings == "expensive" ? [Expensive] : null,
@@ -37,7 +39,7 @@ public sealed class PurchasePriceTests
 
         var lowest = PurchasePlanner.LowestPrice(preferences, Printings);
 
-        Assert.Equal(new PriceLimit((decimal)expected, currency), lowest);
+        Assert.Equal(new PriceLimit(decimal.Parse(expected, CultureInfo.InvariantCulture), currency), lowest);
     }
 
     [Fact]

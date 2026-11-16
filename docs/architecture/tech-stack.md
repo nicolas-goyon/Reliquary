@@ -82,7 +82,7 @@ The **Alternative** column gives an option that the project did not choose, or a
 
 | Layer | Choice | Alternative |
 | --- | --- | --- |
-| API | C# and ASP.NET Core on .NET 10, the current LTS version ([ADR 0006](../decisions/0006-backend-and-frontend-languages.md)) | Go |
+| API | C# and ASP.NET Core on .NET 11, the latest version of .NET, since 2026-11-16 ([ADR 0006](../decisions/0006-backend-and-frontend-languages.md), [ADR 0054](../decisions/0054-dotnet-11-and-the-latest-dotnet-version.md)) | Go |
 | Real time | SignalR with a Redis backplane | Raw WebSocket |
 | Database | PostgreSQL, separate schemas, shard directory ([ADR 0008](../decisions/0008-postgresql-schemas-and-shard-directory.md)) | Citus for native sharding later |
 | Migrations | Versioned SQL scripts with DbUp or grate. The M0 task [#14](https://github.com/nicolas-goyon/reliquary/issues/14) chooses the tool. | EF Core Migrations |

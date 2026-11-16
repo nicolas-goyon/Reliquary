@@ -1,3 +1,4 @@
+using Microsoft.OpenApi;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
@@ -12,15 +13,21 @@ using Reliquary.Platform.Observability;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddApiConventions();
-builder.Services.AddOpenApi("v1", options => options.AddDocumentTransformer((document, _, _) =>
+// The OpenAPI documents stay in version 3.1. ASP.NET Core 11 writes version 3.2 by default, and some client generators cannot read it.
+builder.Services.AddOpenApi("v1", options =>
 {
-    document.Info.Title = "Reliquary public API";
-    document.Info.Version = "v1";
-    document.Info.Description = "The public API of Reliquary. The web interface, the plugins and the third-party clients use it. See docs/architecture/api-conventions.md.";
-    return Task.CompletedTask;
-}));
+    options.OpenApiVersion = OpenApiSpecVersion.OpenApi3_1;
+    options.AddDocumentTransformer((document, _, _) =>
+    {
+        document.Info.Title = "Reliquary public API";
+        document.Info.Version = "v1";
+        document.Info.Description = "The public API of Reliquary. The web interface, the plugins and the third-party clients use it. See docs/architecture/api-conventions.md.";
+        return Task.CompletedTask;
+    });
+});
 builder.Services.AddOpenApi(ApiRoutes.InternalDocument, options =>
 {
+    options.OpenApiVersion = OpenApiSpecVersion.OpenApi3_1;
     options.ShouldInclude = description => description.GroupName == ApiRoutes.InternalDocument;
     options.AddDocumentTransformer((document, _, _) =>
     {

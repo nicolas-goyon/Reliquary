@@ -1,6 +1,6 @@
 # 0006. Backend in C# and ASP.NET Core, front end and plugins in TypeScript
 
-- Status: Accepted
+- Status: Accepted. Amended by [0054](0054-dotnet-11-and-the-latest-dotnet-version.md).
 - Date: 2026-10-26
 - Deciders: @nicolas-goyon
 

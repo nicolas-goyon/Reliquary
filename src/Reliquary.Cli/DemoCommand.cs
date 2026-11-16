@@ -40,7 +40,7 @@ internal static class DemoCommand
         {
             if (!jobs.TryGetValue(name, out var job))
             {
-                await Console.Error.WriteLineAsync($"The job \"{name}\" does not exist. Correct the setting Demo:Jobs.");
+                await Console.Error.WriteLineAsync($"The job \"{name}\" does not exist. Correct the setting Demo:Jobs.", cancellationToken);
                 return 2;
             }
 

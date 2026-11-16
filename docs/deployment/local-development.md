@@ -9,7 +9,7 @@ To use Reliquary every day with your own data, use a [pre-production instance](p
 ## Requirements
 
 - Docker with the Compose plugin, Git and `just`. [Install the software](requirements.md#install-the-software) tells how to install them.
-- For hot reload only: the .NET SDK 10.0 and Node.js 24. See [Develop with hot reload](#develop-with-hot-reload).
+- For hot reload only: the .NET SDK 11.0 and Node.js 24. See [Develop with hot reload](#develop-with-hot-reload).
 
 ## Install
 
@@ -65,14 +65,14 @@ The demo accounts are:
 
 ## Develop with hot reload
 
-Install the .NET SDK 10.0 and Node.js 24 first:
+Install the .NET SDK 11.0 and Node.js 24 first:
 
 /// tab | Linux
 
 1. Install the .NET SDK with the script of Microsoft, then add it to the variable `PATH`:
 
    ```shell
-   curl -sSL https://dot.net/v1/dotnet-install.sh | bash -s -- --channel 10.0
+   curl -sSL https://dot.net/v1/dotnet-install.sh | bash -s -- --channel 11.0
    echo 'export PATH="$HOME/.dotnet:$PATH"' >> ~/.bashrc
    ```
 
@@ -90,7 +90,7 @@ Install the tools in WSL, not in Windows. The commands of `just` run in the Ubun
 1. In the Ubuntu terminal, install the .NET SDK with the script of Microsoft, then add it to the variable `PATH`:
 
    ```shell
-   curl -sSL https://dot.net/v1/dotnet-install.sh | bash -s -- --channel 10.0
+   curl -sSL https://dot.net/v1/dotnet-install.sh | bash -s -- --channel 11.0
    echo 'export PATH="$HOME/.dotnet:$PATH"' >> ~/.bashrc
    ```
 

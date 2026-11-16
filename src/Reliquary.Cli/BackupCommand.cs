@@ -24,7 +24,7 @@ internal static class BackupCommand
             }
             catch (InvalidOperationException exception)
             {
-                await Console.Error.WriteLineAsync(exception.Message);
+                await Console.Error.WriteLineAsync(exception.Message, cancellationToken);
                 return 1;
             }
         });
@@ -47,7 +47,7 @@ internal static class BackupCommand
             }
             catch (InvalidOperationException exception)
             {
-                await Console.Error.WriteLineAsync(exception.Message);
+                await Console.Error.WriteLineAsync(exception.Message, cancellationToken);
                 return 1;
             }
         });

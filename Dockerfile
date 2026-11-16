@@ -4,7 +4,7 @@
 # The web app has its own Dockerfile in web/.
 
 # The build stage runs on the platform of the builder. The output is portable .NET code, so each target platform uses it.
-FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:11.0 AS build
 WORKDIR /source
 
 # Restore first, so a change of the code does not restore the packages again.
@@ -34,7 +34,7 @@ RUN set -e; \
     dotnet publish src/Reliquary.Worker --no-restore --configuration Release --output /app/worker $properties; \
     dotnet publish src/Reliquary.Cli --no-restore --configuration Release --output /app/cli $properties
 
-FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:11.0 AS runtime
 WORKDIR /app
 ENV ASPNETCORE_HTTP_PORTS=8080 \
     DOTNET_NOLOGO=1 \
