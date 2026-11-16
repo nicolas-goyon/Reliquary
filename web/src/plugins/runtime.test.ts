@@ -6,7 +6,7 @@ function list(developmentPlugins: boolean): ExtensionList {
   return {
     coreApi: '1.1.0',
     plugins: { maxActive: 8, frameOrigin: null, developmentPlugins },
-    items: [{ id: 'installed', kind: 'plugin', name: 'Installed', version: '1.0.0', coreApi: '^1.0', permissions: [], slots: [], enabled: true, compatible: true, active: true }],
+    items: [{ id: 'installed', kind: 'plugin', name: 'Installed', version: '1.0.0', coreApi: '^1.0', permissions: [], slots: [], enabled: true, compatible: true, active: true, panels: [], i18n: null }],
   }
 }
 

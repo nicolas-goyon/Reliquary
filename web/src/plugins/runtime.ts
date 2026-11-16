@@ -1,7 +1,9 @@
 import { activePlugins, type ExtensionList } from '../api/extensions'
 import type { SlotRegistry } from '../slots/registry'
-import { registerContributionMethods, type ContributingPlugin } from './contributions'
+import { registerContributionMethods } from './contributions'
 import { developmentFrameUrl, loadDevelopmentManifest } from './development'
+import { frameUrl } from './frame'
+import { registerPluginUi, type PanelPlugin } from './pluginUi'
 import { PluginHost, PluginLimitError, type PluginHostOptions, type StartOptions } from './host'
 import type { PluginVersion } from './frame'
 
@@ -31,12 +33,13 @@ export function startPluginRuntime(list: ExtensionList, options: RuntimeOptions 
   document.body.append(container)
 
   // The data of each plugin for its contributions, and the functions that remove its contributions.
-  const plugins = new Map<string, ContributingPlugin>()
+  const plugins = new Map<string, PanelPlugin>()
+  const language = options.language ?? (() => document.documentElement.lang || 'en')
   const cleanups = new Map<string, () => void>()
 
   const host = new PluginHost({
-    language: () => document.documentElement.lang || 'en',
     ...options,
+    language,
     container,
     settings: list.plugins,
     coreApi: list.coreApi,
@@ -44,7 +47,21 @@ export function startPluginRuntime(list: ExtensionList, options: RuntimeOptions 
       options.registerMethods?.(peer, plugin)
       const data = plugins.get(plugin.id)
       if (options.registry && data) {
-        cleanups.set(plugin.id, registerContributionMethods(peer, data, options.registry))
+        const removeContributions = registerContributionMethods(peer, data, options.registry)
+        const removeUi = registerPluginUi(peer, data, options.registry, {
+          coreApi: list.coreApi,
+          language,
+          hostWindow: options.hostWindow,
+          connectTimeoutMs: options.connectTimeoutMs,
+          intervalMs: options.intervalMs,
+          maxMissed: options.maxMissed,
+          timeoutMs: options.timeoutMs,
+          maxMessageBytes: options.maxMessageBytes,
+        })
+        cleanups.set(plugin.id, () => {
+          removeContributions()
+          removeUi()
+        })
       }
     },
     onEvent: (event) => {
@@ -72,7 +89,16 @@ export function startPluginRuntime(list: ExtensionList, options: RuntimeOptions 
   }
 
   for (const plugin of activePlugins(list)) {
-    plugins.set(plugin.id, { id: plugin.id, name: plugin.name, slots: plugin.slots, development: false })
+    plugins.set(plugin.id, {
+      id: plugin.id,
+      name: plugin.name,
+      version: plugin.version,
+      slots: plugin.slots,
+      development: false,
+      src: frameUrl(plugin, list.plugins.frameOrigin),
+      panels: plugin.panels ?? [],
+      i18n: plugin.i18n ?? null,
+    })
     start({ id: plugin.id, version: plugin.version })
   }
 
@@ -84,8 +110,9 @@ export function startPluginRuntime(list: ExtensionList, options: RuntimeOptions 
             console.warn(`The development plugin "${plugin.id}" has the ID of a running plugin. The core did not start it.`)
             return
           }
-          plugins.set(plugin.id, { id: plugin.id, name: plugin.name, slots: plugin.slots, development: true })
-          start({ id: plugin.id, version: plugin.version }, { src: developmentFrameUrl(plugin, list.plugins.frameOrigin), development: true })
+          const src = developmentFrameUrl(plugin, list.plugins.frameOrigin)
+          plugins.set(plugin.id, { ...plugin, development: true, src })
+          start({ id: plugin.id, version: plugin.version }, { src, development: true })
         })
         .catch((error: unknown) => console.warn(`The development plugin at ${url} did not start.`, error))
     }

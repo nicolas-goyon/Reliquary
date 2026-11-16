@@ -44,7 +44,9 @@ import { SlotRegistry, SlotRegistryContext } from './slots/registry'
 import { Slot } from './slots/Slot'
 import { registerCoreContributions } from './slots/coreContributions'
 import { webVersion } from './version'
+import { PluginDialogs } from './plugins/PluginDialogs'
 import { PluginRuntime } from './plugins/PluginRuntime'
+import { PluginPage } from './pages/PluginPage'
 
 const repositoryUrl = 'https://github.com/nicolas-goyon/reliquary'
 
@@ -64,6 +66,7 @@ const patternRoutes: { pattern: RegExp; render(match: RegExpMatchArray): ReactNo
   { pattern: /^\/decks\/([0-9a-f-]{36})\/transition-plan$/, render: (match) => <TransitionPlanPage key={match[1]} id={match[1]} /> },
 
   { pattern: /^\/decks\/([0-9a-f-]{36})\/purchase-list$/, render: (match) => <PurchaseListPage key={match[1]} id={match[1]} /> },
+  { pattern: /^\/plugins\/([a-z0-9][a-z0-9-]{1,63})\/([a-z][a-z0-9-]{0,31})$/, render: (match) => <PluginPage key={match[0]} pluginId={match[1]} page={match[2]} /> },
   { pattern: /^\/authors\/([0-9a-f-]{36})$/, render: (match) => <AuthorPage key={match[1]} id={match[1]} /> },
   { pattern: /^\/collection\/locations\/([0-9a-f-]{36})$/, render: (match) => <LocationPage key={match[1]} id={match[1]} /> },
   { pattern: /^\/collection\/locations\/([0-9a-f-]{36})\/inventory$/, render: (match) => <InventoryPage key={match[1]} id={match[1]} /> },
@@ -186,6 +189,7 @@ function Shell() {
       </footer>
       {helpOpen && <ShortcutHelp onClose={() => setHelpOpen(false)} />}
       <PluginRuntime />
+      <PluginDialogs />
     </div>
   )
 }

@@ -16,6 +16,19 @@ export interface Extension {
   compatible: boolean
   /** True when the extension runs for the user. */
   active: boolean
+  /** The panels of the plugin manifest. */
+  panels: ExtensionPanel[]
+  /** The translations of the plugin manifest, by language, or null. */
+  i18n: Record<string, Record<string, string>> | null
+}
+
+/** A panel of a plugin manifest. The web app shows each open panel in its own sandboxed iframe. */
+export interface ExtensionPanel {
+  id: string
+  /** "analysis.tabs", "card.page", "plugin.page" or "plugin.dialog". */
+  slot: string
+  /** The title in English. The translations are in `i18n` with the key `panels.<id>.title`. */
+  title: string
 }
 
 /** The settings of the plugin runtime of the instance. */

@@ -59,6 +59,14 @@ export interface HostMethods {
   'ui.contribute': { params: { slot: SlotName; contribution: ContributionData }; result: null }
   'ui.withdraw': { params: { slot: SlotName; id: string }; result: null }
   'ui.notify': { params: { message: string; tone: 'info' | 'success' | 'error' }; result: null }
+  /** Only in a panel frame: the height of the content, in CSS pixels. The core applies the maximum height of the slot. */
+  'ui.resize': { params: { height: number }; result: null }
+  /** Opens a panel of the slot "plugin.dialog" in a dialog of the core. The panel gets the data in its context. */
+  'ui.openDialog': { params: { panel: string; data?: unknown }; result: null }
+  /** Closes the dialog of the plugin. */
+  'ui.closeDialog': { params: null; result: null }
+  /** Opens a panel of the slot "plugin.page" at the address /plugins/<plugin ID>/<panel ID>. */
+  'ui.openPage': { params: { page: string }; result: null }
 }
 
 /** The methods that the plugin answers. The core calls them. */
@@ -70,6 +78,8 @@ export interface PluginMethods {
   'plugin.deactivate': { params: null; result: null }
   /** The user selected a button or a menu item of the plugin. */
   'ui.action': { params: { slot: SlotName; id: string; context: SlotContexts[SlotName] }; result: null }
+  /** Only in a panel frame: the context of the slot changed, for example after a change of the deck. */
+  'panel.update': { params: { context: unknown }; result: null }
   /** The core asks the value of a cell of a column of the table mode. */
   'ui.cell': { params: { id: string; context: SlotContexts['table.columns'] }; result: { text: string | null } }
 }

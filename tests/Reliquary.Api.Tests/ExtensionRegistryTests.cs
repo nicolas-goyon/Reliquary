@@ -156,6 +156,33 @@ public sealed class ExtensionRegistryTests
         Assert.Equal("stats", body!.Manifest.GetProperty("panels")[0].GetProperty("id").GetString());
         Assert.Equal("camera", body.Manifest.GetProperty("devices")[0].GetString());
         Assert.Equal("Scan de cartes", body.Manifest.GetProperty("i18n").GetProperty("fr").GetProperty("name").GetString());
+        Assert.Equal([new ExtensionPanelResponse("stats", "analysis.tabs", "Scan statistics")], body.Extension.Panels);
+    }
+
+    [Fact]
+    public async Task ExtensionListGivesThePanelsAndTheTranslationsOfAPlugin()
+    {
+        await using var instance = await Instance.CreateAsync();
+        using var admin = await instance.SignInAsync("admin@example.org");
+        var manifest = new
+        {
+            id = "card-scan",
+            kind = "plugin",
+            name = "Card scan",
+            version = "1.0.0",
+            coreApi = "^1.0",
+            entry = "dist/index.js",
+            slots = new[] { "card.page" },
+            panels = new[] { new { id = "prices", slot = "card.page", title = "Prices" } },
+            i18n = new Dictionary<string, Dictionary<string, string>> { ["fr"] = new() { ["panels.prices.title"] = "Prix" } },
+        };
+        (await admin.PutAsJsonAsync("/api/v1/admin/extensions/card-scan", manifest, TestContext.Current.CancellationToken)).EnsureSuccessStatusCode();
+        (await admin.PatchAsJsonAsync("/api/v1/admin/extensions/card-scan", new { enabled = true }, TestContext.Current.CancellationToken)).EnsureSuccessStatusCode();
+
+        var item = Assert.Single((await ListAsync(admin)).Items);
+
+        Assert.Equal([new ExtensionPanelResponse("prices", "card.page", "Prices")], item.Panels);
+        Assert.Equal("Prix", item.I18n!.Value.GetProperty("fr").GetProperty("panels.prices.title").GetString());
     }
 
     [Fact]

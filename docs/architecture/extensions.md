@@ -85,6 +85,26 @@ Plugins have two purposes:
     The plugin does not get the objects of the page.
   - A contribution of a development plugin shows the badge "Not checked".
   - When the core removes the plugin frame, it also removes the items of the plugin.
+- Plugin panels use the slots `analysis.tabs`, `card.page`, `plugin.page` and `plugin.dialog`:
+  - The field `panels` of the plugin manifest declares each panel, with its slot and its title.
+    The field `i18n` gives the translated titles with the key `panels.<id>.title`.
+    `GET /api/v1/extensions` gives the panels and the translations to the web app.
+  - The registry keeps each panel as a contribution of the kind `plugin-panel`, with no render function.
+    `SlotItem` renders it with the component `PluginPanel` of the core.
+  - The core creates the frame of a panel only when the user opens the panel, and removes it when the panel closes.
+    An analysis tab opens when the user selects it, and a part of the card page opens when the user expands it.
+  - A panel frame uses the same frame address as the plugin.
+    The connect message has the field `panel` with the ID, the slot and the context.
+    Thus the SDK calls the code of the panel and not `activate`.
+  - The panel gets the IDs of the context only: `{ deckId }`, `{ oracleId }`, `{ page }` or `{ data }`.
+    When the IDs change, the core calls `panel.update`.
+  - The SDK gives the height of the content with `ui.resize`.
+    The core applies a minimum of 48 pixels and the maximum of the slot: 800 for `analysis.tabs`, 600 for `card.page` and `plugin.dialog`, 2000 for `plugin.page`.
+  - `ui.openPage` opens the page `/plugins/<plugin ID>/<panel ID>`.
+    `ui.openDialog` opens a panel of the slot `plugin.dialog` in a dialog of the core, and `ui.closeDialog` closes it.
+  - The watchdog also applies to each panel frame.
+    A panel that does not answer shows an error, and the core removes its frame.
+  - A panel of a development plugin shows the banner "Not checked".
 - Panels (analysis tabs, the card page, plugin pages and dialogs) render in their own sandboxed iframe.
 - The plugin frame contains no credential of the user.
   The core calls the public API for the plugin with a plugin token, which has only the scopes that the user accepted.
