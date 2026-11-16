@@ -111,6 +111,10 @@ Rules for the error codes:
 | `provider_not_enabled` | 404 | The OAuth provider is not enabled on the instance. |
 | `core_version_not_supported` | 409 | The extension does not support the current version of the core API. |
 | `version_revoked` | 409 | The plugin catalog revoked this plugin version. Install a different version. |
+| `vault_not_configured` | 503 | The instance has no vault key, so it cannot keep the secret of a linked account. |
+| `vault_key_missing` | 409 | The instance does not have the vault key of the secret. The user must link the account again. |
+| `vault_secret_unreadable` | 409 | The vault cannot decrypt the secret. The user must link the account again. |
+| `linked_account_method_not_supported` | 409 | The core does not support the authentication method of the site yet. |
 | `scope_missing` | 403 | The delegation token does not have the scope of the endpoint, or the endpoint does not accept delegation tokens. |
 | `delegation_limit` | 409 | The account has the maximum number of active delegations. |
 | `service_account_name_taken` | 409 | A service account with the same name exists. |

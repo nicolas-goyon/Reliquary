@@ -87,6 +87,12 @@ public static class AuthPolicies
 
     /// <summary>A service account, with its secret. The internal API uses this policy.</summary>
     public const string ServiceAccount = "service_account";
+
+    /// <summary>
+    /// A user with a plugin token only. Use it with <see cref="PluginTokenEndpointExtensions.RequirePluginToken{TBuilder}"/>,
+    /// because the scope filter refuses a plugin token on an endpoint without a scope.
+    /// </summary>
+    public const string Plugin = "plugin";
 }
 
 /// <summary>

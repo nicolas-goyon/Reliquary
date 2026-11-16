@@ -138,8 +138,16 @@ internal sealed class ScopeFilter : IEndpointFilter
             return await next(context);
         }
 
-        var token = http.User.FindFirst(ReliquaryClaims.AuthMethod)?.Value == AuthMethods.Plugin ? "plugin token" : "delegation token";
-        var required = http.GetEndpoint()?.Metadata.GetMetadata<RequiredScopeMetadata>();
+        var isPlugin = http.User.FindFirst(ReliquaryClaims.AuthMethod)?.Value == AuthMethods.Plugin;
+        var metadata = http.GetEndpoint()?.Metadata;
+        if (isPlugin && metadata?.GetMetadata<PluginTokenEndpointMetadata>() is not null)
+        {
+            // The endpoint accepts only a plugin token, with no scope. Its policy and its own checks protect it.
+            return await next(context);
+        }
+
+        var token = isPlugin ? "plugin token" : "delegation token";
+        var required = metadata?.GetMetadata<RequiredScopeMetadata>();
         if (required is null)
         {
             return ApiProblems.Problem(

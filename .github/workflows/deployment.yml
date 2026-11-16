@@ -157,7 +157,7 @@ jobs:
           $bytes = [System.IO.File]::ReadAllBytes("$folder\.env")
           if ($bytes[0] -eq 0xEF) { Write-Error 'The .env file starts with a byte order mark.'; exit 1 }
           $text = [System.IO.File]::ReadAllText("$folder\.env")
-          foreach ($pattern in '(?m)^RELIQUARY_VERSION=develop$', '(?m)^RELIQUARY_SIGNING_KEY=\S{44}$', '(?m)^RELIQUARY_POSTGRES_PASSWORD=[0-9a-f]{48}$') {
+          foreach ($pattern in '(?m)^RELIQUARY_VERSION=develop$', '(?m)^RELIQUARY_SIGNING_KEY=\S{44}$', '(?m)^RELIQUARY_VAULT_KEY_1=\S{44}$', '(?m)^RELIQUARY_POSTGRES_PASSWORD=[0-9a-f]{48}$') {
             if ($text -notmatch $pattern) { Write-Error "The .env file does not match $pattern."; exit 1 }
           }
           powershell -NoProfile -ExecutionPolicy Bypass -File "$folder\reliquary-update.ps1" --init develop

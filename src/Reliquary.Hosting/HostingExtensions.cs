@@ -6,6 +6,7 @@ using Reliquary.BuildingBlocks.Events;
 using Reliquary.Platform;
 using Reliquary.Platform.Extensions;
 using Reliquary.Platform.InternalApi;
+using Reliquary.Platform.LinkedAccounts;
 
 namespace Reliquary.Hosting;
 
@@ -90,6 +91,7 @@ public static class HostingExtensions
         }
 
         api.MapExtensionEndpoints();
+        api.MapLinkedAccountEndpoints();
 
         return api;
     }

@@ -7,3 +7,5 @@ secrets:
   connectionStrings:
     users: Host=postgres;Database=reliquary;Username=reliquary;Password=test
     redis: redis:6379
+  vaultKeys:
+    "2026-11": dGhpcy1pcy1hLXRlc3QtdmF1bHQta2V5LWNoYXJ0LTE=

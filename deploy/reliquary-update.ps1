@@ -781,10 +781,12 @@ function Invoke-Init([string] $Version) {
         }
     }
     $signingKey = [Convert]::ToBase64String((Get-RandomBytes 32))
+    $vaultKey = [Convert]::ToBase64String((Get-RandomBytes 32))
     $password = ((Get-RandomBytes 24) | ForEach-Object { $_.ToString('x2') }) -join ''
     $text = [System.IO.File]::ReadAllText($template)
     $text = [regex]::Replace($text, '(?m)^RELIQUARY_VERSION=.*$', "RELIQUARY_VERSION=$Version")
     $text = [regex]::Replace($text, '(?m)^RELIQUARY_SIGNING_KEY=.*$', "RELIQUARY_SIGNING_KEY=$signingKey")
+    $text = [regex]::Replace($text, '(?m)^RELIQUARY_VAULT_KEY_1=.*$', "RELIQUARY_VAULT_KEY_1=$vaultKey")
     $text = [regex]::Replace($text, '(?m)^RELIQUARY_POSTGRES_PASSWORD=.*$', "RELIQUARY_POSTGRES_PASSWORD=$password")
     Write-TextFile $script:EnvFile $text
     if (-not $script:OnWindows) {

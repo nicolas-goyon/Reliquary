@@ -35,6 +35,7 @@ The API, the worker and the CLI read their settings from environment variables.
 - `ConnectionStrings__Users` and the other connection strings
 - `Auth__SigningKey`
 - `Email__Smtp__Password` and the client secrets of the external sign-in
+- `Plugins__VaultKeys__<key ID>`: the keys of the vault of the linked accounts
 
 The web container needs these variables:
 
