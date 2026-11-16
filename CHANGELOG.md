@@ -5,6 +5,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## Unreleased
 
+## [0.3.0] - 2026-11-16
+
 ### Added
 
 - The local multiplayer mode: one person tests a deck against 2 or 3 other decks on one computer (ADR 0045).
