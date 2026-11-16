@@ -1,6 +1,6 @@
 import { Component, lazy, Suspense, type ErrorInfo, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { isPluginContribution, useSlotContributions, type AnySlotContribution, type SlotContexts, type SlotName } from './registry'
+import { isPluginContribution, isPluginPanel, useSlotContributions, type AnySlotContribution, type SlotContexts, type SlotName } from './registry'
 
 interface SlotProps<Name extends SlotName> {
   name: Name
@@ -33,6 +33,7 @@ interface SlotItemProps<Name extends SlotName> {
 
 // The component of plugin items loads only when a plugin adds an item, so the main bundle does not contain it.
 const PluginAction = lazy(() => import('../plugins/PluginAction').then((module) => ({ default: module.PluginAction })))
+const PluginPanel = lazy(() => import('../plugins/PluginPanel').then((module) => ({ default: module.PluginPanel })))
 
 /**
  * Renders one contribution of a slot inside its own error boundary.
@@ -45,6 +46,10 @@ export function SlotItem<Name extends SlotName>({ slot, contribution, context }:
       {isPluginContribution(contribution) ? (
         <Suspense fallback={null}>
           <PluginAction contribution={contribution} context={context} appearance={slot === 'deck.actions' ? 'button' : 'link'} />
+        </Suspense>
+      ) : isPluginPanel(contribution) ? (
+        <Suspense fallback={null}>
+          <PluginPanel contribution={contribution} context={context} collapsible={slot === 'card.page'} />
         </Suspense>
       ) : (
         <Contribution render={() => contribution.render(context)} />

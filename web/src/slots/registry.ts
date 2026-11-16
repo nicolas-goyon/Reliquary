@@ -30,6 +30,10 @@ export interface SlotContexts {
   'card.page': { oracleId: string }
   /** The account page. */
   'account.page': { account: Account }
+  /** A page of a plugin at /plugins/<plugin ID>/<page>. Only plugin panels use this slot. */
+  'plugin.page': { pluginId: string; page: string }
+  /** The open dialogs of the plugins. Only plugin panels use this slot. */
+  'plugin.dialog': Record<string, never>
 }
 
 export type SlotName = keyof SlotContexts
@@ -42,6 +46,8 @@ export const slotNames = [
   'table.columns',
   'card.page',
   'account.page',
+  'plugin.page',
+  'plugin.dialog',
 ] as const satisfies readonly SlotName[]
 
 /** One interface element in a slot. */
@@ -86,15 +92,56 @@ export interface PluginActionContribution {
   run(context: unknown): Promise<void>
 }
 
+/** The slots where a plugin shows a panel: a sandboxed iframe that the core creates when the user opens the panel. */
+export const pluginPanelSlots = ['analysis.tabs', 'card.page', 'plugin.page', 'plugin.dialog'] as const
+export type PluginPanelSlot = (typeof pluginPanelSlots)[number]
+
+/** The state of a panel frame. */
+export type PanelState = 'loading' | 'ready' | 'failed'
+
+/** An open panel. The component of the core calls `update` when the context changes, and `close` when the panel closes. */
+export interface PanelHandle {
+  update(context: unknown): void
+  close(): void
+}
+
+/**
+ * A panel of a plugin. The plugin manifest declares it. The core creates its frame only when the user opens the panel.
+ * The contribution has no render function: the component `PluginPanel` of the core calls `mount`.
+ */
+export interface PluginPanelContribution {
+  kind: 'plugin-panel'
+  /** A unique ID in the slot: "plugin.<plugin ID>.<panel ID>". */
+  id: string
+  order?: number
+  plugin: { id: string; name: string; development: boolean }
+  /** The ID of the panel in the plugin manifest. */
+  panelId: string
+  title: PluginText
+  /** The maximum height of the frame, in CSS pixels. */
+  maxHeight: number
+  /** Only in the slot "plugin.dialog": closes the dialog. */
+  close?(): void
+  /** Creates the frame of the panel in the element. */
+  mount(element: HTMLElement, context: unknown, onState: (state: PanelState) => void): PanelHandle
+}
+
 /** The plugin contributions that each slot accepts. */
-type PluginContributionOf<Name extends SlotName> = Name extends PluginActionSlot ? PluginActionContribution : never
+type PluginContributionOf<Name extends SlotName> =
+  | (Name extends PluginActionSlot ? PluginActionContribution : never)
+  | (Name extends PluginPanelSlot ? PluginPanelContribution : never)
 
 /** A contribution of the core, or a contribution of a plugin in a slot that accepts plugin data. */
 export type AnySlotContribution<Name extends SlotName> = SlotContribution<Name> | PluginContributionOf<Name>
 
-/** Tells whether a contribution is data from a plugin. */
-export function isPluginContribution<Name extends SlotName>(contribution: AnySlotContribution<Name>): contribution is PluginContributionOf<Name> {
+/** Tells whether a contribution is a button or a menu item of a plugin. */
+export function isPluginContribution<Name extends SlotName>(contribution: AnySlotContribution<Name>): contribution is Extract<PluginContributionOf<Name>, PluginActionContribution> {
   return 'kind' in contribution && contribution.kind === 'plugin'
+}
+
+/** Tells whether a contribution is a panel of a plugin. */
+export function isPluginPanel<Name extends SlotName>(contribution: AnySlotContribution<Name>): contribution is Extract<PluginContributionOf<Name>, PluginPanelContribution> {
+  return 'kind' in contribution && contribution.kind === 'plugin-panel'
 }
 
 type AnyContribution = AnySlotContribution<SlotName>

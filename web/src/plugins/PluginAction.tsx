@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import type { PluginActionContribution } from '../slots/registry'
 import { PluginIconImage } from './icons'
 import { NotCheckedBanner } from './NotCheckedBanner'
-import { pluginText } from './text'
+import { pluginText } from '../slots/pluginText'
 
 interface PluginActionProps {
   contribution: PluginActionContribution

@@ -182,7 +182,32 @@ public sealed class OnlineGameGateTests(PlaytestInstance instance)
                 }
             }
 
-            await Task.WhenAll(clients.Select(item => Task.Run(() => PlayAsync(item.Client, item.Seat, item.Tab))));
+            var conflicts = new System.Collections.Concurrent.ConcurrentQueue<int>();
+            using var listener = new MeterListener();
+            listener.InstrumentPublished = (instrument, meterListener) =>
+            {
+                if (instrument.Meter.Name == Telemetry.Name && instrument.Name == PlaytestMetrics.ConflictsName)
+                {
+                    meterListener.EnableMeasurementEvents(instrument);
+                }
+            };
+            listener.SetMeasurementEventCallback<int>((_, value, _, _) => conflicts.Enqueue(value));
+            listener.Start();
+            try
+            {
+                await Task.WhenAll(clients.Select(item => Task.Run(() => PlayAsync(item.Client, item.Seat, item.Tab))));
+            }
+            finally
+            {
+                // The number of conflicts before each write: it tells how near the test is to the limit of the retries.
+                var sorted = conflicts.Order().ToList();
+                if (sorted.Count > 0)
+                {
+                    TestContext.Current.TestOutputHelper?.WriteLine(string.Create(
+                        CultureInfo.InvariantCulture,
+                        $"Retry: {sorted.Count} writes, conflicts p50 {sorted[sorted.Count / 2]}, p99 {sorted[sorted.Count * 99 / 100]}, max {sorted[^1]}."));
+                }
+            }
             var view = (await clients[0].Client.InvokeAsync("Resync", "view"))["result"]!["view"]!;
 
             // Each action applied one time: each player lost one life point for each action.
