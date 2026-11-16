@@ -3,6 +3,7 @@ import type { SlotRegistry } from '../slots/registry'
 import { registerContributionMethods } from './contributions'
 import { developmentFrameUrl, loadDevelopmentManifest } from './development'
 import { frameUrl } from './frame'
+import { registerPluginFormats } from './formats'
 import { registerPluginUi, type PanelPlugin } from './pluginUi'
 import { PluginHost, PluginLimitError, type PluginHostOptions, type StartOptions } from './host'
 import type { PluginVersion } from './frame'
@@ -58,9 +59,11 @@ export function startPluginRuntime(list: ExtensionList, options: RuntimeOptions 
           timeoutMs: options.timeoutMs,
           maxMessageBytes: options.maxMessageBytes,
         })
+        const removeFormats = registerPluginFormats(peer, data, options.registry)
         cleanups.set(plugin.id, () => {
           removeContributions()
           removeUi()
+          removeFormats()
         })
       }
     },
@@ -98,6 +101,7 @@ export function startPluginRuntime(list: ExtensionList, options: RuntimeOptions 
       src: frameUrl(plugin, list.plugins.frameOrigin),
       panels: plugin.panels ?? [],
       i18n: plugin.i18n ?? null,
+      formats: plugin.formats ?? [],
     })
     start({ id: plugin.id, version: plugin.version })
   }

@@ -1,8 +1,8 @@
-import type { ApiFetchParams, ApiFetchResult, HostMethods, LinkedAccount, PluginMethods, RelayFetchParams, RelayFetchResult } from './methods.ts'
+import type { ApiFetchParams, ApiFetchResult, ExportedFile, HostMethods, LinkedAccount, PluginMethods, RelayFetchParams, RelayFetchResult } from './methods.ts'
 import { connectMessageType, coreApiVersion, errorCodes, readyMessageType, type ConnectMessage } from './protocol.ts'
 import { RpcError, RpcPeer, type PeerOptions } from './rpc.ts'
 import type { PanelSlot } from './manifest.ts'
-import type { ContributionData, SlotContexts, SlotContributions, SlotName } from './slots.ts'
+import type { CellValue, ContributionData, SlotContexts, SlotContributions, SlotName } from './slots.ts'
 
 /** The functions that the SDK gives to a plugin. */
 export interface PluginSdk {
@@ -70,6 +70,20 @@ export interface PanelDefinition {
   update?(context: SlotContexts[PanelSlot]): void | Promise<void>
 }
 
+/**
+ * The code of an import format or an export format. The plugin manifest declares the format in the field `formats`.
+ * The SDK calls the function of the direction of the format.
+ */
+export interface FormatDefinition {
+  /**
+   * Converts an imported file. Return a deck list in the text format of Reliquary for a deck format,
+   * or a CSV file of Reliquary for a collection format. The core then imports it with its own endpoints.
+   */
+  import?(content: string, fileName: string | null): string | Promise<string>
+  /** Converts the CSV file of Reliquary of a deck or of a collection into the file of the format. */
+  export?(content: string): ExportedFile | Promise<ExportedFile>
+}
+
 /** The definition of a plugin. */
 export interface PluginDefinition {
   /** Runs one time, when the core connects the plugin frame. */
@@ -78,6 +92,8 @@ export interface PluginDefinition {
   deactivate?(): void | Promise<void>
   /** The panels of the plugin, by the ID of the plugin manifest. */
   panels?: Record<string, PanelDefinition>
+  /** The import formats and the export formats of the plugin, by the ID of the plugin manifest. */
+  formats?: Record<string, FormatDefinition>
 }
 
 /** The window of the plugin frame, as the SDK uses it. Tests give a different environment. */
@@ -140,6 +156,7 @@ export function definePlugin(definition: PluginDefinition, options: DefinePlugin
       const message = event.data
       const peer = new RpcPeer<PluginMethods, HostMethods>(event.ports[0], options)
       const sdk = createSdk(peer, message)
+      handleFormats(peer, definition.formats ?? {})
       Promise.resolve()
         .then(() => (message.panel ? mountPanel(definition, message.panel, sdk, peer, environment) : definition.activate(sdk)))
         .then(() => resolve(sdk), reject)
@@ -153,6 +170,28 @@ export function definePlugin(definition: PluginDefinition, options: DefinePlugin
   })
   ready.catch(() => undefined)
   return { ready }
+}
+
+/** Answers the conversions of the formats of the plugin. */
+function handleFormats(peer: RpcPeer<PluginMethods, HostMethods>, formats: Record<string, FormatDefinition>): void {
+  peer.handle('format.import', async ({ id, content, fileName }) => {
+    const convert = formats[id]?.import
+    if (!convert) {
+      throw new RpcError(errorCodes.invalidParams, `The plugin has no import code for the format "${id}".`)
+    }
+    const result = await convert(content, fileName)
+    if (typeof result !== 'string') {
+      throw new RpcError(errorCodes.internalError, `The import code of the format "${id}" must return a text.`)
+    }
+    return { content: result }
+  })
+  peer.handle('format.export', async ({ id, content }) => {
+    const convert = formats[id]?.export
+    if (!convert) {
+      throw new RpcError(errorCodes.invalidParams, `The plugin has no export code for the format "${id}".`)
+    }
+    return await convert(content)
+  })
 }
 
 /** Renders a panel in the body of the frame, and gives its height to the core when it changes. */
@@ -198,7 +237,7 @@ function isConnectMessage(data: unknown): data is ConnectMessage {
 
 function createSdk(peer: RpcPeer<PluginMethods, HostMethods>, message: ConnectMessage): PluginSdk {
   const actions = new Map<string, (context: SlotContexts[SlotName]) => void | Promise<void>>()
-  const cells = new Map<string, (context: SlotContexts['table.columns']) => string | null | Promise<string | null>>()
+  const columns = new Map<string, (rows: SlotContexts['table.columns'][]) => (CellValue | null)[] | Promise<(CellValue | null)[]>>()
   const key = (slot: SlotName, id: string): string => `${slot}\u0000${id}`
 
   peer.handle('plugin.ping', () => null)
@@ -210,12 +249,16 @@ function createSdk(peer: RpcPeer<PluginMethods, HostMethods>, message: ConnectMe
     await action(context)
     return null
   })
-  peer.handle('ui.cell', async ({ id, context }) => {
-    const cell = cells.get(id)
-    if (!cell) {
+  peer.handle('ui.cells', async ({ id, rows }) => {
+    const column = columns.get(id)
+    if (!column) {
       throw new RpcError(errorCodes.invalidParams, `The plugin has no column "${id}".`)
     }
-    return { text: await cell(context) }
+    const cells = await column(rows)
+    if (!Array.isArray(cells) || cells.length !== rows.length) {
+      throw new RpcError(errorCodes.internalError, `The column "${id}" must give one cell for each row: ${rows.length} cells.`)
+    }
+    return { cells }
   })
 
   return {
@@ -256,14 +299,14 @@ function createSdk(peer: RpcPeer<PluginMethods, HostMethods>, message: ConnectMe
         if ('onAction' in contribution && contribution.onAction) {
           actions.set(key(slot, contribution.id), contribution.onAction as (context: SlotContexts[SlotName]) => void | Promise<void>)
         }
-        if ('cell' in contribution) {
-          cells.set(contribution.id, contribution.cell)
+        if ('cells' in contribution) {
+          columns.set(contribution.id, contribution.cells)
         }
         await peer.call('ui.contribute', { slot, contribution: data })
         return async () => {
           actions.delete(key(slot, contribution.id))
           if (slot === 'table.columns') {
-            cells.delete(contribution.id)
+            columns.delete(contribution.id)
           }
           await peer.call('ui.withdraw', { slot, id: contribution.id })
         }

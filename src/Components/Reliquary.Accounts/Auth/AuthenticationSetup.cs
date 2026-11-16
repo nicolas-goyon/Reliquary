@@ -10,6 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Reliquary.Accounts.Data;
+using Reliquary.Accounts.Plugins;
 using Reliquary.Accounts.Security;
 using Reliquary.Accounts.ServiceAccounts;
 using Reliquary.BuildingBlocks.Api;
@@ -22,7 +23,7 @@ namespace Reliquary.Accounts.Auth;
 /// </summary>
 internal static class AuthSchemes
 {
-    /// <summary>The default scheme. It sends each credential to its scheme by the start of the value: <c>rlq_</c>, <c>rls_</c>, <c>rld_</c>, else an access token.</summary>
+    /// <summary>The default scheme. It sends each credential to its scheme by the start of the value: <c>rlq_</c>, <c>rls_</c>, <c>rld_</c>, <c>rlp_</c>, else an access token.</summary>
     public const string Default = "Reliquary";
 
     /// <summary>The access tokens of the web sessions.</summary>
@@ -36,6 +37,9 @@ internal static class AuthSchemes
 
     /// <summary>The delegation tokens.</summary>
     public const string Delegation = "Reliquary.Delegation";
+
+    /// <summary>The plugin tokens.</summary>
+    public const string Plugin = "Reliquary.Plugin";
 
     /// <summary>The short cookie that keeps the result of an OAuth provider until the API creates the web session.</summary>
     public const string External = "Reliquary.External";
@@ -75,12 +79,14 @@ internal static class AuthenticationSetup
                 return PrefixedSecretFormat.ApiKey.Matches(authorization) ? AuthSchemes.ApiKey
                     : PrefixedSecretFormat.ServiceAccount.Matches(authorization) ? AuthSchemes.ServiceAccount
                     : PrefixedSecretFormat.Delegation.Matches(authorization) ? AuthSchemes.Delegation
+                    : authorization.StartsWith(PluginTokenAuthenticationHandler.HeaderStart, StringComparison.Ordinal) ? AuthSchemes.Plugin
                     : AuthSchemes.Bearer;
             })
             .AddJwtBearer(AuthSchemes.Bearer, options => options.MapInboundClaims = false)
             .AddScheme<AuthenticationSchemeOptions, ApiKeyAuthenticationHandler>(AuthSchemes.ApiKey, null)
             .AddScheme<AuthenticationSchemeOptions, ServiceAccountAuthenticationHandler>(AuthSchemes.ServiceAccount, null)
             .AddScheme<AuthenticationSchemeOptions, DelegationAuthenticationHandler>(AuthSchemes.Delegation, null)
+            .AddScheme<AuthenticationSchemeOptions, PluginTokenAuthenticationHandler>(AuthSchemes.Plugin, null)
             .AddCookie(AuthSchemes.External, options =>
             {
                 options.Cookie.Name = "reliquary_external";
@@ -105,8 +111,25 @@ internal static class AuthenticationSetup
                     NameClaimType = ReliquaryClaims.DisplayName,
                     RoleClaimType = ReliquaryClaims.Role,
                     IssuerSigningKeyResolver = (_, _, _, _) => [AccessTokens.ValidationParameters(auth.Value).IssuerSigningKey],
+
+                    // Only the access tokens of the web sessions have this type. A plugin token has the type rlp+jwt.
+                    ValidTypes = [AccessTokens.TokenType],
                 };
                 options.TokenValidationParameters = parameters;
+
+                // A token with the key of the instance and an other method, for example a plugin token, is never an access token.
+                options.Events = new JwtBearerEvents
+                {
+                    OnTokenValidated = context =>
+                    {
+                        if (context.Principal?.FindFirst(ReliquaryClaims.AuthMethod)?.Value != AuthMethods.Session)
+                        {
+                            context.Fail("The token is not the access token of a web session.");
+                        }
+
+                        return Task.CompletedTask;
+                    },
+                };
             });
 
         var enabled = new List<string>();

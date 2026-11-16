@@ -24,6 +24,7 @@ namespace Reliquary.Platform.Extensions;
 /// <param name="Active">Whether the extension runs for the user: a module when the instance enables it, a plugin when the user also activates it.</param>
 /// <param name="Panels">The panels of the plugin manifest. The web app shows each panel in its own sandboxed iframe.</param>
 /// <param name="I18n">The translations of the plugin manifest, or null.</param>
+/// <param name="Formats">The import formats and the export formats of the plugin manifest.</param>
 public sealed record ExtensionResponse(
     string Id,
     string Kind,
@@ -36,13 +37,22 @@ public sealed record ExtensionResponse(
     bool Compatible,
     bool Active,
     IReadOnlyList<ExtensionPanelResponse> Panels,
-    JsonElement? I18n);
+    JsonElement? I18n,
+    IReadOnlyList<ExtensionFormatResponse> Formats);
 
 /// <summary>A panel of a plugin manifest.</summary>
 /// <param name="Id">The ID of the panel in the plugin.</param>
 /// <param name="Slot">The slot of the panel, for example <c>analysis.tabs</c>.</param>
 /// <param name="Title">The title in English.</param>
 public sealed record ExtensionPanelResponse(string Id, string Slot, string Title);
+
+/// <summary>An import format or an export format of a plugin manifest.</summary>
+/// <param name="Id">The ID of the format in the plugin.</param>
+/// <param name="Direction"><c>import</c> or <c>export</c>.</param>
+/// <param name="Target"><c>deck</c> or <c>collection</c>.</param>
+/// <param name="Title">The name in English.</param>
+/// <param name="Extensions">The file name extensions, for example <c>.dek</c>.</param>
+public sealed record ExtensionFormatResponse(string Id, string Direction, string Target, string Title, IReadOnlyList<string> Extensions);
 
 /// <summary>The extensions of the instance and the version of the core API.</summary>
 /// <param name="CoreApi">The current version of the core API.</param>
@@ -102,6 +112,7 @@ public static class ExtensionEndpoints
             .RequireAuthorization(AuthPolicies.Session);
 
         api.MapDevelopmentPluginEndpoints();
+        api.MapPluginFileEndpoints();
 
         var admin = api.MapGroup("/admin/extensions").WithTags("Administration").RequireAuthorization(AuthPolicies.Administrator);
 
@@ -274,7 +285,8 @@ public static class ExtensionEndpoints
             return false;
         }
 
-        var isPlugin = body.TryGetProperty("kind", out var kind) && kind.ValueKind == JsonValueKind.String && kind.GetString() == "plugin";
+        // A manifest of the plugin catalog has no kind, so a manifest without a kind is a plugin manifest.
+        var isPlugin = !body.TryGetProperty("kind", out var kind) || (kind.ValueKind == JsonValueKind.String && kind.GetString() == "plugin");
         if (isPlugin)
         {
             errors = PluginManifestCheck.Check(body);
@@ -287,6 +299,10 @@ public static class ExtensionEndpoints
         try
         {
             manifest = body.Deserialize<ExtensionManifest>(JsonSerializerOptions.Web)!;
+            if (isPlugin)
+            {
+                manifest = manifest with { Kind = "plugin" };
+            }
         }
         catch (JsonException)
         {
@@ -307,12 +323,12 @@ public static class ExtensionEndpoints
     private static ExtensionResponse ToResponse(ExtensionRow row, IReadOnlyDictionary<string, bool>? activations)
     {
         var active = row.Enabled && row.Compatible && (row.Kind == "module" || (activations?.GetValueOrDefault(row.Id) ?? false));
-        var (panels, i18n) = ReadPanels(row.Manifest);
-        return new ExtensionResponse(row.Id, row.Kind, row.Name, row.Version, row.CoreApi, row.Permissions, row.Slots, row.Enabled, row.Compatible, active, panels, i18n);
+        var (panels, i18n, formats) = ReadInterface(row.Manifest);
+        return new ExtensionResponse(row.Id, row.Kind, row.Name, row.Version, row.CoreApi, row.Permissions, row.Slots, row.Enabled, row.Compatible, active, panels, i18n, formats);
     }
 
-    /// <summary>Reads the panels and the translations of a manifest. The API checked the manifest at install time.</summary>
-    private static (IReadOnlyList<ExtensionPanelResponse> Panels, JsonElement? I18n) ReadPanels(string manifest)
+    /// <summary>Reads the panels, the translations and the formats of a manifest. The API checked the manifest at install time.</summary>
+    private static (IReadOnlyList<ExtensionPanelResponse> Panels, JsonElement? I18n, IReadOnlyList<ExtensionFormatResponse> Formats) ReadInterface(string manifest)
     {
         using var document = JsonDocument.Parse(manifest);
         var root = document.RootElement;
@@ -332,7 +348,39 @@ public static class ExtensionEndpoints
         }
 
         JsonElement? i18n = root.TryGetProperty("i18n", out var translations) && translations.ValueKind == JsonValueKind.Object ? translations.Clone() : null;
-        return (panels, i18n);
+
+        var formats = new List<ExtensionFormatResponse>();
+        if (root.TryGetProperty("formats", out var formatList) && formatList.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var format in formatList.EnumerateArray())
+            {
+                if (format.ValueKind == JsonValueKind.Object
+                    && TryGetString(format, "id", out var id)
+                    && TryGetString(format, "direction", out var direction)
+                    && TryGetString(format, "target", out var target)
+                    && TryGetString(format, "title", out var title))
+                {
+                    var extensions = format.TryGetProperty("extensions", out var extensionList) && extensionList.ValueKind == JsonValueKind.Array
+                        ? extensionList.EnumerateArray().Where(item => item.ValueKind == JsonValueKind.String).Select(item => item.GetString()!).ToList()
+                        : [];
+                    formats.Add(new ExtensionFormatResponse(id, direction, target, title, extensions));
+                }
+            }
+        }
+
+        return (panels, i18n, formats);
+    }
+
+    private static bool TryGetString(JsonElement element, string name, out string value)
+    {
+        value = string.Empty;
+        if (!element.TryGetProperty(name, out var property) || property.ValueKind != JsonValueKind.String)
+        {
+            return false;
+        }
+
+        value = property.GetString()!;
+        return true;
     }
 
     private static AdminExtensionResponse ToAdminResponse(ExtensionRow row) => new(

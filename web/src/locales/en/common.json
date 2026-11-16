@@ -114,7 +114,8 @@
     "game_full": "The game has no free place. Ask the host to remove a player or to make a new game.",
     "game_started": "The game started. A new player cannot join it.",
     "game_open_limit": "You have 3 open games. Close a game, then create a new game.",
-    "game_not_enough_players": "The game needs 2 players or more. Send the invite link to another player."
+    "game_not_enough_players": "The game needs 2 players or more. Send the invite link to another player.",
+    "plugin_format_failed": "The plugin did not convert the file. Check the file, or select a different format."
   },
   "fieldErrors": {
     "required": "This field is necessary.",
@@ -132,6 +133,10 @@
     "panelFailed": "The panel of the plugin {{name}} did not answer. Close the panel and open it again.",
     "pageUnavailable": "This plugin page is not available. Make sure that the plugin is active for your account.",
     "pageTitle": "Plugin page",
-    "closeDialog": "Close"
+    "closeDialog": "Close",
+    "cellLoading": "The plugin loads the cell.",
+    "cellFailed": "The plugin {{name}} did not give this cell.",
+    "formatGroup": "Plugin formats",
+    "notCheckedFormat": "{{title}} (not checked)"
   }
 }

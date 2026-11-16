@@ -44,6 +44,7 @@ export const translatedErrorCodes = [
   'game_started',
   'game_open_limit',
   'game_not_enough_players',
+  'plugin_format_failed',
 ] as const
 
 export type TranslatedErrorCode = (typeof translatedErrorCodes)[number]

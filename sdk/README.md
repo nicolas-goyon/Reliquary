@@ -45,6 +45,44 @@ definePlugin({
 })
 ```
 
+### Columns
+
+A column of the table mode gives the cells of many rows in one call:
+
+```ts
+await sdk.ui.contribute('table.columns', {
+  id: 'price',
+  title: { en: 'Price', fr: 'Prix' },
+  async cells(rows) {
+    return rows.map((row) => (row.quantity > 1 ? { text: `${row.quantity} copies`, tone: 'warning' } : null))
+  },
+})
+```
+
+The core keeps the cells until the deck changes.
+
+### Formats
+
+Declare an import format or an export format in the field `formats` of the plugin manifest, then give its code to `definePlugin`:
+
+```ts
+definePlugin({
+  activate() {},
+  formats: {
+    scan: {
+      // Return a deck list in the text format of Reliquary, for example "1 Sol Ring".
+      import: (content) => content.split('\n').filter(Boolean).map((name) => `1 ${name}`).join('\n'),
+    },
+    sheet: {
+      // Get the CSV file of Reliquary, and return the file of the format.
+      export: (content) => ({ fileName: 'collection.tsv', contentType: 'text/tab-separated-values', content: content.replaceAll(',', '\t') }),
+    },
+  },
+})
+```
+
+The core imports the result with the session of the user, so an import format needs no write permission.
+
 ### Panels
 
 A panel is an analysis tab, a part of the card page, a plugin page or a plugin dialog.

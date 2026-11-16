@@ -2,6 +2,8 @@ import { useId, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { fileFormats, type ExportedFile, type FileFormat } from '../api/exchange'
 import { useAuth } from '../auth/session'
+import { convertWithPlugin, findPluginFormat, requirePluginFormat, usePluginFormats } from '../slots/pluginFormats'
+import { PluginFormatOptions } from '../slots/PluginFormatOptions'
 import { ErrorAlert } from './Forms'
 
 /** The dialog of the export of a deck: the file format, then a download of the file. */
@@ -9,14 +11,20 @@ export function DeckExportDialog({ deckId, onClose }: { deckId: string; onClose(
   const { t } = useTranslation('decks')
   const { request } = useAuth()
   const id = useId()
-  const [format, setFormat] = useState<FileFormat>('moxfield')
+  // A format of the core, or the value of a plugin format ("plugin:<ID>").
+  const [format, setFormat] = useState<string>('moxfield')
+  const pluginFormats = usePluginFormats('deck.export-formats')
+  const selectedPluginFormat = findPluginFormat(pluginFormats, format)
   const [error, setError] = useState<unknown>(null)
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
     setError(null)
     try {
-      const file = await request<ExportedFile>(`/decks/${deckId}/export?format=${format}`)
+      // A plugin format converts the CSV file of Reliquary into its own file.
+      const pluginFormat = requirePluginFormat(pluginFormats, format)
+      const exported = await request<ExportedFile>(`/decks/${deckId}/export?format=${pluginFormat ? 'csv' : format}`)
+      const file = pluginFormat ? await convertWithPlugin(pluginFormat, exported.content, null) : exported
       const url = URL.createObjectURL(new Blob([file.content], { type: file.contentType }))
       const link = document.createElement('a')
       link.href = url
@@ -35,14 +43,15 @@ export function DeckExportDialog({ deckId, onClose }: { deckId: string; onClose(
         <h2 id={`${id}-title`}>{t('export.title')}</h2>
         <div className="field">
           <label htmlFor={`${id}-format`}>{t('import.fileFormat')}</label>
-          <select id={`${id}-format`} value={format} onChange={(event) => setFormat(event.target.value as FileFormat)}>
+          <select id={`${id}-format`} value={format} onChange={(event) => setFormat(event.target.value)}>
             {fileFormats.map((known) => (
               <option key={known} value={known}>
                 {t(`fileFormats.${known}`)}
               </option>
             ))}
+            <PluginFormatOptions formats={pluginFormats} />
           </select>
-          <p className="field-hint">{t(`export.hint.${format}`)}</p>
+          {!selectedPluginFormat && !format.startsWith('plugin:') && <p className="field-hint">{t(`export.hint.${format as FileFormat}`)}</p>}
         </div>
         <ErrorAlert error={error} />
         <div className="form-actions">

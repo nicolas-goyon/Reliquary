@@ -53,6 +53,9 @@ public sealed class AuthOptions
     /// <summary>Gets or sets the lifetime of a delegation token. A token never stays valid after the end of its delegation.</summary>
     public TimeSpan DelegationTokenLifetime { get; set; } = TimeSpan.FromHours(1);
 
+    /// <summary>Gets or sets the lifetime of a plugin token. The default is 10 minutes. See docs/decisions/0049-plugin-sandbox.md.</summary>
+    public TimeSpan PluginTokenLifetime { get; set; } = TimeSpan.FromMinutes(10);
+
     /// <summary>
     /// Gets or sets the OAuth providers, by name: <c>Google</c>, <c>GitHub</c> or <c>Discord</c>.
     /// A provider is enabled when it has a client ID and a client secret.
