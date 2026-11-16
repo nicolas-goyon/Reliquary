@@ -9,7 +9,7 @@ import type { Account } from '../api/types'
  */
 export type TableColumnContext =
   | { deckId: string; part: 'header' }
-  | { deckId: string; part: 'cell'; line: DeckLine; card: DeckCard | null }
+  | { deckId: string; part: 'cell'; line: DeckLine; card: DeckCard | null; deckVersion: number }
 
 /**
  * The named places of the interface where the core, and later the extensions, add interface elements.
@@ -126,10 +126,37 @@ export interface PluginPanelContribution {
   mount(element: HTMLElement, context: unknown, onState: (state: PanelState) => void): PanelHandle
 }
 
+/** The tones of a cell of a plugin column. */
+export const pluginCellTones = ['neutral', 'positive', 'warning', 'negative'] as const
+export type PluginCellTone = (typeof pluginCellTones)[number]
+
+/** The value of a cell of a plugin column. The core renders the text: a cell has no iframe. */
+export interface PluginCell {
+  text: string
+  tone?: PluginCellTone
+  tooltip?: string
+}
+
+/**
+ * A column of a plugin in the table mode. The plugin sends data: the header and, for each row, a cell.
+ * `cell` collects the rows of one deck version and asks the plugin for all of them in one call.
+ */
+export interface PluginColumnContribution {
+  kind: 'plugin-column'
+  /** A unique ID in the slot: "plugin.<plugin ID>.<column ID>". */
+  id: string
+  order?: number
+  plugin: { id: string; name: string; development: boolean }
+  title: PluginText
+  /** Gets the cell of a row. The promise rejects when the plugin fails or does not answer. */
+  cell(context: Extract<TableColumnContext, { part: 'cell' }>): Promise<PluginCell | null>
+}
+
 /** The plugin contributions that each slot accepts. */
 type PluginContributionOf<Name extends SlotName> =
   | (Name extends PluginActionSlot ? PluginActionContribution : never)
   | (Name extends PluginPanelSlot ? PluginPanelContribution : never)
+  | (Name extends 'table.columns' ? PluginColumnContribution : never)
 
 /** A contribution of the core, or a contribution of a plugin in a slot that accepts plugin data. */
 export type AnySlotContribution<Name extends SlotName> = SlotContribution<Name> | PluginContributionOf<Name>
@@ -137,6 +164,11 @@ export type AnySlotContribution<Name extends SlotName> = SlotContribution<Name> 
 /** Tells whether a contribution is a button or a menu item of a plugin. */
 export function isPluginContribution<Name extends SlotName>(contribution: AnySlotContribution<Name>): contribution is Extract<PluginContributionOf<Name>, PluginActionContribution> {
   return 'kind' in contribution && contribution.kind === 'plugin'
+}
+
+/** Tells whether a contribution is a column of a plugin. */
+export function isPluginColumn<Name extends SlotName>(contribution: AnySlotContribution<Name>): contribution is Extract<PluginContributionOf<Name>, PluginColumnContribution> {
+  return 'kind' in contribution && contribution.kind === 'plugin-column'
 }
 
 /** Tells whether a contribution is a panel of a plugin. */

@@ -105,6 +105,18 @@ Plugins have two purposes:
   - The watchdog also applies to each panel frame.
     A panel that does not answer shows an error, and the core removes its frame.
   - A panel of a development plugin shows the banner "Not checked".
+- Plugin columns use the slot `table.columns`:
+  - The plugin calls `ui.contribute` with an ID and a title. A plugin can add 2 columns at most.
+  - The registry keeps the column as a contribution of the kind `plugin-column`, with no render function.
+    `SlotItem` renders the header and the cells with the component `PluginColumn` of the core. A cell has no iframe.
+  - The core collects the cells that the table asks in one render.
+    Then it calls `ui.cells` one time with all the rows, in parts of 200 rows.
+    Each row has the deck ID, the line ID, the oracle ID, the quantity and the zone.
+  - The plugin gives one cell for each row: a text of 100 characters at most, an optional tone and an optional tooltip, or null.
+    The tones are `neutral`, `positive`, `warning` and `negative`.
+  - The core keeps the cells of the last version of each deck. A change of the deck increases its version, so the core asks the cells again.
+  - A cell that the plugin does not give shows a dash, with the reason for screen readers.
+  - The header of a column of a development plugin shows the badge "Not checked".
 - Panels (analysis tabs, the card page, plugin pages and dialogs) render in their own sandboxed iframe.
 - The plugin frame contains no credential of the user.
   The core calls the public API for the plugin with a plugin token, which has only the scopes that the user accepted.

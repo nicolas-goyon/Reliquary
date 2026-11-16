@@ -45,6 +45,22 @@ definePlugin({
 })
 ```
 
+### Columns
+
+A column of the table mode gives the cells of many rows in one call:
+
+```ts
+await sdk.ui.contribute('table.columns', {
+  id: 'price',
+  title: { en: 'Price', fr: 'Prix' },
+  async cells(rows) {
+    return rows.map((row) => (row.quantity > 1 ? { text: `${row.quantity} copies`, tone: 'warning' } : null))
+  },
+})
+```
+
+The core keeps the cells until the deck changes.
+
 ### Panels
 
 A panel is an analysis tab, a part of the card page, a plugin page or a plugin dialog.

@@ -132,6 +132,8 @@
     "panelFailed": "Le panneau du plugin {{name}} ne répond pas. Fermez le panneau et rouvrez-le.",
     "pageUnavailable": "Cette page de plugin n’est pas disponible. Vérifiez que le plugin est actif pour votre compte.",
     "pageTitle": "Page de plugin",
-    "closeDialog": "Fermer"
+    "closeDialog": "Fermer",
+    "cellLoading": "Le plugin charge la cellule.",
+    "cellFailed": "Le plugin {{name}} n’a pas donné cette cellule."
   }
 }
