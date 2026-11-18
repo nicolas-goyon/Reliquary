@@ -5,6 +5,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## Unreleased
 
+### Added
+
+- Each release publishes the Helm chart as an OCI chart: `oci://ghcr.io/nicolas-goyon/charts/reliquary`. The chart has the version of the release.
+
 ## [0.3.0] - 2026-11-16
 
 ### Added

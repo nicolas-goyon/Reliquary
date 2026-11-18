@@ -4,9 +4,12 @@
   "description": "The scheduled end-to-end test of the online games. Only the workflow e2e.yml uses it. See docs/development/end-to-end-test.md.",
   "type": "module",
   "scripts": {
-    "test": "playwright test"
+    "test": "playwright test",
+    "typecheck": "tsc -p tsconfig.json"
   },
   "devDependencies": {
-    "@playwright/test": "1.65.0"
+    "@playwright/test": "1.65.0",
+    "@types/node": "^26.6.6",
+    "typescript": "~7.0.2"
   }
 }

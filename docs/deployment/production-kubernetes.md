@@ -224,28 +224,22 @@ The chart deletes no backup. Delete the old backups yourself, and copy the backu
 
 ## Install
 
-1. Get the chart of the release:
+1. Install the chart of the release. From the release 0.4.0, each release publishes the chart as an OCI chart, with the release number as its version:
 
    ```shell
-   git clone --depth 1 --branch vX.Y.Z https://github.com/nicolas-goyon/reliquary.git reliquary-X.Y.Z
-   ```
-
-2. Install the chart:
-
-   ```shell
-   helm install reliquary reliquary-X.Y.Z/deploy/helm/reliquary --namespace reliquary --values values-production.yaml --wait --timeout 15m
+   helm install reliquary oci://ghcr.io/nicolas-goyon/charts/reliquary --version X.Y.Z --namespace reliquary --values values-production.yaml --wait --timeout 15m
    ```
 
    Helm runs the migration Job first. Then it starts the API, the worker and the web app.
 
-3. Check the version:
+2. Check the version:
 
    ```shell
    kubectl --namespace reliquary port-forward service/reliquary-web 8080:8080
    curl http://localhost:8080/api/v1/status
    ```
 
-4. Open `https://reliquary.example.org`, make the account of the administrator email address, and open the link of the email.
+3. Open `https://reliquary.example.org`, make the account of the administrator email address, and open the link of the email.
 
 The worker imports the card data from Scryfall at its first start. The import takes some minutes.
 
@@ -253,20 +247,14 @@ The worker imports the card data from Scryfall at its first start. The import ta
 
 1. Read the release notes on the [releases page](https://github.com/nicolas-goyon/reliquary/releases).
 2. Check that the volume of the backups has space for one more backup.
-3. Get the chart of the new release:
+3. Change `image.tag` in `values-production.yaml` to the new release number.
+4. At a time with few users, upgrade to the chart of the new release:
 
    ```shell
-   git clone --depth 1 --branch vX.Y.Z https://github.com/nicolas-goyon/reliquary.git reliquary-X.Y.Z
+   helm upgrade reliquary oci://ghcr.io/nicolas-goyon/charts/reliquary --version X.Y.Z --namespace reliquary --values values-production.yaml --wait --timeout 15m
    ```
 
-4. Change `image.tag` in `values-production.yaml` to the new release number.
-5. At a time with few users, upgrade:
-
-   ```shell
-   helm upgrade reliquary reliquary-X.Y.Z/deploy/helm/reliquary --namespace reliquary --values values-production.yaml --wait --timeout 15m
-   ```
-
-6. Check the version with `/api/v1/status`, or in the footer of the web app.
+5. Check the version with `/api/v1/status`, or in the footer of the web app.
 
 The upgrade does these steps:
 

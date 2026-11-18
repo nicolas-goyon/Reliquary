@@ -101,6 +101,7 @@ The test uses these environment variables:
 
 ## Dependencies
 
-The folder `e2e` has its own `package.json` and lock file, with only `@playwright/test`.
+The folder `e2e` has its own `package.json` and lock file, with `@playwright/test` and the TypeScript compiler.
+The CI checks the types of the test code with `npm run typecheck`. It does not run the test.
 The dependencies of the web app do not change.
 Dependabot updates the folder `e2e` each week.

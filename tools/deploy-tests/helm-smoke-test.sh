@@ -98,9 +98,10 @@ deploy() {
 }
 
 # Sends a GET request from a pod in the cluster, and prints the body. The request fails on an HTTP error.
+# After an upgrade, the Service can send a request to a pod that stops. Thus curl tries the request again.
 get() {
     kube run "smoke-curl-$(openssl rand -hex 4)" --image="$curl_image" --restart=Never --rm --quiet --stdin \
-        --command -- curl --fail --silent --show-error --max-time 10 "$1"
+        --command -- curl --fail --silent --show-error --max-time 10 --retry 5 --retry-delay 2 --retry-all-errors "$1"
 }
 
 check() {
