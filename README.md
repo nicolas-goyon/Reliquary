@@ -4,8 +4,8 @@ Reliquary is an open-source deck and collection manager for Magic: The Gathering
 Its target is the level of Moxfield from the first release, with Commander as the priority format.
 
 > **Status:** early development.
-> The project is in milestone M0 (foundations).
-> Reliquary is not ready for use yet.
+> The milestones M0 to M3 are complete, and milestone M4 (plugins) is near its end. The [roadmap](docs/roadmap.md) gives the milestones.
+> Reliquary has no stable release yet.
 
 ## What Reliquary does
 
