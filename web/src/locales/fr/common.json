@@ -115,7 +115,10 @@
     "game_started": "La partie a commencé. Un nouveau joueur ne peut plus la rejoindre.",
     "game_open_limit": "Vous avez 3 parties ouvertes. Fermez une partie, puis créez une nouvelle partie.",
     "game_not_enough_players": "La partie a besoin d’au moins 2 joueurs. Envoyez le lien d’invitation à un autre joueur.",
-    "plugin_format_failed": "Le plugin n’a pas converti le fichier. Vérifiez le fichier ou choisissez un autre format."
+    "plugin_format_failed": "Le plugin n’a pas converti le fichier. Vérifiez le fichier ou choisissez un autre format.",
+    "consent_required": "Le plugin demande des accès que vous n’avez pas acceptés. Lisez les accès, puis acceptez-les.",
+    "consent_outdated": "Le plugin a changé pendant que la fenêtre était ouverte. Fermez la fenêtre et lisez de nouveau les accès.",
+    "too_many_active_plugins": "Vous avez le nombre maximal de plugins actifs. Désactivez un plugin, puis réessayez."
   },
   "fieldErrors": {
     "required": "Ce champ est obligatoire.",

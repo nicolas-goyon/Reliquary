@@ -53,6 +53,7 @@ public static class PlatformServiceCollectionExtensions
         services.TryAddSingleton<IDomainEventWriter, OutboxWriter>();
         services.TryAddSingleton<MigrationRunner>();
         services.TryAddSingleton<ExtensionRegistry>();
+        services.TryAddSingleton<PluginActivations>();
         services.TryAddSingleton<PluginFileStore>();
         services.TryAddSingleton<IPluginAccess, PluginAccess>();
         services.TryAddSingleton<PluginCatalogSync>();

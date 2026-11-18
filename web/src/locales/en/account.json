@@ -85,6 +85,43 @@
       "profile_read": "Read your account: email address, name and language"
     }
   },
+  "plugins": {
+    "title": "Plugins",
+    "description": "Plugins add functions to Reliquary. Each plugin runs in a sandbox and gets only the access that you accept.",
+    "version": "Version {{version}}",
+    "state": {
+      "active": "Active.",
+      "inactive": "Not active.",
+      "paused": "Paused. The new version asks for more access. Read the new access to start the plugin again."
+    },
+    "activate": "Activate",
+    "deactivate": "Deactivate",
+    "review": "Read the new access",
+    "activated": "The plugin {{name}} is active.",
+    "deactivated": "The plugin {{name}} is not active.",
+    "consent": {
+      "title": "Activate {{name}}",
+      "updateTitle": "New access for {{name}}",
+      "intro": "Read the access that the plugin {{name}} (version {{version}}) asks for. The plugin gets only this access.",
+      "updateIntro": "You accepted the version {{accepted}} of {{name}}. The version {{version}} asks for the access below in addition. The plugin stays paused until you accept this access.",
+      "nothing": "The plugin asks for no access to your data, to other sites or to your devices.",
+      "scopes": "Your data",
+      "network": "Sites that the plugin can contact",
+      "networkHint": "The plugin can send data to these sites and receive data from them.",
+      "siteHost": "The site {{host}}",
+      "subdomains": "All the sites of the domain {{host}}",
+      "computer": "Programs on your computer",
+      "computerPort": "A program on your computer, on the port {{port}}",
+      "devices": "Devices",
+      "camera": "Your camera",
+      "loopbackNetwork": "The programs on your computer, through the local network",
+      "sites": "Linked accounts",
+      "site": "Link your account of the site {{site}}",
+      "accept": "Accept and activate",
+      "acceptUpdate": "Accept the new access",
+      "cancel": "Cancel"
+    }
+  },
   "developmentPlugins": {
     "title": "Development plugins",
     "description": "This instance is a development instance. You can load a plugin from the URL of its plugin manifest, for example the Vite server of the plugin. The plugin runs in a sandbox, but nobody reviewed it. Load only your own plugins.",

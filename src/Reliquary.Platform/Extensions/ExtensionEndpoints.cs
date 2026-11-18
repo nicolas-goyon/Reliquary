@@ -25,6 +25,11 @@ namespace Reliquary.Platform.Extensions;
 /// <param name="Panels">The panels of the plugin manifest. The web app shows each panel in its own sandboxed iframe.</param>
 /// <param name="I18n">The translations of the plugin manifest, or null.</param>
 /// <param name="Formats">The import formats and the export formats of the plugin manifest.</param>
+/// <param name="Network">The network origins that the plugin manifest asks for.</param>
+/// <param name="Devices">The devices that the plugin manifest asks for.</param>
+/// <param name="Sites">The linked account sites of the plugin manifest.</param>
+/// <param name="Consent">The access that the user accepted for the plugin, or null. Only for an authenticated user.</param>
+/// <param name="Paused">Whether the user activated the plugin, but the installed version asks for access that the user did not accept. A paused plugin does not run.</param>
 public sealed record ExtensionResponse(
     string Id,
     string Kind,
@@ -38,7 +43,12 @@ public sealed record ExtensionResponse(
     bool Active,
     IReadOnlyList<ExtensionPanelResponse> Panels,
     JsonElement? I18n,
-    IReadOnlyList<ExtensionFormatResponse> Formats);
+    IReadOnlyList<ExtensionFormatResponse> Formats,
+    IReadOnlyList<string> Network,
+    IReadOnlyList<string> Devices,
+    IReadOnlyList<string> Sites,
+    PluginConsentResponse? Consent,
+    bool Paused);
 
 /// <summary>A panel of a plugin manifest.</summary>
 /// <param name="Id">The ID of the panel in the plugin.</param>
@@ -80,10 +90,6 @@ public sealed record AdminExtensionResponse(ExtensionResponse Extension, JsonEle
 /// <param name="Settings">The settings of the instance for the extension, as a JSON object.</param>
 public sealed record UpdateExtensionRequest(bool? Enabled, JsonElement? Settings);
 
-/// <summary>The body of the activation of a plugin for the user.</summary>
-/// <param name="Enabled">Whether the plugin runs for the user.</param>
-public sealed record PluginActivationRequest(bool? Enabled);
-
 /// <summary>
 /// The endpoints of the extension registry.
 /// </summary>
@@ -109,11 +115,7 @@ public static class ExtensionEndpoints
             .WithName("ListExtensions")
             .WithSummary("Lists the extensions that the instance enables. For an authenticated user, Active tells if the extension runs for the user.");
 
-        api.MapPut("/me/extensions/{id}", SetPluginActivationAsync)
-            .WithTags("Extensions")
-            .WithName("SetPluginActivation")
-            .WithSummary("Activates or deactivates a plugin for the user.")
-            .RequireAuthorization(AuthPolicies.Session);
+        api.MapPluginActivationEndpoints();
 
         api.MapDevelopmentPluginEndpoints();
         api.MapPluginFileEndpoints();
@@ -138,12 +140,12 @@ public static class ExtensionEndpoints
     }
 
     private static async Task<Ok<ExtensionListResponse>> ListAsync(
-        ClaimsPrincipal user, ExtensionRegistry registry, IOptions<PluginOptions> options, CancellationToken cancellationToken)
+        ClaimsPrincipal user, ExtensionRegistry registry, PluginActivations pluginActivations, IOptions<PluginOptions> options, CancellationToken cancellationToken)
     {
         var rows = await registry.ListAsync(enabledOnly: true, cancellationToken);
         var activations = user.FindAccountId() is { } ownerId && rows.Any(row => row.Kind == "plugin")
-            ? await registry.PluginActivationsAsync(ownerId, cancellationToken)
-            : new Dictionary<string, bool>();
+            ? await pluginActivations.ListAsync(ownerId, cancellationToken)
+            : new Dictionary<string, PluginActivation>();
         return TypedResults.Ok(new ExtensionListResponse(
             CoreApi.Version.ToString(),
             rows.Select(row => ToResponse(row, activations)).ToList(),
@@ -151,48 +153,6 @@ public static class ExtensionEndpoints
                 options.Value.MaxActivePlugins,
                 string.IsNullOrWhiteSpace(options.Value.FrameOrigin) ? null : options.Value.FrameOrigin.TrimEnd('/'),
                 options.Value.AllowDevelopmentPlugins)));
-    }
-
-    private static async Task<Results<NoContent, ProblemHttpResult>> SetPluginActivationAsync(
-        string id, PluginActivationRequest request, ClaimsPrincipal user, ExtensionRegistry registry, IOptions<PluginOptions> options, CancellationToken cancellationToken)
-    {
-        if (request.Enabled is not { } enabled)
-        {
-            return ApiProblems.Validation(new FieldError("enabled", FieldErrorCodes.Required, "The field \"enabled\" is necessary."));
-        }
-
-        var extension = await registry.FindAsync(id, cancellationToken);
-        if (extension is not { Kind: "plugin", Enabled: true, Revoked: false } || !extension.Compatible)
-        {
-            return ApiProblems.NotFound("The instance has no enabled plugin with this ID.");
-        }
-
-        var ownerId = user.GetAccountId();
-        if (enabled)
-        {
-            var activePlugins = await ActivePluginIdsAsync(ownerId, registry, cancellationToken);
-            var maxActive = options.Value.MaxActivePlugins;
-            if (!activePlugins.Contains(id) && activePlugins.Count >= maxActive)
-            {
-                return ApiProblems.Conflict(
-                    TooManyActivePlugins,
-                    $"You have {activePlugins.Count} active plugins, and the instance allows {maxActive}. Deactivate a plugin before you activate a different plugin.");
-            }
-        }
-
-        await registry.SetPluginActivationAsync(ownerId, id, enabled, cancellationToken);
-        return TypedResults.NoContent();
-    }
-
-    /// <summary>Gets the IDs of the plugins that run for the user: the instance enables them, and the user activated them.</summary>
-    private static async Task<HashSet<string>> ActivePluginIdsAsync(Guid ownerId, ExtensionRegistry registry, CancellationToken cancellationToken)
-    {
-        var activations = await registry.PluginActivationsAsync(ownerId, cancellationToken);
-        var rows = await registry.ListAsync(enabledOnly: true, cancellationToken);
-        return rows
-            .Where(row => row.Kind == "plugin" && row.Compatible && activations.GetValueOrDefault(row.Id))
-            .Select(row => row.Id)
-            .ToHashSet(StringComparer.Ordinal);
     }
 
     private static async Task<Ok<IReadOnlyList<AdminExtensionResponse>>> ListAllAsync(ExtensionRegistry registry, CancellationToken cancellationToken)
@@ -336,11 +296,16 @@ public static class ExtensionEndpoints
         return true;
     }
 
-    private static ExtensionResponse ToResponse(ExtensionRow row, IReadOnlyDictionary<string, bool>? activations)
+    private static ExtensionResponse ToResponse(ExtensionRow row, IReadOnlyDictionary<string, PluginActivation>? activations)
     {
-        var active = row.Enabled && row.Compatible && !row.Revoked && (row.Kind == "module" || (activations?.GetValueOrDefault(row.Id) ?? false));
+        var isPlugin = row.Kind == "plugin";
+        var asked = isPlugin ? PluginGrant.FromManifest(row.Manifest) : PluginGrant.Empty;
+        var activation = isPlugin ? activations?.GetValueOrDefault(row.Id) : null;
+        var active = row.Enabled && row.Compatible && !row.Revoked && (!isPlugin || (activation?.Runs(asked) ?? false));
         var (panels, i18n, formats) = ReadInterface(row.Manifest);
-        return new ExtensionResponse(row.Id, row.Kind, row.Name, row.Version, row.CoreApi, row.Permissions, row.Slots, row.Enabled, row.Compatible, active, panels, i18n, formats);
+        return new ExtensionResponse(
+            row.Id, row.Kind, row.Name, row.Version, row.CoreApi, row.Permissions, row.Slots, row.Enabled, row.Compatible, active, panels, i18n, formats,
+            asked.Network, asked.Devices, asked.Sites, PluginActivationEndpoints.ToResponse(activation), activation?.IsPaused(asked) ?? false);
     }
 
     /// <summary>Reads the panels, the translations and the formats of a manifest. The API checked the manifest at install time.</summary>

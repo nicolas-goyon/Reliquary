@@ -7,13 +7,30 @@ export interface PluginVersion {
   version: string
 }
 
+/** The network origins and the devices that the user accepted for a plugin. The CSP of the frame allows only these values. */
+export interface FrameAccess {
+  network: string[]
+  devices: string[]
+}
+
 /**
  * Gets the address of the frame HTML of a plugin version.
+ * The frame request has no credential, so the address gives the accepted network origins and devices to the API.
+ * The API refuses a value that is not in the plugin manifest. Without a value, the frame gets no network origin and no device.
  * @param frameOrigin The origin of the frames from the setting `Plugins:FrameOrigin`, or null for the host of the instance.
+ * @param access The network origins and the devices that the user accepted.
  */
-export function frameUrl(plugin: PluginVersion, frameOrigin: string | null): string {
+export function frameUrl(plugin: PluginVersion, frameOrigin: string | null, access?: FrameAccess): string {
   const path = `/api/v1/plugins/${encodeURIComponent(plugin.id)}/${encodeURIComponent(plugin.version)}/frame`
-  return frameOrigin ? `${frameOrigin.replace(/\/+$/, '')}${path}` : path
+  const query = new URLSearchParams()
+  for (const origin of access?.network ?? []) {
+    query.append('network', origin)
+  }
+  for (const device of access?.devices ?? []) {
+    query.append('devices', device)
+  }
+  const search = query.size > 0 ? `?${query.toString()}` : ''
+  return frameOrigin ? `${frameOrigin.replace(/\/+$/, '')}${path}${search}` : `${path}${search}`
 }
 
 /**

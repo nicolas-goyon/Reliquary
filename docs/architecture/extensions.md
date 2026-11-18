@@ -377,10 +377,11 @@ The web app calls the public API for a plugin with a plugin token.
 [ADR 0049](../decisions/0049-plugin-sandbox.md) gives the reasons.
 
 - `POST /api/v1/me/extensions/{id}/token` gives a plugin token. Only a web session can call it.
-  The plugin must run for the user: the instance enables it, it supports the core API, and the user activated it. Else the API returns 404.
+  The plugin must run for the user: the instance enables it, it supports the core API, and the user activated it.
+  The user must also accept all the access of the installed version. Else the API returns 404.
 - The response gives `token`, `expiresAt`, `pluginId` and `scopes`.
   The token is valid for 10 minutes (`Auth:PluginTokenLifetime`).
-- The scopes are the permissions of the manifest. The consent of issue #287 will limit them to the scopes that the user accepted.
+- The scopes are the permissions of the installed version that the user accepted. The section [Consent](#consent) gives the rules.
 - The web app sends the token in the header `Authorization: Bearer rlp_...`.
   `ScopeFilter` checks the scope of the endpoint, as for a delegation token. An endpoint without a scope refuses the token with the status 403 and the code `scope_missing`.
 - The API asks the extension registry for each request whether the plugin still runs for the user.
@@ -502,6 +503,39 @@ The field `revoked` of the catalog index stops a plugin version on all instances
    Thus a revoked version stops in the browser 10 minutes after the sync at most.
    Before this check, the frame can run, but its plugin token gets the status 401.
 
+### Consent
+
+The user accepts the access of a plugin version before the plugin runs: the scopes, the network origins, the devices and the linked account sites.
+
+- The **Plugins** panel of the account page lists the plugins that the instance enables.
+  For each plugin, it shows the state for the user: active, not active or paused.
+  The panel does not show when the instance enables no plugin.
+- The consent dialog shows the access in plain words, in English and in French:
+  - Each scope has the same text as in the **Delegations** panel.
+  - A network origin shows as a site, or as all the sites of a domain for a wildcard.
+    `localhost` and `127.0.0.1` show as a program on the computer of the user.
+    The dialog also shows the origin of the manifest.
+  - Each device and each linked account site has its own text.
+- The table `content.plugin_activations` keeps the consent of the user: `accepted_version`, `accepted_scopes`, `accepted_network`, `accepted_devices`, `accepted_sites` and `accepted_at`.
+- `PUT /api/v1/me/extensions/{id}` with `{ "enabled": true, "consent": { "version", "scopes", "network", "devices", "sites" } }` activates the plugin and keeps the consent.
+  - The consent must give the installed version, and it must contain all the access of this version.
+    Else the API refuses it with the status 409 and the code `consent_outdated`, because the dialog showed an older manifest.
+  - Without `consent`, the API activates the plugin only when the last consent contains all the access of the installed version.
+    Else it refuses the request with the status 409 and the code `consent_required`.
+  - A deactivation keeps the consent.
+- `GET /api/v1/extensions` gives for each plugin the access of the manifest (`permissions`, `network`, `devices` and `sites`), the last consent (`consent`) and the field `paused`.
+- **New version**: the user activated a plugin, but the installed version asks for access that the last consent does not contain.
+  The plugin then stays paused.
+  - The comparison uses the same text. Thus a new wildcard origin needs a new consent, also when the user accepted a site of this domain.
+  - A paused plugin does not run, and the API gives it no plugin token.
+    The last consent does not change until the user accepts the new access.
+  - The dialog then shows only the new access.
+  - A new version that asks for the same access or for less access runs with no new consent.
+- The accepted list controls the sandbox:
+  - The runtime puts the accepted `network` origins and `devices` in the frame address.
+    Thus the CSP of the frame allows only these values.
+  - The plugin token has only the scopes that the user accepted.
+
 ### Life cycle and security
 
 1. **Development mode**: on a development instance, a user can load a plugin from a URL.
@@ -515,7 +549,8 @@ The field `revoked` of the catalog index stops a plugin version on all instances
    By default, Reliquary offers only the signed plugins that the administrator enabled for the instance.
 4. **Permissions**: each permission has a scope, for example `decks:read` or `collection:write`.
    The user accepts the permissions when they install the plugin.
-   Each new permission or new domain needs a new approval from the user.
+   Each new permission, new domain, new device or new linked account site needs a new approval from the user.
+   The section [Consent](#consent) gives the rules.
 5. **Revocation**: the project can revoke a compromised plugin version remotely.
    The worker gets the catalog index each hour and disables the revoked versions.
 
