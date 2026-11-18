@@ -137,7 +137,8 @@ A backup is not usable without the signing key and the passwords.
 ### Vault keys
 
 The vault of the linked accounts encrypts the secrets of the plugins with the keys of the setting `Plugins:VaultKeys` ([ADR 0050](../decisions/0050-no-plugin-code-on-the-server.md)).
-Each key has a key ID.
+Each key has a key ID: 1 to 64 letters, digits, dots, hyphens and underscores.
+Each key is 32 random bytes in Base64.
 
 1. Make a key:
 
@@ -146,10 +147,19 @@ Each key has a key ID.
    ```
 
 2. Add the key to the Secret with the name `Plugins__VaultKeys__<key ID>`, for example `Plugins__VaultKeys__2026-11`.
+3. Restart the pods of the API and of the worker.
 
-To change the key, add a new key with a new key ID.
+The key with the last key ID in alphabetical order encrypts the new secrets.
+Use key IDs that sort in the order of their dates, for example `2026-11`, then `2027-05`.
+
+To change the key, add a new key with a key ID that comes after the old key IDs.
 Do not delete the old keys. The vault needs them to read the old secrets.
+When a plugin reads a secret of an old key, the vault encrypts it again with the new key.
+
+The API does not start when a key ID or a key is not valid.
+Without a key, the users can link an account with a public user name, but not with an API key.
 When you lose a key, the secrets that it encrypted are lost. The users must link their accounts again.
+The backup of the database does not contain the keys. Keep a copy of the keys with the copy of the Secret.
 
 ## Write the values
 

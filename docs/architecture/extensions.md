@@ -60,6 +60,37 @@ Plugins have two purposes:
 
 [ADR 0051](../decisions/0051-linked-accounts.md) gives the reasons for these rules.
 
+#### Linked accounts API
+
+The table `content.account_links` keeps one row for each user, plugin and site.
+A row has the authentication method, the name of the external account, the encrypted secret and the key ID.
+It also has the state and the time of the last sync.
+
+| Endpoint | Credential | Effect |
+| --- | --- | --- |
+| `GET /api/v1/me/linked-accounts` | Web session | Lists the sites of the plugins that run for the user, with the link of each site. It also lists the links of the plugins that do not run, so the user can unlink them. The response never contains a secret. |
+| `PUT /api/v1/me/extensions/{id}/accounts/{site}` | Web session | Links an account, or replaces the link. The body has `userName` for `public-username`, and `secret` with an optional `userName` for `api-key`. |
+| `DELETE /api/v1/me/extensions/{id}/accounts/{site}` | Web session | Deletes the link and its secret. |
+| `GET /api/v1/me/extensions/{id}/accounts/{site}/secret` | Plugin token of the plugin `{id}` | Gives `site`, `auth`, `userName` and `secret`. The response has `Cache-Control: no-store`. |
+
+- The plugin must run for the user, and its plugin manifest must declare the site. Else the API returns 404.
+- The API refuses `oauth2-pkce` with the code `linked_account_method_not_supported` until OAuth arrives.
+- A plugin token of a different plugin gets the status 403. A web session, an API key and a delegation token also get the status 403.
+- `RequirePluginToken()` marks an endpoint that accepts only a plugin token. `ScopeFilter` lets a plugin token through to such an endpoint, with no scope.
+
+#### Vault
+
+The vault encrypts each secret with AES-GCM ([ADR 0050](../decisions/0050-no-plugin-code-on-the-server.md)).
+
+- The setting `Plugins:VaultKeys` gives the keys by key ID. Each key is 32 bytes in Base64.
+- The key with the last key ID in ordinal order encrypts the new secrets. The vault reads a secret with the key of its key ID.
+- The associated data is the owner ID, the plugin ID and the site. A secret of one user, plugin or site does not decrypt for a different user, plugin or site.
+- When a plugin reads a secret of an old key, the API encrypts the secret again with the current key.
+- The API does not start when a key ID or a key is not valid. The vault ignores a key with an empty value.
+- Without a key, the API refuses a link with a secret with the status 503 and the code `vault_not_configured`.
+- When the key of a secret is missing, the secret endpoint returns the status 409 with the code `vault_key_missing`.
+  The list shows `secretReadable: false`, and the user must link the account again.
+
 ### Interface slots
 
 - The interface contains named places for extensions: the **slots**.
@@ -384,6 +415,7 @@ The web app calls the public API for a plugin with a plugin token.
 - The scopes are the permissions of the installed version that the user accepted. The section [Consent](#consent) gives the rules.
 - The web app sends the token in the header `Authorization: Bearer rlp_...`.
   `ScopeFilter` checks the scope of the endpoint, as for a delegation token. An endpoint without a scope refuses the token with the status 403 and the code `scope_missing`.
+  The only exceptions are the endpoints with `RequirePluginToken()`, for example the secret endpoint of the linked accounts.
 - The API asks the extension registry for each request whether the plugin still runs for the user.
   After a deactivation by the user or by the administrator, the token gives the status 401.
 

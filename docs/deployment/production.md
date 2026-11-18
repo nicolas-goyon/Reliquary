@@ -112,6 +112,34 @@ ssh your-user@your-server
 
 The port 18035 of Mailpit stays on `127.0.0.1`. With a real email server, Mailpit receives no email.
 
+## Vault keys
+
+The vault of the linked accounts encrypts the secrets of the plugins, for example the API key of an external site ([ADR 0050](../decisions/0050-no-plugin-code-on-the-server.md)).
+The `.env` file gives the vault keys in `RELIQUARY_VAULT_KEY_1`, `RELIQUARY_VAULT_KEY_2` and `RELIQUARY_VAULT_KEY_3`.
+`reliquary-update --init` makes the first key.
+
+The key with the highest number encrypts the new secrets.
+To change the key:
+
+1. Make a key:
+
+   ```shell
+   openssl rand -base64 32
+   ```
+
+2. Put the key in the next empty setting, for example `RELIQUARY_VAULT_KEY_2`.
+   Do not delete the old key. The vault needs it to read the old secrets.
+3. Apply the change:
+
+   ```shell
+   ./reliquary-update
+   ```
+
+When a plugin reads a secret of an old key, the vault encrypts it again with the new key.
+An instance from before the vault has no key. Add `RELIQUARY_VAULT_KEY_1` to its `.env` file.
+Without a key, the users cannot link an account with an API key.
+When you lose a key, the users must link their accounts again.
+
 ## WebSockets for the online games
 
 The online games use a WebSocket on the path `/api/v1/playtest/hub`.
@@ -169,6 +197,7 @@ The script makes a backup before each update. Make a backup each day too, and co
    ///
 
 3. Also keep a copy of the `.env` file in a safe place. A backup is not usable without the database password and the signing key.
+   The backup does not contain the vault keys either.
 
 To restore a backup on a new server, install the same version, stop the API and the worker, and run the CLI restore.
 [Backup and restore](../development/backup-and-restore.md) gives the procedure.

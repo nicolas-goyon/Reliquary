@@ -16,6 +16,7 @@ using Reliquary.Platform.Extensions;
 using Reliquary.Platform.Extensions.Catalog;
 using Reliquary.Platform.Health;
 using Reliquary.Platform.Jobs;
+using Reliquary.Platform.LinkedAccounts;
 using Reliquary.Platform.Migrations;
 using ConfigurationOptions = StackExchange.Redis.ConfigurationOptions;
 using ConnectionMultiplexer = StackExchange.Redis.ConnectionMultiplexer;
@@ -62,6 +63,7 @@ public static class PlatformServiceCollectionExtensions
             client.DefaultRequestHeaders.UserAgent.ParseAdd("Reliquary (+https://github.com/nicolas-goyon/reliquary)");
             client.Timeout = TimeSpan.FromMinutes(2);
         });
+        services.AddLinkedAccounts(configuration);
 
         if (string.IsNullOrWhiteSpace(configuration[$"{EmailOptions.Section}:Smtp:Host"]))
         {

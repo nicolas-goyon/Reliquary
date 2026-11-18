@@ -562,11 +562,13 @@ command_init() {
             fail "Cannot read the settings template from $prefix-cli:$version."
     fi
     signing_key=$(head -c 32 /dev/urandom | base64 | tr -d '\n')
+    vault_key=$(head -c 32 /dev/urandom | base64 | tr -d '\n')
     password=$(random_hex 24)
     (
         umask 077
         sed -e "s|^RELIQUARY_VERSION=.*|RELIQUARY_VERSION=$version|" \
             -e "s|^RELIQUARY_SIGNING_KEY=.*|RELIQUARY_SIGNING_KEY=$signing_key|" \
+            -e "s|^RELIQUARY_VAULT_KEY_1=.*|RELIQUARY_VAULT_KEY_1=$vault_key|" \
             -e "s|^RELIQUARY_POSTGRES_PASSWORD=.*|RELIQUARY_POSTGRES_PASSWORD=$password|" \
             "$template" > "$env_file"
     )

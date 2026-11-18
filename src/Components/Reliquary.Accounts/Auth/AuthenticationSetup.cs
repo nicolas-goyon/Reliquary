@@ -179,6 +179,10 @@ internal static class AuthenticationSetup
                 .RequireClaim(ReliquaryClaims.AuthMethod, AuthMethods.ServiceAccount)
                 .RequireClaim(ReliquaryClaims.ServiceAccountId))
             .AddPolicy(AuthPolicies.Session, policy => policy.RequireAuthenticatedUser().RequireClaim(ReliquaryClaims.AuthMethod, AuthMethods.Session))
+            .AddPolicy(AuthPolicies.Plugin, policy => policy
+                .RequireAuthenticatedUser()
+                .RequireClaim(ReliquaryClaims.AuthMethod, AuthMethods.Plugin)
+                .RequireClaim(ReliquaryClaims.PluginId))
             .AddPolicy(AuthPolicies.Administrator, policy => policy
                 .RequireAuthenticatedUser()
                 .RequireClaim(ReliquaryClaims.AuthMethod, AuthMethods.Session)
