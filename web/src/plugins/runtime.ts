@@ -5,6 +5,9 @@ import { developmentFrameUrl, loadDevelopmentManifest } from './development'
 import { frameAccess } from './consent'
 import { frameUrl } from './frame'
 import { registerPluginFormats } from './formats'
+import { registerHostApi } from './hostApi'
+import { removeNotices } from './notices'
+import { PluginTokens, type SessionRequest } from './pluginTokens'
 import { registerPluginUi, type PanelPlugin } from './pluginUi'
 import { PluginHost, PluginLimitError, type PluginHostOptions, type StartOptions } from './host'
 import type { PluginVersion } from './frame'
@@ -19,6 +22,10 @@ export interface RuntimeOptions extends Partial<Omit<PluginHostOptions, 'setting
   /** The manifest URLs of the development plugins. The runtime uses them only when the instance allows development plugins. */
   developmentUrls?: string[]
   fetcher?: typeof fetch
+  /** Sends a request with the web session of the user. The runtime gets the plugin tokens with it. Without it, the plugins cannot call the public API. */
+  request?: SessionRequest
+  /** The plugin tokens of the running plugins. The default is a new store that uses `request`. */
+  tokens?: PluginTokens
   /** The slot registry of the web app. The runtime adds the contributions of the plugins to it. */
   registry?: SlotRegistry
 }
@@ -38,6 +45,7 @@ export function startPluginRuntime(list: ExtensionList, options: RuntimeOptions 
   const plugins = new Map<string, PanelPlugin>()
   const language = options.language ?? (() => document.documentElement.lang || 'en')
   const cleanups = new Map<string, () => void>()
+  const tokens = options.tokens ?? (options.request ? new PluginTokens({ request: options.request }) : undefined)
 
   const host = new PluginHost({
     ...options,
@@ -48,6 +56,13 @@ export function startPluginRuntime(list: ExtensionList, options: RuntimeOptions 
     registerMethods: (peer, plugin) => {
       options.registerMethods?.(peer, plugin)
       const data = plugins.get(plugin.id)
+      // Each frame of the plugin gets the methods of the public API and of the notices: the main frame and the panel frames.
+      const registerFrameMethods = (target: typeof peer): void => {
+        if (data && tokens) {
+          registerHostApi(target, data, { tokens })
+        }
+      }
+      registerFrameMethods(peer)
       if (options.registry && data) {
         const removeContributions = registerContributionMethods(peer, data, options.registry)
         const removeUi = registerPluginUi(peer, data, options.registry, {
@@ -59,6 +74,7 @@ export function startPluginRuntime(list: ExtensionList, options: RuntimeOptions 
           maxMissed: options.maxMissed,
           timeoutMs: options.timeoutMs,
           maxMessageBytes: options.maxMessageBytes,
+          registerFrameMethods,
         })
         const removeFormats = registerPluginFormats(peer, data, options.registry)
         cleanups.set(plugin.id, () => {
@@ -72,6 +88,8 @@ export function startPluginRuntime(list: ExtensionList, options: RuntimeOptions 
       if (event.type === 'stopped') {
         cleanups.get(event.plugin.id)?.()
         cleanups.delete(event.plugin.id)
+        tokens?.forget(event.plugin.id)
+        removeNotices(event.plugin.id)
       }
       options.onEvent?.(event)
     },
@@ -100,6 +118,7 @@ export function startPluginRuntime(list: ExtensionList, options: RuntimeOptions 
       name: plugin.name,
       version: plugin.version,
       slots: plugin.slots,
+      permissions: plugin.permissions,
       development: false,
       src,
       panels: plugin.panels ?? [],

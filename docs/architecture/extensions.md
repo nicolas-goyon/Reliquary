@@ -312,6 +312,8 @@ A `MessagePort` can go to such a Worker.
   The relay accepts only the domains of the plugin manifest, and it has quotas.
   The relay does not log the content of the requests.
   The relay is off by default, and the administrator enables it for the instance.
+  The core does not have the relay yet, and the plugin SDK has no method for it.
+  Issue [#289](https://github.com/nicolas-goyon/reliquary/issues/289) adds the two when a real plugin needs the relay.
 
 [ADR 0011](../decisions/0011-plugin-network-allowlist.md) and [ADR 0050](../decisions/0050-no-plugin-code-on-the-server.md) give the reasons for these rules.
 
@@ -459,6 +461,31 @@ Each scheme checks all its properties, so a token with one property of the other
 The plugin token also contains `sub` (the user), `plg` (the plugin ID) and `scope` (the scopes, with a space between them).
 A delegation token is a random secret with the start `rld_`, so it is never a valid JWT.
 The policies `Session` and `Administrator` refuse a plugin token, so a plugin token cannot get a new plugin token.
+
+#### Requests of a plugin to the public API
+
+A plugin calls `sdk.api.fetch(path, init)`. The method `api.fetch` of the core sends the request. `web/src/plugins/hostApi.ts` contains the code.
+
+- The main frame and each panel frame of a plugin can call the method.
+- The path is a path after `/api/v1`, for example `/decks?limit=10`.
+  The core refuses a path with `//`, a backslash, a `#` or a dot segment, also when the path encodes them. Thus a request cannot leave `/api/v1`.
+- The methods are `GET`, `POST`, `PUT`, `PATCH` and `DELETE`. The body is JSON.
+- The core sends the request with the plugin token and with no cookie.
+  Thus a plugin cannot use the refresh cookie of the web session.
+- The core keeps one plugin token for each running plugin, until one minute before the token expires.
+  After the status 401, the core gets a new token and tries the request one time.
+- The plugin gets the status and the JSON body of the response. An error status of the API is a response for the plugin, not a failure of the call.
+
+A development plugin has no manifest on the instance. On an instance with `Plugins:AllowDevelopmentPlugins`, the web app asks the token with the ID `dev:<plugin ID>` and the scopes of the plugin manifest:
+`POST /api/v1/me/extensions/dev:deck-stats/token` with `{ "scopes": ["decks:read"] }`.
+The token gets only these scopes. A plugin ID cannot contain a colon, so this ID is never the ID of an installed plugin.
+Other instances return the status 404.
+
+#### Notices
+
+A plugin calls `sdk.ui.notify(message, tone)` to show a short message. The tones are `info`, `success` and `error`.
+The component `PluginNotices` of the core shows the message as text, with the name of the plugin, for 8 seconds.
+The core cuts a message after 200 characters, and it shows 3 notices at most for each plugin.
 
 ### Plugin catalog
 

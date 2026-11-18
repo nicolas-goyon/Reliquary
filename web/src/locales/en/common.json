@@ -144,6 +144,9 @@
     "cellLoading": "The plugin loads the cell.",
     "cellFailed": "The plugin {{name}} did not give this cell.",
     "formatGroup": "Plugin formats",
-    "notCheckedFormat": "{{title}} (not checked)"
+    "notCheckedFormat": "{{title}} (not checked)",
+    "noticeFrom": "{{name}}:",
+    "noticeFromNotChecked": "{{name}} (not checked):",
+    "dismissNotice": "Close"
   }
 }

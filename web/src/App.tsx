@@ -45,6 +45,7 @@ import { Slot } from './slots/Slot'
 import { registerCoreContributions } from './slots/coreContributions'
 import { webVersion } from './version'
 import { PluginDialogs } from './plugins/PluginDialogs'
+import { PluginNotices } from './plugins/PluginNotices'
 import { PluginRuntime } from './plugins/PluginRuntime'
 import { PluginPage } from './pages/PluginPage'
 
@@ -190,6 +191,7 @@ function Shell() {
       {helpOpen && <ShortcutHelp onClose={() => setHelpOpen(false)} />}
       <PluginRuntime />
       <PluginDialogs />
+      <PluginNotices />
     </div>
   )
 }
