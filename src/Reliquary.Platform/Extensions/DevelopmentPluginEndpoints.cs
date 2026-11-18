@@ -31,7 +31,7 @@ public static class DevelopmentPluginEndpoints
     }
 
     private static Results<ContentHttpResult, ProblemHttpResult> Frame(
-        string? entry, string[]? network, IOptions<PluginOptions> options, HttpContext context)
+        string? entry, string[]? network, string[]? devices, IOptions<PluginOptions> options, HttpContext context)
     {
         if (!options.Value.AllowDevelopmentPlugins)
         {
@@ -61,6 +61,9 @@ public static class DevelopmentPluginEndpoints
         }
 
         context.Response.Headers.ContentSecurityPolicy = PluginFramePolicy.ForDevelopment(entryUri, networkUris);
+
+        // The developer wrote the manifest, so the frame gets the devices of the manifest. The header turns off all the other features.
+        context.Response.Headers["Permissions-Policy"] = PluginFramePolicy.PermissionsPolicy(devices ?? []);
         context.Response.Headers.CacheControl = "no-store";
         context.Response.Headers.XContentTypeOptions = "nosniff";
         context.Response.Headers["Referrer-Policy"] = "no-referrer";

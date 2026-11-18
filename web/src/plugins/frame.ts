@@ -34,15 +34,39 @@ export function frameUrl(plugin: PluginVersion, frameOrigin: string | null, acce
 }
 
 /**
+ * The features of the browser that each device of the plugin manifest gives to the frame, for the `allow` attribute.
+ * Chrome first called the access to `localhost` "local-network-access", then "loopback-network". The API has the same list in `PluginFramePolicy`.
+ */
+const deviceFeatures: Record<string, string[]> = {
+  camera: ['camera'],
+  'loopback-network': ['loopback-network', 'local-network-access'],
+}
+
+/**
+ * Gets the `allow` attribute of a frame from its address: the features of the devices in the query of the address.
+ * The API makes the `Permissions-Policy` header from the same query, so the attribute and the header always agree.
+ * An address with no device gives an empty attribute.
+ */
+export function frameAllow(src: string): string {
+  let devices: string[]
+  try {
+    devices = new URL(src, 'https://reliquary.invalid').searchParams.getAll('devices')
+  } catch {
+    return ''
+  }
+  return [...new Set(devices.flatMap((device) => deviceFeatures[device] ?? []))].join('; ')
+}
+
+/**
  * Creates the iframe of a plugin. With a panel title, the frame is visible: it is the frame of a panel.
  * - `sandbox="allow-scripts"` only: the frame has an opaque origin, so it cannot read the cookies, the storage or the DOM of the core.
- * - The `allow` attribute is empty: the frame gets no device. Issue #290 adds the devices that the user accepts.
+ * - The `allow` attribute gives only the devices that the user accepted. Without a device, it is empty.
  * - The frame sends no referrer.
  */
 export function createPluginFrame(document: Document, plugin: PluginVersion, src: string, panelTitle?: string): HTMLIFrameElement {
   const frame = document.createElement('iframe')
   frame.setAttribute('sandbox', 'allow-scripts')
-  frame.setAttribute('allow', '')
+  frame.setAttribute('allow', frameAllow(src))
   frame.setAttribute('referrerpolicy', 'no-referrer')
   if (panelTitle === undefined) {
     // The main frame of a plugin has no interface.

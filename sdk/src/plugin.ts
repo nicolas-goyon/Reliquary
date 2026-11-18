@@ -20,7 +20,10 @@ export interface PluginSdk {
   }
   /** The network. The frame can reach only the domains of the plugin manifest that the user accepted. */
   readonly net: {
-    /** Sends a request from the frame. The site must accept requests with the header `Origin: null`. */
+    /**
+     * Sends a request from the frame. The site must accept requests with the header `Origin: null`.
+     * For `localhost` and `127.0.0.1`, the plugin manifest must declare the device "loopback-network", and the browser asks the user.
+     */
     fetch(input: string, init?: RequestInit): Promise<Response>
   }
   /** The storage of the plugin for the user. The core keeps it on the server. */
@@ -244,6 +247,36 @@ async function mountPanel(
   }
 }
 
+/** Tells whether the address names the computer of the user: `localhost`, a name that ends with `.localhost`, `127.0.0.0/8` or `[::1]`. */
+export function isLoopbackUrl(input: string): boolean {
+  let host: string
+  try {
+    host = new URL(input).hostname.toLowerCase()
+  } catch {
+    return false
+  }
+  return host === 'localhost' || host.endsWith('.localhost') || host === '[::1]' || /^127(\.\d{1,3}){3}$/.test(host)
+}
+
+let loopbackAddressSpace: boolean | undefined
+
+/**
+ * Tells whether the browser accepts the fetch option `targetAddressSpace: 'loopback'` (Local Network Access of Chromium).
+ * A browser that knows the option with other values throws for an unknown value, so the SDK tests the value one time.
+ * A browser that does not know the option ignores it.
+ */
+function supportsLoopbackAddressSpace(): boolean {
+  if (loopbackAddressSpace === undefined) {
+    try {
+      new Request('http://localhost/', { targetAddressSpace: 'loopback' } as RequestInit)
+      loopbackAddressSpace = true
+    } catch {
+      loopbackAddressSpace = false
+    }
+  }
+  return loopbackAddressSpace
+}
+
 function isConnectMessage(data: unknown): data is ConnectMessage {
   if (typeof data !== 'object' || data === null) {
     return false
@@ -287,7 +320,7 @@ function createSdk(peer: RpcPeer<PluginMethods, HostMethods>, message: ConnectMe
       fetch: (path, init = {}) => peer.call('api.fetch', { ...init, path }),
     },
     net: {
-      fetch: (input, init) => globalThis.fetch(input, init),
+      fetch: (input, init) => globalThis.fetch(input, isLoopbackUrl(input) && supportsLoopbackAddressSpace() ? ({ targetAddressSpace: 'loopback', ...init } as RequestInit) : init),
     },
     storage: {
       get: async <T>(storageKey: string) => {

@@ -263,7 +263,8 @@ On a development instance, a user loads a plugin from the URL of its plugin mani
    It also allows the WebSocket of this origin, so the server of the plugin can reload the plugin.
    The `network` origins of the plugin manifest get `connect-src` and `img-src`.
    `PluginFramePolicy.ForDevelopment` makes this CSP. The same class makes the CSP of the installed plugins, so the two policies have the same common rules.
-5. The connect message has `development: true`, and the interface shows a "Not checked" banner for the plugin.
+5. The frame address also has the `devices` of the plugin manifest. The frame gets these devices, and the `Permissions-Policy` header turns off the other features.
+6. The connect message has `development: true`, and the interface shows a "Not checked" banner for the plugin.
    Each contribution of a development plugin must show this banner.
 
 The core does not check a development plugin, but the plugin runs in the same sandbox as other plugins.
@@ -413,6 +414,8 @@ The frame response has these headers:
   It does not turn off the features of the accepted devices: `camera` for the device `camera`, and `loopback-network` and `local-network-access` for the device `loopback-network`.
   A header can only remove a permission.
   The `allow` attribute of the iframe gives the accepted devices to the frame, for example `allow="camera"`.
+  The web app makes the attribute from the `devices` values of the frame address (`frameAllow` in `web/src/plugins/frame.ts`), so the attribute and the header agree.
+  [Devices of a plugin](../plugins/devices.md) gives the rules for plugin authors and the manual check list for the browsers.
 - `Cache-Control: no-store`, `X-Content-Type-Options: nosniff` and `Referrer-Policy: no-referrer`
 
 Known limit: a sandboxed frame can open a new address in its own frame.
