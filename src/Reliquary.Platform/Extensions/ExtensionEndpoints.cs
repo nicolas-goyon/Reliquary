@@ -9,6 +9,8 @@ using Reliquary.BuildingBlocks.Api;
 using Reliquary.BuildingBlocks.Security;
 using Reliquary.BuildingBlocks.Versioning;
 
+using Reliquary.Platform.Extensions.Catalog;
+
 namespace Reliquary.Platform.Extensions;
 
 /// <summary>An installed extension.</summary>
@@ -124,6 +126,7 @@ public static class ExtensionEndpoints
 
         api.MapDevelopmentPluginEndpoints();
         api.MapPluginFileEndpoints();
+        api.MapPluginCatalogEndpoints();
 
         var admin = api.MapGroup("/admin/extensions").WithTags("Administration").RequireAuthorization(AuthPolicies.Administrator);
 
@@ -166,7 +169,7 @@ public static class ExtensionEndpoints
         return TypedResults.Ok<IReadOnlyList<AdminExtensionResponse>>(rows.Select(ToAdminResponse).ToList());
     }
 
-    private static async Task<Results<Created<AdminExtensionResponse>, Ok<AdminExtensionResponse>, ProblemHttpResult>> InstallAsync(
+    internal static async Task<Results<Created<AdminExtensionResponse>, Ok<AdminExtensionResponse>, ProblemHttpResult>> InstallAsync(
         string id, JsonElement body, ExtensionRegistry registry, CancellationToken cancellationToken)
     {
         if (!TryReadManifest(body, out var manifest, out var manifestJson, out var readErrors))

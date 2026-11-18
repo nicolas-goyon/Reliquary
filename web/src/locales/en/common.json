@@ -58,7 +58,8 @@
     "decks": "Decks",
     "explore": "Explore",
     "moderation": "Moderation",
-    "collection": "Collection"
+    "collection": "Collection",
+    "plugins": "Plugins"
   },
   "notFound": {
     "title": "Page not found",
@@ -122,7 +123,9 @@
     "vault_not_configured": "The instance cannot keep an API key. Tell the administrator of the instance.",
     "vault_key_missing": "The instance lost the key of this secret. Link the account again.",
     "vault_secret_unreadable": "The instance cannot read this secret. Link the account again.",
-    "linked_account_method_not_supported": "This sign-in method is not available yet."
+    "linked_account_method_not_supported": "This sign-in method is not available yet.",
+    "catalog_not_configured": "The instance has no plugin catalog. Set the address of a catalog index in the settings of the instance.",
+    "catalog_sync_failed": "The sync of the plugin catalog failed. Read the logs of the API, then try again."
   },
   "fieldErrors": {
     "required": "This field is necessary.",
@@ -149,5 +152,45 @@
     "noticeFromNotChecked": "{{name}} (not checked):",
     "dismissNotice": "Close",
     "disabledByCore": "Reliquary deactivated the plugin {{name}}, because it failed too many times. You can activate it again in the panel Plugins of your account."
+  },
+  "adminPlugins": {
+    "title": "Plugins of the instance",
+    "forbidden": "Only the administrators can open this page.",
+    "description": "Install the plugins of the catalog and enable them for the instance. Then each user activates a plugin in the panel Plugins of their account and accepts its access.",
+    "catalog": {
+      "title": "Plugin catalog",
+      "notConfigured": "The instance has no plugin catalog. Set Plugins:Catalog:Url to the address of a catalog index.",
+      "neverSynced": "The instance did not get the catalog index yet.",
+      "state": "Index {{serial}}. Last sync: {{checked}}. The index expires on {{expires}}.",
+      "sync": "Sync the catalog now"
+    },
+    "synced": "The catalog has the index {{serial}}. New plugin versions: {{added}}. New revoked versions: {{revoked}}.",
+    "empty": "The instance has no plugin. Sync the catalog to get its plugins.",
+    "columns": {
+      "plugin": "Plugin",
+      "state": "State",
+      "latest": "Last version of the catalog",
+      "actions": "Actions"
+    },
+    "state": {
+      "notInstalled": "Not installed.",
+      "enabled": "Version {{version}}. Enabled for the instance.",
+      "disabled": "Version {{version}}. Installed, not enabled.",
+      "revoked": "Version {{version}}. The catalog revoked this version: {{reason}}",
+      "notCompatible": "Version {{version}}. This version does not support this version of Reliquary."
+    },
+    "noVersion": "None",
+    "actions": {
+      "installAndEnable": "Install and enable",
+      "update": "Update to {{version}}",
+      "enable": "Enable",
+      "disable": "Disable",
+      "uninstall": "Uninstall"
+    },
+    "enabled": "The plugin {{name}} (version {{version}}) is enabled for the instance.",
+    "disabled": "The plugin {{name}} is not enabled for the instance.",
+    "updated": "The plugin {{name}} has the version {{version}}.",
+    "uninstalled": "Reliquary uninstalled the plugin {{name}}.",
+    "uninstallConfirm": "Uninstall the plugin {{name}}? The plugin stops for all the users."
   }
 }

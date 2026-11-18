@@ -587,7 +587,21 @@ An administrator can start it with `reliquary jobs run plugins.catalog`.
    The job then fails, and the next sync tries the version again.
 
 The job does not install a plugin in the extension registry.
-The administrator installs a plugin of the catalog with the plugin manifest of the version.
+The administrator installs a plugin of the catalog on the page **Plugins** of the administrators.
+
+#### Catalog page of the administrators
+
+The page `/admin/plugins` of the web app shows the plugins of the catalog and the installed plugins. Only an administrator can use its endpoints.
+
+- `GET /api/v1/admin/plugin-catalog` gives the state of the last catalog index (`serial`, `expiresAt`, `checkedAt`) and the plugins whose files the instance has.
+  Each plugin has its name, its description, its versions and `latestVersion`: the last version that the catalog did not revoke.
+- `POST /api/v1/admin/plugin-catalog/sync` runs the catalog sync now.
+  Without `Plugins:Catalog:Url`, it returns the status 409 with the code `catalog_not_configured`. A sync that fails returns the status 502 with the code `catalog_sync_failed`.
+- `POST /api/v1/admin/plugin-catalog/{id}/{version}/install` installs a version from its `manifest.json` in `users.extension_files`.
+  It applies the rules of `PUT /api/v1/admin/extensions/{id}`: a new plugin is disabled, and a revoked version returns `version_revoked`.
+- The page uses `PATCH` and `DELETE /api/v1/admin/extensions/{id}` to enable, disable and uninstall a plugin.
+- The buttons of the page are: **Install and enable**, **Update to** the last version, **Enable**, **Disable** and **Uninstall**.
+- Then each user activates the plugin in the panel **Plugins** of the account page, with the consent dialog.
 
 #### Revocation
 

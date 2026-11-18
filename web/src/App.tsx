@@ -48,6 +48,7 @@ import { PluginDialogs } from './plugins/PluginDialogs'
 import { PluginNotices } from './plugins/PluginNotices'
 import { PluginRuntime } from './plugins/PluginRuntime'
 import { PluginPage } from './pages/PluginPage'
+import { AdminPluginsPage } from './pages/AdminPluginsPage'
 
 const repositoryUrl = 'https://github.com/nicolas-goyon/reliquary'
 
@@ -92,6 +93,7 @@ const routes: Record<string, () => ReactNode> = {
   '/auth/complete': () => <AuthCompletePage />,
   '/account': () => <AccountPage />,
   '/admin/moderation': () => <ModerationPage />,
+  '/admin/plugins': () => <AdminPluginsPage />,
 }
 
 function patternPage(path: string): () => ReactNode {
