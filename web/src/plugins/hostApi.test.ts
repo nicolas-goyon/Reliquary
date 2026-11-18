@@ -117,6 +117,57 @@ describe('api.fetch', () => {
   })
 })
 
+describe('storage', () => {
+  it('keeps, reads, lists and removes the values with the plugin token', async () => {
+    const { plugin, sent } = setup([
+      new Response(null, { status: 204 }),
+      Response.json({ value: { theme: 'dark' } }),
+      new Response(null, { status: 404 }),
+      Response.json({ keys: ['settings'] }),
+      new Response(null, { status: 204 }),
+      new Response(null, { status: 204 }),
+    ])
+
+    await plugin.call('storage.set', { key: 'settings', value: { theme: 'dark' } })
+    const value = await plugin.call('storage.get', { key: 'settings' })
+    const missing = await plugin.call('storage.get', { key: 'last sync/é' })
+    const keys = await plugin.call('storage.keys', null)
+    await plugin.call('storage.remove', { key: 'settings' })
+    await plugin.call('storage.set', { key: 'settings', value: null })
+
+    expect(value).toEqual({ value: { theme: 'dark' } })
+    expect(missing).toEqual({ value: null })
+    expect(keys).toEqual({ keys: ['settings'] })
+    expect(sent.map((item) => `${item.init.method} ${item.url}`)).toEqual([
+      'PUT /api/v1/me/extensions/deck-stats/storage?key=settings',
+      'GET /api/v1/me/extensions/deck-stats/storage?key=settings',
+      'GET /api/v1/me/extensions/deck-stats/storage?key=last%20sync%2F%C3%A9',
+      'GET /api/v1/me/extensions/deck-stats/storage',
+      'DELETE /api/v1/me/extensions/deck-stats/storage?key=settings',
+      'DELETE /api/v1/me/extensions/deck-stats/storage?key=settings',
+    ])
+    expect(sent[0].init.body).toBe('{"value":{"theme":"dark"}}')
+    expect((sent[0].init.headers as Record<string, string>).Authorization).toBe('Bearer rlp_token-1')
+  })
+
+  it('gives the error code of a limit when the storage is full, and refuses a key that is not valid', async () => {
+    const { plugin, sent } = setup([new Response(null, { status: 413 })])
+
+    await expect(plugin.call('storage.set', { key: 'big', value: 'x' })).rejects.toMatchObject({ code: errorCodes.limitExceeded })
+    await expect(plugin.call('storage.get', { key: '' })).rejects.toMatchObject({ code: errorCodes.invalidParams })
+    await expect(plugin.call('storage.set', { key: 'k'.repeat(129), value: 1 })).rejects.toMatchObject({ code: errorCodes.invalidParams })
+    expect(sent).toHaveLength(1)
+  })
+
+  it('uses the development ID for the storage of a development plugin', async () => {
+    const { plugin, sent } = setup([Response.json({ keys: [] })], { development: true })
+
+    await plugin.call('storage.keys', null)
+
+    expect(sent[0].url).toBe('/api/v1/me/extensions/dev%3Adeck-stats/storage')
+  })
+})
+
 describe('ui.notify', () => {
   it('adds a notice with the name of the plugin, and cuts a long message', async () => {
     const { plugin } = setup([])

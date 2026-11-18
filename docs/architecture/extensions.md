@@ -115,7 +115,8 @@ The provider `PluginPersonalData` of the platform follows [ADR 0032](../decision
   - `plugins.json` lists the plugins that the user activated, with the consent of the user.
   - `linked-accounts.json` lists the linked accounts: the plugin, the site, the authentication method, the user name and the state of the last sync.
     The field `hasSecret` tells whether the link has a secret. The file never contains a secret.
-- The deletion of an account deletes the plugin activations, the linked accounts and their secrets.
+  - `storage.json` lists the values of the [plugin storage](#plugin-storage), with the plugin and the key of each value.
+- The deletion of an account deletes the plugin activations, the linked accounts with their secrets, and the plugin storage.
 
 ### Interface slots
 
@@ -480,6 +481,23 @@ A development plugin has no manifest on the instance. On an instance with `Plugi
 `POST /api/v1/me/extensions/dev:deck-stats/token` with `{ "scopes": ["decks:read"] }`.
 The token gets only these scopes. A plugin ID cannot contain a colon, so this ID is never the ID of an installed plugin.
 Other instances return the status 404.
+
+#### Plugin storage
+
+The plugin frame has an opaque origin, so it has no storage of the browser.
+A plugin keeps small values for the user with `sdk.storage`: `get`, `set`, `remove` and `keys`.
+
+- The table `content.plugin_storage` keeps one JSON value for each owner, each plugin and each key.
+- A key has 1 to 128 characters. The keys and the values of one plugin and one user have 64 KB at most.
+  A write that goes over this limit changes nothing. The API returns the status 413 with the code `plugin_storage_full`, and the plugin gets the error code `-32004`.
+- The endpoints accept only a plugin token of the plugin `{id}`. A web session and the token of a different plugin get the status 403.
+  - `GET /api/v1/me/extensions/{id}/storage` lists the keys.
+  - `GET /api/v1/me/extensions/{id}/storage?key=<key>` gives `{ "value": ... }`, or the status 404.
+  - `PUT /api/v1/me/extensions/{id}/storage?key=<key>` with `{ "value": ... }` keeps the value.
+  - `DELETE /api/v1/me/extensions/{id}/storage?key=<key>` deletes the value.
+- The storage keeps no `null` value: `sdk.storage.set(key, null)` removes the key.
+- A plugin must not keep a secret in the storage. The vault keeps the secrets of the linked accounts.
+- The storage of a development plugin uses the ID `dev:<plugin ID>`.
 
 #### Notices
 

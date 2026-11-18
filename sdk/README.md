@@ -114,7 +114,7 @@ The type `PluginManifest` gives the fields of the plugin manifest.
 | --- | --- |
 | `sdk.api.fetch(path, init)` | Send a request to the public API. The core adds a plugin token with the scopes that the user accepted. |
 | `sdk.net.fetch(url, init)` | Send a request from the frame to a domain of the plugin manifest. |
-| `sdk.storage` | Keep small values for the user: `get`, `set`, `remove` and `keys`. |
+| `sdk.storage` | Keep small JSON values for the user on the server: `get`, `set`, `remove` and `keys`. One plugin has 64 KB at most for each user. |
 | `sdk.accounts.list()` | Get the linked accounts of the user for this plugin. |
 | `sdk.accounts.secret(site)` | Get the linked account of a site with its secret, for example the API key. Only this plugin can get it. Do not keep the secret in `sdk.storage`. |
 | `sdk.ui.contribute(slot, contribution)` | Add a button, a menu item or a column to a slot. |

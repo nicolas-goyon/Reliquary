@@ -116,6 +116,7 @@ public static class ExtensionEndpoints
             .WithSummary("Lists the extensions that the instance enables. For an authenticated user, Active tells if the extension runs for the user.");
 
         api.MapPluginActivationEndpoints();
+        api.MapPluginStorageEndpoints();
 
         api.MapDevelopmentPluginEndpoints();
         api.MapPluginFileEndpoints();
