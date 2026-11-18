@@ -5,6 +5,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## Unreleased
 
+## [0.4.0] - 2026-11-18
+
 ### Added
 
 - The plugin catalog (ADR 0052): the worker gets the signed catalog index and checks its ECDSA P-256 signature.
