@@ -43,7 +43,8 @@ public sealed class ExtensionRegistryTests
         var beforeEnable = await ListAsync(user);
         var enable = await admin.PatchAsJsonAsync("/api/v1/admin/extensions/moxfield-sync", new { enabled = true, settings = new { relay = true } }, TestContext.Current.CancellationToken);
         var afterEnable = await ListAsync(user);
-        var activate = await user.PutAsJsonAsync("/api/v1/me/extensions/moxfield-sync", new { enabled = true }, TestContext.Current.CancellationToken);
+        var consent = new { version = "0.1.0", scopes = new[] { "decks:read", "decks:write" }, network = new[] { "https://api.moxfield.com" } };
+        var activate = await user.PutAsJsonAsync("/api/v1/me/extensions/moxfield-sync", new { enabled = true, consent }, TestContext.Current.CancellationToken);
         var afterActivate = await ListAsync(user);
         var anonymous = await ListAsync(instance.Factory.CreateClient());
 
@@ -282,7 +283,7 @@ public sealed class ExtensionRegistryTests
         using var client = instance.Factory.CreateClient();
 
         var response = await client.GetAsync(
-            new Uri("/api/v1/plugins/development/frame?entry=http://localhost:5173/src/main.ts&network=https://api.moxfield.com/v2", UriKind.Relative),
+            new Uri("/api/v1/plugins/development/frame?entry=http://localhost:5173/src/main.ts&network=https://api.moxfield.com/v2&devices=camera&devices=unknown", UriKind.Relative),
             TestContext.Current.CancellationToken);
         var html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         var list = await ListAsync(client);
@@ -296,6 +297,12 @@ public sealed class ExtensionRegistryTests
             string.Join(";", response.Headers.GetValues("Content-Security-Policy")));
         Assert.Contains("<script type=\"module\" src=\"http://localhost:5173/src/main.ts\"></script>", html, StringComparison.Ordinal);
         Assert.True(list.Plugins.DevelopmentPlugins);
+
+        // The frame gets the devices of the query, and the header turns off the other features.
+        var permissions = Assert.Single(response.Headers.GetValues("Permissions-Policy"));
+        Assert.DoesNotContain("camera=()", permissions, StringComparison.Ordinal);
+        Assert.Contains("microphone=()", permissions, StringComparison.Ordinal);
+        Assert.Contains("loopback-network=()", permissions, StringComparison.Ordinal);
     }
 
     [Theory]

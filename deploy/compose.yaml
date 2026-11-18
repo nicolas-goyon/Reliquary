@@ -28,6 +28,11 @@ x-backend-environment: &backend-environment
   Cards__Import__BulkType: ${RELIQUARY_CARD_BULK_TYPE:-default_cards}
   Decks__LinkImport__MoxfieldUserAgent: ${RELIQUARY_MOXFIELD_USER_AGENT:-}
   Recommendations__Enabled: ${RELIQUARY_RECOMMENDATIONS:-false}
+  # The keys of the vault of the linked accounts. The key with the highest number encrypts the new secrets.
+  # The vault ignores an empty key. See https://nicolas-goyon.github.io/reliquary/deployment/production/#vault-keys.
+  Plugins__VaultKeys__1: ${RELIQUARY_VAULT_KEY_1:-}
+  Plugins__VaultKeys__2: ${RELIQUARY_VAULT_KEY_2:-}
+  Plugins__VaultKeys__3: ${RELIQUARY_VAULT_KEY_3:-}
 
 # The images: the script reliquary-update writes RELIQUARY_IMAGE_* with the digest of each image,
 # so a tag that moves (for example "develop") does not change a running instance.

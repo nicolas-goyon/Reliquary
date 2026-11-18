@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <Compile Include="..\Shared\**\*.cs" Link="Shared\%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="..\Reliquary.Platform.Tests\Extensions\Catalog\TestCatalog.cs" Link="Plugins\TestCatalog.cs" />
   </ItemGroup>
 
   <ItemGroup>

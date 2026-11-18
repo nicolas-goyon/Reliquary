@@ -6,9 +6,13 @@
     "rootDir": "src",
     "outDir": "dist",
     "declaration": true,
-    "types": []
+    "types": [],
+    "paths": {}
   },
   "exclude": [
     "src/**/*.test.ts"
+  ],
+  "include": [
+    "src"
   ]
 }

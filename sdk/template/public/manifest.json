@@ -1,0 +1,18 @@
+{
+  "id": "deck-size",
+  "name": "Deck size",
+  "description": "Counts the cards of a deck.",
+  "version": "0.1.0",
+  "coreApi": "^1.0",
+  "entry": "index.js",
+  "permissions": ["decks:read"],
+  "slots": ["deck.actions", "analysis.tabs"],
+  "panels": [{ "id": "size", "slot": "analysis.tabs", "title": "Deck size" }],
+  "i18n": {
+    "fr": {
+      "name": "Taille du deck",
+      "description": "Compte les cartes d’un deck.",
+      "panels.size.title": "Taille du deck"
+    }
+  }
+}

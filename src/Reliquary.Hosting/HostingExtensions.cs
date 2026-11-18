@@ -6,6 +6,7 @@ using Reliquary.BuildingBlocks.Events;
 using Reliquary.Platform;
 using Reliquary.Platform.Extensions;
 using Reliquary.Platform.InternalApi;
+using Reliquary.Platform.LinkedAccounts;
 
 namespace Reliquary.Hosting;
 
@@ -62,7 +63,7 @@ public static class HostingExtensions
     /// <returns>The service collection.</returns>
     public static IServiceCollection AddReliquaryWorker(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddReliquaryWorkerPlatform();
+        services.AddReliquaryWorkerPlatform(configuration);
 
         foreach (var component in CoreComponents.All)
         {
@@ -90,6 +91,7 @@ public static class HostingExtensions
         }
 
         api.MapExtensionEndpoints();
+        api.MapLinkedAccountEndpoints();
 
         return api;
     }

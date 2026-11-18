@@ -1,12 +1,13 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { ExtensionList } from '../api/extensions'
+import { SlotRegistry } from '../slots/registry'
 import { startPluginRuntime } from './runtime'
 
 function list(developmentPlugins: boolean): ExtensionList {
   return {
     coreApi: '1.1.0',
     plugins: { maxActive: 8, frameOrigin: null, developmentPlugins },
-    items: [{ id: 'installed', kind: 'plugin', name: 'Installed', version: '1.0.0', coreApi: '^1.0', permissions: [], slots: [], enabled: true, compatible: true, active: true, panels: [], i18n: null, formats: [] }],
+    items: [{ id: 'installed', kind: 'plugin', name: 'Installed', version: '1.0.0', coreApi: '^1.0', permissions: [], slots: [], enabled: true, compatible: true, active: true, panels: [], i18n: null, formats: [], network: [], devices: [], sites: [], consent: null, paused: false }],
   }
 }
 
@@ -32,6 +33,20 @@ describe('startPluginRuntime', () => {
     expect(document.querySelector('.plugin-frames')).toBeNull()
   })
 
+  it('gives the frame only the network origins and the devices that the user accepted', async () => {
+    const accepted = list(false)
+    accepted.items[0] = {
+      ...accepted.items[0],
+      network: ['https://api.example.com', 'https://cdn.example.com'],
+      devices: ['camera'],
+      consent: { version: '1.0.0', scopes: [], network: ['https://api.example.com', 'https://old.example.com'], devices: ['camera'], sites: [], acceptedAt: null },
+    }
+    const host = startPluginRuntime(accepted, { connectTimeoutMs: 60_000 })
+
+    expect(document.querySelector('iframe[data-plugin="installed"]')).toHaveAttribute('src', '/api/v1/plugins/installed/1.0.0/frame?network=https%3A%2F%2Fapi.example.com&devices=camera')
+    await host.stopAll()
+  })
+
   it('ignores the development plugins when the instance does not allow them', async () => {
     const host = startPluginRuntime(list(false), { developmentUrls: ['http://localhost:5173/manifest.json'], fetcher: manifest, connectTimeoutMs: 60_000 })
 
@@ -40,5 +55,21 @@ describe('startPluginRuntime', () => {
     expect(manifest).not.toHaveBeenCalled()
     expect(host.running).toEqual(['installed'])
     await host.stopAll()
+  })
+
+  it('gives the layout of the user to the slot registry, and reports a frame that does not connect as a crash', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const withLayout = list(false)
+    withLayout.items[0] = { ...withLayout.items[0], layout: { position: 4, hidden: ['deck.actions:sync'] } }
+    const registry = new SlotRegistry()
+    const layouts = vi.spyOn(registry, 'setPluginLayouts')
+    const failures: string[] = []
+
+    const host = startPluginRuntime(withLayout, { registry, connectTimeoutMs: 10, onFailure: (plugin, kind, development) => failures.push(`${plugin.id} ${kind} ${development}`) })
+
+    expect(layouts).toHaveBeenCalledWith({ installed: { position: 4, hidden: ['deck.actions:sync'] } })
+    await vi.waitFor(() => expect(failures).toEqual(['installed crash false']))
+    await host.stopAll()
+    expect(failures).toHaveLength(1)
   })
 })

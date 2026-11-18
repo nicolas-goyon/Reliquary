@@ -9,6 +9,8 @@ using Reliquary.BuildingBlocks.Api;
 using Reliquary.BuildingBlocks.Security;
 using Reliquary.BuildingBlocks.Versioning;
 
+using Reliquary.Platform.Extensions.Catalog;
+
 namespace Reliquary.Platform.Extensions;
 
 /// <summary>An installed extension.</summary>
@@ -25,6 +27,13 @@ namespace Reliquary.Platform.Extensions;
 /// <param name="Panels">The panels of the plugin manifest. The web app shows each panel in its own sandboxed iframe.</param>
 /// <param name="I18n">The translations of the plugin manifest, or null.</param>
 /// <param name="Formats">The import formats and the export formats of the plugin manifest.</param>
+/// <param name="Network">The network origins that the plugin manifest asks for.</param>
+/// <param name="Devices">The devices that the plugin manifest asks for.</param>
+/// <param name="Sites">The linked account sites of the plugin manifest.</param>
+/// <param name="Consent">The access that the user accepted for the plugin, or null. Only for an authenticated user.</param>
+/// <param name="Paused">Whether the user activated the plugin, but the installed version asks for access that the user did not accept. A paused plugin does not run.</param>
+/// <param name="Layout">The position of the plugin and the contributions that the user hides, or null for an extension that the user never activated.</param>
+/// <param name="DisabledByCoreAt">The time when the web app deactivated the plugin because it failed too many times, or null.</param>
 public sealed record ExtensionResponse(
     string Id,
     string Kind,
@@ -38,7 +47,14 @@ public sealed record ExtensionResponse(
     bool Active,
     IReadOnlyList<ExtensionPanelResponse> Panels,
     JsonElement? I18n,
-    IReadOnlyList<ExtensionFormatResponse> Formats);
+    IReadOnlyList<ExtensionFormatResponse> Formats,
+    IReadOnlyList<string> Network,
+    IReadOnlyList<string> Devices,
+    IReadOnlyList<string> Sites,
+    PluginConsentResponse? Consent,
+    bool Paused,
+    PluginLayoutResponse? Layout = null,
+    DateTimeOffset? DisabledByCoreAt = null);
 
 /// <summary>A panel of a plugin manifest.</summary>
 /// <param name="Id">The ID of the panel in the plugin.</param>
@@ -72,16 +88,13 @@ public sealed record PluginRuntimeResponse(int MaxActive, string? FrameOrigin, b
 /// <param name="Settings">The settings of the instance for the extension.</param>
 /// <param name="InstalledAt">The time of the first installation.</param>
 /// <param name="UpdatedAt">The time of the last change.</param>
-public sealed record AdminExtensionResponse(ExtensionResponse Extension, JsonElement Manifest, JsonElement Settings, DateTimeOffset InstalledAt, DateTimeOffset UpdatedAt);
+/// <param name="RevocationReason">The reason of the revocation of the installed version by the plugin catalog, or null. A revoked version does not run.</param>
+public sealed record AdminExtensionResponse(ExtensionResponse Extension, JsonElement Manifest, JsonElement Settings, DateTimeOffset InstalledAt, DateTimeOffset UpdatedAt, string? RevocationReason);
 
 /// <summary>The body of a change of an extension. A missing field does not change.</summary>
 /// <param name="Enabled">The activation flag of the instance.</param>
 /// <param name="Settings">The settings of the instance for the extension, as a JSON object.</param>
 public sealed record UpdateExtensionRequest(bool? Enabled, JsonElement? Settings);
-
-/// <summary>The body of the activation of a plugin for the user.</summary>
-/// <param name="Enabled">Whether the plugin runs for the user.</param>
-public sealed record PluginActivationRequest(bool? Enabled);
 
 /// <summary>
 /// The endpoints of the extension registry.
@@ -90,6 +103,9 @@ public static class ExtensionEndpoints
 {
     /// <summary>The extension does not support the current core API.</summary>
     public const string CoreVersionNotSupported = "core_version_not_supported";
+
+    /// <summary>The plugin catalog revoked this plugin version.</summary>
+    public const string VersionRevoked = "version_revoked";
 
     /// <summary>The user has the maximum number of active plugins.</summary>
     public const string TooManyActivePlugins = "too_many_active_plugins";
@@ -105,14 +121,12 @@ public static class ExtensionEndpoints
             .WithName("ListExtensions")
             .WithSummary("Lists the extensions that the instance enables. For an authenticated user, Active tells if the extension runs for the user.");
 
-        api.MapPut("/me/extensions/{id}", SetPluginActivationAsync)
-            .WithTags("Extensions")
-            .WithName("SetPluginActivation")
-            .WithSummary("Activates or deactivates a plugin for the user.")
-            .RequireAuthorization(AuthPolicies.Session);
+        api.MapPluginActivationEndpoints();
+        api.MapPluginStorageEndpoints();
 
         api.MapDevelopmentPluginEndpoints();
         api.MapPluginFileEndpoints();
+        api.MapPluginCatalogEndpoints();
 
         var admin = api.MapGroup("/admin/extensions").WithTags("Administration").RequireAuthorization(AuthPolicies.Administrator);
 
@@ -134,12 +148,12 @@ public static class ExtensionEndpoints
     }
 
     private static async Task<Ok<ExtensionListResponse>> ListAsync(
-        ClaimsPrincipal user, ExtensionRegistry registry, IOptions<PluginOptions> options, CancellationToken cancellationToken)
+        ClaimsPrincipal user, ExtensionRegistry registry, PluginActivations pluginActivations, IOptions<PluginOptions> options, CancellationToken cancellationToken)
     {
         var rows = await registry.ListAsync(enabledOnly: true, cancellationToken);
         var activations = user.FindAccountId() is { } ownerId && rows.Any(row => row.Kind == "plugin")
-            ? await registry.PluginActivationsAsync(ownerId, cancellationToken)
-            : new Dictionary<string, bool>();
+            ? await pluginActivations.ListAsync(ownerId, cancellationToken)
+            : new Dictionary<string, PluginActivation>();
         return TypedResults.Ok(new ExtensionListResponse(
             CoreApi.Version.ToString(),
             rows.Select(row => ToResponse(row, activations)).ToList(),
@@ -149,55 +163,13 @@ public static class ExtensionEndpoints
                 options.Value.AllowDevelopmentPlugins)));
     }
 
-    private static async Task<Results<NoContent, ProblemHttpResult>> SetPluginActivationAsync(
-        string id, PluginActivationRequest request, ClaimsPrincipal user, ExtensionRegistry registry, IOptions<PluginOptions> options, CancellationToken cancellationToken)
-    {
-        if (request.Enabled is not { } enabled)
-        {
-            return ApiProblems.Validation(new FieldError("enabled", FieldErrorCodes.Required, "The field \"enabled\" is necessary."));
-        }
-
-        var extension = await registry.FindAsync(id, cancellationToken);
-        if (extension is not { Kind: "plugin", Enabled: true } || !extension.Compatible)
-        {
-            return ApiProblems.NotFound("The instance has no enabled plugin with this ID.");
-        }
-
-        var ownerId = user.GetAccountId();
-        if (enabled)
-        {
-            var activePlugins = await ActivePluginIdsAsync(ownerId, registry, cancellationToken);
-            var maxActive = options.Value.MaxActivePlugins;
-            if (!activePlugins.Contains(id) && activePlugins.Count >= maxActive)
-            {
-                return ApiProblems.Conflict(
-                    TooManyActivePlugins,
-                    $"You have {activePlugins.Count} active plugins, and the instance allows {maxActive}. Deactivate a plugin before you activate a different plugin.");
-            }
-        }
-
-        await registry.SetPluginActivationAsync(ownerId, id, enabled, cancellationToken);
-        return TypedResults.NoContent();
-    }
-
-    /// <summary>Gets the IDs of the plugins that run for the user: the instance enables them, and the user activated them.</summary>
-    private static async Task<HashSet<string>> ActivePluginIdsAsync(Guid ownerId, ExtensionRegistry registry, CancellationToken cancellationToken)
-    {
-        var activations = await registry.PluginActivationsAsync(ownerId, cancellationToken);
-        var rows = await registry.ListAsync(enabledOnly: true, cancellationToken);
-        return rows
-            .Where(row => row.Kind == "plugin" && row.Compatible && activations.GetValueOrDefault(row.Id))
-            .Select(row => row.Id)
-            .ToHashSet(StringComparer.Ordinal);
-    }
-
     private static async Task<Ok<IReadOnlyList<AdminExtensionResponse>>> ListAllAsync(ExtensionRegistry registry, CancellationToken cancellationToken)
     {
         var rows = await registry.ListAsync(enabledOnly: false, cancellationToken);
         return TypedResults.Ok<IReadOnlyList<AdminExtensionResponse>>(rows.Select(ToAdminResponse).ToList());
     }
 
-    private static async Task<Results<Created<AdminExtensionResponse>, Ok<AdminExtensionResponse>, ProblemHttpResult>> InstallAsync(
+    internal static async Task<Results<Created<AdminExtensionResponse>, Ok<AdminExtensionResponse>, ProblemHttpResult>> InstallAsync(
         string id, JsonElement body, ExtensionRegistry registry, CancellationToken cancellationToken)
     {
         if (!TryReadManifest(body, out var manifest, out var manifestJson, out var readErrors))
@@ -223,6 +195,11 @@ public static class ExtensionEndpoints
             return ApiProblems.Conflict(
                 CoreVersionNotSupported,
                 $"The extension supports the core API versions \"{manifest.CoreApi}\", but the core API version is {CoreApi.Version}. Install a version of the extension for this core.");
+        }
+
+        if (manifest.Kind == "plugin" && await registry.RevocationReasonAsync(id, manifest.Version!, cancellationToken) is { } reason)
+        {
+            return ApiProblems.Conflict(VersionRevoked, $"The plugin catalog revoked the version {manifest.Version} of {id}: {reason} Install a different version.");
         }
 
         var existing = await registry.FindAsync(id, cancellationToken);
@@ -257,6 +234,13 @@ public static class ExtensionEndpoints
             return ApiProblems.Conflict(
                 CoreVersionNotSupported,
                 $"The extension supports the core API versions \"{existing.CoreApi}\", but the core API version is {CoreApi.Version}. Install a compatible version before you enable it.");
+        }
+
+        if (request.Enabled == true && existing.Revoked)
+        {
+            return ApiProblems.Conflict(
+                VersionRevoked,
+                $"The plugin catalog revoked the version {existing.Version} of {id}: {existing.RevocationReason} Install a different version before you enable it.");
         }
 
         var settings = request.Settings is { ValueKind: JsonValueKind.Object } value ? value : (JsonElement?)null;
@@ -320,11 +304,18 @@ public static class ExtensionEndpoints
         return true;
     }
 
-    private static ExtensionResponse ToResponse(ExtensionRow row, IReadOnlyDictionary<string, bool>? activations)
+    private static ExtensionResponse ToResponse(ExtensionRow row, IReadOnlyDictionary<string, PluginActivation>? activations)
     {
-        var active = row.Enabled && row.Compatible && (row.Kind == "module" || (activations?.GetValueOrDefault(row.Id) ?? false));
+        var isPlugin = row.Kind == "plugin";
+        var asked = isPlugin ? PluginGrant.FromManifest(row.Manifest) : PluginGrant.Empty;
+        var activation = isPlugin ? activations?.GetValueOrDefault(row.Id) : null;
+        var active = row.Enabled && row.Compatible && !row.Revoked && (!isPlugin || (activation?.Runs(asked) ?? false));
         var (panels, i18n, formats) = ReadInterface(row.Manifest);
-        return new ExtensionResponse(row.Id, row.Kind, row.Name, row.Version, row.CoreApi, row.Permissions, row.Slots, row.Enabled, row.Compatible, active, panels, i18n, formats);
+        return new ExtensionResponse(
+            row.Id, row.Kind, row.Name, row.Version, row.CoreApi, row.Permissions, row.Slots, row.Enabled, row.Compatible, active, panels, i18n, formats,
+            asked.Network, asked.Devices, asked.Sites, PluginActivationEndpoints.ToResponse(activation), activation?.IsPaused(asked) ?? false,
+            activation is null ? null : new PluginLayoutResponse(activation.Settings.Position, activation.Settings.Hidden),
+            activation?.Settings.DisabledByCoreAt);
     }
 
     /// <summary>Reads the panels, the translations and the formats of a manifest. The API checked the manifest at install time.</summary>
@@ -388,7 +379,8 @@ public static class ExtensionEndpoints
         ParseJson(row.Manifest),
         ParseJson(row.Settings),
         new DateTimeOffset(row.InstalledAt, TimeSpan.Zero),
-        new DateTimeOffset(row.UpdatedAt, TimeSpan.Zero));
+        new DateTimeOffset(row.UpdatedAt, TimeSpan.Zero),
+        row.RevocationReason);
 
     private static JsonElement ParseJson(string json)
     {

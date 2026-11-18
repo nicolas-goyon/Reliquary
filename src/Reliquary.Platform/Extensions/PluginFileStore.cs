@@ -209,6 +209,19 @@ public sealed partial class PluginFileStore(IDatabase database, TimeProvider tim
     }
 
     /// <summary>
+    /// Tells whether the store has the files of a plugin version.
+    /// </summary>
+    /// <returns><see langword="true"/> when the store has one file or more of the version.</returns>
+    public async Task<bool> HasVersionAsync(string extensionId, string version, CancellationToken cancellationToken)
+    {
+        await using var connection = await database.OpenUsersAsync(cancellationToken);
+        return await connection.ExecuteScalarAsync<bool>(new CommandDefinition(
+            "select exists (select 1 from users.extension_files where extension_id = @extensionId and version = @version)",
+            new { extensionId, version },
+            cancellationToken: cancellationToken));
+    }
+
+    /// <summary>
     /// Gets a file of a plugin version.
     /// </summary>
     /// <returns>The file, or <see langword="null"/> when the store does not have it.</returns>

@@ -1,4 +1,4 @@
-import type { ApiFetchParams, ApiFetchResult, ExportedFile, HostMethods, LinkedAccount, PluginMethods, RelayFetchParams, RelayFetchResult } from './methods.ts'
+import type { ApiFetchParams, ApiFetchResult, ExportedFile, HostMethods, LinkedAccount, LinkedAccountSecret, PluginMethods } from './methods.ts'
 import { connectMessageType, coreApiVersion, errorCodes, readyMessageType, type ConnectMessage } from './protocol.ts'
 import { RpcError, RpcPeer, type PeerOptions } from './rpc.ts'
 import type { PanelSlot } from './manifest.ts'
@@ -20,10 +20,11 @@ export interface PluginSdk {
   }
   /** The network. The frame can reach only the domains of the plugin manifest that the user accepted. */
   readonly net: {
-    /** Sends a request from the frame. The site must accept requests with the header `Origin: null`. */
+    /**
+     * Sends a request from the frame. The site must accept requests with the header `Origin: null`.
+     * For `localhost` and `127.0.0.1`, the plugin manifest must declare the device "loopback-network", and the browser asks the user.
+     */
     fetch(input: string, init?: RequestInit): Promise<Response>
-    /** Sends a request through the network relay of the core, for a site that refuses requests from a browser. */
-    relay(params: RelayFetchParams): Promise<RelayFetchResult>
   }
   /** The storage of the plugin for the user. The core keeps it on the server. */
   readonly storage: {
@@ -35,6 +36,8 @@ export interface PluginSdk {
   /** The linked accounts of the user for this plugin. */
   readonly accounts: {
     list(): Promise<LinkedAccount[]>
+    /** Gets the linked account of a site with its secret, for example the API key. Do not keep the secret in the storage of the plugin. */
+    secret(site: string): Promise<LinkedAccountSecret>
   }
   /** The interface elements of the plugin. */
   readonly ui: {
@@ -94,6 +97,11 @@ export interface PluginDefinition {
   panels?: Record<string, PanelDefinition>
   /** The import formats and the export formats of the plugin, by the ID of the plugin manifest. */
   formats?: Record<string, FormatDefinition>
+  /**
+   * Syncs a linked account. The core calls it on a click of the user, when the web app opens, or periodically,
+   * as the field `accounts` of the plugin manifest tells. Throw an error when the sync fails.
+   */
+  syncAccount?(account: LinkedAccount, sdk: PluginSdk): void | Promise<void>
 }
 
 /** The window of the plugin frame, as the SDK uses it. Tests give a different environment. */
@@ -157,6 +165,7 @@ export function definePlugin(definition: PluginDefinition, options: DefinePlugin
       const peer = new RpcPeer<PluginMethods, HostMethods>(event.ports[0], options)
       const sdk = createSdk(peer, message)
       handleFormats(peer, definition.formats ?? {})
+      handleSync(peer, definition, sdk)
       Promise.resolve()
         .then(() => (message.panel ? mountPanel(definition, message.panel, sdk, peer, environment) : definition.activate(sdk)))
         .then(() => resolve(sdk), reject)
@@ -194,6 +203,17 @@ function handleFormats(peer: RpcPeer<PluginMethods, HostMethods>, formats: Recor
   })
 }
 
+/** Answers the syncs of the linked accounts. */
+function handleSync(peer: RpcPeer<PluginMethods, HostMethods>, definition: PluginDefinition, sdk: PluginSdk): void {
+  peer.handle('account.sync', async ({ account }) => {
+    if (!definition.syncAccount) {
+      throw new RpcError(errorCodes.methodNotFound, 'The plugin has no sync code. Add "syncAccount" to definePlugin.')
+    }
+    await definition.syncAccount(account, sdk)
+    return null
+  })
+}
+
 /** Renders a panel in the body of the frame, and gives its height to the core when it changes. */
 async function mountPanel(
   definition: PluginDefinition,
@@ -225,6 +245,36 @@ async function mountPanel(
       }
     }).observe(document.documentElement)
   }
+}
+
+/** Tells whether the address names the computer of the user: `localhost`, a name that ends with `.localhost`, `127.0.0.0/8` or `[::1]`. */
+export function isLoopbackUrl(input: string): boolean {
+  let host: string
+  try {
+    host = new URL(input).hostname.toLowerCase()
+  } catch {
+    return false
+  }
+  return host === 'localhost' || host.endsWith('.localhost') || host === '[::1]' || /^127(\.\d{1,3}){3}$/.test(host)
+}
+
+let loopbackAddressSpace: boolean | undefined
+
+/**
+ * Tells whether the browser accepts the fetch option `targetAddressSpace: 'loopback'` (Local Network Access of Chromium).
+ * A browser that knows the option with other values throws for an unknown value, so the SDK tests the value one time.
+ * A browser that does not know the option ignores it.
+ */
+function supportsLoopbackAddressSpace(): boolean {
+  if (loopbackAddressSpace === undefined) {
+    try {
+      new Request('http://localhost/', { targetAddressSpace: 'loopback' } as RequestInit)
+      loopbackAddressSpace = true
+    } catch {
+      loopbackAddressSpace = false
+    }
+  }
+  return loopbackAddressSpace
 }
 
 function isConnectMessage(data: unknown): data is ConnectMessage {
@@ -270,8 +320,7 @@ function createSdk(peer: RpcPeer<PluginMethods, HostMethods>, message: ConnectMe
       fetch: (path, init = {}) => peer.call('api.fetch', { ...init, path }),
     },
     net: {
-      fetch: (input, init) => globalThis.fetch(input, init),
-      relay: (params) => peer.call('net.relay', params),
+      fetch: (input, init) => globalThis.fetch(input, isLoopbackUrl(input) && supportsLoopbackAddressSpace() ? ({ targetAddressSpace: 'loopback', ...init } as RequestInit) : init),
     },
     storage: {
       get: async <T>(storageKey: string) => {
@@ -288,6 +337,7 @@ function createSdk(peer: RpcPeer<PluginMethods, HostMethods>, message: ConnectMe
     },
     accounts: {
       list: async () => (await peer.call('accounts.list', null)).accounts,
+      secret: (site) => peer.call('accounts.secret', { site }),
     },
     ui: {
       contribute: async (slot, contribution) => {

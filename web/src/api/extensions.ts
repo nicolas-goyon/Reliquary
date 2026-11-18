@@ -22,6 +22,38 @@ export interface Extension {
   i18n: Record<string, Record<string, string>> | null
   /** The import formats and the export formats of the plugin manifest. */
   formats: ExtensionFormat[]
+  /** The network origins that the plugin manifest asks for. */
+  network: string[]
+  /** The devices that the plugin manifest asks for: "camera" and "loopback-network". */
+  devices: string[]
+  /** The host names of the linked account sites of the plugin manifest. */
+  sites: string[]
+  /** The access that the user accepted for the plugin, or null. */
+  consent: PluginConsent | null
+  /** True when the user activated the plugin, but the installed version asks for access that the user did not accept. */
+  paused: boolean
+  /** The position of the plugin and the contributions that the user hides, or null when the user never activated the plugin. */
+  layout?: PluginLayout | null
+  /** The time when the web app deactivated the plugin because it failed too many times, or null. */
+  disabledByCoreAt?: string | null
+}
+
+/** The layout of a plugin for the user. See issue #278. */
+export interface PluginLayout {
+  /** The position of the contributions of the plugin among the contributions of the other plugins. A smaller number comes first. */
+  position: number
+  /** The hidden contributions, as "slot:id", for example "deck.actions:sync". */
+  hidden: string[]
+}
+
+/** The access that the user accepted for a plugin version. */
+export interface PluginConsent {
+  version: string
+  scopes: string[]
+  network: string[]
+  devices: string[]
+  sites: string[]
+  acceptedAt: string | null
 }
 
 /** An import format or an export format of a plugin manifest. */

@@ -85,6 +85,64 @@
       "profile_read": "Read your account: email address, name and language"
     }
   },
+  "plugins": {
+    "title": "Plugins",
+    "description": "Plugins add functions to Reliquary. Each plugin runs in a sandbox and gets only the access that you accept.",
+    "version": "Version {{version}}",
+    "state": {
+      "active": "Active.",
+      "inactive": "Not active.",
+      "paused": "Paused. The new version asks for more access. Read the new access to start the plugin again.",
+      "disabledByCore": "Reliquary deactivated this plugin on {{date}}, because it failed too many times. You can activate it again."
+    },
+    "activate": "Activate",
+    "deactivate": "Deactivate",
+    "review": "Read the new access",
+    "activated": "The plugin {{name}} is active.",
+    "deactivated": "The plugin {{name}} is not active.",
+    "layout": {
+      "title": "Layout of {{name}}",
+      "position": "Position among the plugins",
+      "positionHint": "The elements of a plugin with a smaller number come first. The default is 0.",
+      "visible": "Elements that Reliquary shows",
+      "none": "The plugin has no element that you can hide now.",
+      "item": "{{text}} ({{slot}})",
+      "save": "Save the layout",
+      "saved": "Reliquary saved the layout of {{name}}.",
+      "slots": {
+        "navigation": "navigation",
+        "appMenu": "menu",
+        "deckActions": "actions of a deck",
+        "analysisTabs": "analysis of a deck",
+        "tableColumns": "column of the table mode",
+        "cardPage": "page of a card",
+        "importFormats": "import format",
+        "exportFormats": "export format"
+      }
+    },
+    "consent": {
+      "title": "Activate {{name}}",
+      "updateTitle": "New access for {{name}}",
+      "intro": "Read the access that the plugin {{name}} (version {{version}}) asks for. The plugin gets only this access.",
+      "updateIntro": "You accepted the version {{accepted}} of {{name}}. The version {{version}} asks for the access below in addition. The plugin stays paused until you accept this access.",
+      "nothing": "The plugin asks for no access to your data, to other sites or to your devices.",
+      "scopes": "Your data",
+      "network": "Sites that the plugin can contact",
+      "networkHint": "The plugin can send data to these sites and receive data from them.",
+      "siteHost": "The site {{host}}",
+      "subdomains": "All the sites of the domain {{host}}",
+      "computer": "Programs on your computer",
+      "computerPort": "A program on your computer, on the port {{port}}",
+      "devices": "Devices",
+      "camera": "Your camera",
+      "loopbackNetwork": "The programs on your computer, through the local network",
+      "sites": "Linked accounts",
+      "site": "Link your account of the site {{site}}",
+      "accept": "Accept and activate",
+      "acceptUpdate": "Accept the new access",
+      "cancel": "Cancel"
+    }
+  },
   "developmentPlugins": {
     "title": "Development plugins",
     "description": "This instance is a development instance. You can load a plugin from the URL of its plugin manifest, for example the Vite server of the plugin. The plugin runs in a sandbox, but nobody reviewed it. Load only your own plugins.",
@@ -100,5 +158,39 @@
       "missingFields": "The plugin manifest does not have the fields \"id\", \"version\" and \"entry\". Add these fields to the plugin manifest.",
       "invalidEntry": "The field \"entry\" of the plugin manifest is not an http or https URL. Change the field \"entry\"."
     }
+  },
+  "linkedAccounts": {
+    "title": "Linked accounts",
+    "description": "Your plugins use these accounts on other sites. Reliquary encrypts each API key, and only the plugin of the link can read it.",
+    "site": "Site",
+    "plugin": "Plugin",
+    "stateTitle": "State",
+    "lastSync": "Last sync",
+    "actions": "Actions",
+    "never": "Never",
+    "state": {
+      "notLinked": "Not linked",
+      "linked": "Linked",
+      "synced": "Synced",
+      "failed": "Sync failed",
+      "keyLost": "Link the account again",
+      "syncing": "Sync in progress"
+    },
+    "pluginInactive": "The plugin does not run. You can only unlink the account.",
+    "link": "Link",
+    "change": "Change",
+    "sync": "Sync",
+    "unlink": "Unlink",
+    "unlinkConfirm": "Unlink your account on {{site}}? Reliquary deletes the link and its API key.",
+    "oauthLater": "This sign-in method is not available yet.",
+    "formTitle": "Link your account on {{site}}",
+    "apiKey": "API key",
+    "apiKeyHint": "Reliquary encrypts the key. Only the plugin of the link can read it. The page never shows it again.",
+    "userName": "User name",
+    "userNameOptional": "User name (optional)",
+    "userNameHint": "Your public user name on the site. The plugin reads only your public data.",
+    "submit": "Link the account",
+    "cancel": "Cancel",
+    "linked": "Reliquary linked your account on {{site}}."
   }
 }

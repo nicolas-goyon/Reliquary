@@ -52,6 +52,10 @@ export interface DevelopmentPlugin {
   network: string[]
   /** The slots of the plugin manifest. */
   slots: string[]
+  /** The scopes of the public API that the plugin manifest asks for. */
+  permissions: string[]
+  /** The devices of the plugin manifest, for example "camera". */
+  devices: string[]
   /** The panels of the plugin manifest. */
   panels: ExtensionPanel[]
   i18n: Record<string, Record<string, string>> | null
@@ -93,7 +97,7 @@ export async function loadDevelopmentManifest(manifestUrl: string, fetcher: type
       ? error
       : new DevelopmentManifestError('notAvailable', 'The plugin manifest did not load. Make sure that the server of the plugin runs and accepts requests from this site.')
   }
-  const { id, name, version, entry, network, slots, panels, i18n, formats } = manifest ?? {}
+  const { id, name, version, entry, network, slots, permissions, devices, panels, i18n, formats } = manifest ?? {}
   if (typeof id !== 'string' || typeof version !== 'string' || typeof entry !== 'string') {
     throw new DevelopmentManifestError('missingFields', 'The plugin manifest must have the fields "id", "version" and "entry".')
   }
@@ -109,6 +113,8 @@ export async function loadDevelopmentManifest(manifestUrl: string, fetcher: type
     entry: entryUrl,
     network: Array.isArray(network) ? network.filter((item): item is string => typeof item === 'string' && isHttpUrl(item)) : [],
     slots: Array.isArray(slots) ? slots.filter((item): item is string => typeof item === 'string') : [],
+    permissions: Array.isArray(permissions) ? permissions.filter((item): item is string => typeof item === 'string') : [],
+    devices: Array.isArray(devices) ? devices.filter((item): item is string => typeof item === 'string') : [],
     panels: Array.isArray(panels) ? panels.filter(isPanel) : [],
     i18n: typeof i18n === 'object' && i18n !== null && !Array.isArray(i18n) ? (i18n as Record<string, Record<string, string>>) : null,
     formats: Array.isArray(formats) ? formats.filter(isFormat).map((format) => ({ ...format, extensions: Array.isArray(format.extensions) ? format.extensions : [] })) : [],
@@ -135,6 +141,10 @@ export function developmentFrameUrl(plugin: DevelopmentPlugin, frameOrigin: stri
   const query = new URLSearchParams({ entry: plugin.entry })
   for (const origin of plugin.network) {
     query.append('network', origin)
+  }
+  // The developer wrote the manifest, so a development plugin gets all the devices of its manifest.
+  for (const device of plugin.devices) {
+    query.append('devices', device)
   }
   const path = `/api/v1/plugins/development/frame?${query}`
   return frameOrigin ? `${frameOrigin.replace(/\/+$/, '')}${path}` : path

@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Reliquary.Platform.Extensions;
 using Reliquary.Platform.Migrations;
@@ -80,7 +81,12 @@ internal sealed class PluginInstance : IAsyncDisposable
         }
     }
 
-    public static async Task<PluginInstance> CreateAsync(params (string Key, string Value)[] settings)
+    public static Task<PluginInstance> CreateAsync(params (string Key, string Value)[] settings) => CreateAsync(null, settings);
+
+    /// <summary>
+    /// Creates an instance with settings and changes of the services, for example the HTTP handler of the plugin catalog.
+    /// </summary>
+    public static async Task<PluginInstance> CreateAsync(Action<IServiceCollection>? services, params (string Key, string Value)[] settings)
     {
         var database = await TestServers.CreateDatabaseAsync("plugins");
         var factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
@@ -95,6 +101,11 @@ internal sealed class PluginInstance : IAsyncDisposable
             foreach (var (key, value) in settings)
             {
                 builder.UseSetting(key, value);
+            }
+
+            if (services is not null)
+            {
+                builder.ConfigureTestServices(services);
             }
         });
         await factory.Services.GetRequiredService<MigrationRunner>().MigrateAsync(TestContext.Current.CancellationToken);
@@ -147,6 +158,25 @@ internal sealed class PluginInstance : IAsyncDisposable
         (await admin.PatchAsJsonAsync($"/api/v1/admin/extensions/{id}", new { enabled = true }, TestContext.Current.CancellationToken)).EnsureSuccessStatusCode();
         var stored = files.Length > 0 ? files : [new PluginFile((string)manifest["entry"]!, EntryContent)];
         await Files.SaveVersionAsync(id, (string)manifest["version"]!, stored, TestContext.Current.CancellationToken);
+    }
+
+    /// <summary>
+    /// Activates a plugin for the user, with the consent for all the access of the installed version.
+    /// </summary>
+    public static async Task ActivateAsync(HttpClient user, string id)
+    {
+        var cancel = TestContext.Current.CancellationToken;
+        var plugin = (await user.GetFromJsonAsync<JsonElement>("/api/v1/extensions", cancel)).GetProperty("items").EnumerateArray()
+            .Single(item => item.GetProperty("id").GetString() == id);
+        var consent = new
+        {
+            version = plugin.GetProperty("version").GetString(),
+            scopes = plugin.GetProperty("permissions"),
+            network = plugin.GetProperty("network"),
+            devices = plugin.GetProperty("devices"),
+            sites = plugin.GetProperty("sites"),
+        };
+        (await user.PutAsJsonAsync($"/api/v1/me/extensions/{id}", new { enabled = true, consent }, cancel)).EnsureSuccessStatusCode();
     }
 
     public async ValueTask DisposeAsync()

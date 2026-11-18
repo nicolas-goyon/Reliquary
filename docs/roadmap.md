@@ -27,7 +27,7 @@ flowchart TB
     g25{{"Gate: an update keeps the data, and a rollback gives the data before the update."}}
     m3["M3 · Deck testing<br/>Goldfish, local multiplayer, shared screen, simplified online games"]
     g3{{"Gate: an online game with 4 players runs for one hour with no desynchronization."}}
-    m4["M4 · Plugins<br/>Plugin SDK, slots, linked accounts, plugin catalog, card scan plugin, Helm chart"]
+    m4["M4 · Plugins<br/>Plugin SDK, slots, linked accounts, plugin catalog, Helm chart"]
     g4{{"Gate: a signed plugin of the catalog works only with the scopes and domains that the user accepted. A revoked version stops after one sync."}}
     m0 --> g0 --> m1 --> g1 --> m2 --> g2 --> m25 --> g25 --> m3 --> g3 --> m4 --> g4
 ```
@@ -96,9 +96,9 @@ See [Gate test](architecture/online-games.md#gate-test).
 ## [M4: Plugins](https://github.com/nicolas-goyon/reliquary/milestone/5)
 
 - Browser plugins: the plugin SDK, interface slots, linked accounts, and the plugin catalog with checked and signed plugins
-- A card scan plugin
 - A Helm chart for Kubernetes
 
+The card scan plugin, the network relay and OAuth 2 for linked accounts come after M4, when a real plugin needs them.
 The move of users to another database while the instance runs comes after M4.
 Server modules also come after M4.
 
@@ -111,12 +111,17 @@ The test checks these steps:
 4. The browser refuses a request of the plugin to a domain that the user did not accept.
 5. The test catalog revokes the version. After one sync, the plugin does not run.
 
+The test is in `tests/Reliquary.Api.Tests/Plugins/SignedPluginGateTests.cs`.
+In step 1, the test sends the consent of the user for the access of the plugin.
+Step 4 checks the CSP header of the plugin frame. A test in a browser is not part of the gate test yet.
+
 The decision records [0048](decisions/0048-plugin-sdk-license-and-packaging.md) to [0053](decisions/0053-helm-chart-scope.md) give the design of M4.
 
 ## [Later](https://github.com/nicolas-goyon/reliquary/milestone/6)
 
 - Server modules
 - Collection sharing
+- The card scan plugin, the network relay for plugins, and OAuth 2 with PKCE for linked accounts
 - The move of users to another database while the instance runs
 - The features with the priority v2 or later:
   - comments under a deck

@@ -58,7 +58,8 @@
     "decks": "Decks",
     "explore": "Explorer",
     "moderation": "Modération",
-    "collection": "Collection"
+    "collection": "Collection",
+    "plugins": "Plugins"
   },
   "notFound": {
     "title": "Page introuvable",
@@ -115,7 +116,16 @@
     "game_started": "La partie a commencé. Un nouveau joueur ne peut plus la rejoindre.",
     "game_open_limit": "Vous avez 3 parties ouvertes. Fermez une partie, puis créez une nouvelle partie.",
     "game_not_enough_players": "La partie a besoin d’au moins 2 joueurs. Envoyez le lien d’invitation à un autre joueur.",
-    "plugin_format_failed": "Le plugin n’a pas converti le fichier. Vérifiez le fichier ou choisissez un autre format."
+    "plugin_format_failed": "Le plugin n’a pas converti le fichier. Vérifiez le fichier ou choisissez un autre format.",
+    "consent_required": "Le plugin demande des accès que vous n’avez pas acceptés. Lisez les accès, puis acceptez-les.",
+    "consent_outdated": "Le plugin a changé pendant que la fenêtre était ouverte. Fermez la fenêtre et lisez de nouveau les accès.",
+    "too_many_active_plugins": "Vous avez le nombre maximal de plugins actifs. Désactivez un plugin, puis réessayez.",
+    "vault_not_configured": "L’instance ne peut pas garder de clé d’API. Prévenez l’administrateur de l’instance.",
+    "vault_key_missing": "L’instance a perdu la clé de ce secret. Liez le compte à nouveau.",
+    "vault_secret_unreadable": "L’instance ne peut pas lire ce secret. Liez le compte à nouveau.",
+    "linked_account_method_not_supported": "Cette méthode de connexion n’est pas encore disponible.",
+    "catalog_not_configured": "L’instance n’a pas de catalogue de plugins. Donnez l’adresse d’un index de catalogue dans les réglages de l’instance.",
+    "catalog_sync_failed": "La synchronisation du catalogue de plugins a échoué. Lisez les journaux de l’API, puis réessayez."
   },
   "fieldErrors": {
     "required": "Ce champ est obligatoire.",
@@ -137,6 +147,50 @@
     "cellLoading": "Le plugin charge la cellule.",
     "cellFailed": "Le plugin {{name}} n’a pas donné cette cellule.",
     "formatGroup": "Formats des plugins",
-    "notCheckedFormat": "{{title}} (non vérifié)"
+    "notCheckedFormat": "{{title}} (non vérifié)",
+    "noticeFrom": "{{name}} :",
+    "noticeFromNotChecked": "{{name}} (non vérifié) :",
+    "dismissNotice": "Fermer",
+    "disabledByCore": "Reliquary a désactivé le plugin {{name}}, car il a échoué trop souvent. Vous pouvez le réactiver dans le panneau Plugins de votre compte."
+  },
+  "adminPlugins": {
+    "title": "Plugins de l’instance",
+    "forbidden": "Seuls les administrateurs peuvent ouvrir cette page.",
+    "description": "Installez les plugins du catalogue et activez-les pour l’instance. Chaque utilisateur active ensuite un plugin dans le panneau Plugins de son compte et accepte ses accès.",
+    "catalog": {
+      "title": "Catalogue de plugins",
+      "notConfigured": "L’instance n’a pas de catalogue de plugins. Donnez l’adresse d’un index de catalogue dans Plugins:Catalog:Url.",
+      "neverSynced": "L’instance n’a pas encore reçu l’index du catalogue.",
+      "state": "Index {{serial}}. Dernière synchronisation : {{checked}}. L’index expire le {{expires}}.",
+      "sync": "Synchroniser le catalogue maintenant"
+    },
+    "synced": "Le catalogue a l’index {{serial}}. Nouvelles versions de plugins : {{added}}. Nouvelles versions révoquées : {{revoked}}.",
+    "empty": "L’instance n’a aucun plugin. Synchronisez le catalogue pour recevoir ses plugins.",
+    "columns": {
+      "plugin": "Plugin",
+      "state": "État",
+      "latest": "Dernière version du catalogue",
+      "actions": "Actions"
+    },
+    "state": {
+      "notInstalled": "Non installé.",
+      "enabled": "Version {{version}}. Activé pour l’instance.",
+      "disabled": "Version {{version}}. Installé, non activé.",
+      "revoked": "Version {{version}}. Le catalogue a révoqué cette version : {{reason}}",
+      "notCompatible": "Version {{version}}. Cette version ne prend pas en charge cette version de Reliquary."
+    },
+    "noVersion": "Aucune",
+    "actions": {
+      "installAndEnable": "Installer et activer",
+      "update": "Mettre à jour vers {{version}}",
+      "enable": "Activer",
+      "disable": "Désactiver",
+      "uninstall": "Désinstaller"
+    },
+    "enabled": "Le plugin {{name}} (version {{version}}) est activé pour l’instance.",
+    "disabled": "Le plugin {{name}} n’est pas activé pour l’instance.",
+    "updated": "Le plugin {{name}} a la version {{version}}.",
+    "uninstalled": "Reliquary a désinstallé le plugin {{name}}.",
+    "uninstallConfirm": "Désinstaller le plugin {{name}} ? Le plugin s’arrête pour tous les utilisateurs."
   }
 }

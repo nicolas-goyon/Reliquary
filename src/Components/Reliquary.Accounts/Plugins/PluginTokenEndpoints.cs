@@ -15,6 +15,13 @@ namespace Reliquary.Accounts.Plugins;
 /// <param name="Scopes">The scopes of the token.</param>
 public sealed record PluginTokenResponse(string Token, DateTimeOffset ExpiresAt, string PluginId, IReadOnlyList<string> Scopes);
 
+/// <summary>The optional body of the request for a plugin token.</summary>
+/// <param name="Scopes">
+/// The scopes that the token can have. The token gets only the scopes of this list that the plugin has.
+/// The web app sends the scopes of the plugin manifest for a development plugin, because the instance does not have this manifest.
+/// </param>
+public sealed record PluginTokenRequest(IReadOnlyList<string>? Scopes);
+
 /// <summary>
 /// The endpoint that gives a plugin token to the web app. See docs/decisions/0049-plugin-sandbox.md.
 /// </summary>
@@ -30,13 +37,15 @@ internal static class PluginTokenEndpoints
     }
 
     private static async Task<Results<Ok<PluginTokenResponse>, ProblemHttpResult>> CreateAsync(
-        string id, ClaimsPrincipal user, IPluginAccess access, PluginTokens tokens, CancellationToken cancellationToken)
+        string id, PluginTokenRequest? request, ClaimsPrincipal user, IPluginAccess access, PluginTokens tokens, CancellationToken cancellationToken)
     {
         var accountId = user.GetAccountId();
-        if (await access.ScopesAsync(accountId, id, cancellationToken) is not { } scopes)
+        if (await access.ScopesAsync(accountId, id, cancellationToken) is not { } allowed)
         {
             return ApiProblems.NotFound("The plugin does not run for you. The instance must enable the plugin, and you must activate it.");
         }
+
+        var scopes = request?.Scopes is { } wanted ? allowed.Where(scope => wanted.Contains(scope, StringComparer.Ordinal)).ToList() : allowed;
 
         var (token, expiresAt) = tokens.Create(accountId, id, scopes);
         return TypedResults.Ok(new PluginTokenResponse(token, expiresAt, id, scopes));

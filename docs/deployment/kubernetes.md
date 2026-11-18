@@ -35,6 +35,7 @@ The API, the worker and the CLI read their settings from environment variables.
 - `ConnectionStrings__Users` and the other connection strings
 - `Auth__SigningKey`
 - `Email__Smtp__Password` and the client secrets of the external sign-in
+- `Plugins__VaultKeys__<key ID>`: the keys of the vault of the linked accounts
 
 The web container needs these variables:
 
@@ -108,7 +109,8 @@ These values are necessary:
 - `secrets.existingSecret`: the name of a Secret with the keys `Auth__SigningKey`, `ConnectionStrings__Users` and `ConnectionStrings__Redis`.
   The containers read all the keys of the Secret as environment variables.
 
-To check a change of the chart, run `just helm-check`.
+To check a change of the chart, run `just helm-check`. The CI runs the same check on each pull request.
+The release workflow publishes the chart to `oci://ghcr.io/nicolas-goyon/charts/reliquary`.
 To test the chart on a [kind](https://kind.sigs.k8s.io/) cluster, run `just helm-smoke`.
 The test installs the images `latest`, upgrades to the images `develop`, and checks the health endpoints and `/api/v1/status` after each step.
 The workflow `helm-smoke.yml` runs the same test each night.

@@ -145,6 +145,37 @@ jobs:
             exit 1
           fi
 
+  e2e:
+    name: End-to-end test code
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: e2e
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: web/.nvmrc
+          cache: npm
+          cache-dependency-path: e2e/package-lock.json
+
+      # The scheduled workflow e2e.yml runs the test. This job checks only the types, so it installs no browser.
+      - name: Install
+        run: npm ci
+
+      - name: Type check
+        run: npm run typecheck
+
+  chart:
+    name: Helm chart
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Lint, render and check the chart
+        run: tools/deploy-tests/check-chart.sh
+
   docs:
     name: Documentation
     runs-on: ubuntu-latest

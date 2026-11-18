@@ -91,6 +91,7 @@ restore:
     dotnet restore
     npm --prefix web ci
     npm --prefix sdk ci
+    npm --prefix e2e ci
 
 # Build the backend and the web app.
 build:
@@ -165,6 +166,7 @@ lint-code:
     npm --prefix web run lint
     npm --prefix web run typecheck
     npm --prefix sdk run typecheck
+    npm --prefix e2e run typecheck
 
 # Check the documentation against the ASD-STE100 rules and the Markdown rules.
 lint-docs:

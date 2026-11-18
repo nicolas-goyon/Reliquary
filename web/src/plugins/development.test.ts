@@ -61,6 +61,8 @@ describe('development plugins', () => {
       entry: 'http://localhost:5173/src/main.ts',
       network: ['https://api.example.org'],
       slots: [],
+      permissions: [],
+      devices: [],
       panels: [],
       i18n: null,
       formats: [],
@@ -79,11 +81,12 @@ describe('development plugins', () => {
   })
 
   it('makes the address of the development frame', () => {
-    const plugin = { manifestUrl: '', id: 'x', name: 'x', version: '1.0.0', entry: 'http://localhost:5173/src/main.ts', network: ['https://api.example.org'], slots: [], panels: [], i18n: null, formats: [] }
+    const plugin = { manifestUrl: '', id: 'x', name: 'x', version: '1.0.0', entry: 'http://localhost:5173/src/main.ts', network: ['https://api.example.org'], slots: [], permissions: [], devices: [], panels: [], i18n: null, formats: [] }
 
     expect(developmentFrameUrl(plugin, null)).toBe(
       '/api/v1/plugins/development/frame?entry=http%3A%2F%2Flocalhost%3A5173%2Fsrc%2Fmain.ts&network=https%3A%2F%2Fapi.example.org',
     )
     expect(developmentFrameUrl(plugin, 'https://plugins.example.org/')).toMatch(/^https:\/\/plugins\.example\.org\/api\/v1\/plugins\/development\/frame\?/)
+    expect(developmentFrameUrl({ ...plugin, devices: ['camera'] }, null)).toMatch(/&devices=camera$/)
   })
 })

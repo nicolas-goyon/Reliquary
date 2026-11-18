@@ -24,7 +24,7 @@ export function session(token = 'token-1', account: Record<string, unknown> = te
 
 /**
  * Replaces fetch with handlers for "METHOD /path" keys. A request with no handler fails the test,
- * except `GET /extensions`, which gives no extension by default.
+ * except `GET /extensions` and `GET /me/linked-accounts`, which give no extension and no linked account by default.
  * @returns The list of the requests, for the assertions.
  */
 export function mockApi(handlers: Record<string, Handler>) {
@@ -38,6 +38,10 @@ export function mockApi(handlers: Record<string, Handler>) {
       // A test with no handler for this request gets an instance with no extension, and the request is not in the list.
       if (key === 'GET /extensions' && !handlers[key]) {
         return Response.json({ coreApi: '1.1.0', items: [], plugins: { maxActive: 8, frameOrigin: null, developmentPlugins: false } })
+      }
+      // The account page asks the linked accounts. A test with no handler gets an empty list, and the request is not in the list.
+      if (key === 'GET /me/linked-accounts' && !handlers[key]) {
+        return Response.json({ items: [] })
       }
       const body = typeof init.body === 'string' ? JSON.parse(init.body) : undefined
       const headers = (init.headers ?? {}) as Record<string, string>

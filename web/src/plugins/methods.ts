@@ -1,12 +1,20 @@
 /**
  * The methods of the RPC protocol that the host runtime uses.
  * The plugin SDK has the full list in sdk/src/methods.ts.
- * The issues of milestone M4 add the methods that the core answers: contributions, storage, API, network relay and linked accounts.
  */
 
 /** The methods that the core answers. The plugin calls them. */
 export interface HostMethods {
   [method: string]: { params: unknown; result: unknown }
+  /** Sends a request to the public API with a plugin token. See hostApi.ts. */
+  'api.fetch': { params: unknown; result: { status: number; body: unknown } }
+  /** The storage of the plugin for the user. The API keeps the values. */
+  'storage.get': { params: unknown; result: { value: unknown } }
+  'storage.set': { params: unknown; result: null }
+  'storage.remove': { params: unknown; result: null }
+  'storage.keys': { params: null; result: { keys: string[] } }
+  /** Shows a short message to the user. */
+  'ui.notify': { params: unknown; result: null }
   /** Adds a contribution of the plugin to a slot. The core checks the data before it accepts it. */
   'ui.contribute': { params: unknown; result: null }
   /** Removes a contribution of the plugin. */
@@ -16,6 +24,10 @@ export interface HostMethods {
   'ui.openDialog': { params: unknown; result: null }
   'ui.closeDialog': { params: unknown; result: null }
   'ui.openPage': { params: unknown; result: null }
+  /** The linked accounts of the user for the plugin. See src/linkedAccounts/sync.ts. */
+  'accounts.list': { params: null; result: unknown }
+  /** The linked account of a site with its secret. Only the peer of the plugin of the link gets it. */
+  'accounts.secret': { params: unknown; result: unknown }
 }
 
 /** The methods that the plugin answers. The core calls them. */
@@ -35,4 +47,6 @@ export interface PluginMethods {
   'ui.cells': { params: { id: string; rows: Record<string, unknown>[] }; result: unknown }
   /** The user selected a button or a menu item of the plugin. */
   'ui.action': { params: { slot: string; id: string; context: unknown }; result: null }
+  /** The core starts a sync of a linked account. The plugin throws an error when the sync fails. */
+  'account.sync': { params: { account: { site: string; userName: string | null; connected: boolean; lastSyncAt: string | null } }; result: null }
 }

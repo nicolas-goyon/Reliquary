@@ -5,6 +5,40 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## Unreleased
 
+### Added
+
+- The plugin catalog (ADR 0052): the worker gets the signed catalog index and checks its ECDSA P-256 signature.
+  Then it keeps the files of the plugin versions.
+  A version that the catalog revokes stops on the instance after one sync.
+- The page **Plugins** of the administrators: sync the catalog, install a plugin version, and enable or disable a plugin for the instance.
+- The consent dialog: the user accepts the scopes, the network origins, the devices and the linked account sites of a plugin in plain words.
+  A new version that asks for more access stays paused until the user accepts it.
+- Linked accounts (ADR 0051): the panel **Linked accounts** of the account page, with a public user name or an API key.
+  The vault encrypts each secret with AES-GCM (`Plugins:VaultKeys`), and only the plugin of the link can read it. The web app runs the syncs.
+- Plugins call the public API with `sdk.api.fetch`: the web app sends each request with a plugin token and with no cookie.
+- Plugins show a short message with `sdk.ui.notify`.
+- The plugin storage: 64 KB of JSON values for each plugin and each user (`sdk.storage`).
+- Plugins can use the camera and call a program on the computer of the user, when the user accepted these devices.
+- The layout of the plugins: the user gives a position to each plugin and hides its contributions.
+- The web app deactivates a plugin after 3 crashes or 5 slow answers in one browser session, and tells the user.
+- The export of personal data contains the folder `plugins`, and the deletion of an account deletes the plugin data.
+- The plugin template in `sdk/template`, the guide for plugin authors and the review check list of the plugin catalog.
+- Each release publishes the Helm chart as an OCI chart: `oci://ghcr.io/nicolas-goyon/charts/reliquary`. The chart has the version of the release.
+- The CI checks the Helm chart and the types of the end-to-end test code.
+
+### Changed
+
+- A development plugin gets a plugin token with the scopes of its plugin manifest, and its frame has a `Permissions-Policy` header.
+
+### Removed
+
+- `sdk.net.relay` of the plugin SDK. The core has no network relay yet.
+
+### Fixed
+
+- The deletion of an account now deletes the plugin activations of the account.
+- The Helm chart had the version 0.2.0 after the release 0.3.0. The release now sets the version of the chart.
+
 ## [0.3.0] - 2026-11-16
 
 ### Added

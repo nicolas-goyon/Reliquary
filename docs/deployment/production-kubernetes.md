@@ -137,7 +137,8 @@ A backup is not usable without the signing key and the passwords.
 ### Vault keys
 
 The vault of the linked accounts encrypts the secrets of the plugins with the keys of the setting `Plugins:VaultKeys` ([ADR 0050](../decisions/0050-no-plugin-code-on-the-server.md)).
-Each key has a key ID.
+Each key has a key ID: 1 to 64 letters, digits, dots, hyphens and underscores.
+Each key is 32 random bytes in Base64.
 
 1. Make a key:
 
@@ -146,10 +147,19 @@ Each key has a key ID.
    ```
 
 2. Add the key to the Secret with the name `Plugins__VaultKeys__<key ID>`, for example `Plugins__VaultKeys__2026-11`.
+3. Restart the pods of the API and of the worker.
 
-To change the key, add a new key with a new key ID.
+The key with the last key ID in alphabetical order encrypts the new secrets.
+Use key IDs that sort in the order of their dates, for example `2026-11`, then `2027-05`.
+
+To change the key, add a new key with a key ID that comes after the old key IDs.
 Do not delete the old keys. The vault needs them to read the old secrets.
+When a plugin reads a secret of an old key, the vault encrypts it again with the new key.
+
+The API does not start when a key ID or a key is not valid.
+Without a key, the users can link an account with a public user name, but not with an API key.
 When you lose a key, the secrets that it encrypted are lost. The users must link their accounts again.
+The backup of the database does not contain the keys. Keep a copy of the keys with the copy of the Secret.
 
 ## Write the values
 
@@ -214,28 +224,22 @@ The chart deletes no backup. Delete the old backups yourself, and copy the backu
 
 ## Install
 
-1. Get the chart of the release:
+1. Install the chart of the release. From the release 0.4.0, each release publishes the chart as an OCI chart, with the release number as its version:
 
    ```shell
-   git clone --depth 1 --branch vX.Y.Z https://github.com/nicolas-goyon/reliquary.git reliquary-X.Y.Z
-   ```
-
-2. Install the chart:
-
-   ```shell
-   helm install reliquary reliquary-X.Y.Z/deploy/helm/reliquary --namespace reliquary --values values-production.yaml --wait --timeout 15m
+   helm install reliquary oci://ghcr.io/nicolas-goyon/charts/reliquary --version X.Y.Z --namespace reliquary --values values-production.yaml --wait --timeout 15m
    ```
 
    Helm runs the migration Job first. Then it starts the API, the worker and the web app.
 
-3. Check the version:
+2. Check the version:
 
    ```shell
    kubectl --namespace reliquary port-forward service/reliquary-web 8080:8080
    curl http://localhost:8080/api/v1/status
    ```
 
-4. Open `https://reliquary.example.org`, make the account of the administrator email address, and open the link of the email.
+3. Open `https://reliquary.example.org`, make the account of the administrator email address, and open the link of the email.
 
 The worker imports the card data from Scryfall at its first start. The import takes some minutes.
 
@@ -243,20 +247,14 @@ The worker imports the card data from Scryfall at its first start. The import ta
 
 1. Read the release notes on the [releases page](https://github.com/nicolas-goyon/reliquary/releases).
 2. Check that the volume of the backups has space for one more backup.
-3. Get the chart of the new release:
+3. Change `image.tag` in `values-production.yaml` to the new release number.
+4. At a time with few users, upgrade to the chart of the new release:
 
    ```shell
-   git clone --depth 1 --branch vX.Y.Z https://github.com/nicolas-goyon/reliquary.git reliquary-X.Y.Z
+   helm upgrade reliquary oci://ghcr.io/nicolas-goyon/charts/reliquary --version X.Y.Z --namespace reliquary --values values-production.yaml --wait --timeout 15m
    ```
 
-4. Change `image.tag` in `values-production.yaml` to the new release number.
-5. At a time with few users, upgrade:
-
-   ```shell
-   helm upgrade reliquary reliquary-X.Y.Z/deploy/helm/reliquary --namespace reliquary --values values-production.yaml --wait --timeout 15m
-   ```
-
-6. Check the version with `/api/v1/status`, or in the footer of the web app.
+5. Check the version with `/api/v1/status`, or in the footer of the web app.
 
 The upgrade does these steps:
 

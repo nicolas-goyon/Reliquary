@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import type { HostMethods, PluginMethods } from './methods.ts'
-import { definePlugin, type PluginEnvironment, type PluginSdk } from './plugin.ts'
+import { definePlugin, isLoopbackUrl, type PluginEnvironment, type PluginSdk } from './plugin.ts'
 import { connectMessageType, coreApiVersion, errorCodes, readyMessageType, type ConnectMessage } from './protocol.ts'
 import { RpcError, RpcPeer, type PortLike } from './rpc.ts'
 
@@ -278,5 +278,84 @@ describe('definePlugin', () => {
     assert.deepEqual(await host.call('format.export', { id: 'sheet', content: 'a,b' }), { fileName: 'collection.tsv', contentType: 'text/tab-separated-values', content: 'a\tb' })
     await assert.rejects(host.call('format.export', { id: 'scan', content: 'x' }), (error: RpcError) => error.code === errorCodes.invalidParams)
     host.close()
+  })
+
+  it('syncs a linked account with the secret from the core', async () => {
+    const frame = new FakeFrame()
+    const synced: string[] = []
+    const handle = definePlugin(
+      {
+        activate: () => undefined,
+        syncAccount: async (account, sdk) => {
+          const { secret } = await sdk.accounts.secret(account.site)
+          if (secret === 'wrong') {
+            throw new Error('The site refused the API key.')
+          }
+          synced.push(`${account.site}:${secret}`)
+        },
+      },
+      { environment: frame },
+    )
+    const host = frame.connect()
+    let secret = 'key-1'
+    host.handle('accounts.secret', ({ site }) => ({ site, auth: 'api-key' as const, userName: null, secret }))
+    await handle.ready
+    const account = { site: 'example.com', userName: null, connected: true, lastSyncAt: null }
+
+    assert.equal(await host.call('account.sync', { account }), null)
+    secret = 'wrong'
+    await assert.rejects(host.call('account.sync', { account }), (error: RpcError) => error.message === 'The site refused the API key.')
+
+    assert.deepEqual(synced, ['example.com:key-1'])
+    host.close()
+  })
+
+  it('refuses a sync when the plugin has no sync code', async () => {
+    const frame = new FakeFrame()
+    const handle = definePlugin({ activate: () => undefined }, { environment: frame })
+    const host = frame.connect()
+    await handle.ready
+
+    const account = { site: 'example.com', userName: null, connected: true, lastSyncAt: null }
+    await assert.rejects(host.call('account.sync', { account }), (error: RpcError) => error.code === errorCodes.methodNotFound)
+    host.close()
+  })
+})
+
+describe('sdk.net.fetch', () => {
+  it('knows the addresses of the computer of the user', () => {
+    for (const url of ['http://localhost:8080/scan', 'http://127.0.0.1/', 'http://127.1.2.3:9/', 'http://[::1]:3000/', 'http://scanner.localhost/', 'HTTP://LOCALHOST/']) {
+      assert.equal(isLoopbackUrl(url), true, url)
+    }
+    for (const url of ['https://api.example.com/', 'https://localhost.example.com/', 'http://128.0.0.1/', 'http://1127.0.0.1.example/', 'not a url']) {
+      assert.equal(isLoopbackUrl(url), false, url)
+    }
+  })
+
+  it('marks a request to localhost as a loopback request, and changes no other request', async () => {
+    const frame = new FakeFrame()
+    const handle = definePlugin({ activate: () => undefined }, { environment: frame })
+    const core = frame.connect()
+    const sdk = await handle.ready
+    const calls: { input: unknown; init: unknown }[] = []
+    const original = globalThis.fetch
+    globalThis.fetch = (async (input: unknown, init?: unknown) => {
+      calls.push({ input, init })
+      return new Response('ok')
+    }) as typeof fetch
+    try {
+      await sdk.net.fetch('http://localhost:8080/scan', { method: 'POST' })
+      await sdk.net.fetch('https://api.example.com/decks', { method: 'POST' })
+      await sdk.net.fetch('https://api.example.com/decks')
+    } finally {
+      globalThis.fetch = original
+      core.close()
+    }
+
+    assert.deepEqual(calls, [
+      { input: 'http://localhost:8080/scan', init: { targetAddressSpace: 'loopback', method: 'POST' } },
+      { input: 'https://api.example.com/decks', init: { method: 'POST' } },
+      { input: 'https://api.example.com/decks', init: undefined },
+    ])
   })
 })

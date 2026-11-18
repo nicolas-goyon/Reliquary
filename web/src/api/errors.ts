@@ -45,6 +45,15 @@ export const translatedErrorCodes = [
   'game_open_limit',
   'game_not_enough_players',
   'plugin_format_failed',
+  'consent_required',
+  'consent_outdated',
+  'too_many_active_plugins',
+  'catalog_not_configured',
+  'catalog_sync_failed',
+  'vault_not_configured',
+  'vault_key_missing',
+  'vault_secret_unreadable',
+  'linked_account_method_not_supported',
 ] as const
 
 export type TranslatedErrorCode = (typeof translatedErrorCodes)[number]

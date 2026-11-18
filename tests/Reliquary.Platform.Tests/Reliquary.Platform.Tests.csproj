@@ -17,6 +17,7 @@
   <ItemGroup>
     <Compile Include="..\Shared\**\*.cs" Link="Shared\%(RecursiveDir)%(Filename)%(Extension)" />
     <EmbeddedResource Include="Migrations\**\*.sql" LogicalName="Migrations/%(RecursiveDir)%(Filename)%(Extension)" />
+    <EmbeddedResource Include="Extensions\Catalog\TestVectors\*" Exclude="Extensions\Catalog\TestVectors\.gitattributes" LogicalName="CatalogVectors/%(Filename)%(Extension)" />
   </ItemGroup>
 
   <ItemGroup>

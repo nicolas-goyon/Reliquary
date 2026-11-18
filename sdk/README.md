@@ -20,6 +20,8 @@ It uses the [Apache License 2.0](LICENSE).
 
 ## Write a plugin
 
+The guide [Write a plugin](../docs/plugins/index.md) gives the full procedure, and the folder [`template`](template/README.md) is a plugin to copy.
+
 Install the package:
 
 ```sh
@@ -114,9 +116,9 @@ The type `PluginManifest` gives the fields of the plugin manifest.
 | --- | --- |
 | `sdk.api.fetch(path, init)` | Send a request to the public API. The core adds a plugin token with the scopes that the user accepted. |
 | `sdk.net.fetch(url, init)` | Send a request from the frame to a domain of the plugin manifest. |
-| `sdk.net.relay(request)` | Send a request through the network relay of the core, for a site that refuses requests from a browser. |
-| `sdk.storage` | Keep small values for the user: `get`, `set`, `remove` and `keys`. |
+| `sdk.storage` | Keep small JSON values for the user on the server: `get`, `set`, `remove` and `keys`. One plugin has 64 KB at most for each user. |
 | `sdk.accounts.list()` | Get the linked accounts of the user for this plugin. |
+| `sdk.accounts.secret(site)` | Get the linked account of a site with its secret, for example the API key. Only this plugin can get it. Do not keep the secret in `sdk.storage`. |
 | `sdk.ui.contribute(slot, contribution)` | Add a button, a menu item or a column to a slot. |
 | `sdk.ui.notify(message, tone)` | Show a short message to the user. |
 | `sdk.ui.openDialog(panel, data)` | Open a panel of the slot `plugin.dialog` in a dialog. |
@@ -124,8 +126,33 @@ The type `PluginManifest` gives the fields of the plugin manifest.
 | `sdk.ui.openPage(page)` | Open a panel of the slot `plugin.page`. |
 | `sdk.ui.resize(height)` | Give the height of the panel. The SDK calls it for you. |
 
-The core gives these functions in milestone M4.
-Until the core has a function, a call to it fails with the error code `-32601` (method not found).
+When a call fails, the promise rejects with an `RpcError`. Its `code` is an error code of `errorCodes`, for example `-32002` (the plugin manifest does not declare the slot) or `-32004` (the storage is full).
+
+## Linked accounts
+
+The field `accounts` of the plugin manifest declares the external sites of the plugin.
+The account page of the user shows a **Linked accounts** panel for these sites.
+The core runs the sync, and calls the function `syncAccount` of the plugin:
+
+- `manual`: when the user selects **Sync** in the panel.
+- `on-open`: when the web app opens, and when the user selects **Sync**.
+- `periodic`: each `intervalMinutes` minutes while the web app is open, and when the user selects **Sync**. The minimum interval is 15 minutes.
+
+```ts
+definePlugin({
+  activate: () => undefined,
+  async syncAccount(account, sdk) {
+    const { secret } = await sdk.accounts.secret(account.site)
+    const response = await sdk.net.fetch(`https://api.example.com/decks?key=${secret}`)
+    if (!response.ok) {
+      throw new Error(`The site answered ${response.status}.`)
+    }
+  },
+})
+```
+
+When `syncAccount` throws an error, the panel shows the message of the error to the user.
+A sync has a time limit of 60 seconds.
 
 ## Errors
 

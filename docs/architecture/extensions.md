@@ -60,6 +60,64 @@ Plugins have two purposes:
 
 [ADR 0051](../decisions/0051-linked-accounts.md) gives the reasons for these rules.
 
+#### Linked accounts API
+
+The table `content.account_links` keeps one row for each user, plugin and site.
+A row has the authentication method, the name of the external account, the encrypted secret and the key ID.
+It also has the state and the time of the last sync.
+
+| Endpoint | Credential | Effect |
+| --- | --- | --- |
+| `GET /api/v1/me/linked-accounts` | Web session | Lists the sites of the plugins that run for the user, with the link of each site. It also lists the links of the plugins that do not run, so the user can unlink them. The response never contains a secret. |
+| `PUT /api/v1/me/extensions/{id}/accounts/{site}` | Web session | Links an account, or replaces the link. The body has `userName` for `public-username`, and `secret` with an optional `userName` for `api-key`. |
+| `DELETE /api/v1/me/extensions/{id}/accounts/{site}` | Web session | Deletes the link and its secret. |
+| `POST /api/v1/me/extensions/{id}/accounts/{site}/sync` | Web session | Records the result of a sync: `succeeded`, and `error` after a failed sync. The API keeps the time of the request and 200 characters of the message. |
+| `GET /api/v1/me/extensions/{id}/accounts/{site}/secret` | Plugin token of the plugin `{id}` | Gives `site`, `auth`, `userName` and `secret`. The response has `Cache-Control: no-store`. |
+
+- The plugin must run for the user, and its plugin manifest must declare the site. Else the API returns 404.
+- The API refuses `oauth2-pkce` with the code `linked_account_method_not_supported` until OAuth arrives.
+- A plugin token of a different plugin gets the status 403. A web session, an API key and a delegation token also get the status 403.
+- `RequirePluginToken()` marks an endpoint that accepts only a plugin token. `ScopeFilter` lets a plugin token through to such an endpoint, with no scope.
+
+#### Sync of linked accounts
+
+The web app runs the sync. `web/src/linkedAccounts/sync.ts` loads with the plugin runtime.
+
+- When a plugin frame starts, the core reads the linked accounts of the plugin:
+  - `on-open`: the core runs a sync of each linked account.
+  - `periodic`: the core runs a sync when the last sync is older than the interval, then checks again after each interval.
+    The interval is `intervalMinutes`, 60 minutes when the manifest gives no interval, and 15 minutes at least.
+    Before a periodic sync, the core reads the time of the last sync again, so two tabs do not run two syncs.
+- The Linked accounts panel shows a **Sync** button when the plugin frame runs. A new link also gets a first sync.
+- For a sync, the core calls `account.sync` on the plugin, with a time limit of 60 seconds.
+  The plugin throws an error when the sync fails. The core sends the result with `POST .../sync`.
+- The plugin gets the secret with `accounts.secret`. The core gets a plugin token, then calls the secret endpoint, and gives the answer to the frame of this plugin only.
+  The plugin gets its linked accounts without secrets with `accounts.list`.
+
+#### Vault
+
+The vault encrypts each secret with AES-GCM ([ADR 0050](../decisions/0050-no-plugin-code-on-the-server.md)).
+
+- The setting `Plugins:VaultKeys` gives the keys by key ID. Each key is 32 bytes in Base64.
+- The key with the last key ID in ordinal order encrypts the new secrets. The vault reads a secret with the key of its key ID.
+- The associated data is the owner ID, the plugin ID and the site. A secret of one user, plugin or site does not decrypt for a different user, plugin or site.
+- When a plugin reads a secret of an old key, the API encrypts the secret again with the current key.
+- The API does not start when a key ID or a key is not valid. The vault ignores a key with an empty value.
+- Without a key, the API refuses a link with a secret with the status 503 and the code `vault_not_configured`.
+- When the key of a secret is missing, the secret endpoint returns the status 409 with the code `vault_key_missing`.
+  The list shows `secretReadable: false`, and the user must link the account again.
+
+#### Personal data
+
+The provider `PluginPersonalData` of the platform follows [ADR 0032](../decisions/0032-personal-data.md):
+
+- The export of an account contains the folder `plugins`:
+  - `plugins.json` lists the plugins that the user activated, with the consent of the user.
+  - `linked-accounts.json` lists the linked accounts: the plugin, the site, the authentication method, the user name and the state of the last sync.
+    The field `hasSecret` tells whether the link has a secret. The file never contains a secret.
+  - `storage.json` lists the values of the [plugin storage](#plugin-storage), with the plugin and the key of each value.
+- The deletion of an account deletes the plugin activations, the linked accounts with their secrets, and the plugin storage.
+
 ### Interface slots
 
 - The interface contains named places for extensions: the **slots**.
@@ -154,6 +212,7 @@ Plugins have two purposes:
   - Each slot has a maximum size.
   - The user can change the order of the contributions and hide them.
   - The core disables a plugin automatically if the plugin crashes or slows the interface.
+  The section [Layout and failures](#layout-and-failures) gives the rules.
 
 ### Plugin runtime
 
@@ -187,6 +246,9 @@ The instance settings of the section `Plugins` are:
 | `Plugins:MaxActivePlugins` | 8 | The maximum number of active plugins for each user. `PUT /api/v1/me/extensions/{id}` refuses one more plugin with the error `too_many_active_plugins`. |
 | `Plugins:FrameOrigin` | none | A second host name for the plugin frames, for example `https://plugins.example.org`. Without a value, the frames use the host of the instance, with an opaque origin. |
 | `Plugins:AllowDevelopmentPlugins` | `false` | Allows the development mode. `appsettings.Development.json` and the local instance of `compose.yaml` turn it on. A deployed instance keeps it off. |
+| `Plugins:Catalog:Url` | none | The address of the catalog index, with HTTPS. Without a value, the worker does not sync a plugin catalog. See [Plugin catalog](#plugin-catalog). |
+| `Plugins:Catalog:Keys` | the keys of the project | The public keys that can sign the catalog index. |
+| `Plugins:Catalog:Interval` | `01:00:00` | The minimum time between two syncs of the catalog. |
 
 `GET /api/v1/extensions` gives these settings to the web app in the field `plugins`.
 
@@ -203,7 +265,8 @@ On a development instance, a user loads a plugin from the URL of its plugin mani
    It also allows the WebSocket of this origin, so the server of the plugin can reload the plugin.
    The `network` origins of the plugin manifest get `connect-src` and `img-src`.
    `PluginFramePolicy.ForDevelopment` makes this CSP. The same class makes the CSP of the installed plugins, so the two policies have the same common rules.
-5. The connect message has `development: true`, and the interface shows a "Not checked" banner for the plugin.
+5. The frame address also has the `devices` of the plugin manifest. The frame gets these devices, and the `Permissions-Policy` header turns off the other features.
+6. The connect message has `development: true`, and the interface shows a "Not checked" banner for the plugin.
    Each contribution of a development plugin must show this banner.
 
 The core does not check a development plugin, but the plugin runs in the same sandbox as other plugins.
@@ -252,6 +315,8 @@ A `MessagePort` can go to such a Worker.
   The relay accepts only the domains of the plugin manifest, and it has quotas.
   The relay does not log the content of the requests.
   The relay is off by default, and the administrator enables it for the instance.
+  The core does not have the relay yet, and the plugin SDK has no method for it.
+  Issue [#289](https://github.com/nicolas-goyon/reliquary/issues/289) adds the two when a real plugin needs the relay.
 
 [ADR 0011](../decisions/0011-plugin-network-allowlist.md) and [ADR 0050](../decisions/0050-no-plugin-code-on-the-server.md) give the reasons for these rules.
 
@@ -322,6 +387,7 @@ Two endpoints send a plugin version to the browser:
 
 The two endpoints accept requests with no credential, because the browser sends no credential when it opens the frame.
 They send only the installed version of a plugin that the instance enables, so a disabled plugin stops at the next start of its frame.
+They do not send a version that the plugin catalog revoked.
 
 The frame request has no credential, so the API does not know the user.
 Thus the runtime of the web app puts the values that the user accepted in the query of the frame address:
@@ -350,6 +416,8 @@ The frame response has these headers:
   It does not turn off the features of the accepted devices: `camera` for the device `camera`, and `loopback-network` and `local-network-access` for the device `loopback-network`.
   A header can only remove a permission.
   The `allow` attribute of the iframe gives the accepted devices to the frame, for example `allow="camera"`.
+  The web app makes the attribute from the `devices` values of the frame address (`frameAllow` in `web/src/plugins/frame.ts`), so the attribute and the header agree.
+  [Devices of a plugin](../plugins/devices.md) gives the rules for plugin authors and the manual check list for the browsers.
 - `Cache-Control: no-store`, `X-Content-Type-Options: nosniff` and `Referrer-Policy: no-referrer`
 
 Known limit: a sandboxed frame can open a new address in its own frame.
@@ -373,12 +441,14 @@ The web app calls the public API for a plugin with a plugin token.
 [ADR 0049](../decisions/0049-plugin-sandbox.md) gives the reasons.
 
 - `POST /api/v1/me/extensions/{id}/token` gives a plugin token. Only a web session can call it.
-  The plugin must run for the user: the instance enables it, it supports the core API, and the user activated it. Else the API returns 404.
+  The plugin must run for the user: the instance enables it, it supports the core API, and the user activated it.
+  The user must also accept all the access of the installed version. Else the API returns 404.
 - The response gives `token`, `expiresAt`, `pluginId` and `scopes`.
   The token is valid for 10 minutes (`Auth:PluginTokenLifetime`).
-- The scopes are the permissions of the manifest. The consent of issue #287 will limit them to the scopes that the user accepted.
+- The scopes are the permissions of the installed version that the user accepted. The section [Consent](#consent) gives the rules.
 - The web app sends the token in the header `Authorization: Bearer rlp_...`.
   `ScopeFilter` checks the scope of the endpoint, as for a delegation token. An endpoint without a scope refuses the token with the status 403 and the code `scope_missing`.
+  The only exceptions are the endpoints with `RequirePluginToken()`, for example the secret endpoint of the linked accounts.
 - The API asks the extension registry for each request whether the plugin still runs for the user.
   After a deactivation by the user or by the administrator, the token gives the status 401.
 
@@ -397,6 +467,219 @@ The plugin token also contains `sub` (the user), `plg` (the plugin ID) and `scop
 A delegation token is a random secret with the start `rld_`, so it is never a valid JWT.
 The policies `Session` and `Administrator` refuse a plugin token, so a plugin token cannot get a new plugin token.
 
+#### Requests of a plugin to the public API
+
+A plugin calls `sdk.api.fetch(path, init)`. The method `api.fetch` of the core sends the request. `web/src/plugins/hostApi.ts` contains the code.
+
+- The main frame and each panel frame of a plugin can call the method.
+- The path is a path after `/api/v1`, for example `/decks?limit=10`.
+  The core refuses a path with `//`, a backslash, a `#` or a dot segment, also when the path encodes them. Thus a request cannot leave `/api/v1`.
+- The methods are `GET`, `POST`, `PUT`, `PATCH` and `DELETE`. The body is JSON.
+- The core sends the request with the plugin token and with no cookie.
+  Thus a plugin cannot use the refresh cookie of the web session.
+- The core keeps one plugin token for each running plugin, until one minute before the token expires.
+  After the status 401, the core gets a new token and tries the request one time.
+- The plugin gets the status and the JSON body of the response. An error status of the API is a response for the plugin, not a failure of the call.
+
+A development plugin has no manifest on the instance. On an instance with `Plugins:AllowDevelopmentPlugins`, the web app asks the token with the ID `dev:<plugin ID>` and the scopes of the plugin manifest:
+`POST /api/v1/me/extensions/dev:deck-stats/token` with `{ "scopes": ["decks:read"] }`.
+The token gets only these scopes. A plugin ID cannot contain a colon, so this ID is never the ID of an installed plugin.
+Other instances return the status 404.
+
+#### Plugin storage
+
+The plugin frame has an opaque origin, so it has no storage of the browser.
+A plugin keeps small values for the user with `sdk.storage`: `get`, `set`, `remove` and `keys`.
+
+- The table `content.plugin_storage` keeps one JSON value for each owner, each plugin and each key.
+- A key has 1 to 128 characters. The keys and the values of one plugin and one user have 64 KB at most.
+  A write that goes over this limit changes nothing. The API returns the status 413 with the code `plugin_storage_full`, and the plugin gets the error code `-32004`.
+- The endpoints accept only a plugin token of the plugin `{id}`. A web session and the token of a different plugin get the status 403.
+  - `GET /api/v1/me/extensions/{id}/storage` lists the keys.
+  - `GET /api/v1/me/extensions/{id}/storage?key=<key>` gives `{ "value": ... }`, or the status 404.
+  - `PUT /api/v1/me/extensions/{id}/storage?key=<key>` with `{ "value": ... }` keeps the value.
+  - `DELETE /api/v1/me/extensions/{id}/storage?key=<key>` deletes the value.
+- The storage keeps no `null` value: `sdk.storage.set(key, null)` removes the key.
+- A plugin must not keep a secret in the storage. The vault keeps the secrets of the linked accounts.
+- The storage of a development plugin uses the ID `dev:<plugin ID>`.
+
+#### Notices
+
+A plugin calls `sdk.ui.notify(message, tone)` to show a short message. The tones are `info`, `success` and `error`.
+The component `PluginNotices` of the core shows the message as text, with the name of the plugin, for 8 seconds.
+The core cuts a message after 200 characters, and it shows 3 notices at most for each plugin.
+
+### Plugin catalog
+
+The plugin catalog publishes two files: the catalog index `index.json` and its signature `index.json.sig`.
+[ADR 0052](../decisions/0052-plugin-catalog-signature-and-revocation.md) gives the reasons for the design.
+
+```json
+{
+  "format": 1,
+  "serial": 42,
+  "expires": "2026-12-16T00:00:00Z",
+  "keyId": "reliquary-2026",
+  "plugins": [
+    {
+      "id": "deck-stats",
+      "versions": [
+        {
+          "version": "1.2.0",
+          "files": [
+            { "path": "manifest.json", "integrity": "sha384-...", "size": 412 },
+            { "path": "dist/index.js", "integrity": "sha384-...", "size": 18230 }
+          ]
+        }
+      ]
+    }
+  ],
+  "revoked": [
+    { "id": "deck-stats", "version": "1.1.0", "reason": "The version sends the deck lists to a site that the manifest does not declare." }
+  ]
+}
+```
+
+| Field | Content |
+| --- | --- |
+| `format` | The version of the format. The core reads only the format 1. |
+| `serial` | A number that increases at each publication, 1 or more. |
+| `expires` | The end of the validity, in the ISO 8601 format. The catalog signs the index again before this date. |
+| `keyId` | The ID of the key that signed the index. |
+| `plugins` | The plugins, with their versions. Each version has 1 to 200 files: the path, the SHA-384 integrity value and the size in bytes. The file `manifest.json` is the plugin manifest of the version, and it is necessary. The rules of the paths and of the sizes are the rules of the store of plugin files. |
+| `revoked` | The revoked versions: the plugin ID, the version and a reason of 500 characters or fewer. |
+
+`CatalogIndexCheck` of the platform checks an index in this order:
+
+1. The index has 1 MB or less, and the signature has 256 bytes or less.
+2. A trusted key made the signature.
+   The signature is a DER ECDSA P-256 signature with SHA-256 of the exact bytes of `index.json`.
+   Thus the check does not serialize the JSON again, and `openssl dgst -sha256 -sign` makes a valid signature.
+3. The JSON follows the format.
+   The check refuses an unknown field, a field two times, a missing field and a `null` value.
+   The field `keyId` must name the key that made the signature.
+4. The serial is not smaller than the serial of the last index of the instance.
+   An index with the same serial must have the same bytes.
+5. The date `expires` is in the future.
+
+The setting `Plugins:Catalog:Keys` gives the trusted keys.
+Each key has an `Id` and a `PublicKey`: a PEM block or the Base64 text of a DER SubjectPublicKeyInfo structure.
+To change the signing key, the operator adds the new key, waits for an index from the new key, then removes the old key.
+Without a value, the instance trusts the keys of the project.
+The project catalog has no key yet, so an instance must set `Plugins:Catalog:Keys` until the project adds its key to the code.
+
+#### Catalog sync
+
+The worker job `plugins.catalog` syncs the catalog each hour.
+The worker has this job only when `Plugins:Catalog:Url` has a value.
+An administrator can start it with `reliquary jobs run plugins.catalog`.
+
+1. The job gets the index and the signature from `Plugins:Catalog:Url` and from the same address with `.sig` at the end.
+2. It checks them with `CatalogIndexCheck`.
+   When the check refuses the index, the job fails and the instance keeps its last index.
+3. The table `users.plugin_catalog` keeps the last index that the instance accepted: the serial, the hash, the bytes of the index and the signature.
+4. For each version that is not revoked and not in the store of plugin files, the job gets each file from `<folder of the index>/<plugin ID>/<version>/<path>`.
+   For example, the address of `dist/index.js` of `deck-stats` 1.2.0 is `https://example.org/catalog/deck-stats/1.2.0/dist/index.js`.
+5. The job checks the size and the SHA-384 hash of each file.
+   It also checks the plugin manifest of the version with `PluginManifestCheck`, its ID, its version and its entry file.
+6. `PluginFileStore` keeps the files of each version that passes the checks.
+   A version with an incorrect file stays out of the store.
+   The job then fails, and the next sync tries the version again.
+
+The job does not install a plugin in the extension registry.
+The administrator installs a plugin of the catalog on the page **Plugins** of the administrators.
+
+#### Catalog page of the administrators
+
+The page `/admin/plugins` of the web app shows the plugins of the catalog and the installed plugins. Only an administrator can use its endpoints.
+
+- `GET /api/v1/admin/plugin-catalog` gives the state of the last catalog index (`serial`, `expiresAt`, `checkedAt`) and the plugins whose files the instance has.
+  Each plugin has its name, its description, its versions and `latestVersion`: the last version that the catalog did not revoke.
+- `POST /api/v1/admin/plugin-catalog/sync` runs the catalog sync now.
+  Without `Plugins:Catalog:Url`, it returns the status 409 with the code `catalog_not_configured`. A sync that fails returns the status 502 with the code `catalog_sync_failed`.
+- `POST /api/v1/admin/plugin-catalog/{id}/{version}/install` installs a version from its `manifest.json` in `users.extension_files`.
+  It applies the rules of `PUT /api/v1/admin/extensions/{id}`: a new plugin is disabled, and a revoked version returns `version_revoked`.
+- The page uses `PATCH` and `DELETE /api/v1/admin/extensions/{id}` to enable, disable and uninstall a plugin.
+- The buttons of the page are: **Install and enable**, **Update to** the last version, **Enable**, **Disable** and **Uninstall**.
+- Then each user activates the plugin in the panel **Plugins** of the account page, with the consent dialog.
+
+#### Revocation
+
+The field `revoked` of the catalog index stops a plugin version on all instances after one sync.
+
+1. The catalog sync adds each revocation to the table `users.extension_revocations`, in the transaction that keeps the index.
+   A revocation is permanent.
+   A later index without the revocation does not enable the version again, so a fixed plugin needs a new version.
+2. The catalog sync disables each installed plugin whose version the catalog revoked.
+   The sync does not get the files of a revoked version.
+3. The API then refuses the revoked version:
+   - `GET /api/v1/extensions` does not list it.
+   - The frame endpoint and the file endpoint return the status 404.
+   - `POST /api/v1/me/extensions/{id}/token` and `PUT /api/v1/me/extensions/{id}` return the status 404.
+   - A plugin token of the version gets the status 401 at its next request.
+   - `PATCH /api/v1/admin/extensions/{id}` cannot enable it, and `PUT /api/v1/admin/extensions/{id}` cannot install it. The error is `version_revoked`.
+   - `GET /api/v1/admin/extensions` gives the reason in the field `revocationReason`.
+4. While a plugin runs, the web app gets `GET /api/v1/extensions` each 10 minutes, and when the page becomes visible again.
+   When the active plugins or their versions changed, the web app removes all the plugin frames and starts the active plugins again.
+   Thus a revoked version stops in the browser 10 minutes after the sync at most.
+   Before this check, the frame can run, but its plugin token gets the status 401.
+
+### Consent
+
+The user accepts the access of a plugin version before the plugin runs: the scopes, the network origins, the devices and the linked account sites.
+
+- The **Plugins** panel of the account page lists the plugins that the instance enables.
+  For each plugin, it shows the state for the user: active, not active or paused.
+  The panel does not show when the instance enables no plugin.
+- The consent dialog shows the access in plain words, in English and in French:
+  - Each scope has the same text as in the **Delegations** panel.
+  - A network origin shows as a site, or as all the sites of a domain for a wildcard.
+    `localhost` and `127.0.0.1` show as a program on the computer of the user.
+    The dialog also shows the origin of the manifest.
+  - Each device and each linked account site has its own text.
+- The table `content.plugin_activations` keeps the consent of the user: `accepted_version`, `accepted_scopes`, `accepted_network`, `accepted_devices`, `accepted_sites` and `accepted_at`.
+- `PUT /api/v1/me/extensions/{id}` with `{ "enabled": true, "consent": { "version", "scopes", "network", "devices", "sites" } }` activates the plugin and keeps the consent.
+  - The consent must give the installed version, and it must contain all the access of this version.
+    Else the API refuses it with the status 409 and the code `consent_outdated`, because the dialog showed an older manifest.
+  - Without `consent`, the API activates the plugin only when the last consent contains all the access of the installed version.
+    Else it refuses the request with the status 409 and the code `consent_required`.
+  - A deactivation keeps the consent.
+- `GET /api/v1/extensions` gives for each plugin the access of the manifest (`permissions`, `network`, `devices` and `sites`), the last consent (`consent`) and the field `paused`.
+- **New version**: the user activated a plugin, but the installed version asks for access that the last consent does not contain.
+  The plugin then stays paused.
+  - The comparison uses the same text. Thus a new wildcard origin needs a new consent, also when the user accepted a site of this domain.
+  - A paused plugin does not run, and the API gives it no plugin token.
+    The last consent does not change until the user accepts the new access.
+  - The dialog then shows only the new access.
+  - A new version that asks for the same access or for less access runs with no new consent.
+- The accepted list controls the sandbox:
+  - The runtime puts the accepted `network` origins and `devices` in the frame address.
+    Thus the CSP of the frame allows only these values.
+  - The plugin token has only the scopes that the user accepted.
+
+### Layout and failures
+
+The user controls where the contributions of the plugins show, and the core stops a plugin that fails.
+
+- The column `settings` of the table `content.plugin_activations` keeps a JSON object for each user and each plugin:
+  `position`, `hidden` and `disabledByCoreAt`.
+- **Layout**: the panel **Plugins** of the account page has the form **Layout** for each active plugin.
+  - `position` is a number from -1000 to 1000, with the default 0.
+    In each slot, the contributions of the core come first. Then the contributions of the plugin with the smaller position come first.
+  - `hidden` lists the contributions that the user hides, as `slot:id`, for example `deck.actions:sync` or `analysis.tabs:stats`. The list has 50 entries at most.
+  - The user cannot hide a plugin page or a dialog of a plugin: a page is an address, and the plugin opens its dialogs.
+  - `PUT /api/v1/me/extensions/{id}/layout` with `{ "position": 2, "hidden": [...] }` keeps the layout. The user must have activated the plugin one time.
+  - `GET /api/v1/extensions` gives the layout in the field `layout`. The runtime gives it to the slot registry with `setPluginLayouts`.
+    `SlotRegistry.list` applies it, and `SlotRegistry.listAll` also gives the hidden contributions for the form.
+- **Failures**: `web/src/plugins/failures.ts` counts the failures of each plugin in the session storage of the browser.
+  - A crash: the frame did not connect, or it did not answer 3 heartbeats.
+  - A slow answer: a call of the core to the main frame got no answer in the time limit, for example `ui.action` or `ui.cells`.
+  - After 3 crashes or 5 slow answers in one browser session, the web app deactivates the plugin:
+    `PUT /api/v1/me/extensions/{id}` with `{ "enabled": false, "failed": true }`.
+    The API keeps the time in `disabledByCoreAt`, and the next activation removes it.
+  - The web app shows a notice that stays until the user closes it. The panel **Plugins** shows the date and the button **Activate**.
+  - The failures of a development plugin do not count, because its author changes it all the time.
+
 ### Life cycle and security
 
 1. **Development mode**: on a development instance, a user can load a plugin from a URL.
@@ -410,7 +693,8 @@ The policies `Session` and `Administrator` refuse a plugin token, so a plugin to
    By default, Reliquary offers only the signed plugins that the administrator enabled for the instance.
 4. **Permissions**: each permission has a scope, for example `decks:read` or `collection:write`.
    The user accepts the permissions when they install the plugin.
-   Each new permission or new domain needs a new approval from the user.
+   Each new permission, new domain, new device or new linked account site needs a new approval from the user.
+   The section [Consent](#consent) gives the rules.
 5. **Revocation**: the project can revoke a compromised plugin version remotely.
    The worker gets the catalog index each hour and disables the revoked versions.
 

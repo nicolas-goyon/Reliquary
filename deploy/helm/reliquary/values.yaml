@@ -69,7 +69,13 @@ secrets:
     redis: ""
   smtpPassword: ""
   googleClientSecret: ""
-  # The keys of the vault of the linked accounts (Plugins:VaultKeys), by key ID. See docs/decisions/0050-no-plugin-code-on-the-server.md.
+  # The keys of the vault of the linked accounts (Plugins:VaultKeys), by key ID. Each key is 32 random bytes in Base64.
+  # Make a key with "openssl rand -base64 32". A key ID has 1 to 64 letters, digits, dots, hyphens and underscores.
+  # The key with the last ID in alphabetical order encrypts the new secrets. Do not delete the old keys.
+  # The chart writes each key to the Secret as Plugins__VaultKeys__<key ID>. See docs/deployment/production-kubernetes.md.
+  # For example:
+  #   vaultKeys:
+  #     "2026-11": "<output of openssl rand -base64 32>"
   vaultKeys: {}
   # More keys for the Secret, as environment variables.
   extra: {}

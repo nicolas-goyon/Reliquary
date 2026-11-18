@@ -2,12 +2,14 @@ import { act, render, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { ExtensionList } from '../api/extensions'
 import { AuthContext, type AuthContextValue, type AuthState } from '../auth/session'
+import i18n from '../i18n'
 import { testAccount } from '../test/mockApi'
-import { notifyPluginsChanged } from './events'
+import { notifyPluginsChanged, pluginCheckIntervalMs } from './events'
+import { currentNotices, removeNotices } from './notices'
 import { PluginRuntime } from './PluginRuntime'
 
 const runtime = vi.hoisted(() => ({
-  startPluginRuntime: vi.fn<(list: unknown) => { stopAll(): Promise<void> }>(() => ({ stopAll: vi.fn<() => Promise<void>>(async () => undefined) })),
+  startPluginRuntime: vi.fn<(list: unknown, options?: unknown) => { stopAll(): Promise<void> }>(() => ({ stopAll: vi.fn<() => Promise<void>>(async () => undefined) })),
 }))
 vi.mock('./runtime', () => runtime)
 
@@ -16,8 +18,8 @@ function list(active: boolean, developmentPlugins = false): ExtensionList {
     coreApi: '1.1.0',
     plugins: { maxActive: 8, frameOrigin: null, developmentPlugins },
     items: [
-      { id: 'moxfield-sync', kind: 'plugin', name: 'Moxfield', version: '0.1.0', coreApi: '^1.0', permissions: [], slots: [], enabled: true, compatible: true, active, panels: [], i18n: null, formats: [] },
-      { id: 'module', kind: 'module', name: 'Module', version: '1.0.0', coreApi: '^1.0', permissions: [], slots: [], enabled: true, compatible: true, active: true, panels: [], i18n: null, formats: [] },
+      { id: 'moxfield-sync', kind: 'plugin', name: 'Moxfield', version: '0.1.0', coreApi: '^1.0', permissions: [], slots: [], enabled: true, compatible: true, active, panels: [], i18n: null, formats: [], network: [], devices: [], sites: [], consent: null, paused: false },
+      { id: 'module', kind: 'module', name: 'Module', version: '1.0.0', coreApi: '^1.0', permissions: [], slots: [], enabled: true, compatible: true, active: true, panels: [], i18n: null, formats: [], network: [], devices: [], sites: [], consent: null, paused: false },
     ],
   }
 }
@@ -35,6 +37,7 @@ function renderRuntime(state: AuthState, response: ExtensionList | (() => Extens
 
 describe('PluginRuntime', () => {
   afterEach(() => {
+    vi.useRealTimers()
     vi.clearAllMocks()
     localStorage.clear()
   })
@@ -61,7 +64,7 @@ describe('PluginRuntime', () => {
     const response = list(true)
     const { view } = renderRuntime({ status: 'authenticated', account: testAccount }, response)
 
-    await waitFor(() => expect(runtime.startPluginRuntime).toHaveBeenCalledWith(response, { developmentUrls: [], registry: undefined }))
+    await waitFor(() => expect(runtime.startPluginRuntime).toHaveBeenCalledWith(response, expect.objectContaining({ developmentUrls: [], registry: undefined })))
     const host = runtime.startPluginRuntime.mock.results[0].value
     view.unmount()
 
@@ -76,7 +79,7 @@ describe('PluginRuntime', () => {
     response = list(true)
     act(() => notifyPluginsChanged())
 
-    await waitFor(() => expect(runtime.startPluginRuntime).toHaveBeenCalledWith(response, { developmentUrls: [], registry: undefined }))
+    await waitFor(() => expect(runtime.startPluginRuntime).toHaveBeenCalledWith(response, expect.objectContaining({ developmentUrls: [], registry: undefined })))
     expect(request).toHaveBeenCalledTimes(2)
   })
 
@@ -97,7 +100,7 @@ describe('PluginRuntime', () => {
 
     renderRuntime({ status: 'authenticated', account: testAccount }, response)
 
-    await waitFor(() => expect(runtime.startPluginRuntime).toHaveBeenCalledWith(response, { developmentUrls: ['http://localhost:5173/manifest.json'], registry: undefined }))
+    await waitFor(() => expect(runtime.startPluginRuntime).toHaveBeenCalledWith(response, expect.objectContaining({ developmentUrls: ['http://localhost:5173/manifest.json'], registry: undefined })))
   })
 
   it('does not start the runtime for a development plugin when the instance does not allow them', async () => {
@@ -108,5 +111,65 @@ describe('PluginRuntime', () => {
     await new Promise((resolve) => setTimeout(resolve, 10))
 
     expect(runtime.startPluginRuntime).not.toHaveBeenCalled()
+  })
+  it('stops a plugin that the instance no longer gives at the next check', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    let response = list(true)
+    const { request } = renderRuntime({ status: 'authenticated', account: testAccount }, () => response)
+    await waitFor(() => expect(runtime.startPluginRuntime).toHaveBeenCalledTimes(1))
+    const first = runtime.startPluginRuntime.mock.results[0].value
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(pluginCheckIntervalMs)
+    })
+    expect(request).toHaveBeenCalledTimes(2)
+    expect(runtime.startPluginRuntime).toHaveBeenCalledTimes(1)
+
+    // The catalog revoked the version, so the instance does not give the plugin.
+    response = { ...list(true), items: list(true).items.filter((item) => item.kind !== 'plugin') }
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(pluginCheckIntervalMs)
+    })
+
+    await waitFor(() => expect(first.stopAll).toHaveBeenCalledTimes(1))
+    expect(runtime.startPluginRuntime).toHaveBeenCalledTimes(1)
+  })
+
+  it('starts the runtime again when the version of a plugin changes', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    let response = list(true)
+    renderRuntime({ status: 'authenticated', account: testAccount }, () => response)
+    await waitFor(() => expect(runtime.startPluginRuntime).toHaveBeenCalledTimes(1))
+
+    response = { ...list(true), items: list(true).items.map((item) => (item.kind === 'plugin' ? { ...item, version: '0.2.0' } : item)) }
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(pluginCheckIntervalMs)
+    })
+
+    await waitFor(() => expect(runtime.startPluginRuntime).toHaveBeenCalledTimes(2))
+    expect(runtime.startPluginRuntime).toHaveBeenLastCalledWith(response, expect.objectContaining({ developmentUrls: [], registry: undefined }))
+  })
+
+  it('deactivates a plugin that fails 3 times in the session, and tells the user', async () => {
+    sessionStorage.clear()
+    await i18n.changeLanguage('en')
+    const { request } = renderRuntime({ status: 'authenticated', account: testAccount }, list(true))
+    await waitFor(() => expect(runtime.startPluginRuntime).toHaveBeenCalledTimes(1))
+    const options = runtime.startPluginRuntime.mock.calls[0][1] as { onFailure(plugin: { id: string; version: string }, kind: 'crash' | 'slow', development: boolean): void }
+    const plugin = { id: 'moxfield-sync', version: '0.1.0' }
+
+    // The failures of a development plugin do not count.
+    for (let index = 0; index < 5; index += 1) {
+      options.onFailure(plugin, 'crash', true)
+    }
+    options.onFailure(plugin, 'crash', false)
+    options.onFailure(plugin, 'crash', false)
+    expect(request).toHaveBeenCalledTimes(1)
+    options.onFailure(plugin, 'crash', false)
+
+    await waitFor(() => expect(request).toHaveBeenCalledWith('/me/extensions/moxfield-sync', { method: 'PUT', body: { enabled: false, failed: true } }))
+    await waitFor(() => expect(currentNotices().map((notice) => notice.message)).toEqual([expect.stringContaining('Reliquary deactivated the plugin Moxfield')]))
+    expect(currentNotices()[0]).toMatchObject({ core: true, tone: 'error' })
+    removeNotices('moxfield-sync', true)
   })
 })
