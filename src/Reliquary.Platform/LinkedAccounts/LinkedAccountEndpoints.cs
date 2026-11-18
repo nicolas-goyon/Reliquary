@@ -59,6 +59,11 @@ public sealed record LinkedAccountListResponse(IReadOnlyList<LinkedAccountRespon
 /// <param name="Secret">The API key. Necessary for <c>api-key</c>. The API never sends it to the web app again.</param>
 public sealed record LinkAccountRequest(string? UserName, string? Secret);
 
+/// <summary>The result of a sync that the web app ran.</summary>
+/// <param name="Succeeded">Whether the sync completed.</param>
+/// <param name="Error">The message of the plugin after a failed sync. The API keeps 200 characters at most.</param>
+public sealed record LinkedAccountSyncRequest(bool? Succeeded, string? Error);
+
 /// <summary>The linked account of a site, with its secret, for the plugin of the link.</summary>
 /// <param name="Site">The host name of the site.</param>
 /// <param name="Auth">The authentication method.</param>
@@ -89,6 +94,9 @@ public static class LinkedAccountEndpoints
     /// <summary>The maximum length of a secret.</summary>
     public const int MaxSecretLength = 4096;
 
+    /// <summary>The maximum length of the message of a failed sync.</summary>
+    public const int MaxSyncErrorLength = 200;
+
     /// <summary>
     /// Adds the endpoints of the linked accounts to the public API.
     /// </summary>
@@ -111,6 +119,12 @@ public static class LinkedAccountEndpoints
             .WithTags("Linked accounts")
             .WithName("UnlinkAccount")
             .WithSummary("Unlinks an account. The API deletes the link and its secret.")
+            .RequireAuthorization(AuthPolicies.Session);
+
+        api.MapPost("/me/extensions/{id}/accounts/{site}/sync", RecordSyncAsync)
+            .WithTags("Linked accounts")
+            .WithName("RecordLinkedAccountSync")
+            .WithSummary("Records the result of a sync of a linked account. The web app runs the sync with the plugin, then calls this endpoint.")
             .RequireAuthorization(AuthPolicies.Session);
 
         api.MapGet("/me/extensions/{id}/accounts/{site}/secret", GetSecretAsync)
@@ -248,6 +262,32 @@ public static class LinkedAccountEndpoints
         return await store.DeleteAsync(user.GetAccountId(), id, site, cancellationToken)
             ? TypedResults.NoContent()
             : ApiProblems.NotFound("You have no linked account for this plugin and this site.");
+    }
+
+    private static async Task<Results<NoContent, ProblemHttpResult>> RecordSyncAsync(
+        string id, string site, LinkedAccountSyncRequest request, ClaimsPrincipal user, AccountLinkStore store, TimeProvider time, CancellationToken cancellationToken)
+    {
+        if (request.Succeeded is not { } succeeded)
+        {
+            return ApiProblems.Validation(new FieldError("succeeded", FieldErrorCodes.Required, "The field \"succeeded\" is necessary."));
+        }
+
+        var error = succeeded ? null : Clean(request.Error);
+        return await store.RecordSyncAsync(user.GetAccountId(), id, site, succeeded, error, time.GetUtcNow().UtcDateTime, cancellationToken)
+            ? TypedResults.NoContent()
+            : ApiProblems.NotFound("You have no linked account for this plugin and this site.");
+    }
+
+    /// <summary>Removes the control characters of the message of a plugin, and keeps <see cref="MaxSyncErrorLength"/> characters at most.</summary>
+    private static string? Clean(string? message)
+    {
+        if (message is null)
+        {
+            return null;
+        }
+
+        var text = new string([.. message.Select(character => char.IsControl(character) ? ' ' : character)]).Trim();
+        return text.Length == 0 ? null : text.Length > MaxSyncErrorLength ? text[..MaxSyncErrorLength] : text;
     }
 
     private static async Task<Results<Ok<LinkedAccountSecretResponse>, ProblemHttpResult>> GetSecretAsync(

@@ -41,10 +41,27 @@ export function PluginRuntime() {
         if (activePlugins(list).length === 0 && developmentUrls.length === 0) {
           return
         }
-        const { startPluginRuntime } = await import('./runtime')
+        const [{ startPluginRuntime }, { startLinkedAccountSync, stopLinkedAccountSync }] = await Promise.all([
+          import('./runtime'),
+          import('../linkedAccounts/sync'),
+        ])
         if (!cancelled) {
-          const host = startPluginRuntime(list, { developmentUrls, registry })
-          stop = () => host.stopAll()
+          // The sync of the linked accounts adds its methods to each plugin frame. See docs/decisions/0051-linked-accounts.md.
+          const sync = startLinkedAccountSync({ request })
+          const host = startPluginRuntime(list, {
+            developmentUrls,
+            registry,
+            registerMethods: (peer, plugin) => sync.attach(peer, plugin.id),
+            onEvent: (event) => {
+              if (event.type === 'stopped') {
+                sync.detach(event.plugin.id)
+              }
+            },
+          })
+          stop = async () => {
+            stopLinkedAccountSync(sync)
+            await host.stopAll()
+          }
         }
       })
       .catch((error: unknown) => console.warn('The core did not load the plugins.', error))

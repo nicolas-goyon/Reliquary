@@ -16,6 +16,10 @@ export interface HostMethods {
   'ui.openDialog': { params: unknown; result: null }
   'ui.closeDialog': { params: unknown; result: null }
   'ui.openPage': { params: unknown; result: null }
+  /** The linked accounts of the user for the plugin. See src/linkedAccounts/sync.ts. */
+  'accounts.list': { params: null; result: unknown }
+  /** The linked account of a site with its secret. Only the peer of the plugin of the link gets it. */
+  'accounts.secret': { params: unknown; result: unknown }
 }
 
 /** The methods that the plugin answers. The core calls them. */
@@ -35,4 +39,6 @@ export interface PluginMethods {
   'ui.cells': { params: { id: string; rows: Record<string, unknown>[] }; result: unknown }
   /** The user selected a button or a menu item of the plugin. */
   'ui.action': { params: { slot: string; id: string; context: unknown }; result: null }
+  /** The core starts a sync of a linked account. The plugin throws an error when the sync fails. */
+  'account.sync': { params: { account: { site: string; userName: string | null; connected: boolean; lastSyncAt: string | null } }; result: null }
 }
