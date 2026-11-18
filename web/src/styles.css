@@ -2534,3 +2534,16 @@ fieldset.field legend {
 .plugin-notice-error {
   border-left-color: var(--color-danger);
 }
+
+.plugin-layout {
+  flex-basis: 100%;
+}
+
+.plugin-layout summary {
+  cursor: pointer;
+  color: var(--color-link);
+}
+
+.plugin-layout form {
+  margin-top: 0.75rem;
+}

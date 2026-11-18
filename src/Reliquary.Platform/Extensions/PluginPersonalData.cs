@@ -36,6 +36,9 @@ internal sealed class PluginPersonalData(IDatabase database, PluginActivations a
                 AcceptedDevices = activation.Accepted.Devices,
                 AcceptedSites = activation.Accepted.Sites,
                 activation.AcceptedAt,
+                activation.Settings.Position,
+                activation.Settings.Hidden,
+                activation.Settings.DisabledByCoreAt,
             })
             .ToList();
         await archive.WriteJsonAsync("plugins.json", plugins, cancellationToken);

@@ -6,8 +6,9 @@ import { ErrorAlert, SuccessAlert } from '../components/Forms'
 import { ConsentDialog } from './ConsentDialog'
 import { isEmptyAccess, missingAccess, pluginName } from './consent'
 import { notifyPluginsChanged } from './events'
+import { PluginLayoutForm } from './PluginLayoutForm'
 
-type Message = { kind: 'activated' | 'deactivated'; name: string }
+type Message = { kind: 'activated' | 'deactivated' | 'layoutSaved'; name: string }
 
 /**
  * The plugins of the account page: the plugins that the instance enables, with their state for the user.
@@ -38,6 +39,7 @@ export function PluginsPanel() {
   if (plugins.length === 0) {
     return null
   }
+  const dates = new Intl.DateTimeFormat(i18n.resolvedLanguage, { dateStyle: 'medium' })
 
   function changed(kind: Message['kind'], plugin: Extension) {
     setMessage({ kind, name: pluginName(plugin, i18n.resolvedLanguage) })
@@ -87,17 +89,28 @@ export function PluginsPanel() {
     <section className="panel" aria-labelledby={`${id}-title`}>
       <h2 id={`${id}-title`}>{t('plugins.title')}</h2>
       <p>{t('plugins.description')}</p>
-      {message && <SuccessAlert>{t(message.kind === 'activated' ? 'plugins.activated' : 'plugins.deactivated', { name: message.name })}</SuccessAlert>}
+      {message && (
+        <SuccessAlert>
+          {t(message.kind === 'activated' ? 'plugins.activated' : message.kind === 'deactivated' ? 'plugins.deactivated' : 'plugins.layout.saved', { name: message.name })}
+        </SuccessAlert>
+      )}
       <ul className="plugin-list">
         {plugins.map((plugin) => {
           const name = pluginName(plugin, i18n.resolvedLanguage)
           const activated = plugin.active || plugin.paused
+          const disabledByCore = activated ? null : (plugin.disabledByCoreAt ?? null)
           return (
             <li key={plugin.id} className="plugin-list-item">
               <div>
                 <strong>{name}</strong> <span className="field-hint">{t('plugins.version', { version: plugin.version })}</span>
-                <p className={plugin.paused ? 'plugin-state plugin-state-paused' : 'plugin-state'}>
-                  {plugin.paused ? t('plugins.state.paused') : plugin.active ? t('plugins.state.active') : t('plugins.state.inactive')}
+                <p className={plugin.paused || disabledByCore ? 'plugin-state plugin-state-paused' : 'plugin-state'}>
+                  {plugin.paused
+                    ? t('plugins.state.paused')
+                    : plugin.active
+                      ? t('plugins.state.active')
+                      : disabledByCore
+                        ? t('plugins.state.disabledByCore', { date: dates.format(new Date(disabledByCore)) })
+                        : t('plugins.state.inactive')}
                 </p>
               </div>
               <div className="plugin-list-actions">
@@ -119,6 +132,16 @@ export function PluginsPanel() {
                   </button>
                 )}
               </div>
+              {plugin.active && plugin.layout && (
+                <PluginLayoutForm
+                  key={`${plugin.layout.position} ${plugin.layout.hidden.join(' ')}`}
+                  plugin={plugin}
+                  onSaved={() => {
+                    setMessage({ kind: 'layoutSaved', name })
+                    load().catch((caught: unknown) => setError(caught))
+                  }}
+                />
+              )}
             </li>
           )
         })}

@@ -92,13 +92,34 @@
     "state": {
       "active": "Active.",
       "inactive": "Not active.",
-      "paused": "Paused. The new version asks for more access. Read the new access to start the plugin again."
+      "paused": "Paused. The new version asks for more access. Read the new access to start the plugin again.",
+      "disabledByCore": "Reliquary deactivated this plugin on {{date}}, because it failed too many times. You can activate it again."
     },
     "activate": "Activate",
     "deactivate": "Deactivate",
     "review": "Read the new access",
     "activated": "The plugin {{name}} is active.",
     "deactivated": "The plugin {{name}} is not active.",
+    "layout": {
+      "title": "Layout of {{name}}",
+      "position": "Position among the plugins",
+      "positionHint": "The elements of a plugin with a smaller number come first. The default is 0.",
+      "visible": "Elements that Reliquary shows",
+      "none": "The plugin has no element that you can hide now.",
+      "item": "{{text}} ({{slot}})",
+      "save": "Save the layout",
+      "saved": "Reliquary saved the layout of {{name}}.",
+      "slots": {
+        "navigation": "navigation",
+        "appMenu": "menu",
+        "deckActions": "actions of a deck",
+        "analysisTabs": "analysis of a deck",
+        "tableColumns": "column of the table mode",
+        "cardPage": "page of a card",
+        "importFormats": "import format",
+        "exportFormats": "export format"
+      }
+    },
     "consent": {
       "title": "Activate {{name}}",
       "updateTitle": "New access for {{name}}",

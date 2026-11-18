@@ -212,6 +212,7 @@ The provider `PluginPersonalData` of the platform follows [ADR 0032](../decision
   - Each slot has a maximum size.
   - The user can change the order of the contributions and hide them.
   - The core disables a plugin automatically if the plugin crashes or slows the interface.
+  The section [Layout and failures](#layout-and-failures) gives the rules.
 
 ### Plugin runtime
 
@@ -641,6 +642,29 @@ The user accepts the access of a plugin version before the plugin runs: the scop
   - The runtime puts the accepted `network` origins and `devices` in the frame address.
     Thus the CSP of the frame allows only these values.
   - The plugin token has only the scopes that the user accepted.
+
+### Layout and failures
+
+The user controls where the contributions of the plugins show, and the core stops a plugin that fails.
+
+- The column `settings` of the table `content.plugin_activations` keeps a JSON object for each user and each plugin:
+  `position`, `hidden` and `disabledByCoreAt`.
+- **Layout**: the panel **Plugins** of the account page has the form **Layout** for each active plugin.
+  - `position` is a number from -1000 to 1000, with the default 0.
+    In each slot, the contributions of the core come first. Then the contributions of the plugin with the smaller position come first.
+  - `hidden` lists the contributions that the user hides, as `slot:id`, for example `deck.actions:sync` or `analysis.tabs:stats`. The list has 50 entries at most.
+  - The user cannot hide a plugin page or a dialog of a plugin: a page is an address, and the plugin opens its dialogs.
+  - `PUT /api/v1/me/extensions/{id}/layout` with `{ "position": 2, "hidden": [...] }` keeps the layout. The user must have activated the plugin one time.
+  - `GET /api/v1/extensions` gives the layout in the field `layout`. The runtime gives it to the slot registry with `setPluginLayouts`.
+    `SlotRegistry.list` applies it, and `SlotRegistry.listAll` also gives the hidden contributions for the form.
+- **Failures**: `web/src/plugins/failures.ts` counts the failures of each plugin in the session storage of the browser.
+  - A crash: the frame did not connect, or it did not answer 3 heartbeats.
+  - A slow answer: a call of the core to the main frame got no answer in the time limit, for example `ui.action` or `ui.cells`.
+  - After 3 crashes or 5 slow answers in one browser session, the web app deactivates the plugin:
+    `PUT /api/v1/me/extensions/{id}` with `{ "enabled": false, "failed": true }`.
+    The API keeps the time in `disabledByCoreAt`, and the next activation removes it.
+  - The web app shows a notice that stays until the user closes it. The panel **Plugins** shows the date and the button **Activate**.
+  - The failures of a development plugin do not count, because its author changes it all the time.
 
 ### Life cycle and security
 

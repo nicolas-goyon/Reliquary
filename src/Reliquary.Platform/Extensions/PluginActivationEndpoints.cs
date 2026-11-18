@@ -12,7 +12,18 @@ namespace Reliquary.Platform.Extensions;
 /// <summary>The body of the activation of a plugin for the user.</summary>
 /// <param name="Enabled">Whether the plugin runs for the user.</param>
 /// <param name="Consent">The access that the user accepted in the consent dialog. It is necessary when the user did not accept all the access of the installed version.</param>
-public sealed record PluginActivationRequest(bool? Enabled, PluginConsentRequest? Consent);
+/// <param name="Failed">With <c>enabled: false</c>: true when the web app deactivates the plugin because it failed too many times. The API keeps the time.</param>
+public sealed record PluginActivationRequest(bool? Enabled, PluginConsentRequest? Consent, bool? Failed = null);
+
+/// <summary>The layout of a plugin for the user: the position of the plugin and the contributions that the user hides.</summary>
+/// <param name="Position">The position of the contributions of the plugin among the contributions of the other plugins, from -1000 to 1000. A smaller number comes first.</param>
+/// <param name="Hidden">The hidden contributions, as <c>slot:id</c>, for example <c>deck.actions:sync</c>.</param>
+public sealed record PluginLayoutRequest(int? Position, IReadOnlyList<string>? Hidden);
+
+/// <summary>The layout of a plugin for the user.</summary>
+/// <param name="Position">The position of the contributions of the plugin among the contributions of the other plugins.</param>
+/// <param name="Hidden">The hidden contributions, as <c>slot:id</c>.</param>
+public sealed record PluginLayoutResponse(int Position, IReadOnlyList<string> Hidden);
 
 /// <summary>The access that the user accepted for a plugin version, as the consent dialog showed it.</summary>
 /// <param name="Version">The plugin version that the dialog showed.</param>
@@ -48,8 +59,23 @@ public static class PluginActivationEndpoints
     /// <summary>The consent does not agree with the installed version. The web app gets the extensions again and shows the dialog again.</summary>
     public const string ConsentOutdated = "consent_outdated";
 
+    /// <summary>The maximum number of hidden contributions of one plugin.</summary>
+    public const int MaxHidden = 50;
+
+    /// <summary>The maximum length of the key of a hidden contribution.</summary>
+    public const int MaxHiddenLength = 100;
+
+    /// <summary>The maximum distance of a position from 0.</summary>
+    public const int MaxPosition = 1000;
+
     internal static void MapPluginActivationEndpoints(this IEndpointRouteBuilder api)
     {
+        api.MapPut("/me/extensions/{id}/layout", SetLayoutAsync)
+            .WithTags("Extensions")
+            .WithName("SetPluginLayout")
+            .WithSummary("Keeps the position of a plugin and the contributions that the user hides. The user must have activated the plugin one time.")
+            .RequireAuthorization(AuthPolicies.Session);
+
         api.MapPut("/me/extensions/{id}", SetAsync)
             .WithTags("Extensions")
             .WithName("SetPluginActivation")
@@ -91,7 +117,7 @@ public static class PluginActivationEndpoints
         var ownerId = user.GetAccountId();
         if (!enabled)
         {
-            await activations.SetEnabledAsync(ownerId, id, false, cancellationToken);
+            await activations.SetEnabledAsync(ownerId, id, false, request.Failed == true, cancellationToken);
             return TypedResults.NoContent();
         }
 
@@ -126,10 +152,40 @@ public static class PluginActivationEndpoints
         }
         else
         {
-            await activations.SetEnabledAsync(ownerId, id, true, cancellationToken);
+            await activations.SetEnabledAsync(ownerId, id, true, failed: false, cancellationToken);
         }
 
         return TypedResults.NoContent();
+    }
+
+    private static async Task<Results<NoContent, ProblemHttpResult>> SetLayoutAsync(
+        string id, PluginLayoutRequest request, ClaimsPrincipal user, PluginActivations activations, CancellationToken cancellationToken)
+    {
+        var position = request.Position ?? 0;
+        var hidden = (request.Hidden ?? []).Distinct(StringComparer.Ordinal).ToList();
+        var errors = new List<FieldError>();
+        if (position is < -MaxPosition or > MaxPosition)
+        {
+            errors.Add(new FieldError("position", FieldErrorCodes.OutOfRange, $"The position must be from -{MaxPosition} to {MaxPosition}."));
+        }
+
+        if (hidden.Count > MaxHidden)
+        {
+            errors.Add(new FieldError("hidden", FieldErrorCodes.TooLong, $"The list can contain {MaxHidden} contributions at most."));
+        }
+        else if (hidden.Any(key => key is null || key.Length is 0 or > MaxHiddenLength || !key.Contains(':', StringComparison.Ordinal) || key.Any(char.IsControl)))
+        {
+            errors.Add(new FieldError("hidden", FieldErrorCodes.InvalidFormat, $"Each hidden contribution must have the format \"slot:id\", with {MaxHiddenLength} characters at most."));
+        }
+
+        if (errors.Count > 0)
+        {
+            return ApiProblems.Validation(errors);
+        }
+
+        return await activations.SetLayoutAsync(user.GetAccountId(), id, position, hidden, cancellationToken)
+            ? TypedResults.NoContent()
+            : ApiProblems.NotFound("You did not activate a plugin with this ID.");
     }
 
     /// <summary>

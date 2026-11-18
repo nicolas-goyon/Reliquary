@@ -1,9 +1,11 @@
 import { useContext, useEffect, useRef, useState } from 'react'
 import { activePlugins, type ExtensionList } from '../api/extensions'
 import { useAuth } from '../auth/session'
+import i18n from '../i18n'
 import { SlotRegistryContext } from '../slots/registry'
 import { developmentPluginUrls } from './development'
-import { pluginCheckIntervalMs, pluginsChangedEvent, runningPluginsKey } from './events'
+import { pluginName } from './consent'
+import { notifyPluginsChanged, pluginCheckIntervalMs, pluginsChangedEvent, runningPluginsKey } from './events'
 
 /**
  * Starts the plugin runtime when the user has an active plugin or a development plugin. See docs/decisions/0049-plugin-sandbox.md.
@@ -41,20 +43,38 @@ export function PluginRuntime() {
         if (activePlugins(list).length === 0 && developmentUrls.length === 0) {
           return
         }
-        const [{ startPluginRuntime }, { startLinkedAccountSync, stopLinkedAccountSync }, { PluginTokens }] = await Promise.all([
+        const [{ startPluginRuntime }, { startLinkedAccountSync, stopLinkedAccountSync }, { PluginTokens }, { PluginFailures }, { addNotice }] = await Promise.all([
           import('./runtime'),
           import('../linkedAccounts/sync'),
           import('./pluginTokens'),
+          import('./failures'),
+          import('./notices'),
         ])
         if (!cancelled) {
           // The sync of the linked accounts adds its methods to each plugin frame. See docs/decisions/0051-linked-accounts.md.
           // The sync and the method `api.fetch` use the same plugin tokens.
           const tokens = new PluginTokens({ request })
+          const failures = new PluginFailures()
           const sync = startLinkedAccountSync({ request, tokens })
           const host = startPluginRuntime(list, {
             developmentUrls,
             registry,
             tokens,
+            // The core deactivates a plugin that fails too many times in the session, and tells the user. See issue #278.
+            onFailure: (plugin, kind, development) => {
+              if (development || !failures.record(plugin.id, kind)) {
+                return
+              }
+              failures.reset(plugin.id)
+              const item = list.items.find((entry) => entry.id === plugin.id)
+              const name = item ? pluginName(item, i18n.resolvedLanguage) : plugin.id
+              request(`/me/extensions/${encodeURIComponent(plugin.id)}`, { method: 'PUT', body: { enabled: false, failed: true } })
+                .then(() => {
+                  addNotice({ pluginId: plugin.id, pluginName: name, development: false, tone: 'error', core: true, message: i18n.t('plugins.disabledByCore', { name }) })
+                  notifyPluginsChanged()
+                })
+                .catch((error: unknown) => console.warn(`The core did not deactivate the plugin "${plugin.id}".`, error))
+            },
             registerMethods: (peer, plugin) => sync.attach(peer, plugin.id),
             onEvent: (event) => {
               if (event.type === 'stopped') {

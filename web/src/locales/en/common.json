@@ -147,6 +147,7 @@
     "notCheckedFormat": "{{title}} (not checked)",
     "noticeFrom": "{{name}}:",
     "noticeFromNotChecked": "{{name}} (not checked):",
-    "dismissNotice": "Close"
+    "dismissNotice": "Close",
+    "disabledByCore": "Reliquary deactivated the plugin {{name}}, because it failed too many times. You can activate it again in the panel Plugins of your account."
   }
 }
