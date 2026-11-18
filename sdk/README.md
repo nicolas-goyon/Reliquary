@@ -20,6 +20,8 @@ It uses the [Apache License 2.0](LICENSE).
 
 ## Write a plugin
 
+The guide [Write a plugin](../docs/plugins/index.md) gives the full procedure, and the folder [`template`](template/README.md) is a plugin to copy.
+
 Install the package:
 
 ```sh
@@ -124,8 +126,7 @@ The type `PluginManifest` gives the fields of the plugin manifest.
 | `sdk.ui.openPage(page)` | Open a panel of the slot `plugin.page`. |
 | `sdk.ui.resize(height)` | Give the height of the panel. The SDK calls it for you. |
 
-The core gives these functions in milestone M4.
-Until the core has a function, a call to it fails with the error code `-32601` (method not found).
+When a call fails, the promise rejects with an `RpcError`. Its `code` is an error code of `errorCodes`, for example `-32002` (the plugin manifest does not declare the slot) or `-32004` (the storage is full).
 
 ## Linked accounts
 

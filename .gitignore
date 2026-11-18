@@ -12,6 +12,8 @@ dist/
 coverage/
 *.tsbuildinfo
 *.local
+# The plugin template uses the SDK of this repository. A plugin in its own repository keeps its lock file.
+sdk/template/package-lock.json
 
 # The results of the end-to-end test
 e2e/test-results/

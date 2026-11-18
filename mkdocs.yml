@@ -93,7 +93,9 @@ nav:
       - Translations: development/translations.md
       - Writing style: contributing/writing-style.md
   - Plugins:
+      - Write a plugin: plugins/index.md
       - Devices: plugins/devices.md
+      - Review check list: plugins/review.md
   - Architecture:
       - Overview: architecture/overview.md
       - Online games: architecture/online-games.md
