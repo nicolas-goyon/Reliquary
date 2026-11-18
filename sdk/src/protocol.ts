@@ -67,6 +67,8 @@ export const errorCodes = {
   permissionDenied: -32002,
   /** The connection is closed, for example because the core removed the frame. */
   connectionClosed: -32003,
+  /** The call goes over a limit of the core, for example the size of the storage of the plugin. */
+  limitExceeded: -32004,
 } as const
 
 export type RequestId = number | string

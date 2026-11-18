@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Dapper;
 using Reliquary.BuildingBlocks.Accounts;
 using Reliquary.BuildingBlocks.Data;
@@ -6,13 +7,14 @@ using Reliquary.Platform.LinkedAccounts;
 namespace Reliquary.Platform.Extensions;
 
 /// <summary>
-/// The plugin data of an owner for the export and the deletion of the personal data: the plugin activations with the consent, and the linked accounts.
+/// The plugin data of an owner for the export and the deletion of the personal data: the plugin activations with the consent, the linked accounts and the plugin storage.
 /// See docs/decisions/0032-personal-data.md and docs/decisions/0051-linked-accounts.md.
 /// </summary>
 /// <param name="database">The databases of the instance.</param>
 /// <param name="activations">The plugin activations of the users.</param>
 /// <param name="links">The linked accounts of the users.</param>
-internal sealed class PluginPersonalData(IDatabase database, PluginActivations activations, AccountLinkStore links) : IPersonalDataProvider
+/// <param name="storage">The storage of the plugins.</param>
+internal sealed class PluginPersonalData(IDatabase database, PluginActivations activations, AccountLinkStore links, PluginStorage storage) : IPersonalDataProvider
 {
     /// <inheritdoc />
     public string Name => "plugins";
@@ -53,6 +55,11 @@ internal sealed class PluginPersonalData(IDatabase database, PluginActivations a
             })
             .ToList();
         await archive.WriteJsonAsync("linked-accounts.json", accounts, cancellationToken);
+
+        var values = (await storage.ListAllAsync(ownerId, cancellationToken))
+            .Select(row => new { row.PluginId, row.Key, Value = JsonElement.Parse(row.Json) })
+            .ToList();
+        await archive.WriteJsonAsync("storage.json", values, cancellationToken);
     }
 
     /// <inheritdoc />
@@ -62,6 +69,7 @@ internal sealed class PluginPersonalData(IDatabase database, PluginActivations a
         await connection.ExecuteAsync(new CommandDefinition(
             """
             delete from content.account_links where owner_id = @ownerId;
+            delete from content.plugin_storage where owner_id = @ownerId;
             delete from content.plugin_activations where owner_id = @ownerId;
             """,
             new { ownerId },

@@ -293,16 +293,25 @@ public sealed class LinkedAccountTests(LinkedAccountInstanceFixture fixture) : I
         (await user.PutAsJsonAsync(Link(id, ApiSite), new { userName = "Chandra", secret = "secret-key-1" }, Cancel)).EnsureSuccessStatusCode();
         (await user.PutAsJsonAsync(Link(id, NameSite), new { userName = "Jace" }, Cancel)).EnsureSuccessStatusCode();
         var ownerId = (await user.GetFromJsonAsync<JsonElement>("/api/v1/me", Cancel)).GetProperty("account").GetProperty("id").GetGuid();
+        var pluginToken = await PluginTokenAsync(user, id);
+        using (var store = new HttpRequestMessage(HttpMethod.Put, $"/api/v1/me/extensions/{id}/storage?key=note") { Content = JsonContent.Create(new { value = "kept" }) })
+        {
+            store.Headers.Authorization = new AuthenticationHeaderValue("Bearer", pluginToken);
+            (await user.SendAsync(store, Cancel)).EnsureSuccessStatusCode();
+        }
+
         var provider = Instance.Factory.Services.GetServices<IPersonalDataProvider>().Single(item => item.Name == "plugins");
         var archive = new MemoryArchive();
 
         await provider.ExportAsync(ownerId, archive, Cancel);
         var links = archive.Files["linked-accounts.json"];
         var plugins = archive.Files["plugins.json"];
+        var storage = Assert.Single(JsonElement.Parse(archive.Files["storage.json"]).EnumerateArray());
         await provider.DeleteAsync(ownerId, Cancel);
         await provider.DeleteAsync(ownerId, Cancel);
 
         Assert.DoesNotContain("secret-key-1", links, StringComparison.Ordinal);
+        Assert.Equal((id, "note", "kept"), (storage.GetProperty("pluginId").GetString(), storage.GetProperty("key").GetString(), storage.GetProperty("value").GetString()));
         var exported = JsonElement.Parse(links).EnumerateArray().ToList();
         Assert.Equal([ApiSite, NameSite], exported.Select(link => link.GetProperty("site").GetString()));
         Assert.Equal(["Chandra", "Jace"], exported.Select(link => link.GetProperty("userName").GetString()));
@@ -314,6 +323,7 @@ public sealed class LinkedAccountTests(LinkedAccountInstanceFixture fixture) : I
         await using var connection = new NpgsqlConnection(Instance.Database.ConnectionString);
         Assert.Equal(0, await connection.ExecuteScalarAsync<int>("select count(*) from content.account_links where owner_id = @ownerId", new { ownerId }));
         Assert.Equal(0, await connection.ExecuteScalarAsync<int>("select count(*) from content.plugin_activations where owner_id = @ownerId", new { ownerId }));
+        Assert.Equal(0, await connection.ExecuteScalarAsync<int>("select count(*) from content.plugin_storage where owner_id = @ownerId", new { ownerId }));
     }
 
     [Fact]

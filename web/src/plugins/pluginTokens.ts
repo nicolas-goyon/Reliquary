@@ -30,6 +30,11 @@ export interface TokenPlugin {
   permissions?: string[]
 }
 
+/** Gets the plugin ID of the token of a plugin: the ID of an installed plugin, or the ID with the development prefix. */
+export function tokenPluginId(plugin: TokenPlugin): string {
+  return plugin.development ? `${developmentTokenPrefix}${plugin.id}` : plugin.id
+}
+
 /** Gets and keeps one plugin token for each running plugin. */
 export class PluginTokens {
   private readonly options: PluginTokensOptions
@@ -44,9 +49,8 @@ export class PluginTokens {
     const now = this.options.now ?? Date.now
     const cached = this.tokens.get(plugin.id)
     const fresh = () => {
-      const id = plugin.development ? `${developmentTokenPrefix}${plugin.id}` : plugin.id
       return this.options
-        .request<TokenResponse>(`/me/extensions/${encodeURIComponent(id)}/token`, {
+        .request<TokenResponse>(`/me/extensions/${encodeURIComponent(tokenPluginId(plugin))}/token`, {
           method: 'POST',
           body: plugin.development ? { scopes: plugin.permissions ?? [] } : undefined,
         })

@@ -8,6 +8,11 @@ export interface HostMethods {
   [method: string]: { params: unknown; result: unknown }
   /** Sends a request to the public API with a plugin token. See hostApi.ts. */
   'api.fetch': { params: unknown; result: { status: number; body: unknown } }
+  /** The storage of the plugin for the user. The API keeps the values. */
+  'storage.get': { params: unknown; result: { value: unknown } }
+  'storage.set': { params: unknown; result: null }
+  'storage.remove': { params: unknown; result: null }
+  'storage.keys': { params: null; result: { keys: string[] } }
   /** Shows a short message to the user. */
   'ui.notify': { params: unknown; result: null }
   /** Adds a contribution of the plugin to a slot. The core checks the data before it accepts it. */

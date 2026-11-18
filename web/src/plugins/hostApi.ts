@@ -1,16 +1,19 @@
 import type { HostPeer } from './connection'
 import { addNotice, type NoticeTone } from './notices'
-import type { PluginTokens, TokenPlugin } from './pluginTokens'
+import { tokenPluginId, type PluginTokens, type TokenPlugin } from './pluginTokens'
 import { errorCodes } from './protocol'
 import { RpcError } from './rpc'
 
 /**
- * The methods `api.fetch` and `ui.notify` of the core. See docs/decisions/0049-plugin-sandbox.md.
+ * The methods `api.fetch`, `storage.*` and `ui.notify` of the core. See docs/decisions/0049-plugin-sandbox.md.
  * The core sends each request of a plugin to the public API with a plugin token, so the API applies the scopes that the user accepted.
  */
 
 const methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
 const tones: NoticeTone[] = ['info', 'success', 'error']
+
+/** The maximum length of a key of the plugin storage. The API has the same limit. */
+export const maxStorageKeyLength = 128
 
 /** The maximum length of the path of `api.fetch`. */
 const maxPathLength = 2000
@@ -47,7 +50,7 @@ export function checkApiPath(path: unknown): string {
   return path
 }
 
-/** Adds the methods `api.fetch` and `ui.notify` to the peer of a plugin. */
+/** Adds the methods `api.fetch`, `storage.*` and `ui.notify` to the peer of a plugin. */
 export function registerHostApi(peer: HostPeer, plugin: ApiPlugin, options: HostApiOptions): void {
   const fetcher = options.fetcher ?? fetch
 
@@ -60,6 +63,32 @@ export function registerHostApi(peer: HostPeer, plugin: ApiPlugin, options: Host
     return fetcher(`/api/v1${path}`, { method, headers, body: body === undefined ? undefined : JSON.stringify(body), credentials: 'omit', redirect: 'error' })
   }
 
+  /** Sends a request, and one more time with a new token after the status 401: the token expired, or the plugin changed. */
+  const sendWithToken = async (path: string, method: string, body: unknown): Promise<Response> => {
+    try {
+      const response = await send(path, method, body)
+      if (response.status !== 401) {
+        return response
+      }
+      options.tokens.forget(plugin.id)
+      return await send(path, method, body)
+    } catch {
+      throw new RpcError(errorCodes.internalError, 'The core did not send the request to the public API. Make sure that the plugin is active for the user.')
+    }
+  }
+
+  const readJson = async (response: Response): Promise<unknown> => {
+    const text = await response.text()
+    if (!text) {
+      return null
+    }
+    try {
+      return JSON.parse(text) as unknown
+    } catch {
+      return text
+    }
+  }
+
   peer.handle('api.fetch', async (params) => {
     const request = (params ?? {}) as { path?: unknown; method?: unknown; body?: unknown }
     const path = checkApiPath(request.path)
@@ -70,30 +99,59 @@ export function registerHostApi(peer: HostPeer, plugin: ApiPlugin, options: Host
     if ((method === 'GET' || method === 'DELETE') && request.body !== undefined) {
       throw new RpcError(errorCodes.invalidParams, `A ${method} request has no body.`)
     }
-    let response: Response
-    try {
-      response = await send(path, method, request.body)
-      if (response.status === 401) {
-        // The token expired, or the plugin changed. The core tries one time with a new token.
-        options.tokens.forget(plugin.id)
-        response = await send(path, method, request.body)
-      }
-    } catch (error) {
-      if (error instanceof RpcError) {
-        throw error
-      }
-      throw new RpcError(errorCodes.internalError, 'The core did not send the request to the public API. Make sure that the plugin is active for the user.')
+    const response = await sendWithToken(path, method, request.body)
+    return { status: response.status, body: await readJson(response) }
+  })
+
+  // The storage of the plugin for the user. The API keeps it, because the plugin frame has no storage.
+  const storagePath = `/me/extensions/${encodeURIComponent(tokenPluginId(plugin))}/storage`
+  const storageKey = (params: unknown): string => {
+    const key = (params as { key?: unknown } | null)?.key
+    if (typeof key !== 'string' || key.length === 0 || key.length > maxStorageKeyLength) {
+      throw new RpcError(errorCodes.invalidParams, `The parameter "key" must be a text of 1 to ${maxStorageKeyLength} characters.`)
     }
-    const text = await response.text()
-    let body: unknown = null
-    if (text) {
-      try {
-        body = JSON.parse(text)
-      } catch {
-        body = text
-      }
+    return `${storagePath}?key=${encodeURIComponent(key)}`
+  }
+  const storageFailed = (response: Response): RpcError =>
+    response.status === 413
+      ? new RpcError(errorCodes.limitExceeded, 'The storage of the plugin for this user is full: 64 KB at most. Remove values, or keep a smaller value.')
+      : response.status === 400
+        ? new RpcError(errorCodes.invalidParams, 'The API refused the key or the value of the storage.')
+        : new RpcError(errorCodes.internalError, `The storage of the plugin is not available: HTTP status ${response.status}.`)
+
+  peer.handle('storage.get', async (params) => {
+    const response = await sendWithToken(storageKey(params), 'GET', undefined)
+    if (response.status === 404) {
+      return { value: null }
     }
-    return { status: response.status, body }
+    if (!response.ok) {
+      throw storageFailed(response)
+    }
+    return { value: ((await readJson(response)) as { value?: unknown } | null)?.value ?? null }
+  })
+  peer.handle('storage.set', async (params) => {
+    const value = (params as { value?: unknown } | null)?.value
+    // The storage keeps no null value: a null value removes the key.
+    const response = value === undefined || value === null ? await sendWithToken(storageKey(params), 'DELETE', undefined) : await sendWithToken(storageKey(params), 'PUT', { value })
+    if (!response.ok) {
+      throw storageFailed(response)
+    }
+    return null
+  })
+  peer.handle('storage.remove', async (params) => {
+    const response = await sendWithToken(storageKey(params), 'DELETE', undefined)
+    if (!response.ok) {
+      throw storageFailed(response)
+    }
+    return null
+  })
+  peer.handle('storage.keys', async () => {
+    const response = await sendWithToken(storagePath, 'GET', undefined)
+    if (!response.ok) {
+      throw storageFailed(response)
+    }
+    const keys = ((await readJson(response)) as { keys?: unknown } | null)?.keys
+    return { keys: Array.isArray(keys) ? keys.filter((key): key is string => typeof key === 'string') : [] }
   })
 
   peer.handle('ui.notify', (params) => {
