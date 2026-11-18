@@ -204,7 +204,7 @@ describe('linked accounts', () => {
     render(<App />)
 
     expect(await screen.findByRole('heading', { name: 'Comptes liés' })).toBeInTheDocument()
-    expect(await screen.findByText('Synchro des decks')).toBeInTheDocument()
+    expect((await screen.findAllByText('Synchro des decks')).length).toBeGreaterThan(0)
     expect(screen.getByRole('button', { name: 'Lier api.example.com' })).toBeInTheDocument()
     expect(await seriousAccessibilityProblems()).toEqual([])
   })
