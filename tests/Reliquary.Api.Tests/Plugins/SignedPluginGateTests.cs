@@ -12,12 +12,9 @@ namespace Reliquary.Api.Tests.Plugins;
 /// The gate test of milestone M4. See the section "M4: Plugins" of docs/roadmap.md.
 /// </summary>
 /// <remarks>
-/// The test covers the parts of the gate that the API controls. Two parts need code that is not in the core yet:
-/// <list type="bullet">
-/// <item>The consent of issue #287. Until then, the activation of the plugin accepts all its scopes,
-/// and the web app gives the accepted network origins in the query of the frame address.</item>
-/// <item>A browser that applies the CSP. The test checks the CSP header that the browser gets. The scheduled end-to-end tests can open the frame in a browser later.</item>
-/// </list>
+/// The test covers the parts of the gate that the API controls.
+/// The consent of the user gives the scopes of the plugin token. The web app gives the accepted network origins in the query of the frame address.
+/// The test checks the CSP header that the browser gets, because the test has no browser that applies the CSP.
 /// </remarks>
 public sealed class SignedPluginGateTests
 {
@@ -53,7 +50,9 @@ public sealed class SignedPluginGateTests
 
         // 1. The user accepts the scopes and the domains of the plugin.
         var user = await instance.SignInAsync($"{id}@example.org");
-        (await user.PutAsJsonAsync($"/api/v1/me/extensions/{id}", new { enabled = true }, Cancel)).EnsureSuccessStatusCode();
+        Assert.Equal(HttpStatusCode.Conflict, (await user.PutAsJsonAsync($"/api/v1/me/extensions/{id}", new { enabled = true }, Cancel)).StatusCode);
+        var consent = new { version = "1.0.0", scopes = Permissions, network = Network };
+        (await user.PutAsJsonAsync($"/api/v1/me/extensions/{id}", new { enabled = true, consent }, Cancel)).EnsureSuccessStatusCode();
         var frame = $"/api/v1/plugins/{id}/1.0.0/frame?network={Uri.EscapeDataString(AcceptedOrigin)}";
 
         // 2. The plugin adds a deck action and an analysis panel, and it reads a deck.

@@ -34,7 +34,8 @@ public sealed class PluginRevocationTests
         (await admin.PutAsJsonAsync($"/api/v1/admin/extensions/{id}", manifest, Cancel)).EnsureSuccessStatusCode();
         (await admin.PatchAsJsonAsync($"/api/v1/admin/extensions/{id}", new { enabled = true }, Cancel)).EnsureSuccessStatusCode();
         var user = await instance.SignInAsync($"{id}@example.org");
-        (await user.PutAsJsonAsync($"/api/v1/me/extensions/{id}", new { enabled = true }, Cancel)).EnsureSuccessStatusCode();
+        var consent = new { version = "1.0.0", scopes = DecksRead, network = ExampleNetwork };
+        (await user.PutAsJsonAsync($"/api/v1/me/extensions/{id}", new { enabled = true, consent }, Cancel)).EnsureSuccessStatusCode();
         var token = await PluginTokenAsync(user, id);
         var frame = $"/api/v1/plugins/{id}/1.0.0/frame";
         var file = $"/api/v1/plugins/{id}/1.0.0/files/dist/index.js";
