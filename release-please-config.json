@@ -21,6 +21,16 @@
           "type": "json",
           "path": "web/package.json",
           "jsonpath": "$.version"
+        },
+        {
+          "type": "yaml",
+          "path": "deploy/helm/reliquary/Chart.yaml",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "yaml",
+          "path": "deploy/helm/reliquary/Chart.yaml",
+          "jsonpath": "$.appVersion"
         }
       ]
     }
