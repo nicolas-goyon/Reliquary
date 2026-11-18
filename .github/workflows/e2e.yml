@@ -53,7 +53,7 @@ jobs:
         run: |
           set -euo pipefail
           $COMPOSE --profile app build
-          $COMPOSE up --detach --wait postgres redis mailpit
+          $COMPOSE up --detach --wait postgres redis
           $COMPOSE --profile app run --rm migrate migrate
           $COMPOSE --profile app run --rm migrate demo load
           $COMPOSE --profile app up --detach --wait api worker web

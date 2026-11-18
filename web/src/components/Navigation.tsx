@@ -58,9 +58,6 @@ export function AccountMenu({ account }: { account: Account | null }) {
         <li>
           <Link to="/sign-in">{t('navigation.signIn')}</Link>
         </li>
-        <li>
-          <Link to="/register">{t('navigation.register')}</Link>
-        </li>
       </ul>
     )
   }

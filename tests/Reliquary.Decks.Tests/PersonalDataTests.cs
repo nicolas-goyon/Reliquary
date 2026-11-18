@@ -110,14 +110,12 @@ public sealed class PersonalDataTests(DecksInstance instance)
         var hide = await administrator.PutAsJsonAsync($"/api/v1/moderation/hidden/deck/{deck.Id}", new { reason = "Offensive" }, Cancel);
         Assert.Equal((HttpStatusCode.Created, HttpStatusCode.Created, HttpStatusCode.NoContent), (reportByUser.StatusCode, reportAboutUser.StatusCode, hide.StatusCode));
 
-        var wrong = await client.PostAsJsonAsync("/api/v1/me/deletion", new { password = "wrong password" }, Cancel);
-        var requested = await client.PostAsJsonAsync("/api/v1/me/deletion", new { password = "correct horse battery" }, Cancel);
+        var requested = await client.PostAsync("/api/v1/me/deletion", null, Cancel);
         var deletion = (await requested.Content.ReadFromJsonAsync<DeletionResponse>(Cancel))!;
         await MakeDeletionDueAsync(accountId);
         await RunPersonalDataJobAsync();
         await instance.PublishEventsAsync();
 
-        Assert.Equal(HttpStatusCode.BadRequest, wrong.StatusCode);
         Assert.Equal(TimeSpan.FromDays(7), deletion.DeleteAfter - deletion.RequestedAt);
         Assert.Empty(await FindOwnerAsync(accountId, deck.Id));
         var search = await other.GetFromJsonAsync<JsonElement>(new Uri("/api/v1/public-decks?q=Public", UriKind.Relative), Cancel);
@@ -129,7 +127,7 @@ public sealed class PersonalDataTests(DecksInstance instance)
     {
         using var client = await instance.NewUserAsync();
 
-        await client.PostAsJsonAsync("/api/v1/me/deletion", new { password = "correct horse battery" }, Cancel);
+        await client.PostAsync("/api/v1/me/deletion", null, Cancel);
         var cancel = await client.DeleteAsync(new Uri("/api/v1/me/deletion", UriKind.Relative), Cancel);
         var state = await client.GetFromJsonAsync<DeletionResponse>(new Uri("/api/v1/me/deletion", UriKind.Relative), Cancel);
         await RunPersonalDataJobAsync();

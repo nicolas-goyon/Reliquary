@@ -6,12 +6,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Reliquary.BuildingBlocks.Accounts;
 using Reliquary.BuildingBlocks.Data;
-using Reliquary.BuildingBlocks.Email;
 using Reliquary.BuildingBlocks.Events;
 using Reliquary.BuildingBlocks.Security;
 using Reliquary.Platform.Backup;
 using Reliquary.Platform.Data;
-using Reliquary.Platform.Email;
 using Reliquary.Platform.Events;
 using Reliquary.Platform.Extensions;
 using Reliquary.Platform.Extensions.Catalog;
@@ -41,7 +39,6 @@ public static class PlatformServiceCollectionExtensions
         services.Configure<DatabaseOptions>(configuration.GetSection(DatabaseOptions.Section));
         services.Configure<OutboxOptions>(configuration.GetSection(OutboxOptions.Section));
         services.Configure<JobOptions>(configuration.GetSection(JobOptions.Section));
-        services.Configure<EmailOptions>(configuration.GetSection(EmailOptions.Section));
         services.Configure<PluginOptions>(configuration.GetSection(PluginOptions.Section));
         services.Configure<PluginCatalogOptions>(configuration.GetSection(PluginCatalogOptions.Section));
 
@@ -67,15 +64,6 @@ public static class PlatformServiceCollectionExtensions
         });
         services.AddLinkedAccounts(configuration);
         services.AddSingleton<IPersonalDataProvider, PluginPersonalData>();
-
-        if (string.IsNullOrWhiteSpace(configuration[$"{EmailOptions.Section}:Smtp:Host"]))
-        {
-            services.TryAddSingleton<IEmailSender, LogEmailSender>();
-        }
-        else
-        {
-            services.TryAddSingleton<IEmailSender, SmtpEmailSender>();
-        }
 
         // The migrations must complete before the other hosted services start, so this service comes first.
         services.Insert(0, ServiceDescriptor.Singleton<Microsoft.Extensions.Hosting.IHostedService, MigrateOnStartupService>());

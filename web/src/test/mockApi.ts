@@ -10,11 +10,9 @@ export function problem(status: number, code: string, errors: { field: string; c
 export const testAccount = {
   id: '0190a000-0000-7000-8000-000000000001',
   email: 'ana@example.org',
-  emailChecked: true,
   displayName: 'Ana',
   language: 'en',
   isAdministrator: false,
-  hasPassword: true,
   createdAt: '2026-10-26T10:00:00Z',
 } as const
 

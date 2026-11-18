@@ -20,7 +20,7 @@ internal static class DemoCommand
 {
     public static Command Create()
     {
-        var load = new Command("load", "Load the demo dataset: the demo cards and the demo accounts. The passwords of the demo accounts are public.");
+        var load = new Command("load", "Load the demo dataset: the demo cards and the demo accounts. A user opens the demo accounts with the development sign-in.");
         load.SetAction(async (_, cancellationToken) =>
         {
             using var host = CliHost.Build();

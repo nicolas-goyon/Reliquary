@@ -43,7 +43,7 @@ public sealed class CollectionInstance : IAsyncDisposable
                     builder.UseSetting("ConnectionStrings:Users", connectionString);
                     builder.UseSetting("ConnectionStrings:Redis", TestServers.Redis);
                     builder.UseSetting("Auth:SigningKey", "dGVzdC1zaWduaW5nLWtleS1mb3ItdGhlLWNvbGxlY3Rpb24tdGVzdHMtb25seQ==");
-                    builder.UseSetting("Auth:RequireCheckedEmail", "false");
+                    builder.UseSetting("Auth:AllowDevelopmentSignIn", "true");
                     builder.UseSetting("Auth:RequestsPerMinute", "100000");
                 });
             }
@@ -107,9 +107,8 @@ public sealed class CollectionInstance : IAsyncDisposable
         var api = await GetAsync();
         var client = api.CreateClient();
         var email = $"user{Interlocked.Increment(ref accounts)}-{Guid.NewGuid():N}@example.org";
-        var credentials = new { email, password = "correct horse battery", displayName = "Tester", language = "en" };
-        (await client.PostAsJsonAsync("/api/v1/auth/register", credentials, TestContext.Current.CancellationToken)).EnsureSuccessStatusCode();
-        var signIn = await client.PostAsJsonAsync("/api/v1/auth/sign-in", credentials, TestContext.Current.CancellationToken);
+        var credentials = new { email, displayName = "Tester", language = "en" };
+        var signIn = await client.PostAsJsonAsync("/api/v1/auth/development/sign-in", credentials, TestContext.Current.CancellationToken);
         signIn.EnsureSuccessStatusCode();
         var session = await signIn.Content.ReadFromJsonAsync<JsonElement>(TestContext.Current.CancellationToken);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", session.GetProperty("accessToken").GetString());

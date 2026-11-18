@@ -63,9 +63,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => window.clearTimeout(refreshTimer.current)
   }, [doRefresh])
 
-  const signIn = useCallback(
-    async (email: string, password: string) => {
-      const session = await apiRequest<SessionResponse>('/auth/sign-in', { method: 'POST', body: { email, password } })
+  const developmentSignIn = useCallback(
+    async (email: string) => {
+      const session = await apiRequest<SessionResponse>('/auth/development/sign-in', { method: 'POST', body: { email, language: i18n.resolvedLanguage } })
       acceptSession(session.accessToken, session.expiresIn, session.account)
       return session.account
     },
@@ -100,8 +100,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const updateAccount = useCallback((account: Account) => setState({ status: 'authenticated', account }), [])
 
   const value = useMemo<AuthContextValue>(
-    () => ({ state, signIn, signOut, request, acceptSession, updateAccount }),
-    [state, signIn, signOut, request, acceptSession, updateAccount],
+    () => ({ state, developmentSignIn, signOut, request, updateAccount }),
+    [state, developmentSignIn, signOut, request, updateAccount],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

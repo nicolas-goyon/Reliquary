@@ -1,49 +1,18 @@
-using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Time.Testing;
 using Reliquary.Accounts.Auth;
-using Reliquary.BuildingBlocks.Email;
 using Reliquary.Platform.Migrations;
 using Reliquary.Testing;
 using StackExchange.Redis;
 
 namespace Reliquary.Accounts.Tests;
-
-/// <summary>
-/// Keeps the emails of the tests in memory.
-/// </summary>
-public sealed partial class EmailOutbox : IEmailSender
-{
-    private readonly ConcurrentQueue<EmailMessage> messages = new();
-
-    public IReadOnlyList<EmailMessage> Messages => messages.ToList();
-
-    public Task SendAsync(EmailMessage message, CancellationToken cancellationToken)
-    {
-        messages.Enqueue(message);
-        return Task.CompletedTask;
-    }
-
-    /// <summary>
-    /// Gets the token of the last link in the emails to an address.
-    /// </summary>
-    public string LastToken(string to)
-    {
-        var message = messages.Last(message => message.To == to);
-        return Uri.UnescapeDataString(TokenPattern().Match(message.TextBody).Groups[1].Value);
-    }
-
-    [GeneratedRegex(@"\?token=([^\s]+)")]
-    private static partial Regex TokenPattern();
-}
 
 /// <summary>
 /// The shared data of a group of API replicas: one database, one Redis server, one email outbox and one clock.
@@ -57,8 +26,6 @@ public sealed class AccountsInstance : IAsyncDisposable
     private AccountsInstance(TestDatabase database) => Database = database;
 
     public TestDatabase Database { get; }
-
-    public EmailOutbox Emails { get; } = new();
 
     public FakeTimeProvider Time { get; } = new(DateTimeOffset.UtcNow);
 
@@ -127,6 +94,7 @@ public sealed class AccountsApi(AccountsInstance instance) : WebApplicationFacto
         builder.UseSetting("Auth:SigningKey", AccountsInstance.SigningKey);
         builder.UseSetting("Auth:PublicUrl", "https://reliquary.test");
         builder.UseSetting("Auth:RequestsPerMinute", "1000");
+        builder.UseSetting("Auth:AllowDevelopmentSignIn", "true");
         builder.UseSetting("Auth:AdministratorEmails:0", "admin@example.org");
         foreach (var (key, value) in Instance.Settings)
         {
@@ -135,7 +103,6 @@ public sealed class AccountsApi(AccountsInstance instance) : WebApplicationFacto
 
         builder.ConfigureTestServices(services =>
         {
-            services.AddSingleton<IEmailSender>(Instance.Emails);
             services.AddSingleton<TimeProvider>(Instance.Time);
         });
     }
@@ -188,11 +155,11 @@ public sealed class BrowserClient(HttpClient client) : IDisposable
     public Task<HttpResponseMessage> GetAsync(string path, string? bearer = null) => SendAsync(HttpMethod.Get, path, null, bearer);
 
     /// <summary>
-    /// Signs in and keeps the access token.
+    /// Starts a web session with the development sign-in, and keeps the access token. The API makes the account when it does not exist.
     /// </summary>
-    public async Task<SessionResponse> SignInAsync(string email, string password)
+    public async Task<SessionResponse> SignInAsync(string email, string? displayName = null, string? language = null)
     {
-        var response = await PostAsync("/api/v1/auth/sign-in", new { email, password });
+        var response = await PostAsync("/api/v1/auth/development/sign-in", new { email, displayName, language });
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var session = (await response.Content.ReadFromJsonAsync<SessionResponse>(TestContext.Current.CancellationToken))!;
         AccessToken = session.AccessToken;

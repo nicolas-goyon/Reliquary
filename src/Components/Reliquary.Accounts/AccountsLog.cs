@@ -4,7 +4,7 @@ namespace Reliquary.Accounts;
 
 /// <summary>
 /// The log messages of the Accounts component. The messages follow the strict mode of the writing rules.
-/// The messages never contain a password, a token or an email address.
+/// The messages never contain a token or an email address.
 /// </summary>
 internal static partial class AccountsLog
 {
@@ -20,8 +20,8 @@ internal static partial class AccountsLog
     [LoggerMessage(EventId = 3003, Level = LogLevel.Warning, Message = "The OAuth sign-in with {Provider} failed: {Reason}")]
     public static partial void ExternalSignInFailed(this ILogger logger, string provider, string reason);
 
-    [LoggerMessage(EventId = 3004, Level = LogLevel.Error, Message = "The API could not send an email of the kind {Kind} to the account {AccountId}.")]
-    public static partial void EmailFailed(this ILogger logger, Exception exception, string kind, Guid accountId);
+    [LoggerMessage(EventId = 3004, Level = LogLevel.Warning, Message = "The development sign-in started a session for the account {AccountId}. Do not enable Auth:AllowDevelopmentSignIn on a deployed instance.")]
+    public static partial void DevelopmentSignIn(this ILogger logger, Guid accountId);
 
     [LoggerMessage(EventId = 3100, Level = LogLevel.Warning, Message = "Redis is not available, so the API did not count the request of the API key {KeyId}.")]
     public static partial void QuotaUnavailable(this ILogger logger, Exception exception, Guid keyId);

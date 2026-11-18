@@ -69,10 +69,9 @@ The Accounts component keeps the accounts in the `users` schema, not in the shar
 
 | Table | Content |
 | --- | --- |
-| `accounts` | The email address, the password hash, the public name, the language and the security stamp of each account |
+| `accounts` | The email address, the public name, the language and the security stamp of each account |
 | `external_logins` | The OAuth logins of each account |
 | `refresh_tokens` | The hashes of the refresh tokens of the web sessions |
-| `account_tokens` | The hashes of the single-use tokens of the emails |
 | `api_keys` | The prefix and the hash of the secret of each API key |
 | `usage_counters` | The number of API requests of each day, for each API key and each account |
 

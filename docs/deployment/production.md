@@ -16,7 +16,7 @@ A production instance uses the same files and the same script as a [pre-producti
 | --- | --- | --- |
 | Version | The channel `develop` | A release number, for example `0.2.0` |
 | Address | <http://localhost:8090> | `https://your-domain`, through a reverse proxy |
-| Emails | Mailpit keeps them | A real email server sends them |
+| Sign-in | A service, or the development sign-in | A service only: Google, GitHub or Discord |
 | Backups | On the same computer | Also on a different computer, each day |
 | Updates | When you want | After you read the release notes, at a time with few users |
 
@@ -25,7 +25,7 @@ A production instance uses the same files and the same script as a [pre-producti
 - A Linux server with Docker and the Compose plugin. See [Requirements](requirements.md).
 - A domain name that points to the server.
 - A reverse proxy with HTTPS. This page uses [Caddy](https://caddyserver.com), which gets the certificates automatically.
-- An email server (SMTP) for the account emails.
+- An OAuth client at Google, GitHub or Discord. The users sign in with this service. [Sign-in](pre-production.md#sign-in) tells how to make it.
 - A place on a different computer for the backups.
 
 The server must use Linux. Docker Desktop is not for servers.
@@ -80,14 +80,12 @@ ssh your-user@your-server
    | `RELIQUARY_PROJECT` | `reliquary` |
    | `RELIQUARY_PUBLIC_URL` | `https://your-domain` |
    | `RELIQUARY_BIND_ADDRESS` | `127.0.0.1`. Only the reverse proxy opens the instance. |
-   | `RELIQUARY_ADMINISTRATOR_EMAIL` | Your email address |
-   | `RELIQUARY_SMTP_HOST`, `RELIQUARY_SMTP_PORT`, `RELIQUARY_SMTP_SECURITY`, `RELIQUARY_SMTP_USER_NAME`, `RELIQUARY_SMTP_PASSWORD` | The settings of your email server |
-   | `RELIQUARY_EMAIL_FROM` | The sender address, for example `Reliquary <noreply@your-domain>` |
-   | `RELIQUARY_REQUIRE_CHECKED_EMAIL` | `true` |
-   | `RELIQUARY_ACCOUNTS_WITHOUT_EMAIL` | `false` |
+   | `RELIQUARY_ADMINISTRATOR_EMAIL` | The email address of your account at the sign-in service |
+   | `RELIQUARY_GOOGLE_CLIENT_ID` and `RELIQUARY_GOOGLE_CLIENT_SECRET` | The OAuth client. Use the `GITHUB` or `DISCORD` settings for the other services. |
+   | `RELIQUARY_DEVELOPMENT_SIGN_IN` | `false` |
    | `RELIQUARY_KEEP_BACKUPS` | The number of local backups, for example `14` |
 
-   For the Google sign-in, set `RELIQUARY_GOOGLE_CLIENT_ID` and `RELIQUARY_GOOGLE_CLIENT_SECRET`.
+   The authorized redirect URI of the OAuth client is `https://your-domain/api/v1/auth/external/<service>/callback`.
    The authorized redirect URI is `https://your-domain/api/v1/auth/external/google/callback`.
 
 4. Install the instance:
@@ -108,9 +106,7 @@ ssh your-user@your-server
    The reverse proxy must send all the paths to the web container. The web container sends `/api` to the API.
    It keeps the headers `X-Forwarded-Proto` and `X-Forwarded-Host` of the reverse proxy.
 
-6. Open `https://your-domain`, make the account of the administrator email address, and open the link of the email.
-
-The port 18035 of Mailpit stays on `127.0.0.1`. With a real email server, Mailpit receives no email.
+6. Open `https://your-domain`, and sign in with the account of the administrator email address.
 
 ## Vault keys
 
@@ -230,5 +226,6 @@ Do not use the channels `develop` or `latest` in production. A release number ne
 ## Security
 
 - Keep `.env` and the folder `backups` private. The script makes the folder `backups` readable by its user only.
-- Do not open the ports of PostgreSQL, Redis or Mailpit. The Compose file does not open them, except Mailpit on `127.0.0.1`.
+- Do not open the ports of PostgreSQL or Redis. The Compose file does not open them.
+- Keep `RELIQUARY_DEVELOPMENT_SIGN_IN` at `false`. With `true`, each visitor can open each account.
 - Update to each new release that fixes a security problem. [Security policy](https://github.com/nicolas-goyon/reliquary/blob/develop/SECURITY.md) tells how to report a problem.

@@ -4,19 +4,16 @@ using Reliquary.BuildingBlocks.Demo;
 namespace Reliquary.Accounts;
 
 /// <summary>
-/// Creates the demo accounts of a local instance. Their email addresses are checked, so they can sign in at once.
+/// Creates the demo accounts of a local instance. A user opens them with the development sign-in.
 /// </summary>
-/// <remarks>
-/// The passwords are public. Do not load the demo data on an instance that other people can reach.
-/// </remarks>
 internal sealed class DemoAccounts(AccountService accounts) : IDemoDataSeeder
 {
-    /// <summary>The demo accounts: email address, password, display name and language.</summary>
-    public static readonly IReadOnlyList<(string Email, string Password, string DisplayName, string Language)> All =
+    /// <summary>The demo accounts: email address, display name and language.</summary>
+    public static readonly IReadOnlyList<(string Email, string DisplayName, string Language)> All =
     [
-        ("demo@reliquary.localhost", "reliquary-demo", "Demo", "en"),
-        ("demo-fr@reliquary.localhost", "reliquary-demo", "Démo", "fr"),
-        ("admin@reliquary.localhost", "reliquary-admin", "Admin", "en"),
+        ("demo@reliquary.localhost", "Demo", "en"),
+        ("demo-fr@reliquary.localhost", "Démo", "fr"),
+        ("admin@reliquary.localhost", "Admin", "en"),
     ];
 
     /// <inheritdoc />
@@ -29,9 +26,9 @@ internal sealed class DemoAccounts(AccountService accounts) : IDemoDataSeeder
     public async Task<string> SeedAsync(CancellationToken cancellationToken)
     {
         var created = 0;
-        foreach (var (email, password, displayName, language) in All)
+        foreach (var (email, displayName, language) in All)
         {
-            if (await accounts.CreateCheckedAccountAsync(email, password, displayName, language, cancellationToken))
+            if (await accounts.CreateAccountAsync(email, displayName, language, "demo", cancellationToken) is not null)
             {
                 created++;
             }

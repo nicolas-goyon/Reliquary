@@ -24,10 +24,6 @@ public sealed record DataExportResponse(Guid Id, string Status, DateTimeOffset R
 /// <param name="DeleteAfter">The time after which the worker deletes the account, or <see langword="null"/>.</param>
 public sealed record DeletionResponse(DateTimeOffset? RequestedAt, DateTimeOffset? DeleteAfter);
 
-/// <summary>The body of a deletion request.</summary>
-/// <param name="Password">The password of the account. An account with no password does not need it.</param>
-public sealed record DeletionRequest(string? Password);
-
 /// <summary>
 /// The endpoints of the export and of the deletion of the account. See docs/decisions/0032-personal-data.md.
 /// </summary>
@@ -86,14 +82,9 @@ internal static class PersonalDataEndpoints
     private static async Task<Ok<DeletionResponse>> GetDeletionAsync(ClaimsPrincipal user, PersonalDataService service, CancellationToken cancellationToken) =>
         TypedResults.Ok(ToDeletion(await service.GetDeletionRequestAsync(user.GetAccountId(), cancellationToken)));
 
-    private static async Task<Results<Ok<DeletionResponse>, ProblemHttpResult>> RequestDeletionAsync(
-        DeletionRequest request, ClaimsPrincipal user, AccountService accounts, PersonalDataService service, CancellationToken cancellationToken)
+    private static async Task<Ok<DeletionResponse>> RequestDeletionAsync(
+        ClaimsPrincipal user, PersonalDataService service, CancellationToken cancellationToken)
     {
-        if (!await accounts.CheckPasswordAsync(user.GetAccountId(), request.Password, cancellationToken))
-        {
-            return ApiProblems.Problem(StatusCodes.Status400BadRequest, AccountErrorCodes.InvalidCredentials, "The password is not correct.");
-        }
-
         return TypedResults.Ok(ToDeletion(await service.SetDeletionRequestAsync(user.GetAccountId(), true, cancellationToken)));
     }
 

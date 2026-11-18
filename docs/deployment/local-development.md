@@ -1,7 +1,7 @@
 # Local instance from the source code
 
 A local instance runs the code of your working tree. Use it to develop Reliquary and to test a branch.
-It contains demo data with public passwords, so do not open it to other computers.
+Each visitor can open each account of a local instance, so do not open it to other computers.
 Terms follow the [glossary](../glossary.md).
 
 To use Reliquary every day with your own data, use a [pre-production instance](pre-production.md).
@@ -57,11 +57,14 @@ To use Reliquary every day with your own data, use a [pre-production instance](p
 
 The demo accounts are:
 
-| Email address | Password | Role |
+| Email address | Button of the sign-in page | Role |
 | --- | --- | --- |
-| `demo@reliquary.localhost` | `reliquary-demo` | User, English interface |
-| `demo-fr@reliquary.localhost` | `reliquary-demo` | User, French interface |
-| `admin@reliquary.localhost` | `reliquary-admin` | Administrator |
+| `demo@reliquary.localhost` | **Open the account Demo** | User, English interface |
+| `demo-fr@reliquary.localhost` | **Open the account Démo** | User, French interface |
+| `admin@reliquary.localhost` | **Open the account Admin** | Administrator |
+
+A local instance has the development sign-in: the sign-in page opens an account with no password and no external service.
+To test with a new account, type an email address in the field **Email address of a test account**.
 
 ## Develop with hot reload
 
@@ -105,7 +108,7 @@ The browser of Windows opens <http://localhost:5080> and <http://localhost:5173>
 
 Then start the instance:
 
-1. Run `just infra` to start PostgreSQL, Redis and Mailpit only.
+1. Run `just infra` to start PostgreSQL and Redis only.
 2. Run `just restore` to install the .NET packages and the npm packages.
 3. Run `just migrate`, then `just demo-local`.
 4. Run `just api` (API on <http://localhost:5080>).

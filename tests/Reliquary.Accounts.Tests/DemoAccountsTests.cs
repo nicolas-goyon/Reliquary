@@ -15,11 +15,10 @@ public sealed class DemoAccountsTests
         var first = await seeder.SeedAsync(TestContext.Current.CancellationToken);
         var second = await seeder.SeedAsync(TestContext.Current.CancellationToken);
         using var browser = replica.CreateBrowser();
-        var session = await browser.SignInAsync("demo@reliquary.localhost", "reliquary-demo");
+        var session = await browser.SignInAsync("demo@reliquary.localhost");
 
         Assert.StartsWith("3 new demo accounts", first, StringComparison.Ordinal);
         Assert.StartsWith("0 new demo accounts", second, StringComparison.Ordinal);
         Assert.Equal("Demo", session.Account.DisplayName);
-        Assert.Empty(instance.Emails.Messages);
     }
 }
