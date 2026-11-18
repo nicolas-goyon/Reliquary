@@ -14,14 +14,14 @@ afterEach(() => removeNotices('deck-stats'))
 
 describe('plugin notices', () => {
   it('shows the notice with the name of the plugin, and the user closes it', async () => {
-    render(<PluginNotices />)
+    const { container } = render(<PluginNotices />)
 
     act(() => addNotice({ pluginId: 'deck-stats', pluginName: 'Deck statistics', development: true, message: '<b>The sync completed.</b>', tone: 'success' }))
 
     // The core shows the text of the plugin as text, not as HTML.
     expect(screen.getByText('<b>The sync completed.</b>')).toBeInTheDocument()
     expect(screen.getByText('Deck statistics (not checked):')).toBeInTheDocument()
-    expect(await seriousAccessibilityProblems()).toEqual([])
+    expect(await seriousAccessibilityProblems(container)).toEqual([])
 
     await userEvent.click(screen.getByRole('button', { name: 'Close' }))
 
