@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import type { HostMethods, PluginMethods } from './methods.ts'
-import { definePlugin, type PluginEnvironment, type PluginSdk } from './plugin.ts'
+import { definePlugin, isLoopbackUrl, type PluginEnvironment, type PluginSdk } from './plugin.ts'
 import { connectMessageType, coreApiVersion, errorCodes, readyMessageType, type ConnectMessage } from './protocol.ts'
 import { RpcError, RpcPeer, type PortLike } from './rpc.ts'
 
@@ -319,5 +319,43 @@ describe('definePlugin', () => {
     const account = { site: 'example.com', userName: null, connected: true, lastSyncAt: null }
     await assert.rejects(host.call('account.sync', { account }), (error: RpcError) => error.code === errorCodes.methodNotFound)
     host.close()
+  })
+})
+
+describe('sdk.net.fetch', () => {
+  it('knows the addresses of the computer of the user', () => {
+    for (const url of ['http://localhost:8080/scan', 'http://127.0.0.1/', 'http://127.1.2.3:9/', 'http://[::1]:3000/', 'http://scanner.localhost/', 'HTTP://LOCALHOST/']) {
+      assert.equal(isLoopbackUrl(url), true, url)
+    }
+    for (const url of ['https://api.example.com/', 'https://localhost.example.com/', 'http://128.0.0.1/', 'http://1127.0.0.1.example/', 'not a url']) {
+      assert.equal(isLoopbackUrl(url), false, url)
+    }
+  })
+
+  it('marks a request to localhost as a loopback request, and changes no other request', async () => {
+    const frame = new FakeFrame()
+    const handle = definePlugin({ activate: () => undefined }, { environment: frame })
+    const core = frame.connect()
+    const sdk = await handle.ready
+    const calls: { input: unknown; init: unknown }[] = []
+    const original = globalThis.fetch
+    globalThis.fetch = (async (input: unknown, init?: unknown) => {
+      calls.push({ input, init })
+      return new Response('ok')
+    }) as typeof fetch
+    try {
+      await sdk.net.fetch('http://localhost:8080/scan', { method: 'POST' })
+      await sdk.net.fetch('https://api.example.com/decks', { method: 'POST' })
+      await sdk.net.fetch('https://api.example.com/decks')
+    } finally {
+      globalThis.fetch = original
+      core.close()
+    }
+
+    assert.deepEqual(calls, [
+      { input: 'http://localhost:8080/scan', init: { targetAddressSpace: 'loopback', method: 'POST' } },
+      { input: 'https://api.example.com/decks', init: { method: 'POST' } },
+      { input: 'https://api.example.com/decks', init: undefined },
+    ])
   })
 })
