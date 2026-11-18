@@ -1,12 +1,15 @@
 /**
  * The methods of the RPC protocol that the host runtime uses.
  * The plugin SDK has the full list in sdk/src/methods.ts.
- * The issues of milestone M4 add the methods that the core answers: contributions, storage, API, network relay and linked accounts.
  */
 
 /** The methods that the core answers. The plugin calls them. */
 export interface HostMethods {
   [method: string]: { params: unknown; result: unknown }
+  /** Sends a request to the public API with a plugin token. See hostApi.ts. */
+  'api.fetch': { params: unknown; result: { status: number; body: unknown } }
+  /** Shows a short message to the user. */
+  'ui.notify': { params: unknown; result: null }
   /** Adds a contribution of the plugin to a slot. The core checks the data before it accepts it. */
   'ui.contribute': { params: unknown; result: null }
   /** Removes a contribution of the plugin. */

@@ -15,10 +15,15 @@ export interface PanelPlugin extends ContributingPlugin {
   panels: ExtensionPanel[]
   i18n: Record<string, Record<string, string>> | null
   formats: ExtensionFormat[]
+  /** The scopes of the public API of the plugin manifest. A development plugin gives them to get its plugin token. */
+  permissions?: string[]
 }
 
 /** The options of the runtime that each panel frame uses. */
-export type PanelFrameOptions = Pick<MountPanelOptions, 'coreApi' | 'language' | 'hostWindow' | 'connectTimeoutMs' | 'intervalMs' | 'maxMissed' | 'timeoutMs' | 'maxMessageBytes'>
+export type PanelFrameOptions = Pick<MountPanelOptions, 'coreApi' | 'language' | 'hostWindow' | 'connectTimeoutMs' | 'intervalMs' | 'maxMissed' | 'timeoutMs' | 'maxMessageBytes'> & {
+  /** Adds the methods that each frame of the plugin can call, for example `api.fetch`, to the peer of a panel frame. */
+  registerFrameMethods?(peer: HostPeer): void
+}
 
 /** The plugin panels come after the panels of the core. */
 const pluginOrderBase = 1000
@@ -65,7 +70,10 @@ export function registerPluginUi(peer: HostPeer, plugin: PanelPlugin, registry: 
         panel: { id: panel.id, slot: panel.slot, title: panelTitle(plugin, panel).en },
         context: fixedContext ?? context,
         onState,
-        registerMethods: (panelPeer) => registerNavigation(panelPeer),
+        registerMethods: (panelPeer) => {
+          registerNavigation(panelPeer)
+          frameOptions.registerFrameMethods?.(panelPeer)
+        },
       }),
   })
 

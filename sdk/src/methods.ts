@@ -21,21 +21,6 @@ export interface ApiFetchResult {
   body: unknown
 }
 
-/** A request that the network relay of the core sends to a domain of the plugin manifest. */
-export interface RelayFetchParams {
-  url: string
-  method?: string
-  headers?: Record<string, string>
-  /** The body as text. */
-  body?: string
-}
-
-export interface RelayFetchResult {
-  status: number
-  headers: Record<string, string>
-  body: string
-}
-
 /** A file that an export format gives. */
 export interface ExportedFile {
   /** The name of the file, with its extension. 100 characters at most, with no "/" or "\\". */
@@ -69,7 +54,6 @@ export interface LinkedAccountSecret {
 export interface HostMethods {
   [method: string]: { params: unknown; result: unknown }
   'api.fetch': { params: ApiFetchParams; result: ApiFetchResult }
-  'net.relay': { params: RelayFetchParams; result: RelayFetchResult }
   'storage.get': { params: { key: string }; result: { value: unknown } }
   'storage.set': { params: { key: string; value: unknown }; result: null }
   'storage.remove': { params: { key: string }; result: null }

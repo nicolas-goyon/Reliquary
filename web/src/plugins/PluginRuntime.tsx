@@ -41,16 +41,20 @@ export function PluginRuntime() {
         if (activePlugins(list).length === 0 && developmentUrls.length === 0) {
           return
         }
-        const [{ startPluginRuntime }, { startLinkedAccountSync, stopLinkedAccountSync }] = await Promise.all([
+        const [{ startPluginRuntime }, { startLinkedAccountSync, stopLinkedAccountSync }, { PluginTokens }] = await Promise.all([
           import('./runtime'),
           import('../linkedAccounts/sync'),
+          import('./pluginTokens'),
         ])
         if (!cancelled) {
           // The sync of the linked accounts adds its methods to each plugin frame. See docs/decisions/0051-linked-accounts.md.
-          const sync = startLinkedAccountSync({ request })
+          // The sync and the method `api.fetch` use the same plugin tokens.
+          const tokens = new PluginTokens({ request })
+          const sync = startLinkedAccountSync({ request, tokens })
           const host = startPluginRuntime(list, {
             developmentUrls,
             registry,
+            tokens,
             registerMethods: (peer, plugin) => sync.attach(peer, plugin.id),
             onEvent: (event) => {
               if (event.type === 'stopped') {

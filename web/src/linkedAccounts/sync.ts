@@ -1,6 +1,7 @@
 import { ApiError, apiRequest, type RequestOptions } from '../api/client'
 import type { HostPeer } from '../plugins/connection'
 import { errorCodes } from '../plugins/protocol'
+import { PluginTokens } from '../plugins/pluginTokens'
 import { RpcError } from '../plugins/rpc'
 import { linkPath, siteKey, type LinkedAccountList, type LinkedAccountSite } from './api'
 import { notifyLinkedAccountsChanged, setSyncController, type SyncController } from './syncState'
@@ -19,9 +20,6 @@ export const defaultIntervalMinutes = 60
 /** The time limit of a sync, in milliseconds. */
 export const syncTimeoutMs = 60_000
 
-/** The core gets a new plugin token when the token expires in less than this time, in milliseconds. */
-const tokenMarginMs = 60_000
-
 /** A sync that started less than this time before the planned time counts as on time, in milliseconds. */
 const scheduleSlackMs = 60_000
 
@@ -32,6 +30,8 @@ export interface LinkedAccountSyncOptions {
   request: SessionRequest
   /** Sends a request with a plugin token. The default is `apiRequest`. */
   pluginRequest?: typeof apiRequest
+  /** The plugin tokens of the running plugins. The default is a new store that uses `request`. */
+  tokens?: PluginTokens
   /** The clock, in milliseconds. */
   now?: () => number
 }
@@ -61,10 +61,11 @@ export class LinkedAccountSync implements SyncController {
   private readonly peers = new Map<string, HostPeer>()
   private readonly timers = new Map<string, ReturnType<typeof setInterval>[]>()
   private readonly active = new Map<string, Promise<void>>()
-  private readonly tokens = new Map<string, Promise<{ token: string; expiresAt: number }>>()
+  private readonly tokens: PluginTokens
 
   constructor(options: LinkedAccountSyncOptions) {
     this.options = options
+    this.tokens = options.tokens ?? new PluginTokens({ request: options.request, now: options.now })
   }
 
   private now(): number {
@@ -87,7 +88,7 @@ export class LinkedAccountSync implements SyncController {
       clearInterval(timer)
     }
     this.timers.delete(pluginId)
-    this.tokens.delete(pluginId)
+    this.tokens.forget(pluginId)
     if (this.peers.delete(pluginId)) {
       notifyLinkedAccountsChanged()
     }
@@ -196,7 +197,7 @@ export class LinkedAccountSync implements SyncController {
       throw new RpcError(errorCodes.invalidParams, 'The parameter "site" must be the host name of a site of the plugin manifest.')
     }
     try {
-      const { token } = await this.pluginToken(pluginId)
+      const token = await this.tokens.get({ id: pluginId })
       return await (this.options.pluginRequest ?? apiRequest)(`${linkPath(pluginId, site)}/secret`, { accessToken: token })
     } catch (error) {
       if (error instanceof ApiError && error.status === 404) {
@@ -207,19 +208,6 @@ export class LinkedAccountSync implements SyncController {
       }
       throw error
     }
-  }
-
-  /** Gets a plugin token for the plugin. The core keeps it until one minute before it expires. */
-  private pluginToken(pluginId: string): Promise<{ token: string; expiresAt: number }> {
-    const cached = this.tokens.get(pluginId)
-    const fresh = () =>
-      this.options
-        .request<{ token: string; expiresAt: string }>(`/me/extensions/${encodeURIComponent(pluginId)}/token`, { method: 'POST' })
-        .then((response) => ({ token: response.token, expiresAt: Date.parse(response.expiresAt) }))
-    const next = cached ? cached.then((value) => (value.expiresAt - tokenMarginMs > this.now() ? value : fresh()), fresh) : fresh()
-    this.tokens.set(pluginId, next)
-    next.catch(() => this.tokens.delete(pluginId))
-    return next
   }
 }
 

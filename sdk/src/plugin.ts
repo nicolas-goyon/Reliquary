@@ -1,4 +1,4 @@
-import type { ApiFetchParams, ApiFetchResult, ExportedFile, HostMethods, LinkedAccount, LinkedAccountSecret, PluginMethods, RelayFetchParams, RelayFetchResult } from './methods.ts'
+import type { ApiFetchParams, ApiFetchResult, ExportedFile, HostMethods, LinkedAccount, LinkedAccountSecret, PluginMethods } from './methods.ts'
 import { connectMessageType, coreApiVersion, errorCodes, readyMessageType, type ConnectMessage } from './protocol.ts'
 import { RpcError, RpcPeer, type PeerOptions } from './rpc.ts'
 import type { PanelSlot } from './manifest.ts'
@@ -22,8 +22,6 @@ export interface PluginSdk {
   readonly net: {
     /** Sends a request from the frame. The site must accept requests with the header `Origin: null`. */
     fetch(input: string, init?: RequestInit): Promise<Response>
-    /** Sends a request through the network relay of the core, for a site that refuses requests from a browser. */
-    relay(params: RelayFetchParams): Promise<RelayFetchResult>
   }
   /** The storage of the plugin for the user. The core keeps it on the server. */
   readonly storage: {
@@ -290,7 +288,6 @@ function createSdk(peer: RpcPeer<PluginMethods, HostMethods>, message: ConnectMe
     },
     net: {
       fetch: (input, init) => globalThis.fetch(input, init),
-      relay: (params) => peer.call('net.relay', params),
     },
     storage: {
       get: async <T>(storageKey: string) => {
