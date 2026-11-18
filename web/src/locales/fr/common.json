@@ -118,7 +118,11 @@
     "plugin_format_failed": "Le plugin n’a pas converti le fichier. Vérifiez le fichier ou choisissez un autre format.",
     "consent_required": "Le plugin demande des accès que vous n’avez pas acceptés. Lisez les accès, puis acceptez-les.",
     "consent_outdated": "Le plugin a changé pendant que la fenêtre était ouverte. Fermez la fenêtre et lisez de nouveau les accès.",
-    "too_many_active_plugins": "Vous avez le nombre maximal de plugins actifs. Désactivez un plugin, puis réessayez."
+    "too_many_active_plugins": "Vous avez le nombre maximal de plugins actifs. Désactivez un plugin, puis réessayez.",
+    "vault_not_configured": "L’instance ne peut pas garder de clé d’API. Prévenez l’administrateur de l’instance.",
+    "vault_key_missing": "L’instance a perdu la clé de ce secret. Liez le compte à nouveau.",
+    "vault_secret_unreadable": "L’instance ne peut pas lire ce secret. Liez le compte à nouveau.",
+    "linked_account_method_not_supported": "Cette méthode de connexion n’est pas encore disponible."
   },
   "fieldErrors": {
     "required": "Ce champ est obligatoire.",

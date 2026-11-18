@@ -137,5 +137,37 @@
       "missingFields": "Le manifeste du plugin n’a pas les champs « id », « version » et « entry ». Ajoutez ces champs au manifeste.",
       "invalidEntry": "Le champ « entry » du manifeste n’est pas une URL http ou https. Modifiez le champ « entry »."
     }
+  },
+  "linkedAccounts": {
+    "title": "Comptes liés",
+    "description": "Vos plugins utilisent ces comptes sur d’autres sites. Reliquary chiffre chaque clé d’API, et seul le plugin du lien peut la lire.",
+    "site": "Site",
+    "plugin": "Plugin",
+    "stateTitle": "État",
+    "lastSync": "Dernière synchronisation",
+    "actions": "Actions",
+    "never": "Jamais",
+    "state": {
+      "notLinked": "Non lié",
+      "linked": "Lié",
+      "synced": "Synchronisé",
+      "failed": "Échec de la synchronisation",
+      "keyLost": "Liez le compte à nouveau"
+    },
+    "pluginInactive": "Le plugin ne fonctionne pas. Vous pouvez seulement délier le compte.",
+    "link": "Lier",
+    "change": "Modifier",
+    "unlink": "Délier",
+    "unlinkConfirm": "Délier votre compte sur {{site}} ? Reliquary supprime le lien et sa clé d’API.",
+    "oauthLater": "Cette méthode de connexion n’est pas encore disponible.",
+    "formTitle": "Lier votre compte sur {{site}}",
+    "apiKey": "Clé d’API",
+    "apiKeyHint": "Reliquary chiffre la clé. Seul le plugin du lien peut la lire. La page ne l’affiche plus jamais.",
+    "userName": "Nom d’utilisateur",
+    "userNameOptional": "Nom d’utilisateur (facultatif)",
+    "userNameHint": "Votre nom d’utilisateur public sur le site. Le plugin lit seulement vos données publiques.",
+    "submit": "Lier le compte",
+    "cancel": "Annuler",
+    "linked": "Votre compte sur {{site}} est lié."
   }
 }
