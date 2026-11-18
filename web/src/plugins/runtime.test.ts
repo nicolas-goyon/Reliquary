@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { ExtensionList } from '../api/extensions'
+import { SlotRegistry } from '../slots/registry'
 import { startPluginRuntime } from './runtime'
 
 function list(developmentPlugins: boolean): ExtensionList {
@@ -54,5 +55,21 @@ describe('startPluginRuntime', () => {
     expect(manifest).not.toHaveBeenCalled()
     expect(host.running).toEqual(['installed'])
     await host.stopAll()
+  })
+
+  it('gives the layout of the user to the slot registry, and reports a frame that does not connect as a crash', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const withLayout = list(false)
+    withLayout.items[0] = { ...withLayout.items[0], layout: { position: 4, hidden: ['deck.actions:sync'] } }
+    const registry = new SlotRegistry()
+    const layouts = vi.spyOn(registry, 'setPluginLayouts')
+    const failures: string[] = []
+
+    const host = startPluginRuntime(withLayout, { registry, connectTimeoutMs: 10, onFailure: (plugin, kind, development) => failures.push(`${plugin.id} ${kind} ${development}`) })
+
+    expect(layouts).toHaveBeenCalledWith({ installed: { position: 4, hidden: ['deck.actions:sync'] } })
+    await vi.waitFor(() => expect(failures).toEqual(['installed crash false']))
+    await host.stopAll()
+    expect(failures).toHaveLength(1)
   })
 })

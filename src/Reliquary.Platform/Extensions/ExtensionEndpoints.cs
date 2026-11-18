@@ -30,6 +30,8 @@ namespace Reliquary.Platform.Extensions;
 /// <param name="Sites">The linked account sites of the plugin manifest.</param>
 /// <param name="Consent">The access that the user accepted for the plugin, or null. Only for an authenticated user.</param>
 /// <param name="Paused">Whether the user activated the plugin, but the installed version asks for access that the user did not accept. A paused plugin does not run.</param>
+/// <param name="Layout">The position of the plugin and the contributions that the user hides, or null for an extension that the user never activated.</param>
+/// <param name="DisabledByCoreAt">The time when the web app deactivated the plugin because it failed too many times, or null.</param>
 public sealed record ExtensionResponse(
     string Id,
     string Kind,
@@ -48,7 +50,9 @@ public sealed record ExtensionResponse(
     IReadOnlyList<string> Devices,
     IReadOnlyList<string> Sites,
     PluginConsentResponse? Consent,
-    bool Paused);
+    bool Paused,
+    PluginLayoutResponse? Layout = null,
+    DateTimeOffset? DisabledByCoreAt = null);
 
 /// <summary>A panel of a plugin manifest.</summary>
 /// <param name="Id">The ID of the panel in the plugin.</param>
@@ -306,7 +310,9 @@ public static class ExtensionEndpoints
         var (panels, i18n, formats) = ReadInterface(row.Manifest);
         return new ExtensionResponse(
             row.Id, row.Kind, row.Name, row.Version, row.CoreApi, row.Permissions, row.Slots, row.Enabled, row.Compatible, active, panels, i18n, formats,
-            asked.Network, asked.Devices, asked.Sites, PluginActivationEndpoints.ToResponse(activation), activation?.IsPaused(asked) ?? false);
+            asked.Network, asked.Devices, asked.Sites, PluginActivationEndpoints.ToResponse(activation), activation?.IsPaused(asked) ?? false,
+            activation is null ? null : new PluginLayoutResponse(activation.Settings.Position, activation.Settings.Hidden),
+            activation?.Settings.DisabledByCoreAt);
     }
 
     /// <summary>Reads the panels, the translations and the formats of a manifest. The API checked the manifest at install time.</summary>

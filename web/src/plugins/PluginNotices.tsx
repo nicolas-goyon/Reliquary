@@ -13,7 +13,11 @@ export function PluginNotices() {
       {notices.map((notice) => (
         <div key={notice.key} className={`plugin-notice plugin-notice-${notice.tone}`}>
           <p>
-            <strong>{notice.development ? t('plugins.noticeFromNotChecked', { name: notice.pluginName }) : t('plugins.noticeFrom', { name: notice.pluginName })}</strong>{' '}
+            {!notice.core && (
+              <>
+                <strong>{notice.development ? t('plugins.noticeFromNotChecked', { name: notice.pluginName }) : t('plugins.noticeFrom', { name: notice.pluginName })}</strong>{' '}
+              </>
+            )}
             {notice.message}
           </p>
           <button type="button" className="link-button" onClick={() => dismissNotice(notice.key)}>

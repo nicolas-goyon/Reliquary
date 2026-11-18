@@ -10,7 +10,7 @@ beforeEach(async () => {
   await i18n.changeLanguage('en')
 })
 
-afterEach(() => removeNotices('deck-stats'))
+afterEach(() => removeNotices('deck-stats', true))
 
 describe('plugin notices', () => {
   it('shows the notice with the name of the plugin, and the user closes it', async () => {

@@ -171,4 +171,40 @@ describe('plugins panel and consent dialog', () => {
     expect(await screen.findByRole('heading', { name: 'Delegations' })).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Plugins' })).toBeNull()
   })
+
+  it('saves the position of an active plugin and the elements that the user hides', async () => {
+    let current = plugin({ active: true, consent: acceptedV1, layout: { position: 0, hidden: ['deck.actions:old'] } })
+    const calls = mockApi(
+      handlers({
+        'GET /extensions': () => list(current),
+        'PUT /me/extensions/deck-sync/layout': () => {
+          current = plugin({ active: true, consent: acceptedV1, layout: { position: 2, hidden: [] } })
+          return new Response(null, { status: 204 })
+        },
+      }),
+    )
+    render(<App />)
+    const user = userEvent.setup()
+
+    await user.click(await screen.findByText('Layout of Deck sync'))
+    const hidden = screen.getByRole('checkbox', { name: 'old (actions of a deck)' })
+    expect(hidden).not.toBeChecked()
+    expect(await seriousAccessibilityProblems()).toEqual([])
+    await user.click(hidden)
+    await user.clear(screen.getByRole('spinbutton', { name: 'Position among the plugins' }))
+    await user.type(screen.getByRole('spinbutton', { name: 'Position among the plugins' }), '2')
+    await user.click(screen.getByRole('button', { name: 'Save the layout' }))
+
+    expect(await screen.findByText('Reliquary saved the layout of Deck sync.')).toBeInTheDocument()
+    expect(calls.filter((call) => call.key === 'PUT /me/extensions/deck-sync/layout').map((call) => call.body)).toEqual([{ position: 2, hidden: [] }])
+  })
+
+  it('tells the user when Reliquary deactivated a plugin that failed', async () => {
+    mockApi(handlers({ 'GET /extensions': () => list(plugin({ consent: acceptedV1, layout: { position: 0, hidden: [] }, disabledByCoreAt: '2026-11-18T08:00:00Z' })) }))
+    render(<App />)
+
+    expect(await screen.findByText(/^Reliquary deactivated this plugin on Nov 18, 2026, because it failed too many times\./)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Activate Deck sync' })).toBeInTheDocument()
+    expect(screen.queryByText('Layout of Deck sync')).not.toBeInTheDocument()
+  })
 })

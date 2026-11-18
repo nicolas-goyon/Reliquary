@@ -42,7 +42,7 @@ afterEach(() => {
   for (const peer of peers.splice(0)) {
     peer.close()
   }
-  removeNotices('deck-stats')
+  removeNotices('deck-stats', true)
 })
 
 describe('api.fetch', () => {

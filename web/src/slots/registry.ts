@@ -225,10 +225,38 @@ export function isPluginPanel<Name extends SlotName>(contribution: AnySlotContri
 
 type AnyContribution = AnySlotContribution<SlotName>
 
+/** The layout of a plugin for the user: its position among the plugins, and the contributions that the user hides. */
+export interface PluginLayoutSetting {
+  position: number
+  hidden: string[]
+}
+
+/** The slots where the user cannot hide a contribution: a plugin page is an address, and the plugin opens its dialogs. */
+const alwaysVisibleSlots: SlotName[] = ['plugin.page', 'plugin.dialog']
+
+/** Gets the plugin of a contribution, or null for a contribution of the core. */
+export function contributionPlugin(contribution: AnyContribution): { id: string; name: string; development: boolean } | null {
+  return 'kind' in contribution ? contribution.plugin : null
+}
+
+/**
+ * Gets the key of a plugin contribution in the layout of the user: "slot:id", with the ID of the contribution in the plugin.
+ * @returns The key, or null for a contribution of the core and for a slot where the user cannot hide a contribution.
+ */
+export function layoutKey(slot: SlotName, contribution: AnyContribution): string | null {
+  const plugin = contributionPlugin(contribution)
+  if (!plugin || alwaysVisibleSlots.includes(slot)) {
+    return null
+  }
+  const prefix = `plugin.${plugin.id}.`
+  return `${slot}:${contribution.id.startsWith(prefix) ? contribution.id.slice(prefix.length) : contribution.id}`
+}
+
 /** The contributions of each slot. The core registers its own panels here, and the extensions use the same registry later. */
 export class SlotRegistry {
   private readonly contributions = new Map<SlotName, AnyContribution[]>()
   private readonly listeners = new Set<() => void>()
+  private layouts = new Map<string, PluginLayoutSetting>()
   private version = 0
 
   /**
@@ -248,10 +276,38 @@ export class SlotRegistry {
     }
   }
 
-  /** Gets the contributions of a slot, in their order. */
+  /**
+   * Replaces the layouts of the plugins of the user, by plugin ID. See issue #278.
+   * The slots then hide the hidden contributions, and show the contributions of the plugins in the order of their positions.
+   */
+  setPluginLayouts(layouts: Record<string, PluginLayoutSetting>): void {
+    this.layouts = new Map(Object.entries(layouts))
+    this.changed()
+  }
+
+  /** Gets the contributions of a slot that the user sees, in their order. */
   list<Name extends SlotName>(slot: Name): AnySlotContribution<Name>[] {
+    return this.listAll(slot).filter((contribution) => {
+      const key = layoutKey(slot, contribution as unknown as AnyContribution)
+      const plugin = contributionPlugin(contribution as unknown as AnyContribution)
+      return key === null || plugin === null || !this.layouts.get(plugin.id)?.hidden.includes(key)
+    })
+  }
+
+  /**
+   * Gets all the contributions of a slot, also the contributions that the user hides.
+   * The contributions of the core come first, in their order. Two contributions of plugins come in the order of the positions of their plugins.
+   */
+  listAll<Name extends SlotName>(slot: Name): AnySlotContribution<Name>[] {
+    const position = (contribution: AnyContribution): number => {
+      const plugin = contributionPlugin(contribution)
+      return plugin ? (this.layouts.get(plugin.id)?.position ?? 0) : 0
+    }
     return [...(this.contributions.get(slot) ?? [])]
-      .sort((left, right) => (left.order ?? 100) - (right.order ?? 100) || left.id.localeCompare(right.id))
+      .sort((left, right) => {
+        const both = contributionPlugin(left) !== null && contributionPlugin(right) !== null
+        return (both ? position(left) - position(right) : 0) || (left.order ?? 100) - (right.order ?? 100) || left.id.localeCompare(right.id)
+      })
       .map((contribution) => contribution as unknown as AnySlotContribution<Name>)
   }
 

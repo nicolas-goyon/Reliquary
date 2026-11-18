@@ -20,6 +20,10 @@ public sealed class PluginConsentTests(PluginInstanceFixture fixture) : IClassFi
 
     private static readonly string[] Camera = ["camera"];
 
+    private static readonly string[] HiddenTwice = ["deck.actions:sync", "analysis.tabs:stats", "deck.actions:sync"];
+
+    private static readonly string[] NoSlot = ["sync"];
+
     private static CancellationToken Cancel => TestContext.Current.CancellationToken;
 
     [Fact]
@@ -141,6 +145,62 @@ public sealed class PluginConsentTests(PluginInstanceFixture fixture) : IClassFi
         Assert.Equal("1.0.0", inactive.Consent!.Version);
         Assert.Equal(HttpStatusCode.NoContent, activate.StatusCode);
         Assert.True((await ItemAsync(user, id)).Active);
+    }
+
+    [Fact]
+    public async Task UserKeepsTheLayoutOfAPlugin()
+    {
+        var instance = fixture.Instance;
+        var id = PluginInstance.NewId();
+        await instance.InstallAsync(Manifest(id, "1.0.0", DecksRead, [], []));
+        using var user = await instance.SignInAsync($"{id}-1@example.org");
+
+        var before = await user.PutAsJsonAsync($"/api/v1/me/extensions/{id}/layout", new { position = 1 }, Cancel);
+        var never = await ItemAsync(user, id);
+        (await user.PutAsJsonAsync($"/api/v1/me/extensions/{id}", Consent("1.0.0", DecksRead, [], []), Cancel)).EnsureSuccessStatusCode();
+        var initial = await ItemAsync(user, id);
+        var set = await user.PutAsJsonAsync($"/api/v1/me/extensions/{id}/layout", new { position = -5, hidden = HiddenTwice }, Cancel);
+        (await user.PutAsJsonAsync($"/api/v1/me/extensions/{id}", new { enabled = false }, Cancel)).EnsureSuccessStatusCode();
+        var kept = await ItemAsync(user, id);
+        var farPosition = await user.PutAsJsonAsync($"/api/v1/me/extensions/{id}/layout", new { position = 1001 }, Cancel);
+        var badKey = await user.PutAsJsonAsync($"/api/v1/me/extensions/{id}/layout", new { hidden = NoSlot }, Cancel);
+
+        Assert.Equal(HttpStatusCode.NotFound, before.StatusCode);
+        Assert.Null(never.Layout);
+        Assert.Equal(0, initial.Layout!.Position);
+        Assert.Empty(initial.Layout.Hidden);
+        Assert.Equal(HttpStatusCode.NoContent, set.StatusCode);
+        Assert.Equal(-5, kept.Layout!.Position);
+        Assert.Equal(["deck.actions:sync", "analysis.tabs:stats"], kept.Layout.Hidden);
+        Assert.Equal("1.0.0", kept.Consent!.Version);
+        Assert.Equal(HttpStatusCode.BadRequest, farPosition.StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, badKey.StatusCode);
+    }
+
+    [Fact]
+    public async Task DeactivationByTheCoreKeepsTheTimeUntilTheNextActivation()
+    {
+        var instance = fixture.Instance;
+        var id = PluginInstance.NewId();
+        await instance.InstallAsync(Manifest(id, "1.0.0", DecksRead, [], []));
+        using var user = await instance.SignInAsync($"{id}-1@example.org");
+        (await user.PutAsJsonAsync($"/api/v1/me/extensions/{id}", Consent("1.0.0", DecksRead, [], []), Cancel)).EnsureSuccessStatusCode();
+        (await user.PutAsJsonAsync($"/api/v1/me/extensions/{id}/layout", new { position = 3 }, Cancel)).EnsureSuccessStatusCode();
+
+        (await user.PutAsJsonAsync($"/api/v1/me/extensions/{id}", new { enabled = false, failed = true }, Cancel)).EnsureSuccessStatusCode();
+        var failed = await ItemAsync(user, id);
+        (await user.PutAsJsonAsync($"/api/v1/me/extensions/{id}", new { enabled = true }, Cancel)).EnsureSuccessStatusCode();
+        var active = await ItemAsync(user, id);
+        (await user.PutAsJsonAsync($"/api/v1/me/extensions/{id}", new { enabled = false }, Cancel)).EnsureSuccessStatusCode();
+        var byUser = await ItemAsync(user, id);
+
+        Assert.False(failed.Active);
+        Assert.NotNull(failed.DisabledByCoreAt);
+        Assert.Equal(3, failed.Layout!.Position);
+        Assert.True(active.Active);
+        Assert.Null(active.DisabledByCoreAt);
+        Assert.Equal(3, active.Layout!.Position);
+        Assert.Null(byUser.DisabledByCoreAt);
     }
 
     [Fact]

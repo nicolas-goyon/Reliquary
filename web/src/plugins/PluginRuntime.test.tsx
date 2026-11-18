@@ -2,12 +2,14 @@ import { act, render, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { ExtensionList } from '../api/extensions'
 import { AuthContext, type AuthContextValue, type AuthState } from '../auth/session'
+import i18n from '../i18n'
 import { testAccount } from '../test/mockApi'
 import { notifyPluginsChanged, pluginCheckIntervalMs } from './events'
+import { currentNotices, removeNotices } from './notices'
 import { PluginRuntime } from './PluginRuntime'
 
 const runtime = vi.hoisted(() => ({
-  startPluginRuntime: vi.fn<(list: unknown) => { stopAll(): Promise<void> }>(() => ({ stopAll: vi.fn<() => Promise<void>>(async () => undefined) })),
+  startPluginRuntime: vi.fn<(list: unknown, options?: unknown) => { stopAll(): Promise<void> }>(() => ({ stopAll: vi.fn<() => Promise<void>>(async () => undefined) })),
 }))
 vi.mock('./runtime', () => runtime)
 
@@ -146,5 +148,28 @@ describe('PluginRuntime', () => {
 
     await waitFor(() => expect(runtime.startPluginRuntime).toHaveBeenCalledTimes(2))
     expect(runtime.startPluginRuntime).toHaveBeenLastCalledWith(response, expect.objectContaining({ developmentUrls: [], registry: undefined }))
+  })
+
+  it('deactivates a plugin that fails 3 times in the session, and tells the user', async () => {
+    sessionStorage.clear()
+    await i18n.changeLanguage('en')
+    const { request } = renderRuntime({ status: 'authenticated', account: testAccount }, list(true))
+    await waitFor(() => expect(runtime.startPluginRuntime).toHaveBeenCalledTimes(1))
+    const options = runtime.startPluginRuntime.mock.calls[0][1] as { onFailure(plugin: { id: string; version: string }, kind: 'crash' | 'slow', development: boolean): void }
+    const plugin = { id: 'moxfield-sync', version: '0.1.0' }
+
+    // The failures of a development plugin do not count.
+    for (let index = 0; index < 5; index += 1) {
+      options.onFailure(plugin, 'crash', true)
+    }
+    options.onFailure(plugin, 'crash', false)
+    options.onFailure(plugin, 'crash', false)
+    expect(request).toHaveBeenCalledTimes(1)
+    options.onFailure(plugin, 'crash', false)
+
+    await waitFor(() => expect(request).toHaveBeenCalledWith('/me/extensions/moxfield-sync', { method: 'PUT', body: { enabled: false, failed: true } }))
+    await waitFor(() => expect(currentNotices().map((notice) => notice.message)).toEqual([expect.stringContaining('Reliquary deactivated the plugin Moxfield')]))
+    expect(currentNotices()[0]).toMatchObject({ core: true, tone: 'error' })
+    removeNotices('moxfield-sync', true)
   })
 })

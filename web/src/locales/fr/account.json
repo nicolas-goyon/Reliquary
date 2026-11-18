@@ -92,13 +92,34 @@
     "state": {
       "active": "Actif.",
       "inactive": "Inactif.",
-      "paused": "En pause. La nouvelle version demande plus d’accès. Lisez les nouveaux accès pour relancer le plugin."
+      "paused": "En pause. La nouvelle version demande plus d’accès. Lisez les nouveaux accès pour relancer le plugin.",
+      "disabledByCore": "Reliquary a désactivé ce plugin le {{date}}, car il a échoué trop souvent. Vous pouvez le réactiver."
     },
     "activate": "Activer",
     "deactivate": "Désactiver",
     "review": "Lire les nouveaux accès",
     "activated": "Le plugin {{name}} est actif.",
     "deactivated": "Le plugin {{name}} est inactif.",
+    "layout": {
+      "title": "Disposition de {{name}}",
+      "position": "Position parmi les plugins",
+      "positionHint": "Les éléments d’un plugin avec un nombre plus petit viennent en premier. La valeur par défaut est 0.",
+      "visible": "Éléments que Reliquary affiche",
+      "none": "Le plugin n’a aucun élément que vous pouvez masquer pour le moment.",
+      "item": "{{text}} ({{slot}})",
+      "save": "Enregistrer la disposition",
+      "saved": "Reliquary a enregistré la disposition de {{name}}.",
+      "slots": {
+        "navigation": "navigation",
+        "appMenu": "menu",
+        "deckActions": "actions d’un deck",
+        "analysisTabs": "analyse d’un deck",
+        "tableColumns": "colonne du mode tableau",
+        "cardPage": "page d’une carte",
+        "importFormats": "format d’import",
+        "exportFormats": "format d’export"
+      }
+    },
     "consent": {
       "title": "Activer {{name}}",
       "updateTitle": "Nouveaux accès pour {{name}}",
