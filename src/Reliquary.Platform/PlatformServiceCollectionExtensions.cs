@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.DataProtection.StackExchangeRedis;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Reliquary.BuildingBlocks.Accounts;
 using Reliquary.BuildingBlocks.Data;
 using Reliquary.BuildingBlocks.Email;
 using Reliquary.BuildingBlocks.Events;
@@ -64,6 +65,7 @@ public static class PlatformServiceCollectionExtensions
             client.Timeout = TimeSpan.FromMinutes(2);
         });
         services.AddLinkedAccounts(configuration);
+        services.AddSingleton<IPersonalDataProvider, PluginPersonalData>();
 
         if (string.IsNullOrWhiteSpace(configuration[$"{EmailOptions.Section}:Smtp:Host"]))
         {

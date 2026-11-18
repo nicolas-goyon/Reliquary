@@ -68,6 +68,8 @@ public sealed class PersonalDataTests(DecksInstance instance)
                 "moderation/hidden-content.json",
                 "moderation/moderation-actions.json",
                 "moderation/reports.json",
+                "plugins/linked-accounts.json",
+                "plugins/plugins.json",
             ],
             entries);
         Assert.Equal("Tester", account.GetProperty("displayName").GetString());

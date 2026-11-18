@@ -107,6 +107,16 @@ The vault encrypts each secret with AES-GCM ([ADR 0050](../decisions/0050-no-plu
 - When the key of a secret is missing, the secret endpoint returns the status 409 with the code `vault_key_missing`.
   The list shows `secretReadable: false`, and the user must link the account again.
 
+#### Personal data
+
+The provider `PluginPersonalData` of the platform follows [ADR 0032](../decisions/0032-personal-data.md):
+
+- The export of an account contains the folder `plugins`:
+  - `plugins.json` lists the plugins that the user activated, with the consent of the user.
+  - `linked-accounts.json` lists the linked accounts: the plugin, the site, the authentication method, the user name and the state of the last sync.
+    The field `hasSecret` tells whether the link has a secret. The file never contains a secret.
+- The deletion of an account deletes the plugin activations, the linked accounts and their secrets.
+
 ### Interface slots
 
 - The interface contains named places for extensions: the **slots**.
