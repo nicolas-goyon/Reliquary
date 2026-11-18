@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { App } from '../App'
 import i18n from '../i18n'
-import { mockApi, problem, session, testAccount } from '../test/mockApi'
+import { mockApi, session, testAccount } from '../test/mockApi'
 
 const exportId = '0190a000-0000-7000-8000-0000000000e1'
 
@@ -57,29 +57,26 @@ describe('personal data', () => {
     click.mockRestore()
   })
 
-  it('asks for the deletion with the password, then cancels it', async () => {
+  it('asks for the deletion after a confirmation, then cancels it', async () => {
     vi.spyOn(window, 'confirm').mockReturnValue(true)
     const calls = mockApi(
       handlers({
         'GET /me/exports': () => Response.json([]),
         'GET /me/deletion': () => Response.json({ requestedAt: null, deleteAfter: null }),
-        'POST /me/deletion': ({ body }) =>
-          (body as { password: string }).password === 'secret password'
-            ? Response.json({ requestedAt: '2026-10-27T10:00:00Z', deleteAfter: '2026-11-03T10:00:00Z' })
-            : problem(400, 'invalid_credentials'),
+        'POST /me/deletion': () => Response.json({ requestedAt: '2026-10-27T10:00:00Z', deleteAfter: '2026-11-03T10:00:00Z' }),
         'DELETE /me/deletion': () => new Response(null, { status: 204 }),
       }),
     )
     const user = userEvent.setup()
     render(<App />)
 
-    await user.type(await screen.findByLabelText('Password'), 'secret password')
-    await user.click(screen.getByRole('button', { name: 'Delete my account' }))
+    await user.click(await screen.findByRole('button', { name: 'Delete my account' }))
+    expect(window.confirm).toHaveBeenCalledWith('Delete your account and all your data in 7 days?')
     expect(await screen.findByText(/Reliquary deletes your account and all your data on/)).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Cancel the deletion' }))
 
     expect(await screen.findByRole('button', { name: 'Delete my account' })).toBeInTheDocument()
-    expect(calls.find((call) => call.key === 'POST /me/deletion')?.body).toEqual({ password: 'secret password' })
+    expect(calls.some((call) => call.key === 'POST /me/deletion')).toBe(true)
     expect(calls.some((call) => call.key === 'DELETE /me/deletion')).toBe(true)
   })
 })

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AccountPage } from './pages/AccountPage'
 import { CardPage } from './pages/CardPage'
+import { AuthCompletePage } from './pages/AuthCompletePage'
 import { AuthorPage } from './pages/AuthorPage'
 import { CardSearchPage } from './pages/CardSearchPage'
 import { ComparePage } from './pages/ComparePage'
@@ -10,7 +11,6 @@ import { CollectionPage } from './pages/CollectionPage'
 import { DeckImportPage } from './pages/DeckImportPage'
 import { DeckListPage } from './pages/DeckListPage'
 import { DeckPage } from './pages/DeckPage'
-import { AuthCompletePage, CheckEmailPage, ForgotPasswordPage, ResetPasswordPage } from './pages/EmailLinkPages'
 import { ExplorePage } from './pages/ExplorePage'
 import { HomePage, NotFoundPage } from './pages/HomePage'
 import { ModerationPage } from './pages/ModerationPage'
@@ -19,7 +19,6 @@ import { InventoryPage } from './pages/InventoryPage'
 import { LocationPage } from './pages/LocationPage'
 import { LocationsPage } from './pages/LocationsPage'
 import { MovementsPage } from './pages/MovementsPage'
-import { RegisterPage } from './pages/RegisterPage'
 import { SignInPage } from './pages/SignInPage'
 import { TablePage } from './pages/TablePage'
 import { LocalGamePage } from './pages/LocalGamePage'
@@ -86,10 +85,6 @@ const routes: Record<string, () => ReactNode> = {
   '/collection/exchange': () => <CollectionExchangePage />,
   '/': () => <HomePage />,
   '/sign-in': () => <SignInPage />,
-  '/register': () => <RegisterPage />,
-  '/check-email': () => <CheckEmailPage />,
-  '/forgot-password': () => <ForgotPasswordPage />,
-  '/reset-password': () => <ResetPasswordPage />,
   '/auth/complete': () => <AuthCompletePage />,
   '/account': () => <AccountPage />,
   '/admin/moderation': () => <ModerationPage />,

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { Account, ApiKey, CreatedApiKey, MeResponse, SessionResponse } from '../api/types'
+import type { Account, ApiKey, CreatedApiKey, MeResponse } from '../api/types'
 import { useAuth } from '../auth/session'
 import { ErrorAlert, SuccessAlert, TextField } from '../components/Forms'
 import { isSupportedLanguage, supportedLanguages } from '../i18n'
@@ -54,69 +54,6 @@ export function ProfilePanel({ account }: { account: Account }) {
         {saved && <SuccessAlert>{t('profile.saved')}</SuccessAlert>}
         <button type="submit" className="button-primary">
           {t('profile.submit')}
-        </button>
-      </form>
-    </section>
-  )
-}
-
-/** The change of the password. */
-export function PasswordPanel({ account }: { account: Account }) {
-  const { t } = useTranslation('account')
-  const { t: tAuth } = useTranslation('auth')
-  const { request, acceptSession } = useAuth()
-  const [currentPassword, setCurrentPassword] = useState('')
-  const [newPassword, setNewPassword] = useState('')
-  const [error, setError] = useState<unknown>(null)
-  const [saved, setSaved] = useState(false)
-
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault()
-    setError(null)
-    setSaved(false)
-    try {
-      const session = await request<SessionResponse>('/me/password', {
-        method: 'POST',
-        body: { currentPassword: account.hasPassword ? currentPassword : null, newPassword },
-      })
-      acceptSession(session.accessToken, session.expiresIn, session.account)
-      setCurrentPassword('')
-      setNewPassword('')
-      setSaved(true)
-    } catch (caught) {
-      setError(caught)
-    }
-  }
-
-  return (
-    <section className="panel" aria-labelledby="password-title">
-      <h2 id="password-title">{account.hasPassword ? t('password.title') : t('password.titleFirst')}</h2>
-      <p>{t('password.description')}</p>
-      <form className="form" onSubmit={(event) => void handleSubmit(event)} noValidate>
-        {account.hasPassword && (
-          <TextField
-            label={t('password.current')}
-            type="password"
-            autoComplete="current-password"
-            value={currentPassword}
-            onChange={(event) => setCurrentPassword(event.target.value)}
-          />
-        )}
-        <TextField
-          label={t('password.new')}
-          field="newPassword"
-          error={error}
-          type="password"
-          autoComplete="new-password"
-          minLength={10}
-          hint={tAuth('fields.passwordHint')}
-          value={newPassword}
-          onChange={(event) => setNewPassword(event.target.value)}
-        />
-        <ErrorAlert error={error} />
-        {saved && <SuccessAlert>{t('password.saved')}</SuccessAlert>}
-        <button type="submit" className="button-primary">
-          {t('password.submit')}
         </button>
       </form>
     </section>

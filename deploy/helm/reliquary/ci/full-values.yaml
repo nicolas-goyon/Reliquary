@@ -1,16 +1,15 @@
-# Values that use most options of the chart: an existing Secret, the Redis StatefulSet and the settings of the emails.
+# Values that use most options of the chart: an existing Secret, the Redis StatefulSet and the OAuth providers.
 # tools/deploy-tests/check-chart.sh uses this file.
 config:
   publicUrl: https://reliquary.example.org
   administratorEmails:
     - admin@example.org
-  email:
-    from: Reliquary <noreply@example.org>
-    smtp:
-      host: smtp.example.org
-      userName: reliquary
   google:
     clientId: example.apps.googleusercontent.com
+  github:
+    clientId: Iv1.0000000000000000
+  discord:
+    clientId: "100000000000000000"
   moxfieldUserAgent: Reliquary/0.2 (admin@example.org)
 extraEnv:
   - name: Logging__LogLevel__Default

@@ -12,7 +12,7 @@
 # Keep this file in ASCII: Windows PowerShell 5.1 reads a file with no byte order mark as ANSI.
 
 # The revision of this script. The script replaces itself only with a script that has a higher revision.
-# reliquary-update-revision: 1
+# reliquary-update-revision: 2
 
 Set-StrictMode -Version 2.0
 $ErrorActionPreference = 'Stop'
@@ -408,7 +408,7 @@ function Restore-Operation {
             Test-Docker @arguments | Out-Null
         }
     }
-    Invoke-Compose $folder up --detach --wait postgres redis mailpit
+    Invoke-Compose $folder up --detach --wait postgres redis
     Invoke-Cli $folder restore "/backups/$backup" --replace
     Invoke-Cli $folder migrate
     Invoke-Compose $folder up --detach --wait --remove-orphans
@@ -532,7 +532,7 @@ function Invoke-Update([string] $Version, [bool] $Force) {
         if ((Test-Installed) -and (-not $Force) -and ((Get-Images $current) -eq (Get-Images $next))) {
             Write-UpdateLog "The instance already has the images of ""$Version"" ($(Get-StateValue $current 'RELIQUARY_RUNNING_VERSION'))."
             Remove-Folder $next
-            Invoke-Compose current up --detach --wait postgres redis mailpit
+            Invoke-Compose current up --detach --wait postgres redis
             Invoke-Cli current migrate
             Invoke-Compose current up --detach --wait --remove-orphans
             return
@@ -546,7 +546,7 @@ function Invoke-Update([string] $Version, [bool] $Force) {
                 Write-UpdateLog "The database volume of the project $($script:Project) exists. Back up its data before the migrations."
                 Backup-Databases next (Get-BackupName 'existing-data')
             }
-            Invoke-Compose next up --detach --wait postgres redis mailpit
+            Invoke-Compose next up --detach --wait postgres redis
             Write-UpdateLog 'Apply the migrations.'
             Invoke-Cli next migrate
             Write-UpdateLog 'Start the API, the worker and the web app.'
@@ -566,7 +566,7 @@ function Invoke-Update([string] $Version, [bool] $Force) {
             Copy-Item -LiteralPath (Join-Path $current 'images.env'), (Join-Path $current 'compose.yaml') -Destination $point
             Start-Operation $point $name 'update'
 
-            Invoke-Compose next up --detach --wait postgres redis mailpit
+            Invoke-Compose next up --detach --wait postgres redis
             Write-UpdateLog 'Apply the migrations.'
             Invoke-Cli next migrate
             Write-UpdateLog 'Start the API, the worker and the web app.'
@@ -694,7 +694,7 @@ function Invoke-Rollback([bool] $Confirmed) {
         Copy-Folder $current $beforeRollback
         Start-Operation $beforeRollback $safety 'rollback'
 
-        Invoke-Compose $point up --detach --wait postgres redis mailpit
+        Invoke-Compose $point up --detach --wait postgres redis
         Invoke-Cli $point restore "/backups/$name" --replace
         Invoke-Cli $point migrate
         Invoke-Compose $point up --detach --wait --remove-orphans

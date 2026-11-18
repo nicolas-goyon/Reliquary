@@ -149,7 +149,6 @@ Each backup contains all the databases. With all the cards, a backup can need 1 
 | Address | Local instance | Pre-production instance | Production instance |
 | --- | --- | --- | --- |
 | Web app and API | <http://localhost:8080> | <http://localhost:8090> | The address of your reverse proxy |
-| Mailpit (test emails) | <http://localhost:18025> | <http://localhost:18035> | Not used with a real email server |
 | PostgreSQL | `localhost:15432` | Not open | Not open |
 | Redis | `localhost:16379` | Not open | Not open |
 

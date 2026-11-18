@@ -157,7 +157,7 @@ Three automatic tests check the main rules:
 | `web/src/theme/contrast.test.ts` | The contrast of the color tokens in the two themes. Text needs 4.5:1 or more. The borders of controls, the focus indicator and the chart bars need 3:1 or more. |
 | `web/src/theme/theme.test.tsx` | The dark tokens of the "Dark" value and of the "System" value are the same. |
 
-The axe test covers these pages: home, sign-in, registration, card search, card, public decks, deck list, deck and account.
+The axe test covers these pages: home, sign-in, card search, card, public decks, deck list, deck and account.
 jsdom has no layout, so axe cannot check the contrast in the tests.
 The contrast test reads the tokens from `web/src/styles.css` instead.
 

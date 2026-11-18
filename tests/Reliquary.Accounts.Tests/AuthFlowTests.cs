@@ -9,73 +9,70 @@ namespace Reliquary.Accounts.Tests;
 
 public sealed class AuthFlowTests
 {
-    internal const string Password = "correct horse battery";
-
     [Fact]
-    public async Task UserRegistersChecksTheEmailAndSignsIn()
+    public async Task DevelopmentSignInMakesTheAccountOneTimeAndStartsASession()
     {
         await using var instance = await AccountsInstance.CreateAsync();
         using var browser = instance.StartReplica().CreateBrowser();
 
-        var register = await browser.PostAsync("/api/v1/auth/register", new { email = "Ana@Example.org", password = Password, displayName = "Ana", language = "fr" });
-        var early = await browser.PostAsync("/api/v1/auth/sign-in", new { email = "ana@example.org", password = Password });
-        var email = Assert.Single(instance.Emails.Messages);
-        var check = await browser.PostAsync("/api/v1/auth/email-check", new { token = instance.Emails.LastToken("Ana@Example.org") });
-        var session = await browser.SignInAsync("ana@example.org", Password);
-        var me = await browser.Http.SendAsync(Authorized(HttpMethod.Get, "/api/v1/me", session.AccessToken), TestContext.Current.CancellationToken);
+        var first = await browser.SignInAsync("Ana@Example.org", "Ana", "fr");
+        var cookie = browser.RefreshCookie;
+        var second = await browser.SignInAsync(" ana@example.org ", "Other name", "en");
+        var me = await browser.GetAsync("/api/v1/me");
         var profile = await me.Content.ReadFromJsonAsync<MeResponse>(TestContext.Current.CancellationToken);
 
-        Assert.Equal(HttpStatusCode.Accepted, register.StatusCode);
-        Assert.Equal(HttpStatusCode.Forbidden, early.StatusCode);
-        Assert.Equal(AccountErrorCodes.EmailNotChecked, await early.CodeAsync());
-        Assert.StartsWith("Vérifiez", email.Subject, StringComparison.Ordinal);
-        Assert.Contains("https://reliquary.test/check-email?token=", email.TextBody, StringComparison.Ordinal);
-        Assert.Equal(HttpStatusCode.NoContent, check.StatusCode);
-        Assert.NotNull(browser.RefreshCookie);
+        Assert.NotNull(cookie);
+        Assert.Equal(first.Account.Id, second.Account.Id);
         Assert.Equal("Ana", profile!.Account.DisplayName);
         Assert.Equal("fr", profile.Account.Language);
-        Assert.True(profile.Account.EmailChecked);
+        Assert.Equal("Ana@Example.org", profile.Account.Email);
         Assert.False(profile.Account.IsAdministrator);
     }
 
     [Fact]
-    public async Task UserMakesAnAccountWithNoEmailAndSignsInWithTheName()
+    public async Task DevelopmentSignInUsesDefaultsAndChecksTheFields()
     {
         await using var instance = await AccountsInstance.CreateAsync();
-        instance.Settings["Auth:AllowAccountsWithoutEmail"] = "true";
         using var browser = instance.StartReplica().CreateBrowser();
 
-        var register = await browser.PostAsync("/api/v1/auth/register", new { displayName = "Ana Dev", password = Password, language = "fr" });
-        var duplicate = await browser.PostAsync("/api/v1/auth/register", new { displayName = " ana dev ", password = Password, language = "fr" });
-        var session = await browser.SignInAsync("ANA DEV", Password);
-        var wrong = await browser.PostAsync("/api/v1/auth/sign-in", new { email = "Ana Dev", password = "not the password" });
+        var session = await browser.SignInAsync("defaults@example.org");
+        var response = await browser.PostAsync("/api/v1/auth/development/sign-in", new { email = "not an address", language = "de" });
+        var body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
-        Assert.Equal(HttpStatusCode.Accepted, register.StatusCode);
-        Assert.Equal(HttpStatusCode.Conflict, duplicate.StatusCode);
-        Assert.Equal(AccountErrorCodes.AccountNameTaken, await duplicate.CodeAsync());
-        Assert.Equal("Ana Dev", session.Account.DisplayName);
-        Assert.Equal(HttpStatusCode.Unauthorized, wrong.StatusCode);
-        Assert.Empty(instance.Emails.Messages);
+        Assert.Equal("defaults", session.Account.DisplayName);
+        Assert.Equal("en", session.Account.Language);
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Contains("\"field\":\"email\"", body, StringComparison.Ordinal);
+        Assert.Contains("\"field\":\"language\"", body, StringComparison.Ordinal);
     }
 
     [Fact]
-    public async Task AccountWithNoEmailIsNotPossibleWhenTheSettingIsOff()
+    public async Task InstanceWithoutTheSettingHasNoDevelopmentSignInAndNoPasswordEndpoints()
     {
         await using var instance = await AccountsInstance.CreateAsync();
+        instance.Settings["Auth:AllowDevelopmentSignIn"] = "false";
         using var browser = instance.StartReplica().CreateBrowser();
 
-        var register = await browser.PostAsync("/api/v1/auth/register", new { displayName = "Ana", password = Password, language = "fr" });
+        var signIn = await browser.PostAsync("/api/v1/auth/development/sign-in", new { email = "ana@example.org" });
+        var providers = await browser.GetAsync("/api/v1/auth/providers");
+        var list = await providers.Content.ReadFromJsonAsync<ProvidersResponse>(TestContext.Current.CancellationToken);
 
-        Assert.Equal(HttpStatusCode.BadRequest, register.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, signIn.StatusCode);
+        Assert.False(list!.DevelopmentSignIn);
+        Assert.Empty(list.Providers);
+        foreach (var path in new[] { "/api/v1/auth/register", "/api/v1/auth/sign-in", "/api/v1/auth/password/forgot", "/api/v1/auth/password/reset", "/api/v1/auth/email-check" })
+        {
+            Assert.Equal(HttpStatusCode.NotFound, (await browser.PostAsync(path, new { email = "ana@example.org", password = "correct horse battery" })).StatusCode);
+        }
     }
 
     [Fact]
-    public async Task RegistrationCreatesTheShardAssignmentAndTheEvent()
+    public async Task NewAccountGetsTheShardAssignmentAndTheEvent()
     {
         await using var instance = await AccountsInstance.CreateAsync();
         using var browser = instance.StartReplica().CreateBrowser();
 
-        await browser.PostAsync("/api/v1/auth/register", new { email = "event@example.org", password = Password, displayName = "Event", language = "en" });
+        await browser.SignInAsync("event@example.org");
 
         await using var connection = new NpgsqlConnection(instance.Database.ConnectionString);
         var accountId = await connection.ExecuteScalarAsync<Guid>("select id from users.accounts where email_normalized = 'event@example.org'");
@@ -86,59 +83,12 @@ public sealed class AuthFlowTests
     }
 
     [Fact]
-    public async Task SecondRegistrationWithTheSameAddressSendsAWarningEmail()
-    {
-        await using var instance = await AccountsInstance.CreateAsync();
-        using var browser = instance.StartReplica().CreateBrowser();
-
-        await browser.PostAsync("/api/v1/auth/register", new { email = "twice@example.org", password = Password, displayName = "One", language = "en" });
-        var second = await browser.PostAsync("/api/v1/auth/register", new { email = "TWICE@example.org", password = "another password", displayName = "Two", language = "en" });
-
-        Assert.Equal(HttpStatusCode.Accepted, second.StatusCode);
-        Assert.Equal(2, instance.Emails.Messages.Count);
-        Assert.Equal("Your Reliquary account", instance.Emails.Messages[1].Subject);
-    }
-
-    [Fact]
-    public async Task RegistrationWithIncorrectFieldsGivesAllTheFieldErrors()
-    {
-        await using var instance = await AccountsInstance.CreateAsync();
-        using var browser = instance.StartReplica().CreateBrowser();
-
-        var response = await browser.PostAsync("/api/v1/auth/register", new { email = "not an address", password = "short", language = "de" });
-        var body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-        Assert.Contains("\"field\":\"email\"", body, StringComparison.Ordinal);
-        Assert.Contains("\"field\":\"password\"", body, StringComparison.Ordinal);
-        Assert.Contains("\"field\":\"displayName\"", body, StringComparison.Ordinal);
-        Assert.Contains("\"field\":\"language\"", body, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public async Task WrongPasswordAndUnknownAddressGiveTheSameError()
-    {
-        await using var instance = await AccountsInstance.CreateAsync();
-        using var browser = instance.StartReplica().CreateBrowser();
-        await RegisterCheckedAsync(instance, browser, "known@example.org");
-
-        var wrong = await browser.PostAsync("/api/v1/auth/sign-in", new { email = "known@example.org", password = "wrong password" });
-        var unknown = await browser.PostAsync("/api/v1/auth/sign-in", new { email = "unknown@example.org", password = Password });
-
-        Assert.Equal(HttpStatusCode.Unauthorized, wrong.StatusCode);
-        Assert.Equal(HttpStatusCode.Unauthorized, unknown.StatusCode);
-        Assert.Equal(AccountErrorCodes.InvalidCredentials, await wrong.CodeAsync());
-        Assert.Equal(AccountErrorCodes.InvalidCredentials, await unknown.CodeAsync());
-    }
-
-    [Fact]
     public async Task AdministratorAddressGivesTheAdministratorRole()
     {
         await using var instance = await AccountsInstance.CreateAsync();
         using var browser = instance.StartReplica().CreateBrowser();
-        await RegisterCheckedAsync(instance, browser, "admin@example.org");
 
-        var session = await browser.SignInAsync("admin@example.org", Password);
+        var session = await browser.SignInAsync("admin@example.org");
 
         Assert.True(session.Account.IsAdministrator);
     }
@@ -148,8 +98,7 @@ public sealed class AuthFlowTests
     {
         await using var instance = await AccountsInstance.CreateAsync();
         using var browser = instance.StartReplica().CreateBrowser();
-        await RegisterCheckedAsync(instance, browser, "refresh@example.org");
-        await browser.SignInAsync("refresh@example.org", Password);
+        await browser.SignInAsync("refresh@example.org");
         var first = browser.RefreshCookie;
 
         var refreshed = await browser.PostAsync("/api/v1/auth/refresh");
@@ -170,8 +119,7 @@ public sealed class AuthFlowTests
     {
         await using var instance = await AccountsInstance.CreateAsync();
         using var browser = instance.StartReplica().CreateBrowser();
-        await RegisterCheckedAsync(instance, browser, "reuse@example.org");
-        await browser.SignInAsync("reuse@example.org", Password);
+        await browser.SignInAsync("reuse@example.org");
         var stolen = browser.RefreshCookie;
         await browser.PostAsync("/api/v1/auth/refresh");
         var current = browser.RefreshCookie;
@@ -192,8 +140,7 @@ public sealed class AuthFlowTests
     {
         await using var instance = await AccountsInstance.CreateAsync();
         using var browser = instance.StartReplica().CreateBrowser();
-        await RegisterCheckedAsync(instance, browser, "out@example.org");
-        await browser.SignInAsync("out@example.org", Password);
+        await browser.SignInAsync("out@example.org");
         var cookie = browser.RefreshCookie;
 
         var signOut = await browser.PostAsync("/api/v1/auth/sign-out");
@@ -205,33 +152,6 @@ public sealed class AuthFlowTests
     }
 
     [Fact]
-    public async Task PasswordResetSetsTheNewPasswordAndStopsTheSessions()
-    {
-        await using var instance = await AccountsInstance.CreateAsync();
-        using var browser = instance.StartReplica().CreateBrowser();
-        await RegisterCheckedAsync(instance, browser, "reset@example.org");
-        await browser.SignInAsync("reset@example.org", Password);
-        var oldCookie = browser.RefreshCookie;
-
-        var forgot = await browser.PostAsync("/api/v1/auth/password/forgot", new { email = "reset@example.org" });
-        var unknown = await browser.PostAsync("/api/v1/auth/password/forgot", new { email = "nobody@example.org" });
-        var token = instance.Emails.LastToken("reset@example.org");
-        var reset = await browser.PostAsync("/api/v1/auth/password/reset", new { token, password = "a new password" });
-        var again = await browser.PostAsync("/api/v1/auth/password/reset", new { token, password = "a third password" });
-        var refresh = await browser.PostAsync("/api/v1/auth/refresh");
-        var oldPassword = await browser.PostAsync("/api/v1/auth/sign-in", new { email = "reset@example.org", password = Password });
-
-        Assert.Equal(HttpStatusCode.Accepted, forgot.StatusCode);
-        Assert.Equal(HttpStatusCode.Accepted, unknown.StatusCode);
-        Assert.Equal(HttpStatusCode.NoContent, reset.StatusCode);
-        Assert.Equal(AccountErrorCodes.InvalidToken, await again.CodeAsync());
-        Assert.NotNull(oldCookie);
-        Assert.Equal(HttpStatusCode.Unauthorized, refresh.StatusCode);
-        Assert.Equal(HttpStatusCode.Unauthorized, oldPassword.StatusCode);
-        await browser.SignInAsync("reset@example.org", "a new password");
-    }
-
-    [Fact]
     public async Task SessionStartedOnOneReplicaWorksOnAnotherReplica()
     {
         await using var instance = await AccountsInstance.CreateAsync();
@@ -239,8 +159,7 @@ public sealed class AuthFlowTests
         var replicaB = instance.StartReplica();
         using var browserA = replicaA.CreateBrowser();
         using var browserB = replicaB.CreateBrowser();
-        await RegisterCheckedAsync(instance, browserA, "replicas@example.org");
-        await browserA.SignInAsync("replicas@example.org", Password);
+        await browserA.SignInAsync("replicas@example.org");
 
         browserB.RefreshCookie = browserA.RefreshCookie;
         var refresh = await browserB.PostAsync("/api/v1/auth/refresh");
@@ -252,35 +171,31 @@ public sealed class AuthFlowTests
     }
 
     [Fact]
-    public async Task ProfileChangesAndPasswordChange()
+    public async Task UserChangesTheProfileAndThePasswordEndpointDoesNotExist()
     {
         await using var instance = await AccountsInstance.CreateAsync();
         using var browser = instance.StartReplica().CreateBrowser();
-        await RegisterCheckedAsync(instance, browser, "profile@example.org");
-        await browser.SignInAsync("profile@example.org", Password);
+        await browser.SignInAsync("profile@example.org");
 
         var patch = await browser.SendAsync(HttpMethod.Patch, "/api/v1/me", new { displayName = "  New name ", language = "fr" });
         var account = await patch.Content.ReadFromJsonAsync<AccountResponse>(TestContext.Current.CancellationToken);
-        var wrongCurrent = await browser.PostAsync("/api/v1/me/password", new { currentPassword = "wrong password", newPassword = "the next password" });
-        var change = await browser.PostAsync("/api/v1/me/password", new { currentPassword = Password, newPassword = "the next password" });
+        var password = await browser.PostAsync("/api/v1/me/password", new { newPassword = "the next password" });
 
         Assert.Equal("New name", account!.DisplayName);
         Assert.Equal("fr", account.Language);
-        Assert.Equal(AccountErrorCodes.InvalidCredentials, await wrongCurrent.CodeAsync());
-        Assert.Equal(HttpStatusCode.OK, change.StatusCode);
-        await browser.SignInAsync("profile@example.org", "the next password");
+        Assert.Equal(HttpStatusCode.NotFound, password.StatusCode);
     }
 
     [Fact]
-    public async Task AuthenticationEndpointsHaveARateLimit()
+    public async Task StartOfAnExternalSignInHasARateLimit()
     {
         await using var instance = await AccountsInstance.CreateAsync();
         instance.Settings["Auth:RequestsPerMinute"] = "2";
         using var browser = instance.StartReplica().CreateBrowser();
 
-        await browser.PostAsync("/api/v1/auth/sign-in", new { email = "a@example.org", password = Password });
-        await browser.PostAsync("/api/v1/auth/sign-in", new { email = "a@example.org", password = Password });
-        var third = await browser.PostAsync("/api/v1/auth/sign-in", new { email = "a@example.org", password = Password });
+        await browser.GetAsync("/api/v1/auth/external/google");
+        await browser.GetAsync("/api/v1/auth/external/google");
+        var third = await browser.GetAsync("/api/v1/auth/external/google");
 
         Assert.Equal(HttpStatusCode.TooManyRequests, third.StatusCode);
         Assert.Equal("rate_limited", await third.CodeAsync());
@@ -318,19 +233,4 @@ public sealed class AuthFlowTests
     [InlineData("/\\evil.example", "/")]
     public void ReturnUrlMustBeALocalPath(string? returnUrl, string expected) =>
         Assert.Equal(expected, ExternalEndpoints.SafeReturnUrl(returnUrl));
-
-    internal static async Task RegisterCheckedAsync(AccountsInstance instance, BrowserClient browser, string email)
-    {
-        var register = await browser.PostAsync("/api/v1/auth/register", new { email, password = Password, displayName = email.Split('@')[0], language = "en" });
-        Assert.Equal(HttpStatusCode.Accepted, register.StatusCode);
-        var check = await browser.PostAsync("/api/v1/auth/email-check", new { token = instance.Emails.LastToken(email) });
-        Assert.Equal(HttpStatusCode.NoContent, check.StatusCode);
-    }
-
-    private static HttpRequestMessage Authorized(HttpMethod method, string path, string token)
-    {
-        var request = new HttpRequestMessage(method, new Uri(path, UriKind.Relative));
-        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-        return request;
-    }
 }

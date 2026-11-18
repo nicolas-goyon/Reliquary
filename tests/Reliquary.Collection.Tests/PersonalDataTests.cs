@@ -62,7 +62,7 @@ public sealed class PersonalDataTests(CollectionInstance instance)
                 new { id = Guid.CreateVersion7(), ownerId, guestId = Guid.CreateVersion7(), locationId = rack.Id });
         }
 
-        await client.PostAsJsonAsync("/api/v1/me/deletion", new { password = "correct horse battery" }, Cancel);
+        await client.PostAsync("/api/v1/me/deletion", null, Cancel);
         await MakeDeletionDueAsync(ownerId);
         await RunPersonalDataJobAsync();
 

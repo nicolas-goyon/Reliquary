@@ -71,28 +71,18 @@ A digest has priority over a tag.
 - name: Auth__AdministratorEmails__{{ $index }}
   value: {{ $email | quote }}
 {{- end }}
-- name: Auth__AllowAccountsWithoutEmail
-  value: {{ $config.accountsWithoutEmail | quote }}
-- name: Auth__RequireCheckedEmail
-  value: {{ $config.requireCheckedEmail | quote }}
+- name: Auth__AllowDevelopmentSignIn
+  value: {{ $config.developmentSignIn | quote }}
 {{- with $config.google.clientId }}
 - name: Auth__Providers__Google__ClientId
   value: {{ . | quote }}
 {{- end }}
-{{- with $config.email.from }}
-- name: Email__From
+{{- with $config.github.clientId }}
+- name: Auth__Providers__GitHub__ClientId
   value: {{ . | quote }}
 {{- end }}
-{{- with $config.email.smtp.host }}
-- name: Email__Smtp__Host
-  value: {{ . | quote }}
-- name: Email__Smtp__Port
-  value: {{ $config.email.smtp.port | quote }}
-- name: Email__Smtp__Security
-  value: {{ $config.email.smtp.security | quote }}
-{{- end }}
-{{- with $config.email.smtp.userName }}
-- name: Email__Smtp__UserName
+{{- with $config.discord.clientId }}
+- name: Auth__Providers__Discord__ClientId
   value: {{ . | quote }}
 {{- end }}
 - name: Cards__Import__Enabled

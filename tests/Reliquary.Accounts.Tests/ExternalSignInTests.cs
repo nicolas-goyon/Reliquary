@@ -21,8 +21,6 @@ public sealed class ExternalSignInTests
         Assert.NotNull(session!.RefreshToken);
         Assert.Equal("Octo", session.Account.DisplayName);
         Assert.Equal("fr", session.Account.Language);
-        Assert.NotNull(session.Account.EmailCheckedAt);
-        Assert.Null(session.Account.PasswordHash);
         Assert.Equal(session.Account.Id, again!.Account.Id);
     }
 
@@ -32,9 +30,9 @@ public sealed class ExternalSignInTests
         await using var instance = await AccountsInstance.CreateAsync();
         var replica = instance.StartReplica();
         using var browser = replica.CreateBrowser();
-        await AuthFlowTests.RegisterCheckedAsync(instance, browser, "link@example.org");
         var accounts = replica.Services.GetRequiredService<AccountService>();
         var store = replica.Services.GetRequiredService<AccountStore>();
+        await browser.SignInAsync("link@example.org");
 
         var (session, _) = await accounts.ExternalSignInAsync(
             new ExternalIdentity("google", "g-1", "LINK@example.org", true, "Link", "en"), TestContext.Current.CancellationToken);
@@ -50,8 +48,8 @@ public sealed class ExternalSignInTests
         await using var instance = await AccountsInstance.CreateAsync();
         var replica = instance.StartReplica();
         using var browser = replica.CreateBrowser();
-        await AuthFlowTests.RegisterCheckedAsync(instance, browser, "victim@example.org");
         var accounts = replica.Services.GetRequiredService<AccountService>();
+        await browser.SignInAsync("victim@example.org");
 
         var (session, error) = await accounts.ExternalSignInAsync(
             new ExternalIdentity("discord", "d-1", "victim@example.org", false, "Attacker", "en"), TestContext.Current.CancellationToken);

@@ -14,14 +14,14 @@ default:
 # Create or update a full local instance on http://localhost:8080: build the images, apply the migrations and load the demo data.
 up:
     {{ compose }} --profile app build
-    {{ compose }} up --detach --wait postgres redis mailpit
+    {{ compose }} up --detach --wait postgres redis
     {{ compose }} --profile app run --rm migrate migrate
     {{ compose }} --profile app run --rm migrate demo load
     {{ compose }} --profile app up --detach --wait api worker web
 
-# Start only the local infrastructure (PostgreSQL, Redis and Mailpit), for "just api" and "just web".
+# Start only the local infrastructure (PostgreSQL and Redis), for "just api" and "just web".
 infra:
-    {{ compose }} up --detach --wait postgres redis mailpit
+    {{ compose }} up --detach --wait postgres redis
 
 # Stop the local instance. The data stays.
 stop:
@@ -43,7 +43,7 @@ backup name:
 
 # Restore the backup backups/NAME into the local instance. It stops the API and the worker, and replaces the data.
 restore-backup name:
-    {{ compose }} up --detach --wait postgres redis mailpit
+    {{ compose }} up --detach --wait postgres redis
     {{ compose }} --profile app stop api worker
     {{ compose }} --profile app run --rm --volume "{{ justfile_directory() }}/backups:/backups" migrate restore /backups/{{ name }} --replace
     {{ compose }} --profile app run --rm migrate migrate
@@ -135,7 +135,7 @@ e2e_compose := "docker compose --project-name reliquary-e2e --file compose.yaml 
 # Create the instance of the end-to-end test on http://localhost:8080: two API replicas behind the web container. See docs/development/end-to-end-test.md.
 e2e-up:
     {{ e2e_compose }} --profile app build
-    {{ e2e_compose }} up --detach --wait postgres redis mailpit
+    {{ e2e_compose }} up --detach --wait postgres redis
     {{ e2e_compose }} --profile app run --rm migrate migrate
     {{ e2e_compose }} --profile app run --rm migrate demo load
     {{ e2e_compose }} --profile app up --detach --wait api worker web

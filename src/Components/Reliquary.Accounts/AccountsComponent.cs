@@ -9,7 +9,6 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using Reliquary.Accounts.Auth;
 using Reliquary.Accounts.Data;
-using Reliquary.Accounts.Emails;
 using Reliquary.Accounts.PersonalData;
 using Reliquary.Accounts.Plugins;
 using Reliquary.Accounts.Profile;
@@ -51,7 +50,6 @@ public sealed class AccountsComponent : ICoreComponent
         services.AddSingleton<PersonalDataService>();
         services.AddSingleton<AccessTokens>();
         services.AddSingleton<PluginTokens>();
-        services.AddSingleton<AccountEmails>();
         services.AddSingleton<AccountService>();
         services.AddSingleton<IDemoDataSeeder, DemoAccounts>();
         services.AddSingleton<ServiceAccountStore>();

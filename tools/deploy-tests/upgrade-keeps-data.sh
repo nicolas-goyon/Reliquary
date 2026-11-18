@@ -69,10 +69,14 @@ api() {
         --header "Authorization: Bearer $token" --header 'Content-Type: application/json' "$@" "$base/api/v1$path"
 }
 
+# The versions after 0.4.0 have the development sign-in. The version 0.4.0 and the older versions have the sign-in with a password.
 sign_in() {
-    token=$(curl --fail-with-body --silent --show-error --header 'Content-Type: application/json' \
-        --data '{"email":"gate@reliquary.localhost","password":"gate-password-1234"}' \
-        "$base/api/v1/auth/sign-in" | json accessToken)
+    token=$(curl --fail --silent --header 'Content-Type: application/json' \
+        --data '{"email":"gate@reliquary.localhost","displayName":"Gate","language":"en"}' \
+        "$base/api/v1/auth/development/sign-in" | json accessToken 2>/dev/null) ||
+        token=$(curl --fail-with-body --silent --show-error --header 'Content-Type: application/json' \
+            --data '{"email":"gate@reliquary.localhost","password":"gate-password-1234"}' \
+            "$base/api/v1/auth/sign-in" | json accessToken)
 }
 
 check_data() {
@@ -91,11 +95,12 @@ update --init "$old_version"
 sed -i.bak \
     -e "s|^RELIQUARY_PROJECT=.*|RELIQUARY_PROJECT=$project|" \
     -e "s|^RELIQUARY_APP_PORT=.*|RELIQUARY_APP_PORT=8190|" \
-    -e "s|^RELIQUARY_MAILPIT_PORT=.*|RELIQUARY_MAILPIT_PORT=18135|" \
     -e "s|^RELIQUARY_PUBLIC_URL=.*|RELIQUARY_PUBLIC_URL=$base|" \
     "$home/.env"
 # The test checks the script of this commit, so the script must not replace itself with the script of an image.
 printf 'RELIQUARY_SELF_UPDATE=false\n' >> "$home/.env"
+# The test instance has no OAuth provider. The older versions ignore this setting.
+printf 'RELIQUARY_DEVELOPMENT_SIGN_IN=true\n' >> "$home/.env"
 if [ -n "${RELIQUARY_IMAGE_PREFIX:-}" ]; then
     printf 'RELIQUARY_IMAGE_PREFIX=%s\n' "$RELIQUARY_IMAGE_PREFIX" >> "$home/.env"
 fi
@@ -104,9 +109,10 @@ log "Install version $old_version."
 RELIQUARY_PULL=${OLD_PULL:-${RELIQUARY_PULL:-true}} update "$old_version"
 
 log "Create the data."
-curl --fail-with-body --silent --show-error --header 'Content-Type: application/json' \
+# Only the version 0.4.0 and the older versions have the registration with a password. The development sign-in makes the account.
+curl --silent --output /dev/null --header 'Content-Type: application/json' \
     --data '{"email":"gate@reliquary.localhost","password":"gate-password-1234","displayName":"Gate","language":"en"}' \
-    "$base/api/v1/auth/register" >/dev/null
+    "$base/api/v1/auth/register" || true
 sign_in
 deck_id=$(api POST /decks --data '{"name":"Gate deck","lines":[]}' | json id)
 api POST "/decks/$deck_id/versions" --data '{"message":"First version"}' >/dev/null

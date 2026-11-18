@@ -6,8 +6,7 @@ tool, and this project does not change it. This wrapper adds the project
 configuration:
 
 - It selects the text to check: all Markdown files that Git tracks or does not ignore,
-  the English interface texts in web/src/locales/en, and the English email texts of
-  the core components (src/Components/*/Emails/en.json).
+  and the English interface texts in web/src/locales/en.
 - It applies the project glossary: "remove" and "delete" are two
   different actions, so the synonym check must not join them.
 
@@ -31,7 +30,6 @@ sys.dont_write_bytecode = True
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
 LOCALE_DIR = "web/src/locales/en/"
-EMAIL_TEXTS = "src/Components/*/Emails/en.json"
 
 
 def load_linter():
@@ -52,7 +50,7 @@ def load_linter():
 
 def default_files():
     result = subprocess.run(
-        ["git", "ls-files", "-z", "--cached", "--others", "--exclude-standard", "--", "*.md", LOCALE_DIR + "*.json", EMAIL_TEXTS],
+        ["git", "ls-files", "-z", "--cached", "--others", "--exclude-standard", "--", "*.md", LOCALE_DIR + "*.json"],
         cwd=ROOT, capture_output=True, check=True,
     )
     names = [name for name in result.stdout.decode("utf-8").split("\0") if name]

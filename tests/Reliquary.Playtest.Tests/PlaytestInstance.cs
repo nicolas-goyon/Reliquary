@@ -68,7 +68,7 @@ public sealed class PlaytestInstance : IAsyncDisposable
             builder.UseSetting("ConnectionStrings:Users", connectionString);
             builder.UseSetting("ConnectionStrings:Redis", TestServers.Redis);
             builder.UseSetting("Auth:SigningKey", "dGVzdC1zaWduaW5nLWtleS1mb3ItdGhlLXBsYXl0ZXN0LXRlc3RzLW9ubHk=");
-            builder.UseSetting("Auth:RequireCheckedEmail", "false");
+            builder.UseSetting("Auth:AllowDevelopmentSignIn", "true");
             builder.UseSetting("Auth:RequestsPerMinute", "100000");
             builder.UseSetting("Playtest:JoinsPerIpPerMinute", JoinsPerIpPerMinute.ToString(System.Globalization.CultureInfo.InvariantCulture));
             // The gate test sends the actions of one hour in less than one minute.
@@ -84,9 +84,8 @@ public sealed class PlaytestInstance : IAsyncDisposable
     {
         var api = await GetAsync();
         var client = api.CreateClient();
-        var credentials = new { email = $"player{Interlocked.Increment(ref accounts)}-{Guid.NewGuid():N}@example.org", password = "correct horse battery", displayName, language = "en" };
-        (await client.PostAsJsonAsync("/api/v1/auth/register", credentials, TestContext.Current.CancellationToken)).EnsureSuccessStatusCode();
-        var signIn = await client.PostAsJsonAsync("/api/v1/auth/sign-in", credentials, TestContext.Current.CancellationToken);
+        var credentials = new { email = $"player{Interlocked.Increment(ref accounts)}-{Guid.NewGuid():N}@example.org", displayName, language = "en" };
+        var signIn = await client.PostAsJsonAsync("/api/v1/auth/development/sign-in", credentials, TestContext.Current.CancellationToken);
         signIn.EnsureSuccessStatusCode();
         var session = await signIn.Content.ReadFromJsonAsync<JsonElement>(TestContext.Current.CancellationToken);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", session.GetProperty("accessToken").GetString());

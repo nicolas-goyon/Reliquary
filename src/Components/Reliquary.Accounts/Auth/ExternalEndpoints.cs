@@ -12,8 +12,8 @@ namespace Reliquary.Accounts.Auth;
 
 /// <summary>The sign-in methods that the instance enables.</summary>
 /// <param name="Providers">The names of the OAuth providers, for example <c>github</c>.</param>
-/// <param name="AccountsWithoutEmail">Whether a user can make an account with no email address.</param>
-public sealed record ProvidersResponse(IReadOnlyList<string> Providers, bool AccountsWithoutEmail);
+/// <param name="DevelopmentSignIn">Whether the instance has the development sign-in, with no OAuth provider.</param>
+public sealed record ProvidersResponse(IReadOnlyList<string> Providers, bool DevelopmentSignIn);
 
 /// <summary>
 /// The endpoints of the sign-in with an OAuth provider: Google, GitHub or Discord.
@@ -37,7 +37,7 @@ internal static class ExternalEndpoints
     {
         var auth = api.MapGroup("/auth").WithTags("Authentication");
 
-        auth.MapGet("/providers", (EnabledProviders providers, IOptions<AuthOptions> options) => TypedResults.Ok(new ProvidersResponse(providers.Names, options.Value.AllowAccountsWithoutEmail)))
+        auth.MapGet("/providers", (EnabledProviders providers, IOptions<AuthOptions> options) => TypedResults.Ok(new ProvidersResponse(providers.Names, options.Value.AllowDevelopmentSignIn)))
             .WithName("ListProviders")
             .WithSummary("Lists the sign-in methods that the instance enables.");
 

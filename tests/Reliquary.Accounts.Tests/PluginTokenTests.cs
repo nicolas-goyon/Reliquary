@@ -226,8 +226,7 @@ public sealed class PluginTokenTests
             var api = instance.StartReplica();
             var admin = await ServiceAccountSetup.SignInAdministratorAsync(instance, api);
             var user = api.CreateBrowser();
-            await AuthFlowTests.RegisterCheckedAsync(instance, user, "plugin-user@example.org");
-            var session = await user.SignInAsync("plugin-user@example.org", AuthFlowTests.Password);
+            var session = await user.SignInAsync("plugin-user@example.org");
             return new Setup(instance, api, admin, user, session.Account.Id);
         }
 

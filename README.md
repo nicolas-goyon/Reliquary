@@ -49,7 +49,7 @@ just down      # destroy the instance and its data
 To change the code, you also need the .NET 11 SDK, Node.js 24 and Python 3:
 
 ```shell
-just infra     # start PostgreSQL, Redis and Mailpit
+just infra     # start PostgreSQL and Redis
 just restore   # install the .NET and npm packages
 just api       # start the API on http://localhost:5080
 just web       # start the web app on http://localhost:5173 (in a second terminal)

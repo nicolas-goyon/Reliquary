@@ -45,9 +45,7 @@ async function newPlayer(browser: Browser, baseURL: string, label: string, name:
 
 async function signIn(page: Page, account: Account, returnUrl: string) {
   await page.goto(`/sign-in?returnUrl=${encodeURIComponent(returnUrl)}`)
-  await page.getByLabel('Public name or email address').fill(account.email)
-  await page.getByLabel('Password', { exact: true }).fill(account.password)
-  await page.getByRole('button', { name: 'Sign in', exact: true }).click()
+  await page.getByRole('button', { name: `Open the account ${account.name}`, exact: true }).click()
 }
 
 const hand = (page: Page) => page.getByRole('region', { name: 'Hand', exact: true })

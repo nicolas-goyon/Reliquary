@@ -95,7 +95,7 @@ internal sealed class PluginInstance : IAsyncDisposable
             builder.UseSetting("ConnectionStrings:Users", database.ConnectionString);
             builder.UseSetting("ConnectionStrings:Redis", TestServers.Redis);
             builder.UseSetting("Auth:SigningKey", "dGVzdC1zaWduaW5nLWtleS1mb3ItdGhlLXBsdWdpbi10ZXN0cw==");
-            builder.UseSetting("Auth:RequireCheckedEmail", "false");
+            builder.UseSetting("Auth:AllowDevelopmentSignIn", "true");
             builder.UseSetting("Auth:RequestsPerMinute", "1000");
             builder.UseSetting("Auth:AdministratorEmails:0", AdministratorEmail);
             foreach (var (key, value) in settings)
@@ -139,9 +139,8 @@ internal sealed class PluginInstance : IAsyncDisposable
     public async Task<HttpClient> SignInAsync(string email)
     {
         var client = Factory.CreateClient();
-        var credentials = new { email, password = "correct horse battery", displayName = email.Split('@')[0], language = "en" };
-        (await client.PostAsJsonAsync("/api/v1/auth/register", credentials, TestContext.Current.CancellationToken)).EnsureSuccessStatusCode();
-        var signIn = await client.PostAsJsonAsync("/api/v1/auth/sign-in", credentials, TestContext.Current.CancellationToken);
+        var credentials = new { email, displayName = email.Split('@')[0], language = "en" };
+        var signIn = await client.PostAsJsonAsync("/api/v1/auth/development/sign-in", credentials, TestContext.Current.CancellationToken);
         var session = await signIn.Content.ReadFromJsonAsync<JsonElement>(TestContext.Current.CancellationToken);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", session.GetProperty("accessToken").GetString());
         return client;

@@ -25,20 +25,16 @@ config:
   publicUrl: ""
   # The email addresses of the administrators.
   administratorEmails: []
-  # true: a user can make an account with no email address. Use it only on a development instance.
-  accountsWithoutEmail: false
-  # true: a user must open the link of the email before the first sign-in.
-  requireCheckedEmail: true
-  email:
-    from: ""
-    smtp:
-      host: ""
-      port: 587
-      # None, StartTls or SslOnConnect.
-      security: StartTls
-      userName: ""
+  # true: a user opens an account with its email address, with no OAuth provider and no password.
+  # Use it only on a test instance that other persons cannot reach.
+  developmentSignIn: false
+  # The users sign in with Google, GitHub or Discord. Set the client ID and the client secret of one provider or more.
+  # The client secrets go in the Secret. The authorized redirect URI is <publicUrl>/api/v1/auth/external/<provider>/callback.
   google:
-    # The client secret goes in the Secret.
+    clientId: ""
+  github:
+    clientId: ""
+  discord:
     clientId: ""
   cards:
     # false: the worker does not import the card data from Scryfall.
@@ -55,7 +51,7 @@ extraEnv: []
 secrets:
   # The name of a Secret that you make. With a name, the chart makes no Secret and ignores the other values of this section.
   # The Secret must contain Auth__SigningKey, ConnectionStrings__Users and ConnectionStrings__Redis.
-  # It can contain the other keys below, for example Email__Smtp__Password.
+  # It can contain the other keys below, for example Auth__Providers__Google__ClientSecret.
   existingSecret: ""
   # The values for a Secret that the chart makes. Use it for a test instance.
   # Auth__SigningKey: a key of 32 bytes or more in Base64. Make it with "openssl rand -base64 32".
@@ -67,8 +63,9 @@ secrets:
     reference: ""
     # Required, except when redis.enabled is true. For example redis:6379,password=...
     redis: ""
-  smtpPassword: ""
   googleClientSecret: ""
+  githubClientSecret: ""
+  discordClientSecret: ""
   # The keys of the vault of the linked accounts (Plugins:VaultKeys), by key ID. Each key is 32 random bytes in Base64.
   # Make a key with "openssl rand -base64 32". A key ID has 1 to 64 letters, digits, dots, hyphens and underscores.
   # The key with the last ID in alphabetical order encrypts the new secrets. Do not delete the old keys.

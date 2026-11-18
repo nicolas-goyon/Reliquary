@@ -1,6 +1,6 @@
 # 0022. Authentication, web sessions and API keys
 
-- Status: Accepted
+- Status: Accepted. [ADR 0054](0054-sign-in-with-oauth-providers-only.md) removes the sign-in with a password and the emails.
 - Date: 2026-10-26
 - Deciders: @nicolas-goyon
 
