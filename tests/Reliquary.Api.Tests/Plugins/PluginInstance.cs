@@ -160,6 +160,25 @@ internal sealed class PluginInstance : IAsyncDisposable
         await Files.SaveVersionAsync(id, (string)manifest["version"]!, stored, TestContext.Current.CancellationToken);
     }
 
+    /// <summary>
+    /// Activates a plugin for the user, with the consent for all the access of the installed version.
+    /// </summary>
+    public static async Task ActivateAsync(HttpClient user, string id)
+    {
+        var cancel = TestContext.Current.CancellationToken;
+        var plugin = (await user.GetFromJsonAsync<JsonElement>("/api/v1/extensions", cancel)).GetProperty("items").EnumerateArray()
+            .Single(item => item.GetProperty("id").GetString() == id);
+        var consent = new
+        {
+            version = plugin.GetProperty("version").GetString(),
+            scopes = plugin.GetProperty("permissions"),
+            network = plugin.GetProperty("network"),
+            devices = plugin.GetProperty("devices"),
+            sites = plugin.GetProperty("sites"),
+        };
+        (await user.PutAsJsonAsync($"/api/v1/me/extensions/{id}", new { enabled = true, consent }, cancel)).EnsureSuccessStatusCode();
+    }
+
     public async ValueTask DisposeAsync()
     {
         administrator?.Dispose();

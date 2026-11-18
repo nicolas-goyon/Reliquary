@@ -85,7 +85,7 @@ public sealed class LinkedAccountTests(LinkedAccountInstanceFixture fixture) : I
         var (user, id) = await SetupAsync();
         var other = PluginInstance.NewId();
         await Instance.InstallAsync(PluginInstance.Manifest(("id", other), ("kind", "plugin"), ("accounts", Accounts)));
-        (await user.PutAsJsonAsync($"/api/v1/me/extensions/{other}", new { enabled = true }, Cancel)).EnsureSuccessStatusCode();
+        await PluginInstance.ActivateAsync(user, other);
         (await user.PutAsJsonAsync(Link(id, ApiSite), new { secret = "secret-key-1" }, Cancel)).EnsureSuccessStatusCode();
         var key = (await (await user.PostAsJsonAsync("/api/v1/me/api-keys", new { name = "Script" }, Cancel)).Content.ReadFromJsonAsync<JsonElement>(Cancel)).GetProperty("key").GetString()!;
 
@@ -239,7 +239,7 @@ public sealed class LinkedAccountTests(LinkedAccountInstanceFixture fixture) : I
         var id = PluginInstance.NewId();
         await instance.InstallAsync(PluginInstance.Manifest(("id", id), ("kind", "plugin"), ("accounts", Accounts)));
         using var user = await instance.SignInAsync($"{id}@example.org");
-        (await user.PutAsJsonAsync($"/api/v1/me/extensions/{id}", new { enabled = true }, Cancel)).EnsureSuccessStatusCode();
+        await PluginInstance.ActivateAsync(user, id);
 
         var apiKey = await user.PutAsJsonAsync(Link(id, ApiSite), new { secret = "secret-key-1" }, Cancel);
         var userName = await user.PutAsJsonAsync(Link(id, NameSite), new { userName = "Jace" }, Cancel);
@@ -268,7 +268,7 @@ public sealed class LinkedAccountTests(LinkedAccountInstanceFixture fixture) : I
         var id = PluginInstance.NewId();
         await Instance.InstallAsync(PluginInstance.Manifest(("id", id), ("kind", "plugin"), ("accounts", Accounts)));
         var user = await Instance.SignInAsync($"{id}@example.org");
-        (await user.PutAsJsonAsync($"/api/v1/me/extensions/{id}", new { enabled = true }, Cancel)).EnsureSuccessStatusCode();
+        await PluginInstance.ActivateAsync(user, id);
         return (user, id);
     }
 
