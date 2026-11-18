@@ -23,14 +23,8 @@
           "jsonpath": "$.version"
         },
         {
-          "type": "yaml",
-          "path": "deploy/helm/reliquary/Chart.yaml",
-          "jsonpath": "$.version"
-        },
-        {
-          "type": "yaml",
-          "path": "deploy/helm/reliquary/Chart.yaml",
-          "jsonpath": "$.appVersion"
+          "type": "generic",
+          "path": "deploy/helm/reliquary/Chart.yaml"
         }
       ]
     }
