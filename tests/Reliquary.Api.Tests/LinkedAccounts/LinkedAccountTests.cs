@@ -6,8 +6,10 @@ using System.Text.Json;
 using Dapper;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
 using Reliquary.Api.Tests.Plugins;
+using Reliquary.BuildingBlocks.Accounts;
 using Reliquary.Platform.LinkedAccounts;
 
 namespace Reliquary.Api.Tests.LinkedAccounts;
@@ -250,6 +252,37 @@ public sealed class LinkedAccountTests(LinkedAccountInstanceFixture fixture) : I
     }
 
     [Fact]
+    public async Task ExportListsTheLinksWithoutSecretsAndDeletionRemovesThem()
+    {
+        var (user, id) = await SetupAsync();
+        using var client = user;
+        (await user.PutAsJsonAsync(Link(id, ApiSite), new { userName = "Chandra", secret = "secret-key-1" }, Cancel)).EnsureSuccessStatusCode();
+        (await user.PutAsJsonAsync(Link(id, NameSite), new { userName = "Jace" }, Cancel)).EnsureSuccessStatusCode();
+        var ownerId = (await user.GetFromJsonAsync<JsonElement>("/api/v1/me", Cancel)).GetProperty("account").GetProperty("id").GetGuid();
+        var provider = Instance.Factory.Services.GetServices<IPersonalDataProvider>().Single(item => item.Name == "plugins");
+        var archive = new MemoryArchive();
+
+        await provider.ExportAsync(ownerId, archive, Cancel);
+        var links = archive.Files["linked-accounts.json"];
+        var plugins = archive.Files["plugins.json"];
+        await provider.DeleteAsync(ownerId, Cancel);
+        await provider.DeleteAsync(ownerId, Cancel);
+
+        Assert.DoesNotContain("secret-key-1", links, StringComparison.Ordinal);
+        var exported = JsonElement.Parse(links).EnumerateArray().ToList();
+        Assert.Equal([ApiSite, NameSite], exported.Select(link => link.GetProperty("site").GetString()));
+        Assert.Equal(["Chandra", "Jace"], exported.Select(link => link.GetProperty("userName").GetString()));
+        Assert.Equal([true, false], exported.Select(link => link.GetProperty("hasSecret").GetBoolean()));
+        var plugin = Assert.Single(JsonElement.Parse(plugins).EnumerateArray());
+        Assert.Equal(id, plugin.GetProperty("pluginId").GetString());
+        Assert.Equal([ApiSite, NameSite, "oauth.example.net"], plugin.GetProperty("acceptedSites").EnumerateArray().Select(site => site.GetString()));
+
+        await using var connection = new NpgsqlConnection(Instance.Database.ConnectionString);
+        Assert.Equal(0, await connection.ExecuteScalarAsync<int>("select count(*) from content.account_links where owner_id = @ownerId", new { ownerId }));
+        Assert.Equal(0, await connection.ExecuteScalarAsync<int>("select count(*) from content.plugin_activations where owner_id = @ownerId", new { ownerId }));
+    }
+
+    [Fact]
     public void InvalidVaultKeyStopsTheStart()
     {
         using var factory = Instance.Factory.WithWebHostBuilder(builder => builder.UseSetting("Plugins:VaultKeys:2026-03", "c2hvcnQ="));
@@ -306,5 +339,25 @@ public sealed class LinkedAccountTests(LinkedAccountInstanceFixture fixture) : I
     {
         await using var connection = new NpgsqlConnection(Instance.Database.ConnectionString);
         return await connection.ExecuteScalarAsync<int>("select count(*) from content.account_links where extension_id = @id and secret_ciphertext is not null", new { id });
+    }
+
+    /// <summary>An archive in memory. It writes the JSON files as the export job writes them, with camel case names.</summary>
+    private sealed class MemoryArchive : IPersonalDataArchive
+    {
+        private static readonly JsonSerializerOptions Options = new(JsonSerializerDefaults.Web);
+
+        public Dictionary<string, string> Files { get; } = new(StringComparer.Ordinal);
+
+        public Task WriteJsonAsync(string path, object value, CancellationToken cancellationToken)
+        {
+            Files[path] = JsonSerializer.Serialize(value, Options);
+            return Task.CompletedTask;
+        }
+
+        public Task WriteTextAsync(string path, string text, CancellationToken cancellationToken)
+        {
+            Files[path] = text;
+            return Task.CompletedTask;
+        }
     }
 }
