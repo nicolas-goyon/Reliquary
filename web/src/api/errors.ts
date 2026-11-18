@@ -48,6 +48,8 @@ export const translatedErrorCodes = [
   'consent_required',
   'consent_outdated',
   'too_many_active_plugins',
+  'catalog_not_configured',
+  'catalog_sync_failed',
   'vault_not_configured',
   'vault_key_missing',
   'vault_secret_unreadable',
