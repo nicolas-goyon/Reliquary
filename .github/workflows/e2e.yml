@@ -1,6 +1,7 @@
 name: End-to-end test
 
 # The end-to-end test of the online games: 4 browsers play random legal actions on 2 API replicas behind the web container.
+# The same run loads the plugin template in a real plugin frame.
 # It is not on the path of the pull requests. See docs/development/end-to-end-test.md.
 # - Each night from Monday to Saturday: 10 minutes.
 # - Each Sunday: 60 minutes.
@@ -48,6 +49,13 @@ jobs:
         run: |
           npm ci
           npx playwright install --with-deps chromium
+
+      - name: Build the plugin template
+        run: |
+          npm --prefix sdk ci
+          npm --prefix sdk run build
+          npm --prefix sdk/template install --no-audit --no-fund
+          npm --prefix sdk/template run build
 
       - name: Create the instance with two API replicas
         run: |

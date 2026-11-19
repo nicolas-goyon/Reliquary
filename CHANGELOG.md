@@ -11,6 +11,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - The guide [Sign-in services](docs/deployment/sign-in-services.md): the steps to connect an instance to Google, GitHub or Discord.
   The troubleshooting page has a part for the sign-in.
+- The scheduled end-to-end test loads the plugin template in a real sandboxed frame.
 
 ### Changed
 

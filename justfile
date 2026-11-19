@@ -150,6 +150,11 @@ e2e minutes="10":
         urls="$urls${urls:+,}http://$({{ e2e_compose }} port --index "$index" api 8080)/metrics"
     done
     npm --prefix e2e ci
+    # The test of the plugin frame needs the build of the plugin template.
+    npm --prefix sdk ci
+    npm --prefix sdk run build
+    npm --prefix sdk/template install --no-audit --no-fund
+    npm --prefix sdk/template run build
     cd e2e
     E2E_BASE_URL="http://localhost:${RELIQUARY_APP_PORT:-8080}" E2E_MINUTES={{ minutes }} E2E_METRICS_URLS="$urls" npx playwright test
 
