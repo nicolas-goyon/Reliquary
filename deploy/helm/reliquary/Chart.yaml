@@ -4,8 +4,8 @@ description: "Reliquary, an open-source deck and collection manager for Magic: T
 type: application
 # The chart has the version of the application. See docs/decisions/0053-helm-chart-scope.md.
 # release-please changes the two lines with the mark "x-release-please-version". Keep the marks.
-version: 0.4.0 # x-release-please-version
-appVersion: "0.4.0" # x-release-please-version
+version: 0.5.0 # x-release-please-version
+appVersion: "0.5.0" # x-release-please-version
 kubeVersion: ">=1.27.0-0"
 home: https://nicolas-goyon.github.io/reliquary/
 sources:
