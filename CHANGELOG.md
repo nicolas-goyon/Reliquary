@@ -17,6 +17,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
   The demo accounts have no password. The sign-in page has one button for each demo account.
 - The Compose files and the Helm chart have the settings of GitHub and Discord.
 
+### Fixed
+
+- The web app kept no session when a sign-in ended before the first refresh of the page.
+  The scheduled end-to-end test found the problem with the buttons of the development sign-in.
+
 ### Removed
 
 - The sign-in with a password, with its pages and its endpoints.
