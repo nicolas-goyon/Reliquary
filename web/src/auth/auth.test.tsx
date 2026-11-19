@@ -72,6 +72,32 @@ describe('authentication', () => {
     expect(screen.queryByRole('heading', { name: 'Change the password' })).not.toBeInTheDocument()
   })
 
+  it('keeps the session of a sign-in that ends before the first refresh', async () => {
+    window.history.replaceState(null, '', '/sign-in?returnUrl=/account')
+    // The first refresh of the page has no cookie. Its answer comes after the sign-in.
+    let answerRefresh: (response: Response) => void = () => {}
+    const refresh = new Promise<Response>((resolve) => (answerRefresh = resolve))
+    mockApi({
+      'POST /auth/refresh': () => refresh,
+      'GET /auth/providers': () => Response.json({ providers: [], developmentSignIn: true }),
+      'POST /auth/development/sign-in': () => session(),
+      'GET /me': () => Response.json({ account: testAccount, externalLogins: [] }),
+      'GET /me/api-keys': () => Response.json([]),
+      'GET /me/exports': () => Response.json([]),
+      'GET /me/deletion': () => Response.json({ requestedAt: null, deleteAfter: null }),
+    })
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.click(await screen.findByRole('button', { name: 'Open the account Demo' }))
+    expect(await screen.findByRole('heading', { level: 1, name: 'Your account' })).toBeInTheDocument()
+
+    answerRefresh(problem(401, 'session_expired'))
+    await new Promise((resolve) => setTimeout(resolve, 50))
+    expect(window.location.pathname).toBe('/account')
+    expect(screen.getByRole('heading', { level: 1, name: 'Your account' })).toBeInTheDocument()
+  })
+
   it('opens a test account by its email address, and shows the error of an address that is not correct', async () => {
     window.history.replaceState(null, '', '/sign-in')
     const calls = mockApi({
