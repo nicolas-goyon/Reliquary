@@ -62,8 +62,21 @@ When a command gives `Cannot connect to the Docker daemon` or `docker: command n
 | In PowerShell, `docker: The term 'docker' is not recognized` | Docker Desktop is not installed, or PowerShell started before the installation. | Install Docker Desktop, then open a new PowerShell window. |
 | In WSL 2, `Permission denied` on the folder `backups` | The instance is in the Windows file system (`/mnt/c`). | Install the instance in the Linux file system, for example in `~/reliquary-preprod`, and move the backups there. Or use `reliquary-update.ps1` in PowerShell. |
 | In WSL 2, `bash: ./reliquary-update: /bin/sh^M: bad interpreter` | A Windows program saved the script with Windows line endings. | Get the script again from the CLI image. Edit `.env` and the script in WSL or in an editor that keeps the line endings. |
-| The Google sign-in fails behind the reverse proxy. | The redirect URI or the public URL is not correct. | Set `RELIQUARY_PUBLIC_URL` to the HTTPS address, and register `https://your-domain/api/v1/auth/external/google/callback` at Google. |
 | An online game shows "The connection stopped. The page connects again." again and again. | The reverse proxy does not let WebSockets through on `/api/v1/playtest/hub`, or its timeout is too short. | Configure the reverse proxy. See [WebSockets for the online games](production.md#websockets-for-the-online-games). |
+
+## Sign-in
+
+[Sign-in services](sign-in-services.md) tells how to set up each service.
+
+| Problem | Cause | Solution |
+| --- | --- | --- |
+| The sign-in page shows "This instance has no sign-in service." | No service has its client ID and its client secret. | Put the two values of one service in the instance, then apply the change. |
+| The sign-in page shows no button for one service. | One of the two values of this service is empty, or the containers did not start again. | Do a check of the two values, then run `./reliquary-update`. |
+| The service shows `redirect_uri_mismatch`, "Invalid Redirect URI" or "The redirect_uri is not associated with this application". | The redirect URI at the service is not the redirect URI of the instance. | Register `RELIQUARY_PUBLIC_URL/api/v1/auth/external/<service>/callback` at the service, with no slash at the end. |
+| The sign-in fails behind the reverse proxy. | The public URL is not correct, or the reverse proxy does not send the header `X-Forwarded-Proto`. | Set `RELIQUARY_PUBLIC_URL` to the HTTPS address, and configure the reverse proxy. |
+| Google shows "Access blocked" or `access_denied`. | The application is not published, and the user is not a test user. | In the Google Auth Platform, select **Audience**, then **Publish app**. |
+| Reliquary shows that the email address is not checked or not available. | The account at the service has no checked email address. | Check the email address at the service, then sign in again. |
+| The administrator cannot open `/admin/moderation`. | The administrator email address is not the address of the account at the service. | Set `RELIQUARY_ADMINISTRATOR_EMAIL` to this address, apply the change, then sign in again. |
 
 ## Start again from a backup
 
