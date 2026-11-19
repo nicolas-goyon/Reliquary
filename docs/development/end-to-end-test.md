@@ -33,6 +33,19 @@ The test fails when one of these conditions is true:
 
 The test replaces the card images with a small local image, so it does not load images from the Scryfall servers.
 
+## The test of the plugin frame
+
+The test `e2e/tests/plugin.spec.ts` runs in the same workflow. It checks a plugin in a real sandboxed frame.
+The tests of the pull requests use a fake core, so they cannot check the sandbox of the browser.
+
+1. The test serves the build of the [plugin template](../plugins/index.md) (`sdk/template/dist`) on a local port.
+2. A demo account signs in, and loads the plugin as a development plugin from this address.
+3. On the page of a deck, the test selects the action of the plugin. The core shows the number of cards.
+4. The test opens the tab of the plugin in the deck analysis. The frame of the plugin shows the number of cards.
+
+The test fails when the frame does not have the attribute `sandbox="allow-scripts"`, or when the page has an error.
+The instance must allow the development plugins. The local instance allows them by default.
+
 ## The instance
 
 The file `e2e/compose.yaml` is an overlay of `compose.yaml`.
@@ -96,6 +109,7 @@ The test uses these environment variables:
 | `E2E_MINUTES` | The duration of the random game, in minutes. The default is 10. |
 | `E2E_METRICS_URLS` | The addresses of `/metrics` of the replicas, with a comma between them. With less than 2 addresses, the test does not check the replicas and the metrics. |
 | `E2E_CHROME` | The path of a Chrome executable. With no value, the test uses the Chromium of Playwright. |
+| `E2E_PLUGIN_DIST` | The folder of the build of the plugin template. The default is `sdk/template/dist`. |
 | `E2E_SUMMARY` | A file for the summary of the run. The workflow adds it to the summary of the job. |
 | `E2E_DEBUG` | With a value, the test writes the last patch before each `Resync` to the output. |
 

@@ -114,6 +114,7 @@ The test checks these steps:
 The test is in `tests/Reliquary.Api.Tests/Plugins/SignedPluginGateTests.cs`.
 In step 1, the test sends the consent of the user for the access of the plugin.
 Step 4 checks the CSP header of the plugin frame. A test in a browser is not part of the gate test yet.
+The scheduled [end-to-end test](development/end-to-end-test.md) runs the plugin template in a real plugin frame. It does not check step 4.
 
 The decision records [0048](decisions/0048-plugin-sdk-license-and-packaging.md) to [0053](decisions/0053-helm-chart-scope.md) give the design of M4.
 

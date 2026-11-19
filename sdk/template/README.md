@@ -42,3 +42,4 @@ The guide [Write a plugin](https://nicolas-goyon.github.io/reliquary/plugins/) g
    The folder `dist` then contains `index.js` and `manifest.json`.
 
 The test `sdk/src/template.test.ts` of the Reliquary repository runs this template against a fake core in each pull request.
+The scheduled test `e2e/tests/plugin.spec.ts` runs it in a real plugin frame.
