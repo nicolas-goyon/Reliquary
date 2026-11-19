@@ -5,6 +5,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## Unreleased
 
+### Added
+
+- The guide [Sign-in services](docs/deployment/sign-in-services.md): the steps to connect an instance to Google, GitHub or Discord.
+  The troubleshooting page has a part for the sign-in.
+
 ### Changed
 
 - **Breaking change:** a user signs in only with Google, GitHub or Discord (ADR 0054). The first sign-in with a service makes the account.

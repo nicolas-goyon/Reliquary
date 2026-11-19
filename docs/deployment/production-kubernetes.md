@@ -13,14 +13,13 @@ Terms follow the [glossary](../glossary.md).
   An Ingress controller is the second choice.
 - PostgreSQL 18. This page uses [CloudNativePG](https://cloudnative-pg.io/).
 - Redis with a persistent volume.
-- An OAuth client at Google, GitHub or Discord. The users sign in with this service. [Sign-in](pre-production.md#sign-in) tells how to make it.
+- An OAuth client at Google, GitHub or Discord. The users sign in with this service. [Sign-in services](sign-in-services.md) tells how to make it.
 - A StorageClass for the volume of the backups.
 
 The chart installs the API, the worker, the web app and the migration Job.
 It does not install PostgreSQL. It installs Redis only when you set `redis.enabled`.
 
-The release workflow does not publish the chart yet ([#312](https://github.com/nicolas-goyon/reliquary/issues/312)).
-Until then, install the chart from a clone of the repository, at the tag of the release.
+The release workflow publishes the chart to `oci://ghcr.io/nicolas-goyon/charts/reliquary`.
 
 ## Prepare the namespace
 

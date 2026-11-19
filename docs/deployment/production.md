@@ -25,7 +25,7 @@ A production instance uses the same files and the same script as a [pre-producti
 - A Linux server with Docker and the Compose plugin. See [Requirements](requirements.md).
 - A domain name that points to the server.
 - A reverse proxy with HTTPS. This page uses [Caddy](https://caddyserver.com), which gets the certificates automatically.
-- An OAuth client at Google, GitHub or Discord. The users sign in with this service. [Sign-in](pre-production.md#sign-in) tells how to make it.
+- An OAuth client at Google, GitHub or Discord. The users sign in with this service. [Sign-in services](sign-in-services.md) tells how to make it.
 - A place on a different computer for the backups.
 
 The server must use Linux. Docker Desktop is not for servers.
@@ -85,8 +85,8 @@ ssh your-user@your-server
    | `RELIQUARY_DEVELOPMENT_SIGN_IN` | `false` |
    | `RELIQUARY_KEEP_BACKUPS` | The number of local backups, for example `14` |
 
-   The authorized redirect URI of the OAuth client is `https://your-domain/api/v1/auth/external/<service>/callback`.
-   The authorized redirect URI is `https://your-domain/api/v1/auth/external/google/callback`.
+   [Sign-in services](sign-in-services.md) tells how to make the OAuth client of each service.
+   The redirect URI of the OAuth client is `https://your-domain/api/v1/auth/external/<service>/callback`.
 
 4. Install the instance:
 
@@ -107,6 +107,7 @@ ssh your-user@your-server
    It keeps the headers `X-Forwarded-Proto` and `X-Forwarded-Host` of the reverse proxy.
 
 6. Open `https://your-domain`, and sign in with the account of the administrator email address.
+   [Do a check of the sign-in](sign-in-services.md#do-a-check-of-the-sign-in) gives the steps.
 
 ## Vault keys
 
