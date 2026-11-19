@@ -3,11 +3,12 @@ import type { APIRequestContext } from '@playwright/test'
 /** A demo account of "demo load". See src/Components/Reliquary.Accounts/DemoAccounts.cs. */
 export interface Account {
   email: string
-  password: string
+  /** The name on the button of the development sign-in. */
+  name: string
 }
 
-export const hostAccount: Account = { email: 'demo@reliquary.localhost', password: 'reliquary-demo' }
-export const secondAccount: Account = { email: 'admin@reliquary.localhost', password: 'reliquary-admin' }
+export const hostAccount: Account = { email: 'demo@reliquary.localhost', name: 'Demo' }
+export const secondAccount: Account = { email: 'admin@reliquary.localhost', name: 'Admin' }
 
 // Cards of the demo card data (data/demo). The decks have 1 commander and 44 other cards, so the games use the command zone and the commander damage.
 const commander = "Atraxa, Praetors' Voice"
@@ -23,7 +24,8 @@ export function deckText(): string {
 }
 
 async function signIn(request: APIRequestContext, account: Account): Promise<string> {
-  const response = await request.post('/api/v1/auth/sign-in', { data: { email: account.email, password: account.password } })
+  // The instance of the test is a local instance, so it has the development sign-in.
+  const response = await request.post('/api/v1/auth/development/sign-in', { data: { email: account.email } })
   if (!response.ok()) throw new Error(`The sign-in of ${account.email} failed: ${response.status()} ${await response.text()}`)
   return ((await response.json()) as { accessToken: string }).accessToken
 }

@@ -27,7 +27,7 @@ Facts that limit the options:
   - A Service for each Deployment
   - A Job `migrate` with the CLI image, as a Helm hook `pre-install` and `pre-upgrade`, with `backoffLimit: 0`
   - An optional `HTTPRoute` of the Gateway API, or an optional `Ingress`, to the `web` Service only
-  - A Secret for the signing key, the connection strings, the SMTP password and the vault keys, or the name of an existing Secret
+  - A Secret for the signing key, the connection strings, the OAuth client secrets and the vault keys, or the name of an existing Secret
 - The worker keeps 1 replica until a test proves the outbox publisher with 2 replicas.
 - PostgreSQL and Redis are external by default.
   The chart has an optional Redis StatefulSet with 1 replica for small clusters.

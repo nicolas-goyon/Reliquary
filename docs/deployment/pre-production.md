@@ -61,14 +61,14 @@ Use PowerShell and the script `reliquary-update.ps1`. You need only Docker Deskt
    .\reliquary-update.ps1 --init develop
    ```
 
-4. Open `.env` with `notepad .env`. Set `RELIQUARY_ADMINISTRATOR_EMAIL` to your email address.
+4. Open `.env` with `notepad .env`, and set up the [sign-in](#sign-in).
 5. Install the instance:
 
    ```powershell
    .\reliquary-update.ps1
    ```
 
-6. Open <http://localhost:8090> and make your account.
+6. Open <http://localhost:8090> and sign in.
 
 The script `reliquary-update.ps1` has the same commands as `reliquary-update`. On this page, replace `./reliquary-update` with `.\reliquary-update.ps1`.
 For example, `.\reliquary-update.ps1 --rollback`.
@@ -90,14 +90,14 @@ Do not use Git Bash: see [Git Bash](requirements.md#git-bash).
    The command copies the script to `~/reliquary-preprod` and makes the file `~/reliquary-preprod/.env` with new secrets.
    To use a different folder, set `RELIQUARY_PREPROD_HOME`.
 
-2. Read `~/reliquary-preprod/.env`. Set `RELIQUARY_ADMINISTRATOR_EMAIL` to your email address.
+2. Open `~/reliquary-preprod/.env`, and set up the [sign-in](#sign-in).
 3. Run the command:
 
    ```shell
    just preprod-update
    ```
 
-4. Open <http://localhost:8090> and make your account.
+4. Open <http://localhost:8090> and sign in.
 
 ### With no clone
 
@@ -117,18 +117,30 @@ Do not use Git Bash: see [Git Bash](requirements.md#git-bash).
    ./reliquary-update --init develop
    ```
 
-3. Read `.env`. Set `RELIQUARY_ADMINISTRATOR_EMAIL` to your email address.
+3. Open `.env`, and set up the [sign-in](#sign-in).
 4. Install the instance:
 
    ```shell
    ./reliquary-update
    ```
 
-5. Open <http://localhost:8090> and make your account.
+5. Open <http://localhost:8090> and sign in.
 
 At its first start, the worker imports all the cards from Scryfall. This import takes some minutes.
 The card search gives few results until the import is complete.
-Mailpit at <http://localhost:18035> keeps the emails of the instance.
+
+## Sign-in
+
+A user signs in with an account of Google, GitHub or Discord. Reliquary keeps no password and sends no email.
+Set up the sign-in before you install the instance. Without it, the sign-in page shows no button.
+
+| Instance | Settings in `.env` |
+| --- | --- |
+| It stays on your computer (`RELIQUARY_BIND_ADDRESS=127.0.0.1`) | `RELIQUARY_DEVELOPMENT_SIGN_IN=true`, and `RELIQUARY_ADMINISTRATOR_EMAIL` with an email address of your choice |
+| Other persons can reach it | The client ID and the client secret of one service or more, and `RELIQUARY_ADMINISTRATOR_EMAIL` with the email address of your account at the service |
+
+[Sign-in services](sign-in-services.md) gives the steps for each service and for the development sign-in.
+After a change of `.env`, run `./reliquary-update`.
 
 ## Start with the computer
 
@@ -259,7 +271,8 @@ After a change, run `./reliquary-update`. When the images did not change, the co
 | `RELIQUARY_VERSION` | The default channel or version of `reliquary-update` |
 | `RELIQUARY_BIND_ADDRESS` | `127.0.0.1` for this computer only. `0.0.0.0` to open the instance to your network, for example for a phone. |
 | `RELIQUARY_PUBLIC_URL` | The address that the users open. Change it with `RELIQUARY_BIND_ADDRESS`. |
-| `RELIQUARY_SMTP_*` | A real email server. The default is Mailpit. |
+| `RELIQUARY_GOOGLE_*`, `RELIQUARY_GITHUB_*`, `RELIQUARY_DISCORD_*` | The OAuth client of each sign-in service. See [Sign-in services](sign-in-services.md). |
+| `RELIQUARY_DEVELOPMENT_SIGN_IN` | `true` only for an instance that stays on your computer. See [Sign-in services](sign-in-services.md). |
 | `RELIQUARY_SIGNING_KEY` | The key of the access tokens. When you change it, all the users must sign in again. |
 
 Do not change `RELIQUARY_POSTGRES_PASSWORD` after the installation. The database keeps the first password.

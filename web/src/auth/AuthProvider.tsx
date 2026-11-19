@@ -16,6 +16,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const accessToken = useRef<string | null>(null)
   const refreshTimer = useRef<number | undefined>(undefined)
   const refreshing = useRef<Promise<string | null> | null>(null)
+  // The number of the sessions that the page accepted. A refresh uses it to see that a sign-in ended before the refresh.
+  const sessions = useRef(0)
 
   const clearSession = useCallback(() => {
     accessToken.current = null
@@ -27,6 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const acceptSession = useCallback((token: string, expiresIn: number, account: Account) => {
     accessToken.current = token
+    sessions.current++
     setState({ status: 'authenticated', account })
     if (isSupportedLanguage(account.language) && i18n.resolvedLanguage !== account.language) {
       void i18n.changeLanguage(account.language)
@@ -37,12 +40,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const doRefresh = useCallback((): Promise<string | null> => {
     // Only one refresh at a time: the API replaces the cookie at each refresh.
+    const started = sessions.current
+    // A sign-in can end while the refresh is in progress. Then the session of the sign-in is newer than the result of the refresh.
+    const replaced = () => sessions.current !== started
     refreshing.current ??= apiRequest<SessionResponse>('/auth/refresh', { method: 'POST' })
       .then((session) => {
+        if (replaced()) {
+          return accessToken.current
+        }
         acceptSession(session.accessToken, session.expiresIn, session.account)
         return session.accessToken
       })
       .catch((error: unknown) => {
+        if (replaced()) {
+          return accessToken.current
+        }
         if ((error instanceof ApiError && error.status === 401) || !accessToken.current) {
           clearSession()
         }
@@ -63,9 +75,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => window.clearTimeout(refreshTimer.current)
   }, [doRefresh])
 
-  const signIn = useCallback(
-    async (email: string, password: string) => {
-      const session = await apiRequest<SessionResponse>('/auth/sign-in', { method: 'POST', body: { email, password } })
+  const developmentSignIn = useCallback(
+    async (email: string) => {
+      const session = await apiRequest<SessionResponse>('/auth/development/sign-in', { method: 'POST', body: { email, language: i18n.resolvedLanguage } })
       acceptSession(session.accessToken, session.expiresIn, session.account)
       return session.account
     },
@@ -100,8 +112,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const updateAccount = useCallback((account: Account) => setState({ status: 'authenticated', account }), [])
 
   const value = useMemo<AuthContextValue>(
-    () => ({ state, signIn, signOut, request, acceptSession, updateAccount }),
-    [state, signIn, signOut, request, acceptSession, updateAccount],
+    () => ({ state, developmentSignIn, signOut, request, updateAccount }),
+    [state, developmentSignIn, signOut, request, updateAccount],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

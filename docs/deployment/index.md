@@ -31,7 +31,8 @@ flowchart LR
 | [Requirements](requirements.md) | The software, the hardware and the ports of each mode |
 | [Local instance from the source code](local-development.md) | Install the development tools, start an instance, update it to a new commit |
 | [Pre-production instance](pre-production.md) | Install the published images on your computer, update, roll back, back up |
-| [Production instance](production.md) | Install on a server with HTTPS, a real email server and backups on a different computer |
+| [Production instance](production.md) | Install on a server with HTTPS, a sign-in service and backups on a different computer |
+| [Sign-in services](sign-in-services.md) | Connect an instance to Google, GitHub or Discord, or use the development sign-in |
 | [Production instance on Kubernetes](production-kubernetes.md) | Install, update and roll back with the Helm chart, CloudNativePG and Redis |
 | [Requirements for Kubernetes](kubernetes.md) | What a Kubernetes deployment must give to the images, and the reference of the Helm chart |
 | [Versions and updates](versions-and-updates.md) | The channels, the release numbers, the steps of an update and the migration rules |

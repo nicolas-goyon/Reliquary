@@ -2,11 +2,9 @@
 export interface Account {
   id: string
   email: string
-  emailChecked: boolean
   displayName: string
   language: 'en' | 'fr'
   isAdministrator: boolean
-  hasPassword: boolean
   createdAt: string
 }
 
@@ -42,5 +40,6 @@ export interface CreatedApiKey {
 
 export interface ProvidersResponse {
   providers: string[]
-  accountsWithoutEmail: boolean
+  /** Whether the instance has the development sign-in, with no OAuth provider. */
+  developmentSignIn: boolean
 }

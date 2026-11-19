@@ -12,7 +12,7 @@
 # POSIX shell functions have no local variables. Each function starts the names of its variables with its own prefix.
 
 # The revision of this script. The script replaces itself only with a script that has a higher revision.
-# reliquary-update-revision: 2
+# reliquary-update-revision: 3
 
 set -eu
 
@@ -250,7 +250,7 @@ recover_operation() {
     log "The $recover_operation did not end. Restore the backup $recover_backup and start version $(state_value "$recover_state" RELIQUARY_RUNNING_VERSION) again."
     compose current stop api worker web >/dev/null 2>&1 || true
     compose next stop api worker web >/dev/null 2>&1 || true
-    compose "$recover_state" up --detach --wait postgres redis mailpit
+    compose "$recover_state" up --detach --wait postgres redis
     cli "$recover_state" restore "/backups/$recover_backup" --replace
     cli "$recover_state" migrate
     compose "$recover_state" up --detach --wait --remove-orphans
@@ -372,7 +372,7 @@ command_update() {
         [ "$(images_of "$state/current")" = "$(images_of "$state/next")" ]; then
         log "The instance already has the images of \"$version\" ($(state_value "$state/current" RELIQUARY_RUNNING_VERSION))."
         rm -rf "$state/next"
-        compose current up --detach --wait postgres redis mailpit >/dev/null
+        compose current up --detach --wait postgres redis >/dev/null
         cli current migrate >/dev/null
         compose current up --detach --wait --remove-orphans >/dev/null
         return 0
@@ -387,7 +387,7 @@ command_update() {
             log "The database volume of the project $project exists. Back up its data before the migrations."
             backup next "$(backup_name existing-data)"
         fi
-        compose next up --detach --wait postgres redis mailpit
+        compose next up --detach --wait postgres redis
         log "Apply the migrations."
         cli next migrate
         log "Start the API, the worker and the web app."
@@ -406,7 +406,7 @@ command_update() {
         cp "$state/current/images.env" "$state/current/compose.yaml" "$restore_points/$name/"
         begin_operation "$restore_points/$name" "$name" update
 
-        compose next up --detach --wait postgres redis mailpit
+        compose next up --detach --wait postgres redis
         log "Apply the migrations."
         cli next migrate
         log "Start the API, the worker and the web app."
@@ -506,7 +506,7 @@ command_rollback() {
     cp -R "$state/current" "$state/before-rollback"
     begin_operation "$state/before-rollback" "$safety" rollback
 
-    compose "$point" up --detach --wait postgres redis mailpit
+    compose "$point" up --detach --wait postgres redis
     cli "$point" restore "/backups/$name" --replace
     cli "$point" migrate
     compose "$point" up --detach --wait --remove-orphans

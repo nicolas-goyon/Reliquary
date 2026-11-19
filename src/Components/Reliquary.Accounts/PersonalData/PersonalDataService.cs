@@ -240,7 +240,6 @@ internal sealed class AccountPersonalData(AccountStore store, ServiceAccountStor
         {
             account.Id,
             account.Email,
-            EmailChecked = account.EmailCheckedAt is not null,
             account.DisplayName,
             account.Language,
             account.IsAdministrator,

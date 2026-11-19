@@ -26,28 +26,20 @@ public sealed class AuthOptions
     /// <summary>Gets or sets the lifetime of a refresh token, so the maximum time without a visit.</summary>
     public TimeSpan RefreshTokenLifetime { get; set; } = TimeSpan.FromDays(30);
 
-    /// <summary>Gets or sets whether a user must check the email address before the first sign-in with a password.</summary>
-    public bool RequireCheckedEmail { get; set; } = true;
-
     /// <summary>
-    /// Gets or sets whether a user can make an account with a public name and a password, with no email address.
-    /// Use it on a development instance only: an account with no address cannot reset its password.
+    /// Gets or sets whether the instance has the development sign-in: a session for an email address with no OAuth provider.
+    /// Use it on a development instance or a test instance only. All the persons who can reach the instance can then use all its accounts.
+    /// The default is false. See docs/decisions/0054-sign-in-with-oauth-providers-only.md.
     /// </summary>
-    public bool AllowAccountsWithoutEmail { get; set; }
+    public bool AllowDevelopmentSignIn { get; set; }
 
-    /// <summary>Gets or sets the lifetime of the link that checks an email address.</summary>
-    public TimeSpan EmailCheckLifetime { get; set; } = TimeSpan.FromHours(48);
-
-    /// <summary>Gets or sets the lifetime of the link that resets a password.</summary>
-    public TimeSpan PasswordResetLifetime { get; set; } = TimeSpan.FromHours(1);
-
-    /// <summary>Gets or sets the address of the web interface, for the links in the emails, for example <c>https://reliquary.example.org</c>.</summary>
+    /// <summary>Gets or sets the address of the web interface, for the return from an OAuth provider, for example <c>https://reliquary.example.org</c>.</summary>
     public Uri PublicUrl { get; set; } = new("http://localhost:5173");
 
     /// <summary>Gets or sets the email addresses of the administrators of the instance.</summary>
     public List<string> AdministratorEmails { get; set; } = [];
 
-    /// <summary>Gets or sets the maximum number of requests to the sign-in, sign-up and email endpoints, for each client address and minute.</summary>
+    /// <summary>Gets or sets the maximum number of requests to the sign-in endpoints, for each client address and minute.</summary>
     public int RequestsPerMinute { get; set; } = 10;
 
     /// <summary>Gets or sets the lifetime of a delegation token. A token never stays valid after the end of its delegation.</summary>

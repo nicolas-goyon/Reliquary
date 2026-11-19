@@ -19,8 +19,7 @@ public sealed class ApiKeyTests
     {
         await using var instance = await AccountsInstance.CreateAsync();
         using var browser = instance.StartReplica().CreateBrowser();
-        await AuthFlowTests.RegisterCheckedAsync(instance, browser, "keys@example.org");
-        await browser.SignInAsync("keys@example.org", "correct horse battery");
+        await browser.SignInAsync("keys@example.org");
 
         var created = await (await browser.PostAsync("/api/v1/me/api-keys", new { name = "Script" }))
             .Content.ReadFromJsonAsync<CreatedApiKeyResponse>(TestContext.Current.CancellationToken);
@@ -46,8 +45,7 @@ public sealed class ApiKeyTests
     {
         await using var instance = await AccountsInstance.CreateAsync();
         using var browser = instance.StartReplica().CreateBrowser();
-        await AuthFlowTests.RegisterCheckedAsync(instance, browser, "wrong@example.org");
-        await browser.SignInAsync("wrong@example.org", "correct horse battery");
+        await browser.SignInAsync("wrong@example.org");
         var created = await (await browser.PostAsync("/api/v1/me/api-keys", new { name = "Script" }))
             .Content.ReadFromJsonAsync<CreatedApiKeyResponse>(TestContext.Current.CancellationToken);
 
@@ -67,8 +65,7 @@ public sealed class ApiKeyTests
         var replicaB = instance.StartReplica();
         using var browserA = replicaA.CreateBrowser();
         using var browserB = replicaB.CreateBrowser();
-        await AuthFlowTests.RegisterCheckedAsync(instance, browserA, "quota@example.org");
-        await browserA.SignInAsync("quota@example.org", "correct horse battery");
+        await browserA.SignInAsync("quota@example.org");
         var key = (await (await browserA.PostAsync("/api/v1/me/api-keys", new { name = "Bot" }))
             .Content.ReadFromJsonAsync<CreatedApiKeyResponse>(TestContext.Current.CancellationToken))!;
 
@@ -105,8 +102,7 @@ public sealed class ApiKeyTests
     {
         await using var instance = await AccountsInstance.CreateAsync();
         using var browser = instance.StartReplica().CreateBrowser();
-        await AuthFlowTests.RegisterCheckedAsync(instance, browser, "many@example.org");
-        await browser.SignInAsync("many@example.org", "correct horse battery");
+        await browser.SignInAsync("many@example.org");
 
         for (var index = 0; index < ProfileEndpoints.MaxApiKeys; index++)
         {

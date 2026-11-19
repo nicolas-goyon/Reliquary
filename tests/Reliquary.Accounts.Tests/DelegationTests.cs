@@ -25,8 +25,7 @@ public sealed class DelegationTests
         var secret = await ServiceAccountSetup.CreateServiceAccountAsync(api, "profile-reader");
         var serviceAccountId = await ServiceAccountSetup.ServiceAccountIdAsync(api, "profile-reader");
         using var user = api.CreateBrowser();
-        await AuthFlowTests.RegisterCheckedAsync(instance, user, "delegate@example.org");
-        var session = await user.SignInAsync("delegate@example.org", AuthFlowTests.Password);
+        var session = await user.SignInAsync("delegate@example.org");
 
         var choices = await (await user.GetAsync("/api/v1/service-accounts")).Content.ReadFromJsonAsync<List<ServiceAccountSummary>>(Cancel);
         var create = await user.PostAsync("/api/v1/me/delegations", new { serviceAccountId, scopes = ProfileRead, expiresInDays = 30 });
@@ -174,8 +173,7 @@ public sealed class DelegationTests
         var secret = await ServiceAccountSetup.CreateServiceAccountAsync(api, "module");
         var serviceAccountId = await ServiceAccountSetup.ServiceAccountIdAsync(api, "module");
         var user = api.CreateBrowser();
-        await AuthFlowTests.RegisterCheckedAsync(instance, user, email);
-        await user.SignInAsync(email, AuthFlowTests.Password);
+        await user.SignInAsync(email);
         var create = await user.PostAsync("/api/v1/me/delegations", new { serviceAccountId, scopes });
         Assert.Equal(HttpStatusCode.Created, create.StatusCode);
         var delegation = (await create.Content.ReadFromJsonAsync<DelegationResponse>(Cancel))!;

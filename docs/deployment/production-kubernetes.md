@@ -13,14 +13,13 @@ Terms follow the [glossary](../glossary.md).
   An Ingress controller is the second choice.
 - PostgreSQL 18. This page uses [CloudNativePG](https://cloudnative-pg.io/).
 - Redis with a persistent volume.
-- An email server (SMTP) for the account emails.
+- An OAuth client at Google, GitHub or Discord. The users sign in with this service. [Sign-in services](sign-in-services.md) tells how to make it.
 - A StorageClass for the volume of the backups.
 
 The chart installs the API, the worker, the web app and the migration Job.
 It does not install PostgreSQL. It installs Redis only when you set `redis.enabled`.
 
-The release workflow does not publish the chart yet ([#312](https://github.com/nicolas-goyon/reliquary/issues/312)).
-Until then, install the chart from a clone of the repository, at the tag of the release.
+The release workflow publishes the chart to `oci://ghcr.io/nicolas-goyon/charts/reliquary`.
 
 ## Prepare the namespace
 
@@ -117,12 +116,12 @@ Make a Secret with the secret settings. The chart does not make it, and Helm nev
      --from-literal=Auth__SigningKey='<signing key>' \
      --from-literal=ConnectionStrings__Users='Host=reliquary-db-rw;Port=5432;Database=reliquary;Username=reliquary;Password=<password>' \
      --from-literal=ConnectionStrings__Redis='<redis connection string>' \
-     --from-literal=Email__Smtp__Password='<SMTP password>'
+     --from-literal=Auth__Providers__Google__ClientSecret='<client secret>'
    ```
 
    With the Redis server of the chart, do not add `ConnectionStrings__Redis`. The chart gives the address of its Redis server.
 
-3. For the Google sign-in, add the key `Auth__Providers__Google__ClientSecret`.
+3. For GitHub or Discord, use the key `Auth__Providers__GitHub__ClientSecret` or `Auth__Providers__Discord__ClientSecret`, and the value `config.github.clientId` or `config.discord.clientId` of the chart.
 
 The containers read all the keys of the Secret as environment variables.
 To add a setting later, add a key to the Secret, then restart the pods:
@@ -172,13 +171,8 @@ config:
   publicUrl: https://reliquary.example.org
   administratorEmails:
     - you@example.org
-  email:
-    from: Reliquary <noreply@example.org>
-    smtp:
-      host: smtp.example.org
-      port: 587
-      security: StartTls
-      userName: reliquary
+  google:
+    clientId: example.apps.googleusercontent.com
 secrets:
   existingSecret: reliquary-secrets
 httpRoute:
@@ -239,7 +233,7 @@ The chart deletes no backup. Delete the old backups yourself, and copy the backu
    curl http://localhost:8080/api/v1/status
    ```
 
-3. Open `https://reliquary.example.org`, make the account of the administrator email address, and open the link of the email.
+3. Open `https://reliquary.example.org`, and sign in with the account of the administrator email address.
 
 The worker imports the card data from Scryfall at its first start. The import takes some minutes.
 

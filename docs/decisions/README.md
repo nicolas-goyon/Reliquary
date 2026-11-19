@@ -29,7 +29,7 @@ Each record gives the context, the decision and its consequences.
 | [0019](0019-hosts-and-scheduled-jobs.md) | Three hosts and scheduled jobs in the worker | Accepted |
 | [0020](0020-card-data-import.md) | Import of the card data from the bulk files | Accepted |
 | [0021](0021-card-search.md) | Card search with the Scryfall syntax in PostgreSQL | Accepted |
-| [0022](0022-authentication-and-api-keys.md) | Authentication, web sessions and API keys | Accepted |
+| [0022](0022-authentication-and-api-keys.md) | Authentication, web sessions and API keys | Accepted, amended by 0054 |
 | [0023](0023-extension-registry.md) | Extension registry and core API version | Accepted |
 | [0024](0024-container-images.md) | Container images and the full local instance | Accepted |
 | [0025](0025-multi-face-analysis-rules.md) | Analysis rules for cards with more than one face | Accepted |
@@ -46,7 +46,7 @@ Each record gives the context, the decision and its consequences.
 | [0036](0036-internal-api.md) | Internal API for the modules under `/internal/v1`, with its own OpenAPI document | Accepted |
 | [0037](0037-service-accounts-and-delegation-tokens.md) | Service accounts, delegations from the account page and delegation tokens with scopes | Accepted |
 | [0038](0038-proxy-pdf-in-the-browser.md) | The web app makes the PDF of the proxies, with its own PDF writer | Accepted |
-| [0039](0039-accounts-without-email-on-development-instances.md) | Accounts without email on development instances | Accepted |
+| [0039](0039-accounts-without-email-on-development-instances.md) | Accounts without email on development instances | Superseded by 0054 |
 | [0040](0040-table-engine-in-the-browser.md) | The table engine runs in the browser | Accepted. Amended by 0047 |
 | [0041](0041-deck-import-from-a-link.md) | The API reads a deck from a link of Moxfield or Archidekt | Accepted |
 | [0042](0042-deployed-instances-and-updates.md) | Deployed instances with the published images, the script `reliquary-update`, and the migration rules | Accepted |
@@ -61,6 +61,7 @@ Each record gives the context, the decision and its consequences.
 | [0051](0051-linked-accounts.md) | Linked accounts with a user name or an API key first, and OAuth 2 later | Accepted |
 | [0052](0052-plugin-catalog-signature-and-revocation.md) | The plugin catalog publishes a signed index with file hashes and revoked versions | Accepted |
 | [0053](0053-helm-chart-scope.md) | The Helm chart deploys the API, the worker and the web app, with external PostgreSQL and Redis | Accepted |
+| [0054](0054-sign-in-with-oauth-providers-only.md) | Sign-in with OAuth providers only, and no email | Accepted |
 | [0054](0054-dotnet-11-and-the-latest-dotnet-version.md) | The backend uses the latest version of .NET, LTS or STS. It uses .NET 11 from 2026-11-16 | Accepted |
 
 ## Open decisions

@@ -9,40 +9,27 @@ using Reliquary.BuildingBlocks.Api;
 
 namespace Reliquary.Accounts.Auth;
 
-/// <summary>The body of a registration.</summary>
-public sealed record RegisterRequest(string? Email, string? Password, string? DisplayName, string? Language);
+/// <summary>The body of the development sign-in.</summary>
+/// <param name="Email">The email address of the account. The API makes the account when it does not exist.</param>
+/// <param name="DisplayName">The public name of a new account. The default is the part of the address before the character @.</param>
+/// <param name="Language">The language of a new account: <c>en</c> or <c>fr</c>. The default is <c>en</c>.</param>
+public sealed record DevelopmentSignInRequest(string? Email, string? DisplayName, string? Language);
 
-/// <summary>The body of a sign-in with a password.</summary>
-public sealed record SignInRequest(string? Email, string? Password);
-
-/// <summary>The body of a request with the token of an email link.</summary>
-public sealed record TokenRequest(string? Token);
-
-/// <summary>The body of a request about an email address.</summary>
-public sealed record EmailRequest(string? Email);
-
-/// <summary>The body of a password reset.</summary>
-public sealed record ResetPasswordRequest(string? Token, string? Password);
-
-/// <summary>An account, as the owner sees it.</summary>
+/// <summary>An account, for its owner.</summary>
 /// <param name="Id">The ID of the account.</param>
-/// <param name="Email">The email address.</param>
-/// <param name="EmailChecked">Whether the user opened the link of the email check, or an OAuth provider checked the address.</param>
-/// <param name="DisplayName">The name that other users see.</param>
-/// <param name="Language">The interface language: <c>en</c> or <c>fr</c>.</param>
+/// <param name="Email">The email address that the OAuth provider gave.</param>
+/// <param name="DisplayName">The public name.</param>
+/// <param name="Language">The language of the interface: <c>en</c> or <c>fr</c>.</param>
 /// <param name="IsAdministrator">Whether the account is an administrator of the instance.</param>
-/// <param name="HasPassword">Whether the account has a password. An account of an OAuth provider can have no password.</param>
-/// <param name="CreatedAt">The time of the creation.</param>
-public sealed record AccountResponse(Guid Id, string Email, bool EmailChecked, string DisplayName, string Language, bool IsAdministrator, bool HasPassword, DateTimeOffset CreatedAt)
+/// <param name="CreatedAt">The time when the account was created.</param>
+public sealed record AccountResponse(Guid Id, string Email, string DisplayName, string Language, bool IsAdministrator, DateTimeOffset CreatedAt)
 {
     internal static AccountResponse From(AccountRow account) => new(
         account.Id,
         account.Email,
-        account.EmailCheckedAt is not null,
         account.DisplayName,
         account.Language,
         account.IsAdministrator,
-        account.PasswordHash is not null,
         new DateTimeOffset(account.CreatedAt, TimeSpan.Zero));
 }
 
@@ -55,41 +42,21 @@ public sealed record AccountResponse(Guid Id, string Email, bool EmailChecked, s
 public sealed record SessionResponse(string AccessToken, string TokenType, int ExpiresIn, DateTimeOffset ExpiresAt, AccountResponse Account);
 
 /// <summary>
-/// The endpoints of the registration, the sign-in and the web sessions.
+/// The endpoints of the web session: refresh, sign-out and the development sign-in.
+/// A user starts a session with an OAuth provider: see <see cref="ExternalEndpoints"/> and docs/decisions/0054-sign-in-with-oauth-providers-only.md.
 /// </summary>
 internal static class AuthEndpoints
 {
-    /// <summary>The name of the rate limiter policy of the authentication endpoints.</summary>
+    /// <summary>The name of the rate limiter policy of the sign-in endpoints.</summary>
     public const string RateLimiterPolicy = "accounts-auth";
 
     public static void Map(IEndpointRouteBuilder api)
     {
         var auth = api.MapGroup("/auth").WithTags("Authentication");
-        var limited = auth.MapGroup(string.Empty).RequireRateLimiting(RateLimiterPolicy);
 
-        limited.MapPost("/register", RegisterAsync)
-            .WithName("Register")
-            .WithSummary("Makes a new account with a password. The response is the same when the address has an account, and the API then sends an email to the address. When the instance allows accounts with no email address, you can omit the address. The response is then 409 when the public name has an account.");
-
-        limited.MapPost("/email-check", CheckEmailAsync)
-            .WithName("CheckEmail")
-            .WithSummary("Marks the email address as checked, with the token of the email link.");
-
-        limited.MapPost("/email-check/resend", ResendEmailCheckAsync)
-            .WithName("ResendEmailCheck")
-            .WithSummary("Sends the email of the address check again, when the address is not checked.");
-
-        limited.MapPost("/sign-in", SignInAsync)
-            .WithName("SignIn")
-            .WithSummary("Starts a web session with an email address and a password. The refresh token goes into an HttpOnly cookie.");
-
-        limited.MapPost("/password/forgot", ForgotPasswordAsync)
-            .WithName("ForgotPassword")
-            .WithSummary("Sends an email with a link that resets the password, when the address has an account.");
-
-        limited.MapPost("/password/reset", ResetPasswordAsync)
-            .WithName("ResetPassword")
-            .WithSummary("Sets a new password with the token of the email link, and stops all the sessions of the account.");
+        auth.MapPost("/development/sign-in", DevelopmentSignInAsync)
+            .WithName("DevelopmentSignIn")
+            .WithSummary("Starts a web session for an email address with no OAuth provider, and makes the account when it does not exist. Only an instance with Auth:AllowDevelopmentSignIn has this endpoint: a development instance or a test instance. Other instances return 404.");
 
         auth.MapPost("/refresh", RefreshAsync)
             .WithName("RefreshSession")
@@ -100,91 +67,27 @@ internal static class AuthEndpoints
             .WithSummary("Stops the web session of the refresh cookie and deletes the cookie.");
     }
 
-    private static async Task<Results<Accepted, ProblemHttpResult>> RegisterAsync(RegisterRequest request, AccountService accounts, IOptions<AuthOptions> options, CancellationToken cancellationToken)
+    private static async Task<Results<Ok<SessionResponse>, ProblemHttpResult>> DevelopmentSignInAsync(
+        DevelopmentSignInRequest request, AccountService accounts, IOptions<AuthOptions> options, HttpResponse response, CancellationToken cancellationToken)
     {
-        if (options.Value.AllowAccountsWithoutEmail && string.IsNullOrWhiteSpace(request.Email))
+        if (!options.Value.AllowDevelopmentSignIn)
         {
-            return await RegisterWithoutEmailAsync(request, accounts, cancellationToken);
+            return ApiProblems.NotFound("This instance does not have the development sign-in. Sign in with an OAuth provider: GET /auth/providers lists them.");
         }
 
         var errors = AccountValidation.Email(request.Email)
-            .Concat(AccountValidation.Password(request.Password))
-            .Concat(AccountValidation.DisplayName(request.DisplayName, required: true))
-            .Concat(AccountValidation.Language(request.Language, required: true))
+            .Concat(AccountValidation.DisplayName(request.DisplayName, required: false))
+            .Concat(AccountValidation.Language(request.Language, required: false))
             .ToList();
         if (errors.Count > 0)
         {
             return ApiProblems.Validation(errors);
         }
 
-        await accounts.RegisterAsync(request.Email!, request.Password!, request.DisplayName!, request.Language!, cancellationToken);
-        return TypedResults.Accepted((string?)null);
-    }
-
-    private static async Task<Results<Accepted, ProblemHttpResult>> RegisterWithoutEmailAsync(RegisterRequest request, AccountService accounts, CancellationToken cancellationToken)
-    {
-        var errors = AccountValidation.Password(request.Password)
-            .Concat(AccountValidation.DisplayName(request.DisplayName, required: true))
-            .Concat(AccountValidation.Language(request.Language, required: true))
-            .ToList();
-
-        // The sign-in uses the character @ to find an email address, so a name with this character cannot sign in.
-        if (request.DisplayName?.Contains('@', StringComparison.Ordinal) == true)
-        {
-            errors.Add(new FieldError("displayName", FieldErrorCodes.InvalidFormat, "The public name must not contain the character @."));
-        }
-
-        if (errors.Count > 0)
-        {
-            return ApiProblems.Validation(errors);
-        }
-
-        return await accounts.RegisterWithoutEmailAsync(request.DisplayName!, request.Password!, request.Language!, cancellationToken)
-            ? TypedResults.Accepted((string?)null)
-            : ApiProblems.Problem(StatusCodes.Status409Conflict, AccountErrorCodes.AccountNameTaken, "An account has this public name. Use a different name.");
-    }
-
-    private static async Task<Results<NoContent, ProblemHttpResult>> CheckEmailAsync(TokenRequest request, AccountService accounts, CancellationToken cancellationToken)
-    {
-        if (string.IsNullOrWhiteSpace(request.Token))
-        {
-            return ApiProblems.Validation(new FieldError("token", FieldErrorCodes.Required, "The token is necessary."));
-        }
-
-        return await accounts.CheckEmailAsync(request.Token, cancellationToken)
-            ? TypedResults.NoContent()
-            : InvalidToken();
-    }
-
-    private static async Task<Results<Accepted, ProblemHttpResult>> ResendEmailCheckAsync(EmailRequest request, AccountService accounts, CancellationToken cancellationToken)
-    {
-        var errors = AccountValidation.Email(request.Email).ToList();
-        if (errors.Count > 0)
-        {
-            return ApiProblems.Validation(errors);
-        }
-
-        await accounts.ResendEmailCheckAsync(request.Email!, cancellationToken);
-        return TypedResults.Accepted((string?)null);
-    }
-
-    private static async Task<Results<Ok<SessionResponse>, ProblemHttpResult>> SignInAsync(SignInRequest request, AccountService accounts, HttpResponse response, CancellationToken cancellationToken)
-    {
-        if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrEmpty(request.Password))
-        {
-            return InvalidCredentials();
-        }
-
-        var (status, session) = await accounts.SignInAsync(request.Email, request.Password, cancellationToken);
-        return status switch
-        {
-            SignInStatus.Success => Started(session!, response),
-            SignInStatus.EmailNotChecked => ApiProblems.Problem(
-                StatusCodes.Status403Forbidden,
-                AccountErrorCodes.EmailNotChecked,
-                "The email address is not checked. Open the link in the email, or ask for a new email."),
-            _ => InvalidCredentials(),
-        };
+        var session = await accounts.DevelopmentSignInAsync(request.Email!, request.DisplayName, request.Language, cancellationToken);
+        return session is null
+            ? ApiProblems.Problem(StatusCodes.Status409Conflict, ErrorCodes.Conflict, "The API did not make the account. Try again.")
+            : Started(session, response);
     }
 
     private static async Task<Results<Ok<SessionResponse>, ProblemHttpResult>> RefreshAsync(HttpRequest request, HttpResponse response, AccountService accounts, CancellationToken cancellationToken)
@@ -214,36 +117,6 @@ internal static class AuthEndpoints
         return TypedResults.NoContent();
     }
 
-    private static async Task<Results<Accepted, ProblemHttpResult>> ForgotPasswordAsync(EmailRequest request, AccountService accounts, CancellationToken cancellationToken)
-    {
-        var errors = AccountValidation.Email(request.Email).ToList();
-        if (errors.Count > 0)
-        {
-            return ApiProblems.Validation(errors);
-        }
-
-        await accounts.ForgotPasswordAsync(request.Email!, cancellationToken);
-        return TypedResults.Accepted((string?)null);
-    }
-
-    private static async Task<Results<NoContent, ProblemHttpResult>> ResetPasswordAsync(ResetPasswordRequest request, AccountService accounts, CancellationToken cancellationToken)
-    {
-        var errors = AccountValidation.Password(request.Password).ToList();
-        if (string.IsNullOrWhiteSpace(request.Token))
-        {
-            errors.Insert(0, new FieldError("token", FieldErrorCodes.Required, "The token is necessary."));
-        }
-
-        if (errors.Count > 0)
-        {
-            return ApiProblems.Validation(errors);
-        }
-
-        return await accounts.ResetPasswordAsync(request.Token!, request.Password!, cancellationToken)
-            ? TypedResults.NoContent()
-            : InvalidToken();
-    }
-
     /// <summary>
     /// Writes the refresh cookie and makes the response of a new session.
     /// </summary>
@@ -254,16 +127,4 @@ internal static class AuthEndpoints
         var expiresIn = (int)Math.Max(0, (session.AccessTokenExpiresAt - DateTimeOffset.UtcNow).TotalSeconds);
         return TypedResults.Ok(new SessionResponse(session.AccessToken, "Bearer", expiresIn, session.AccessTokenExpiresAt, AccountResponse.From(session.Account)));
     }
-
-    private static ProblemHttpResult InvalidCredentials() =>
-        ApiProblems.Problem(
-            StatusCodes.Status401Unauthorized,
-            AccountErrorCodes.InvalidCredentials,
-            "The email address or the password is not correct.");
-
-    private static ProblemHttpResult InvalidToken() =>
-        ApiProblems.Problem(
-            StatusCodes.Status400BadRequest,
-            AccountErrorCodes.InvalidToken,
-            "The link is not valid. You used it before, it expired, or it is not complete. Ask for a new email.");
 }

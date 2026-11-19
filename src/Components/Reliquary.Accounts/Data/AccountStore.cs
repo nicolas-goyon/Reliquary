@@ -16,10 +16,6 @@ internal sealed class AccountRow
 
     public string EmailNormalized { get; set; } = string.Empty;
 
-    public DateTime? EmailCheckedAt { get; set; }
-
-    public string? PasswordHash { get; set; }
-
     public string DisplayName { get; set; } = string.Empty;
 
     public string Language { get; set; } = "en";
@@ -90,7 +86,7 @@ internal sealed class ApiKeyRow
 internal sealed class AccountStore(IDatabase database)
 {
     private const string AccountColumns = """
-        id, email, email_normalized as EmailNormalized, email_checked_at as EmailCheckedAt, password_hash as PasswordHash,
+        id, email, email_normalized as EmailNormalized, 
         display_name as DisplayName, language, is_administrator as IsAdministrator, security_stamp as SecurityStamp,
         created_at as CreatedAt, updated_at as UpdatedAt, last_sign_in_at as LastSignInAt
         """;
@@ -118,9 +114,9 @@ internal sealed class AccountStore(IDatabase database)
     public static Task InsertAccountAsync(NpgsqlTransaction transaction, AccountRow account, CancellationToken cancellationToken) =>
         transaction.Connection!.ExecuteAsync(new CommandDefinition(
             """
-            insert into users.accounts (id, email, email_normalized, email_checked_at, password_hash, display_name, language,
+            insert into users.accounts (id, email, email_normalized, display_name, language,
                 is_administrator, security_stamp, created_at, updated_at, last_sign_in_at)
-            values (@Id, @Email, @EmailNormalized, @EmailCheckedAt, @PasswordHash, @DisplayName, @Language,
+            values (@Id, @Email, @EmailNormalized, @DisplayName, @Language,
                 @IsAdministrator, @SecurityStamp, @CreatedAt, @UpdatedAt, @LastSignInAt)
             """,
             account,
@@ -149,58 +145,6 @@ internal sealed class AccountStore(IDatabase database)
             new { id, displayName, language, now },
             cancellationToken: cancellationToken));
     }
-
-    /// <summary>
-    /// Sets a new password and a new security stamp, and revokes all the refresh tokens of the account.
-    /// </summary>
-    public static async Task SetPasswordAsync(NpgsqlTransaction transaction, Guid id, string passwordHash, bool checkEmail, DateTimeOffset now, CancellationToken cancellationToken)
-    {
-        await transaction.Connection!.ExecuteAsync(new CommandDefinition(
-            """
-            update users.accounts
-            set password_hash = @passwordHash, security_stamp = @stamp, updated_at = @now,
-                email_checked_at = case when @checkEmail then coalesce(email_checked_at, @now) else email_checked_at end
-            where id = @id
-            """,
-            new { id, passwordHash, stamp = Ids.New(), checkEmail, now },
-            transaction,
-            cancellationToken: cancellationToken));
-        await RevokeAllRefreshTokensAsync(transaction, id, now, cancellationToken);
-    }
-
-    public static Task<int> CheckEmailAsync(NpgsqlTransaction transaction, Guid id, DateTimeOffset now, CancellationToken cancellationToken) =>
-        transaction.Connection!.ExecuteAsync(new CommandDefinition(
-            "update users.accounts set email_checked_at = coalesce(email_checked_at, @now), updated_at = @now where id = @id",
-            new { id, now },
-            transaction,
-            cancellationToken: cancellationToken));
-
-    public async Task InsertAccountTokenAsync(Guid accountId, string purpose, byte[] tokenHash, DateTimeOffset now, DateTimeOffset expiresAt, CancellationToken cancellationToken)
-    {
-        await using var connection = await OpenAsync(cancellationToken);
-        await connection.ExecuteAsync(new CommandDefinition(
-            """
-            insert into users.account_tokens (id, account_id, purpose, token_hash, created_at, expires_at)
-            values (@id, @accountId, @purpose, @tokenHash, @now, @expiresAt)
-            """,
-            new { id = Ids.New(), accountId, purpose, tokenHash, now, expiresAt },
-            cancellationToken: cancellationToken));
-    }
-
-    /// <summary>
-    /// Marks a single-use token as used, when it is valid.
-    /// </summary>
-    /// <returns>The account of the token, or <see langword="null"/> when the token is not valid.</returns>
-    public static Task<Guid?> UseAccountTokenAsync(NpgsqlTransaction transaction, string purpose, byte[] tokenHash, DateTimeOffset now, CancellationToken cancellationToken) =>
-        transaction.Connection!.QuerySingleOrDefaultAsync<Guid?>(new CommandDefinition(
-            """
-            update users.account_tokens set used_at = @now
-            where purpose = @purpose and token_hash = @tokenHash and used_at is null and expires_at > @now
-            returning account_id
-            """,
-            new { purpose, tokenHash, now },
-            transaction,
-            cancellationToken: cancellationToken));
 
     public async Task InsertRefreshTokenAsync(Guid accountId, Guid familyId, byte[] tokenHash, Guid securityStamp, DateTimeOffset now, DateTimeOffset expiresAt, CancellationToken cancellationToken)
     {

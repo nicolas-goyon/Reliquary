@@ -20,11 +20,6 @@ public sealed record MeResponse(AccountResponse Account, IReadOnlyList<string> E
 /// <summary>The body of a change of the account. A missing field does not change.</summary>
 public sealed record UpdateMeRequest(string? DisplayName, string? Language);
 
-/// <summary>The body of a change of the password.</summary>
-/// <param name="CurrentPassword">The current password. An account with no password does not need it.</param>
-/// <param name="NewPassword">The new password.</param>
-public sealed record ChangePasswordRequest(string? CurrentPassword, string? NewPassword);
-
 /// <summary>The body of a new API key.</summary>
 public sealed record CreateApiKeyRequest(string? Name);
 
@@ -45,7 +40,7 @@ public sealed record ApiKeyResponse(Guid Id, string Name, string Prefix, DateTim
 public sealed record CreatedApiKeyResponse(Guid Id, string Name, string Prefix, string Key, DateTimeOffset CreatedAt);
 
 /// <summary>
-/// The endpoints of the account of the user: profile, password and API keys.
+/// The endpoints of the account of the user: profile and API keys.
 /// </summary>
 internal static class ProfileEndpoints
 {
@@ -68,11 +63,6 @@ internal static class ProfileEndpoints
         session.MapPatch(string.Empty, UpdateAsync)
             .WithName("UpdateMe")
             .WithSummary("Changes the display name or the interface language of the account.");
-
-        session.MapPost("/password", ChangePasswordAsync)
-            .WithName("ChangePassword")
-            .WithSummary("Changes the password, stops all the sessions of the account and starts a new session.")
-            .RequireRateLimiting(AuthEndpoints.RateLimiterPolicy);
 
         session.MapGet("/api-keys", ListApiKeysAsync)
             .WithName("ListApiKeys")
@@ -111,26 +101,6 @@ internal static class ProfileEndpoints
 
         var account = await store.UpdateProfileAsync(user.GetAccountId(), request.DisplayName?.Trim(), request.Language, time.GetUtcNow(), cancellationToken);
         return account is null ? AccountMissing() : TypedResults.Ok(AccountResponse.From(account));
-    }
-
-    private static async Task<Results<Ok<SessionResponse>, ProblemHttpResult>> ChangePasswordAsync(ChangePasswordRequest request, ClaimsPrincipal user, AccountService accounts, HttpResponse response, CancellationToken cancellationToken)
-    {
-        var errors = AccountValidation.Password(request.NewPassword, "newPassword").ToList();
-        if (errors.Count > 0)
-        {
-            return ApiProblems.Validation(errors);
-        }
-
-        var session = await accounts.ChangePasswordAsync(user.GetAccountId(), request.CurrentPassword, request.NewPassword!, cancellationToken);
-        if (session is null)
-        {
-            return ApiProblems.Problem(
-                StatusCodes.Status400BadRequest,
-                AccountErrorCodes.InvalidCredentials,
-                "The current password is not correct.");
-        }
-
-        return AuthEndpoints.Started(session, response);
     }
 
     private static async Task<Ok<IReadOnlyList<ApiKeyResponse>>> ListApiKeysAsync(ClaimsPrincipal user, AccountStore store, CancellationToken cancellationToken)

@@ -182,9 +182,8 @@ public sealed class DeckLinkTests(DecksInstance instance)
     {
         var client = api.CreateClient();
         var email = $"links-{Guid.NewGuid():N}@example.org";
-        var credentials = new { email, password = "correct horse battery", displayName = "Tester", language = "en" };
-        (await client.PostAsJsonAsync("/api/v1/auth/register", credentials, Cancel)).EnsureSuccessStatusCode();
-        var signIn = await client.PostAsJsonAsync("/api/v1/auth/sign-in", credentials, Cancel);
+        var credentials = new { email, displayName = "Tester", language = "en" };
+        var signIn = await client.PostAsJsonAsync("/api/v1/auth/development/sign-in", credentials, Cancel);
         signIn.EnsureSuccessStatusCode();
         var session = await signIn.Content.ReadFromJsonAsync<JsonElement>(Cancel);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", session.GetProperty("accessToken").GetString());

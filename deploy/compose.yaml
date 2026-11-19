@@ -13,16 +13,13 @@ x-backend-environment: &backend-environment
   Auth__SigningKey: ${RELIQUARY_SIGNING_KEY:?Set RELIQUARY_SIGNING_KEY in the .env file. Make a key with "openssl rand -base64 32".}
   Auth__PublicUrl: ${RELIQUARY_PUBLIC_URL:-http://localhost:8090}
   Auth__AdministratorEmails__0: ${RELIQUARY_ADMINISTRATOR_EMAIL:-}
-  Auth__AllowAccountsWithoutEmail: ${RELIQUARY_ACCOUNTS_WITHOUT_EMAIL:-false}
-  Auth__RequireCheckedEmail: ${RELIQUARY_REQUIRE_CHECKED_EMAIL:-false}
+  Auth__AllowDevelopmentSignIn: ${RELIQUARY_DEVELOPMENT_SIGN_IN:-false}
   Auth__Providers__Google__ClientId: ${RELIQUARY_GOOGLE_CLIENT_ID:-}
   Auth__Providers__Google__ClientSecret: ${RELIQUARY_GOOGLE_CLIENT_SECRET:-}
-  Email__From: ${RELIQUARY_EMAIL_FROM:-Reliquary <noreply@reliquary.localhost>}
-  Email__Smtp__Host: ${RELIQUARY_SMTP_HOST:-mailpit}
-  Email__Smtp__Port: ${RELIQUARY_SMTP_PORT:-1025}
-  Email__Smtp__Security: ${RELIQUARY_SMTP_SECURITY:-None}
-  Email__Smtp__UserName: ${RELIQUARY_SMTP_USER_NAME:-}
-  Email__Smtp__Password: ${RELIQUARY_SMTP_PASSWORD:-}
+  Auth__Providers__GitHub__ClientId: ${RELIQUARY_GITHUB_CLIENT_ID:-}
+  Auth__Providers__GitHub__ClientSecret: ${RELIQUARY_GITHUB_CLIENT_SECRET:-}
+  Auth__Providers__Discord__ClientId: ${RELIQUARY_DISCORD_CLIENT_ID:-}
+  Auth__Providers__Discord__ClientSecret: ${RELIQUARY_DISCORD_CLIENT_SECRET:-}
   # No folder: the worker downloads all the cards from Scryfall.
   Cards__Import__Directory: ""
   Cards__Import__BulkType: ${RELIQUARY_CARD_BULK_TYPE:-default_cards}
@@ -66,13 +63,13 @@ services:
       timeout: 5s
       retries: 12
 
-  # A test email server. It keeps all the emails and sends none. Read the emails at http://localhost:18035.
-  # To send real emails, set RELIQUARY_SMTP_HOST and the other SMTP settings.
+  # Reliquary sends no email, so the instance has no email server. This service does nothing.
+  # The script reliquary-update of the release 0.4.0 and of the older releases starts a service with the name "mailpit",
+  # and it stops when the service does not exist. Remove this service when no instance updates from these releases.
   mailpit:
-    image: axllent/mailpit:v1.33.1
+    image: redis:8-alpine
     restart: unless-stopped
-    ports:
-      - "${RELIQUARY_BIND_ADDRESS:-127.0.0.1}:${RELIQUARY_MAILPIT_PORT:-18035}:8025"
+    entrypoint: ["sleep", "infinity"]
 
   # The CLI: the migrations, the backups, the restores and the jobs. The script runs it. It does not start with "up".
   cli:

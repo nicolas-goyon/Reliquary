@@ -5,6 +5,37 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## Unreleased
 
+### Added
+
+- The guide [Sign-in services](docs/deployment/sign-in-services.md): the steps to connect an instance to Google, GitHub or Discord.
+  The troubleshooting page has a part for the sign-in.
+
+### Changed
+
+- **Breaking change:** a user signs in only with Google, GitHub or Discord (ADR 0054). The first sign-in with a service makes the account.
+  A deployed instance needs the OAuth client of one service or more.
+  The settings are `RELIQUARY_GOOGLE_CLIENT_ID` and `RELIQUARY_GOOGLE_CLIENT_SECRET`, or the `GITHUB` and `DISCORD` settings.
+  An account that had only a password cannot sign in. A service with the same checked email address opens the same account.
+- The request to delete an account needs no password. The delay of 7 days does not change.
+- The local instance, the development settings and the tests use the development sign-in: `POST /api/v1/auth/development/sign-in`.
+  The setting `Auth:AllowDevelopmentSignIn` enables it.
+  The demo accounts have no password. The sign-in page has one button for each demo account.
+- The Compose files and the Helm chart have the settings of GitHub and Discord.
+
+### Fixed
+
+- The web app kept no session when a sign-in ended before the first refresh of the page.
+  The scheduled end-to-end test found the problem with the buttons of the development sign-in.
+
+### Removed
+
+- The sign-in with a password, with its pages and its endpoints.
+  This includes the registration, the check of the email address, the forgotten password and the password change.
+- All the emails: the SMTP settings (`RELIQUARY_SMTP_*`, `Email:*`, `config.email` of the Helm chart), the package MailKit and the Mailpit service.
+- The settings `Auth:AllowAccountsWithoutEmail`, `Auth:RequireCheckedEmail`, `Auth:EmailCheckLifetime` and `Auth:PasswordResetLifetime`.
+- The fields `emailChecked` and `hasPassword` of the account in the public API.
+- The error codes `invalid_credentials`, `email_not_checked`, `account_name_taken` and `invalid_token`.
+
 ## [0.4.0] - 2026-11-18
 
 ### Added

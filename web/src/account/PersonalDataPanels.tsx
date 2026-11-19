@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../auth/session'
-import { ErrorAlert, TextField } from '../components/Forms'
+import { ErrorAlert } from '../components/Forms'
 
 interface DataExport {
   id: string
@@ -98,7 +98,6 @@ export function AccountDeletionPanel() {
   const { t, i18n } = useTranslation('account')
   const { request } = useAuth()
   const [deletion, setDeletion] = useState<Deletion | null>(null)
-  const [password, setPassword] = useState('')
   const [error, setError] = useState<unknown>(null)
 
   useEffect(() => {
@@ -114,8 +113,7 @@ export function AccountDeletionPanel() {
     }
     setError(null)
     try {
-      setDeletion(await request<Deletion>('/me/deletion', { method: 'POST', body: { password } }))
-      setPassword('')
+      setDeletion(await request<Deletion>('/me/deletion', { method: 'POST' }))
     } catch (caught) {
       setError(caught)
     }
@@ -145,7 +143,6 @@ export function AccountDeletionPanel() {
       ) : (
         <form className="form" onSubmit={(event) => void handleDelete(event)} noValidate>
           <p>{t('deletion.description')}</p>
-          <TextField label={t('deletion.password')} field="password" error={error} type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} />
           <button type="submit" className="button-danger">
             {t('deletion.submit')}
           </button>

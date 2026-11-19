@@ -9,14 +9,12 @@ export type AuthState =
 
 export interface AuthContextValue {
   state: AuthState
-  /** Starts a web session with a password. */
-  signIn(email: string, password: string): Promise<Account>
+  /** Starts a web session with the development sign-in. Only a development instance accepts it. */
+  developmentSignIn(email: string): Promise<Account>
   /** Stops the web session. */
   signOut(): Promise<void>
   /** Sends a request to the API with the access token. When the token expired, it gets a new token and sends the request again. */
   request<T>(path: string, options?: Omit<RequestOptions, 'accessToken'>): Promise<T>
-  /** Keeps a new access token, for example after a change of the password. */
-  acceptSession(accessToken: string, expiresIn: number, account: Account): void
   /** Replaces the account, for example after a change of the profile. */
   updateAccount(account: Account): void
 }

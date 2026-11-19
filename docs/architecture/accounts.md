@@ -2,7 +2,9 @@
 
 This page tells how the Accounts component signs in the users and protects the public API.
 Terms follow the [glossary](../glossary.md).
-[ADR 0022](../decisions/0022-authentication-and-api-keys.md) gives the reasons for the design.
+[ADR 0022](../decisions/0022-authentication-and-api-keys.md) and [ADR 0054](../decisions/0054-sign-in-with-oauth-providers-only.md) give the reasons for the design.
+
+A user signs in only with an OAuth provider: Google, GitHub or Discord. An account has no password, and Reliquary sends no email.
 
 ## Credentials
 
@@ -22,7 +24,7 @@ A request with a credential that is not valid gets the error `invalid_authentica
 
 ## Web sessions
 
-1. The user signs in with `POST /api/v1/auth/sign-in`, or with an OAuth provider.
+1. The user signs in with an OAuth provider.
 2. The API returns an access token in the body and writes the refresh token in the cookie `reliquary_refresh`.
 3. The web interface keeps the access token in memory and sends it with each request.
 4. Before the access token expires, or after an error `invalid_authentication`, the web interface calls `POST /api/v1/auth/refresh`.
@@ -45,19 +47,13 @@ The access token contains these claims:
 
 | Endpoint | Credential | Effect |
 | --- | --- | --- |
-| `POST /auth/register` | — | Makes an account and sends the email of the address check. |
-| `POST /auth/email-check` | — | Marks the address as checked, with the token of the email. |
-| `POST /auth/email-check/resend` | — | Sends the email of the address check again. |
-| `POST /auth/sign-in` | — | Starts a web session with a password. |
 | `POST /auth/refresh` | Refresh cookie | Gives a new access token. |
 | `POST /auth/sign-out` | Refresh cookie | Stops the web session. |
-| `POST /auth/password/forgot` | — | Sends the email of the password reset. |
-| `POST /auth/password/reset` | — | Sets a new password with the token of the email. |
-| `GET /auth/providers` | — | Lists the enabled OAuth providers. |
+| `GET /auth/providers` | — | Lists the enabled OAuth providers, and tells whether the instance has the development sign-in. |
 | `GET /auth/external/{provider}` | — | Sends the browser to an OAuth provider. |
+| `POST /auth/development/sign-in` | — | Starts a web session for an email address. Only on a development instance. |
 | `GET /me` | Access token, API key or delegation token with `profile:read` | Gets the account. |
 | `PATCH /me` | Access token | Changes the display name or the language. |
-| `POST /me/password` | Access token | Changes the password and starts a new session. |
 | `GET /me/api-keys` | Access token | Lists the API keys. |
 | `POST /me/api-keys` | Access token | Creates an API key. |
 | `DELETE /me/api-keys/{id}` | Access token | Revokes an API key. |
@@ -76,7 +72,7 @@ The OpenAPI document at `/openapi/v1.json` gives the bodies and the responses.
 3. The API finds the account:
    - If the provider account has an OAuth login, the API uses its account.
    - Else, if an account has the same email address and the provider checked the address, the API adds the OAuth login to that account.
-   - Else, the API makes a new account with a checked address and no password.
+   - Else, if the provider checked the address, the API makes a new account.
 4. The API writes the refresh cookie and sends the browser to `/auth/complete?returnUrl=...` on the web interface.
    If the sign-in fails, the address also has a parameter `error`: `external_sign_in_failed`, `external_email_missing` or `external_email_not_verified`.
 5. The page `/auth/complete` calls `POST /api/v1/auth/refresh`.
@@ -114,14 +110,19 @@ Each response to a request with an API key has these headers:
 When the key or the account has no remaining request, the API returns the error `quota_exceeded` with a `Retry-After` header.
 The scheduled job `accounts.usage-flush` copies the counters of Redis to the table `users.usage_counters` every 5 minutes.
 
-## Emails
+## Development sign-in
 
-The API sends emails for the address check, the password reset, and a second registration with a known address.
-The texts are in `src/Components/Reliquary.Accounts/Emails`, in English and in French.
-The API uses the language of the account.
+A local instance and the tests cannot use an OAuth provider. The development sign-in gives them a web session with no provider.
 
-With no SMTP server in the settings, the API writes each email to the log.
-The local infrastructure has Mailpit: open `http://localhost:18025` to read the emails.
+- The setting `Auth:AllowDevelopmentSignIn` is `false` by default. The development settings, the local Docker Compose file and the tests set it to `true`.
+- `POST /api/v1/auth/development/sign-in` with `{ "email": "ana@example.org" }` starts a web session for the account of this address.
+  The API makes the account when it does not exist. The optional fields `displayName` and `language` apply only to a new account.
+- An instance without the setting returns the status 404.
+- The sign-in page of the web app has the form only when `GET /api/v1/auth/providers` gives `developmentSignIn: true`.
+  The form has one button for each demo account and one field for the address of a test account.
+- The API writes a warning to the log for each development sign-in.
+
+Do not enable the setting on an instance that other persons can reach: each visitor can then open each account.
 
 ## Personal data
 
@@ -133,7 +134,7 @@ The local infrastructure has Mailpit: open `http://localhost:18025` to read the 
 | `POST /me/exports` | Asks for a ZIP archive of all the data. The worker makes it in one minute or less. |
 | `GET /me/exports/{id}/archive` | Downloads the archive. It stays available for 7 days. |
 | `GET /me/deletion` | Gets the deletion request. |
-| `POST /me/deletion` | Asks for the deletion of the account, with the password. The worker deletes the account and all its data after 7 days. |
+| `POST /me/deletion` | Asks for the deletion of the account. The worker deletes the account and all its data after 7 days. |
 | `DELETE /me/deletion` | Cancels the deletion request. |
 
 The online games keep data of the players only in Redis, for 8 hours at most.
@@ -147,21 +148,16 @@ The [online games architecture](online-games.md#personal-data) gives the data an
 | Setting | Default | Meaning |
 | --- | --- | --- |
 | `Auth:SigningKey` | — | The key that signs the access tokens: 32 random bytes or more, in base64. Necessary. Use the same key on all the replicas. |
-| `Auth:PublicUrl` | `http://localhost:5173` | The address of the web interface, for the links in the emails and the end of an OAuth sign-in. |
+| `Auth:PublicUrl` | `http://localhost:5173` | The address of the web interface, for the end of an OAuth sign-in. |
 | `Auth:AccessTokenLifetime` | `00:15:00` | The lifetime of an access token. |
 | `Auth:RefreshTokenLifetime` | `30.00:00:00` | The maximum time without a visit before the user must sign in again. |
-| `Auth:AllowAccountsWithoutEmail` | `false` | A user can make an account with a public name and a password, with no email address. Use it on a development instance only. |
-| `Auth:RequireCheckedEmail` | `true` | A new account with a password must check its address before the first sign-in. |
-| `Auth:EmailCheckLifetime` | `2.00:00:00` | The lifetime of the link of the address check. |
-| `Auth:PasswordResetLifetime` | `01:00:00` | The lifetime of the link of the password reset. |
+| `Auth:AllowDevelopmentSignIn` | `false` | The instance has the [development sign-in](#development-sign-in). Use it on a development instance only. |
 | `Auth:AdministratorEmails` | — | The email addresses of the administrators. |
-| `Auth:RequestsPerMinute` | `10` | The rate limit of the authentication endpoints, for each client address and replica. |
+| `Auth:RequestsPerMinute` | `10` | The rate limit of the start of an OAuth sign-in, for each client address and replica. |
 | `Auth:DelegationTokenLifetime` | `01:00:00` | The lifetime of a delegation token. A token never stays valid after the end of its delegation. |
 | `Auth:Providers:Google:ClientId` and `ClientSecret` | — | Enables the sign-in with Google. The same settings exist for `GitHub` and `Discord`. |
 | `Quotas:RequestsPerKeyPerDay` | `10000` | The daily quota of each API key. |
 | `Quotas:RequestsPerAccountPerDay` | `10000` | The daily quota of all the API keys of one account. |
-| `Email:From` | — | The sender address of the emails. |
-| `Email:Smtp:Host`, `Port`, `UserName`, `Password`, `Security` | — | The SMTP server. With no host, the API writes the emails to the log. |
 
 To make a signing key:
 

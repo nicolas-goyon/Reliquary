@@ -8,15 +8,6 @@
     "submit": "Save the profile",
     "saved": "We saved the profile."
   },
-  "password": {
-    "title": "Change the password",
-    "titleFirst": "Set a password",
-    "description": "After the change, your other sessions stop.",
-    "current": "Current password",
-    "new": "New password",
-    "submit": "Save the password",
-    "saved": "We saved the new password."
-  },
   "logins": {
     "title": "External sign-in services",
     "none": "Your account has no external sign-in service."
@@ -53,7 +44,6 @@
   "deletion": {
     "title": "Delete your account",
     "description": "Reliquary deletes your account and all your data 7 days after your request. You can cancel the request during these 7 days. Export your data first if you want to keep it.",
-    "password": "Password",
     "submit": "Delete my account",
     "confirm": "Delete your account and all your data in 7 days?",
     "scheduled": "Reliquary deletes your account and all your data on {{date}}.",

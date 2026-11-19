@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { App } from '../App'
 import i18n from '../i18n'
+import { seriousAccessibilityProblems } from '../test/axe'
 import { mockApi, problem, session, testAccount } from '../test/mockApi'
 
 describe('authentication', () => {
@@ -14,12 +15,39 @@ describe('authentication', () => {
     vi.unstubAllGlobals()
   })
 
-  it('signs in with a password and opens the return page', async () => {
+  it('shows one button for each OAuth provider, and no password form', async () => {
+    window.history.replaceState(null, '', '/sign-in?returnUrl=/account')
+    mockApi({
+      'POST /auth/refresh': () => problem(401, 'session_expired'),
+      'GET /auth/providers': () => Response.json({ providers: ['google', 'github'], developmentSignIn: false }),
+    })
+    render(<App />)
+
+    expect(await screen.findByRole('link', { name: 'Sign in with Google' })).toHaveAttribute('href', '/api/v1/auth/external/google?returnUrl=%2Faccount&language=en')
+    expect(screen.getByRole('link', { name: 'Sign in with GitHub' })).toBeInTheDocument()
+    expect(screen.queryByLabelText('Password')).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Development sign-in' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Make an account' })).not.toBeInTheDocument()
+    expect(await seriousAccessibilityProblems()).toEqual([])
+  })
+
+  it('tells the user when the instance has no sign-in service', async () => {
+    window.history.replaceState(null, '', '/sign-in')
+    mockApi({
+      'POST /auth/refresh': () => problem(401, 'session_expired'),
+      'GET /auth/providers': () => Response.json({ providers: [], developmentSignIn: false }),
+    })
+    render(<App />)
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('This instance has no sign-in service.')
+  })
+
+  it('opens a demo account with the development sign-in and goes to the return page', async () => {
     window.history.replaceState(null, '', '/sign-in?returnUrl=/account')
     const calls = mockApi({
       'POST /auth/refresh': () => problem(401, 'session_expired'),
-      'GET /auth/providers': () => Response.json({ providers: ['github'] }),
-      'POST /auth/sign-in': ({ body }) => ((body as { password: string }).password === 'correct horse battery' ? session() : problem(401, 'invalid_credentials')),
+      'GET /auth/providers': () => Response.json({ providers: [], developmentSignIn: true }),
+      'POST /auth/development/sign-in': () => session(),
       'GET /me': () => Response.json({ account: testAccount, externalLogins: ['github'] }),
       'GET /me/api-keys': () => Response.json([]),
       'GET /me/exports': () => Response.json([]),
@@ -28,18 +56,9 @@ describe('authentication', () => {
     const user = userEvent.setup()
     render(<App />)
 
-    expect(await screen.findByRole('link', { name: 'GitHub' })).toHaveAttribute(
-      'href',
-      '/api/v1/auth/external/github?returnUrl=%2Faccount&language=en',
-    )
-    await user.type(screen.getByLabelText('Email address'), 'ana@example.org')
-    await user.type(screen.getByLabelText('Password'), 'wrong password')
-    await user.click(screen.getByRole('button', { name: 'Sign in' }))
-    expect(await screen.findByText('The email address or the password is not correct.')).toBeInTheDocument()
-
-    await user.clear(screen.getByLabelText('Password'))
-    await user.type(screen.getByLabelText('Password'), 'correct horse battery')
-    await user.click(screen.getByRole('button', { name: 'Sign in' }))
+    expect(await screen.findByRole('heading', { name: 'Development sign-in' })).toBeInTheDocument()
+    expect(await seriousAccessibilityProblems()).toEqual([])
+    await user.click(screen.getByRole('button', { name: 'Open the account Demo' }))
 
     // The account page renders the core panels through the slot "account.page".
     expect(await screen.findByRole('heading', { level: 1, name: 'Your account' })).toBeInTheDocument()
@@ -49,6 +68,57 @@ describe('authentication', () => {
     expect(await screen.findByText('github')).toBeInTheDocument()
     expect(document.querySelector('[data-slot="account.page"] [data-contribution="core.apiKeys"]')).not.toBeNull()
     expect(calls.find((call) => call.key === 'GET /me/api-keys')?.headers.Authorization).toBe('Bearer token-1')
+    expect(calls.find((call) => call.key === 'POST /auth/development/sign-in')?.body).toEqual({ email: 'demo@reliquary.localhost', language: 'en' })
+    expect(screen.queryByRole('heading', { name: 'Change the password' })).not.toBeInTheDocument()
+  })
+
+  it('keeps the session of a sign-in that ends before the first refresh', async () => {
+    window.history.replaceState(null, '', '/sign-in?returnUrl=/account')
+    // The first refresh of the page has no cookie. Its answer comes after the sign-in.
+    let answerRefresh: (response: Response) => void = () => {}
+    const refresh = new Promise<Response>((resolve) => (answerRefresh = resolve))
+    mockApi({
+      'POST /auth/refresh': () => refresh,
+      'GET /auth/providers': () => Response.json({ providers: [], developmentSignIn: true }),
+      'POST /auth/development/sign-in': () => session(),
+      'GET /me': () => Response.json({ account: testAccount, externalLogins: [] }),
+      'GET /me/api-keys': () => Response.json([]),
+      'GET /me/exports': () => Response.json([]),
+      'GET /me/deletion': () => Response.json({ requestedAt: null, deleteAfter: null }),
+    })
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.click(await screen.findByRole('button', { name: 'Open the account Demo' }))
+    expect(await screen.findByRole('heading', { level: 1, name: 'Your account' })).toBeInTheDocument()
+
+    answerRefresh(problem(401, 'session_expired'))
+    await new Promise((resolve) => setTimeout(resolve, 50))
+    expect(window.location.pathname).toBe('/account')
+    expect(screen.getByRole('heading', { level: 1, name: 'Your account' })).toBeInTheDocument()
+  })
+
+  it('opens a test account by its email address, and shows the error of an address that is not correct', async () => {
+    window.history.replaceState(null, '', '/sign-in')
+    const calls = mockApi({
+      'POST /auth/refresh': () => problem(401, 'session_expired'),
+      'GET /auth/providers': () => Response.json({ providers: [], developmentSignIn: true }),
+      'POST /auth/development/sign-in': ({ body }) =>
+        (body as { email: string }).email.includes('@') ? session() : problem(400, 'validation_failed', [{ field: 'email', code: 'invalid_format', message: 'The email address does not have a correct format.' }]),
+    })
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.type(await screen.findByLabelText(/^Email address of a test account/), 'not an address')
+    await user.click(screen.getByRole('button', { name: 'Open this account' }))
+    await waitFor(() => expect(screen.getByLabelText(/^Email address of a test account/)).toHaveAccessibleDescription(/format/))
+
+    await user.clear(screen.getByLabelText(/^Email address of a test account/))
+    await user.type(screen.getByLabelText(/^Email address of a test account/), 'ana@example.org')
+    await user.click(screen.getByRole('button', { name: 'Open this account' }))
+
+    await waitFor(() => expect(window.location.pathname).toBe('/'))
+    expect(calls.filter((call) => call.key === 'POST /auth/development/sign-in')).toHaveLength(2)
   })
 
   it('gets a new access token and sends the request again when the token expired', async () => {
@@ -83,59 +153,6 @@ describe('authentication', () => {
 
     await waitFor(() => expect(window.location.pathname).toBe('/sign-in'))
     expect(window.location.search).toBe('?returnUrl=%2Faccount')
-  })
-
-  it('makes an account with no email address and signs in', async () => {
-    window.history.replaceState(null, '', '/register')
-    const calls = mockApi({
-      'POST /auth/refresh': () => problem(401, 'session_expired'),
-      'GET /auth/providers': () => Response.json({ providers: [], accountsWithoutEmail: true }),
-      'POST /auth/register': () => new Response(null, { status: 202 }),
-      'POST /auth/sign-in': () => session(),
-    })
-    const user = userEvent.setup()
-    render(<App />)
-
-    await user.type(await screen.findByLabelText('Public name'), 'Ana')
-    await waitFor(() => expect(screen.queryByLabelText('Email address')).not.toBeInTheDocument())
-    await user.type(screen.getByLabelText('Password'), 'correct horse battery')
-    await user.click(screen.getByRole('button', { name: 'Make the account' }))
-
-    await waitFor(() => expect(window.location.pathname).toBe('/'))
-    expect(calls.find((call) => call.key === 'POST /auth/sign-in')?.body).toEqual({ email: 'Ana', password: 'correct horse battery' })
-  })
-
-  it('shows the field errors of the registration', async () => {
-    window.history.replaceState(null, '', '/register')
-    mockApi({
-      'POST /auth/refresh': () => problem(401, 'session_expired'),
-      'POST /auth/register': () =>
-        problem(400, 'validation_failed', [{ field: 'password', code: 'too_short', message: 'The password must have 10 characters or more.' }]),
-    })
-    const user = userEvent.setup()
-    render(<App />)
-
-    await user.type(await screen.findByLabelText('Email address'), 'ana@example.org')
-    await user.type(screen.getByLabelText('Public name'), 'Ana')
-    await user.type(screen.getByLabelText('Password'), 'short')
-    await user.click(screen.getByRole('button', { name: 'Make the account' }))
-
-    expect(await screen.findByText('This value is too short.')).toBeInTheDocument()
-    expect(screen.getByLabelText('Password')).toHaveAttribute('aria-invalid', 'true')
-  })
-
-  it('checks the email address with the token of the link', async () => {
-    window.history.replaceState(null, '', '/check-email?token=abc')
-    const calls = mockApi({
-      'POST /auth/refresh': () => problem(401, 'session_expired'),
-      'POST /auth/email-check': () => new Response(null, { status: 204 }),
-    })
-    render(<App />)
-
-    expect(await screen.findByText('We checked your email address. You can sign in now.')).toBeInTheDocument()
-    expect(calls.filter((call) => call.key === 'POST /auth/email-check')).toEqual([
-      { key: 'POST /auth/email-check', body: { token: 'abc' }, headers: expect.any(Object) },
-    ])
   })
 
   it('shows the error of an OAuth sign-in in French', async () => {

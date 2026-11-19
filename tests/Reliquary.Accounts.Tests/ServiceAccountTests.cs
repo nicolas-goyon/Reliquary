@@ -20,8 +20,7 @@ public sealed class ServiceAccountTests
         var api = instance.StartReplica();
         using var admin = await ServiceAccountSetup.SignInAdministratorAsync(instance, api);
         using var user = api.CreateBrowser();
-        await AuthFlowTests.RegisterCheckedAsync(instance, user, "plain@example.org");
-        await user.SignInAsync("plain@example.org", AuthFlowTests.Password);
+        await user.SignInAsync("plain@example.org");
 
         var create = await admin.PostAsync("/api/v1/admin/service-accounts", new { name = "sync-module", description = "Synchronizes the decks." });
         var created = (await create.Content.ReadFromJsonAsync<CreatedServiceAccountResponse>(Cancel))!;
@@ -73,8 +72,7 @@ public sealed class ServiceAccountTests
         var api = instance.StartReplica();
         var secret = await ServiceAccountSetup.CreateServiceAccountAsync(api, "reader");
         using var user = api.CreateBrowser();
-        await AuthFlowTests.RegisterCheckedAsync(instance, user, "profile@example.org");
-        var session = await user.SignInAsync("profile@example.org", AuthFlowTests.Password);
+        var session = await user.SignInAsync("profile@example.org");
 
         var events = await (await user.GetAsync("/internal/v1/events/types", secret)).Content.ReadFromJsonAsync<JsonElement>(Cancel);
         var profile = await user.GetAsync($"/internal/v1/users/{session.Account.Id}/profile", secret);
@@ -97,8 +95,7 @@ internal static class ServiceAccountSetup
     public static async Task<BrowserClient> SignInAdministratorAsync(AccountsInstance instance, AccountsApi api)
     {
         var admin = api.CreateBrowser();
-        await AuthFlowTests.RegisterCheckedAsync(instance, admin, "admin@example.org");
-        await admin.SignInAsync("admin@example.org", AuthFlowTests.Password);
+        await admin.SignInAsync("admin@example.org");
         return admin;
     }
 

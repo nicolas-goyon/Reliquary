@@ -1,6 +1,6 @@
 # 0039. Accounts without email on development instances
 
-- Status: Accepted
+- Status: Superseded by [ADR 0054](0054-sign-in-with-oauth-providers-only.md)
 - Date: 2026-11-04
 - Deciders: @nicolas-goyon
 
