@@ -13,7 +13,7 @@ ARG RELIQUARY_VERSION=
 ENV RELIQUARY_VERSION=$RELIQUARY_VERSION
 RUN npm run build
 
-FROM nginxinc/nginx-unprivileged:1.30-alpine
+FROM nginxinc/nginx-unprivileged:1.31-alpine
 # The Nginx image makes /etc/nginx/conf.d/default.conf from the template at start.
 # RELIQUARY_API_URL gives the address of the API. RELIQUARY_DNS_RESOLVER gives the DNS server.
 # With no RELIQUARY_DNS_RESOLVER, the script uses the first name server of /etc/resolv.conf.
